@@ -92,8 +92,14 @@ export const SummaryCards: React.FC<SummaryCardsProps> = ({ items }) => {
     return sum + (item.amount || 1);
   }, 0);
 
-  // Calculate expiring items
-  const expiringCount = items.filter((item) => item.isExpiring).length;
+  // Calculate expiring items (items expiring within 7 days)
+  const expiringCount = items.filter((item) => {
+    if (!item.expiryDate) return false;
+    const now = new Date();
+    const sevenDaysFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+    const expiryDate = new Date(item.expiryDate);
+    return expiryDate <= sevenDaysFromNow && expiryDate >= now;
+  }).length;
 
   // Format currency value exactly as in design: [symbol] 1.1w or [symbol] 5,000
   const formatValue = (value: number): string => {

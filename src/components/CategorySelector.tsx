@@ -4,7 +4,6 @@ import styled from 'styled-components/native';
 import { TouchableOpacity } from 'react-native';
 import { Category } from '../types/inventory';
 import { getAllCategories } from '../services/CategoryService';
-import { categories as defaultCategories } from '../data/mockInventory';
 
 const Container = styled.View`
   margin-bottom: ${({ theme }) => theme.spacing.md}px;
@@ -44,14 +43,16 @@ const CategoryText = styled.Text<{ isSelected: boolean }>`
 
 interface CategorySelectorProps {
   categories?: Category[];
+  selectedCategory?: string;
   onCategoryChange?: (categoryId: string) => void;
 }
 
 export const CategorySelector: React.FC<CategorySelectorProps> = ({
   categories: providedCategories,
+  selectedCategory: parentSelectedCategory,
   onCategoryChange,
 }) => {
-  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [selectedCategory, setSelectedCategory] = useState<string>(parentSelectedCategory || 'all');
   const [categories, setCategories] = useState<Category[]>([]);
 
   useEffect(() => {
@@ -73,19 +74,27 @@ export const CategorySelector: React.FC<CategorySelectorProps> = ({
         setCategories([allCategory, ...allCategories]);
       } catch (error) {
         console.error('Error loading categories:', error);
-        // Fallback to default categories
+        // Categories will remain empty array if loading fails
+        // Only show "all" category as fallback
         const allCategory: Category = {
           id: 'all',
           name: 'all',
           label: '全部',
           isCustom: false,
         };
-        setCategories([allCategory, ...defaultCategories.map(cat => ({ ...cat, isCustom: false }))]);
+        setCategories([allCategory]);
       }
     };
 
     loadCategories();
   }, [providedCategories]);
+
+  // Sync internal state with parent's selectedCategory prop
+  useEffect(() => {
+    if (parentSelectedCategory !== undefined) {
+      setSelectedCategory(parentSelectedCategory);
+    }
+  }, [parentSelectedCategory]);
 
   const handleCategoryPress = (categoryId: string) => {
     setSelectedCategory(categoryId);

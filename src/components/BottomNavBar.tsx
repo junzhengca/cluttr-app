@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { TouchableOpacity, View } from 'react-native';
 import styled from 'styled-components/native';
 import { useTheme } from '../theme/ThemeProvider';
@@ -6,6 +6,9 @@ import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { TabParamList } from '../navigation/types';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { BottomSheetModal } from '@gorhom/bottom-sheet';
+import { CreateItemBottomSheet } from './CreateItemBottomSheet';
+import { useInventory } from '../contexts/InventoryContext';
 
 const NavBarContainer = styled.View<{ bottomInset: number }>`
   position: absolute;
@@ -97,6 +100,8 @@ const NotificationBadge = styled.View`
 export const BottomNavBar: React.FC<BottomTabBarProps> = ({ state, navigation }) => {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
+  const bottomSheetRef = useRef<BottomSheetModal>(null);
+  const { refreshItems } = useInventory();
 
   const handleTabPress = (routeName: keyof TabParamList, isFocused: boolean) => {
     const event = navigation.emit({
@@ -111,7 +116,7 @@ export const BottomNavBar: React.FC<BottomTabBarProps> = ({ state, navigation })
   };
 
   const handleAddPress = () => {
-    console.log('Add button pressed');
+    bottomSheetRef.current?.present();
   };
 
   const handleAIPress = () => {
@@ -119,54 +124,57 @@ export const BottomNavBar: React.FC<BottomTabBarProps> = ({ state, navigation })
   };
 
   return (
-    <NavBarContainer bottomInset={insets.bottom}>
-      <NavBar>
-        <TabButtonsContainer>
-          {state.routes.map((route, index) => {
-            const isFocused = state.index === index;
-            const routeName = route.name as keyof TabParamList;
+    <>
+      <NavBarContainer bottomInset={insets.bottom}>
+        <NavBar>
+          <TabButtonsContainer>
+            {state.routes.map((route, index) => {
+              const isFocused = state.index === index;
+              const routeName = route.name as keyof TabParamList;
 
-            let iconName: any = 'home-outline';
-            let IconComponent: any = Ionicons;
+              let iconName: any = 'home-outline';
+              let IconComponent: any = Ionicons;
 
-            if (routeName === 'InventoryTab') {
-              iconName = 'list-outline';
-              IconComponent = Ionicons;
-            } else if (routeName === 'NotesTab') {
-              iconName = 'notebook-edit-outline';
-              IconComponent = MaterialCommunityIcons;
-            }
+              if (routeName === 'InventoryTab') {
+                iconName = 'list-outline';
+                IconComponent = Ionicons;
+              } else if (routeName === 'NotesTab') {
+                iconName = 'notebook-edit-outline';
+                IconComponent = MaterialCommunityIcons;
+              }
 
-            return (
-              <TabButton
-                key={route.key}
-                isActive={isFocused}
-                onPress={() => handleTabPress(routeName, isFocused)}
-              >
-                <IconComponent
-                  name={iconName}
-                  size={24}
-                  color={isFocused ? theme.colors.text : theme.colors.textLight}
-                />
-              </TabButton>
-            );
-          })}
-        </TabButtonsContainer>
+              return (
+                <TabButton
+                  key={route.key}
+                  isActive={isFocused}
+                  onPress={() => handleTabPress(routeName, isFocused)}
+                >
+                  <IconComponent
+                    name={iconName}
+                    size={24}
+                    color={isFocused ? theme.colors.text : theme.colors.textLight}
+                  />
+                </TabButton>
+              );
+            })}
+          </TabButtonsContainer>
 
-        <Separator />
+          <Separator />
 
-        <ActionButtonsContainer>
-          <AddButton onPress={handleAddPress}>
-            <Ionicons name="add" size={32} color={theme.colors.surface} />
-          </AddButton>
+          <ActionButtonsContainer>
+            <AddButton onPress={handleAddPress}>
+              <Ionicons name="add" size={32} color={theme.colors.surface} />
+            </AddButton>
 
-          <AIButton onPress={handleAIPress}>
-            <MaterialCommunityIcons name="auto-fix" size={24} color={theme.colors.primary} />
-            <NotificationBadge />
-          </AIButton>
-        </ActionButtonsContainer>
-      </NavBar>
-    </NavBarContainer>
+            <AIButton onPress={handleAIPress}>
+              <MaterialCommunityIcons name="auto-fix" size={24} color={theme.colors.primary} />
+              <NotificationBadge />
+            </AIButton>
+          </ActionButtonsContainer>
+        </NavBar>
+      </NavBarContainer>
+      <CreateItemBottomSheet bottomSheetRef={bottomSheetRef} onItemCreated={refreshItems} />
+    </>
   );
 };
 

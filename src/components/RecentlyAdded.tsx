@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { TouchableOpacity } from 'react-native';
 import styled from 'styled-components/native';
 import { Ionicons } from '@expo/vector-icons';
@@ -61,8 +61,38 @@ export const RecentlyAdded: React.FC<RecentlyAddedProps> = ({
   onViewAll,
   onItemPress,
 }) => {
-  const displayedItems = items.slice(0, maxItems);
-  const totalCount = items.length;
+  // Sort items by purchaseDate in descending order (most recent first)
+  // Items without purchaseDate go to the end, using item ID as fallback
+  const sortedItems = useMemo(() => {
+    return [...items].sort((a, b) => {
+      const dateA = a.purchaseDate ? new Date(a.purchaseDate).getTime() : null;
+      const dateB = b.purchaseDate ? new Date(b.purchaseDate).getTime() : null;
+      
+      // If both have dates, sort by date descending
+      if (dateA && dateB) {
+        return dateB - dateA;
+      }
+      
+      // If only A has a date, A comes first
+      if (dateA && !dateB) {
+        return -1;
+      }
+      
+      // If only B has a date, B comes first
+      if (!dateA && dateB) {
+        return 1;
+      }
+      
+      // If neither has a date, use item ID (timestamp-based) as fallback
+      // Parse the timestamp from the ID (format: timestamp + random string)
+      const idA = parseInt(a.id.split('-')[0]) || 0;
+      const idB = parseInt(b.id.split('-')[0]) || 0;
+      return idB - idA;
+    });
+  }, [items]);
+
+  const displayedItems = sortedItems.slice(0, maxItems);
+  const totalCount = sortedItems.length;
 
   const handleViewAll = () => {
     if (onViewAll) {

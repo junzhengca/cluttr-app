@@ -6,12 +6,19 @@ export interface Category {
   label: string; // Chinese label
   isCustom: boolean; // Flag to distinguish system vs user-created categories
   createdAt?: string; // ISO date string for custom categories
+  icon?: keyof typeof Ionicons.glyphMap;
+  iconColor?: string;
+}
+
+export interface Location {
+  id: string;
+  name: string; // Chinese label (will be i18n'd in future)
 }
 
 export interface InventoryItem {
   id: string;
   name: string;
-  location: string; // e.g., "主卧"
+  location: string; // Location ID (e.g., "living-room")
   detailedLocation: string; // e.g., "梳妆台"
   icon: keyof typeof Ionicons.glyphMap;
   iconColor: string;

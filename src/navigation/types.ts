@@ -6,6 +6,7 @@ export type HomeStackParamList = {
 
 export type InventoryStackParamList = {
   Inventory: undefined;
+  ItemDetails: { itemId: string };
 };
 
 export type NotesStackParamList = {

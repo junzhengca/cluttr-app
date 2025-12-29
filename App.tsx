@@ -3,8 +3,11 @@ import { StatusBar } from 'expo-status-bar';
 import { NavigationContainer } from '@react-navigation/native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ActivityIndicator, View } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import { SettingsProvider } from './src/contexts/SettingsContext';
 import { ThemeProvider } from './src/theme/ThemeProvider';
+import { InventoryProvider } from './src/contexts/InventoryContext';
 import { RootStack } from './src/navigation/RootStack';
 import { initializeDataFiles } from './src/services/DataInitializationService';
 
@@ -37,16 +40,22 @@ export default function App() {
   }
 
   return (
-    <SafeAreaProvider>
-      <SettingsProvider>
-        <ThemeProvider>
-          <NavigationContainer>
-            <RootStack />
-            <StatusBar style="auto" />
-          </NavigationContainer>
-        </ThemeProvider>
-      </SettingsProvider>
-    </SafeAreaProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <SafeAreaProvider>
+        <SettingsProvider>
+          <InventoryProvider>
+            <ThemeProvider>
+              <BottomSheetModalProvider>
+                <NavigationContainer>
+                  <RootStack />
+                  <StatusBar style="auto" />
+                </NavigationContainer>
+              </BottomSheetModalProvider>
+            </ThemeProvider>
+          </InventoryProvider>
+        </SettingsProvider>
+      </SafeAreaProvider>
+    </GestureHandlerRootView>
   );
 }
 

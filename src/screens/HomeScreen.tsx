@@ -69,8 +69,15 @@ export const HomeScreen: React.FC = () => {
   };
 
   const handleItemPress = (item: InventoryItem) => {
-    console.log('Item pressed:', item.name);
-    // TODO: Navigate to item detail screen
+    // Navigate to ItemDetails in InventoryTab
+    // Get the tab navigator (parent of HomeStack)
+    const tabNavigator = navigation.getParent();
+    if (tabNavigator) {
+      tabNavigator.navigate('InventoryTab', {
+        screen: 'ItemDetails',
+        params: { itemId: item.id },
+      } as any);
+    }
   };
 
   const handleViewAll = () => {
@@ -116,7 +123,10 @@ export const HomeScreen: React.FC = () => {
         contentContainerStyle={{ paddingBottom: bottomPadding }}
       >
         <SearchInput />
-        <CategorySelector onCategoryChange={handleCategoryChange} />
+        <CategorySelector 
+          selectedCategory={selectedCategory}
+          onCategoryChange={handleCategoryChange} 
+        />
         <SummaryCards items={filteredItems} />
         <RecentlyAdded
           items={filteredItems}

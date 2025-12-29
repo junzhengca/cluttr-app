@@ -1,7 +1,7 @@
 import { Category, InventoryItem } from '../types/inventory';
 import { Settings, defaultSettings } from '../types/settings';
-import { fileExists, writeFile } from './FileSystemService';
-import { categories as mockCategories, mockInventoryItems } from '../data/mockInventory';
+import { fileExists, writeFile, readFile } from './FileSystemService';
+import { locationCategories as defaultLocationCategories, itemCategories as defaultItemCategories } from '../data/defaultCategories';
 
 const ITEMS_FILE = 'items.json';
 const CATEGORIES_FILE = 'categories.json';
@@ -16,37 +16,52 @@ interface CategoriesData {
 }
 
 /**
- * Initialize data files with default/mock data if they don't exist
+ * Initialize data files with default data if they don't exist
  */
 export const initializeDataFiles = async (): Promise<void> => {
   try {
     // Initialize categories
     if (!(await fileExists(CATEGORIES_FILE))) {
-      // Exclude "all" category as it's a UI filter, not a stored category
-      const systemCategories: Category[] = mockCategories
+      // Combine location categories (excluding "all") and item categories
+      const locationCats: Category[] = defaultLocationCategories
         .filter((cat) => cat.id !== 'all')
         .map((cat) => ({
           ...cat,
           isCustom: false,
         }));
       
+      const itemCats: Category[] = defaultItemCategories.map((cat) => ({
+        ...cat,
+        isCustom: false,
+      }));
+      
+      const allCategories = [...locationCats, ...itemCats];
+      
       await writeFile<CategoriesData>(CATEGORIES_FILE, {
-        categories: systemCategories,
+        categories: allCategories,
       });
       console.log('Categories file initialized');
+    } else {
+      // Ensure item categories exist even if file already exists
+      const existingData = await readFile<CategoriesData>(CATEGORIES_FILE);
+      const existingCategories = existingData?.categories || [];
+      const existingIds = new Set(existingCategories.map(cat => cat.id));
+      
+      const missingItemCategories = defaultItemCategories.filter(cat => !existingIds.has(cat.id));
+      if (missingItemCategories.length > 0) {
+        const updatedCategories = [...existingCategories, ...missingItemCategories];
+        await writeFile<CategoriesData>(CATEGORIES_FILE, {
+          categories: updatedCategories,
+        });
+        console.log('Added missing item categories');
+      }
     }
     
     // Initialize items
     if (!(await fileExists(ITEMS_FILE))) {
-      // Migrate mock items to new format
-      const migratedItems: InventoryItem[] = mockInventoryItems.map((item) => ({
-        ...item,
-        tags: [], // Initialize empty tags array
-        // Remove isExpiring as it's now calculated from expiryDate
-      }));
-      
+      // Start with empty array - no mock data
       await writeFile<ItemsData>(ITEMS_FILE, {
-        items: migratedItems,
+        items: [],
       });
       console.log('Items file initialized');
     }
