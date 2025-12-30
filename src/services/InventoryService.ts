@@ -1,5 +1,7 @@
 import { InventoryItem } from '../types/inventory';
 import { readFile, writeFile } from './FileSystemService';
+import { generateItemId } from '../utils/idGenerator';
+import { isExpiringSoon } from '../utils/dateUtils';
 
 const ITEMS_FILE = 'items.json';
 
@@ -31,7 +33,7 @@ export const createItem = async (item: Omit<InventoryItem, 'id'>): Promise<Inven
     const items = await getAllItems();
     const newItem: InventoryItem = {
       ...item,
-      id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+      id: generateItemId(),
       tags: item.tags || [],
     };
     
@@ -116,14 +118,7 @@ export const searchItems = async (
   
   // Filter by expiring soon
   if (filters?.expiringSoon) {
-    const now = new Date();
-    const sevenDaysFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
-    
-    items = items.filter((item) => {
-      if (!item.expiryDate) return false;
-      const expiryDate = new Date(item.expiryDate);
-      return expiryDate <= sevenDaysFromNow && expiryDate >= now;
-    });
+    items = items.filter((item) => isExpiringSoon(item.expiryDate));
   }
   
   // Search by query

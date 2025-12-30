@@ -1,6 +1,7 @@
 import { Category } from '../types/inventory';
 import { readFile, writeFile } from './FileSystemService';
 import { getAllItems } from './InventoryService';
+import { generateCategoryId } from '../utils/idGenerator';
 
 const CATEGORIES_FILE = 'categories.json';
 
@@ -52,7 +53,7 @@ export const createCategory = async (
     
     const newCategory: Category = {
       ...category,
-      id: `custom-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      id: generateCategoryId(),
       isCustom: true,
       createdAt: new Date().toISOString(),
     };

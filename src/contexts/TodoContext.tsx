@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useCallback } from 'react';
+import React, { createContext, useContext, useState, useCallback, useMemo } from 'react';
 import { TodoItem } from '../types/inventory';
 import {
   getAllTodos,
@@ -44,33 +44,71 @@ export const TodoProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const newTodo = await createTodo(text);
       if (newTodo) {
-        await refreshTodos();
+        // Optimistically add to state
+        setTodos((prevTodos) => [newTodo, ...prevTodos]);
+        
+        // Refresh to ensure sync (but don't set loading)
+        const allTodos = await getAllTodos();
+        allTodos.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        setTodos(allTodos);
       }
     } catch (error) {
       console.error('Error adding todo:', error);
+      // Revert on error by refreshing
+      await refreshTodos();
     }
   }, [refreshTodos]);
 
   const toggleTodoCompletion = useCallback(async (id: string) => {
     try {
+      // Optimistically update the state
+      setTodos((prevTodos) =>
+        prevTodos.map((todo) =>
+          todo.id === id ? { ...todo, completed: !todo.completed } : todo
+        )
+      );
+      
+      // Then update in storage
       await toggleTodo(id);
-      await refreshTodos();
+      
+      // Refresh to ensure sync (but don't set loading)
+      const allTodos = await getAllTodos();
+      allTodos.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      setTodos(allTodos);
     } catch (error) {
       console.error('Error toggling todo:', error);
+      // Revert on error by refreshing
+      await refreshTodos();
     }
   }, [refreshTodos]);
 
   const removeTodo = useCallback(async (id: string) => {
     try {
+      // Optimistically remove from state
+      setTodos((prevTodos) => prevTodos.filter((todo) => todo.id !== id));
+      
+      // Then delete from storage
       await deleteTodo(id);
-      await refreshTodos();
+      
+      // Refresh to ensure sync (but don't set loading)
+      const allTodos = await getAllTodos();
+      allTodos.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      setTodos(allTodos);
     } catch (error) {
       console.error('Error deleting todo:', error);
+      // Revert on error by refreshing
+      await refreshTodos();
     }
   }, [refreshTodos]);
 
-  const pendingTodos = todos.filter((todo) => !todo.completed);
-  const completedTodos = todos.filter((todo) => todo.completed);
+  const pendingTodos = useMemo(
+    () => todos.filter((todo) => !todo.completed),
+    [todos]
+  );
+  const completedTodos = useMemo(
+    () => todos.filter((todo) => todo.completed),
+    [todos]
+  );
 
   return (
     <TodoContext.Provider

@@ -23,7 +23,7 @@ const HeaderContainer = styled.View<{ topInset: number }>`
   background-color: ${({ theme }) => theme.colors.primaryLightest};
   padding-top: ${({ topInset }) => topInset + 10}px;
   padding-horizontal: ${({ theme }) => theme.spacing.lg}px;
-  padding-bottom: ${({ theme }) => theme.spacing.lg}px;
+  padding-bottom: ${({ theme }) => theme.spacing.sm}px;
   flex-direction: row;
   align-items: center;
   justify-content: space-between;
@@ -75,8 +75,8 @@ const RightSection = styled.View`
 `;
 
 const ActionButton = styled(TouchableOpacity)`
-  width: 48px;
-  height: 48px;
+  width: 40px;
+  height: 40px;
   border-radius: ${({ theme }) => theme.borderRadius.full}px;
   background-color: ${({ theme }) => theme.colors.surface};
   align-items: center;
@@ -186,17 +186,17 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
       {showRightButtons && (
         <RightSection>
           <ActionButton onPress={handleSharePress}>
-            <ActionIcon name="share-outline" size={24} />
+            <ActionIcon name="share-outline" size={20} />
           </ActionButton>
           <ActionButton onPress={handleSettingsPress}>
-            <ActionIcon name="settings-outline" size={24} />
+            <ActionIcon name="settings-outline" size={20} />
           </ActionButton>
           <AvatarButton onPress={handleAvatarPress}>
             {avatarUrl ? (
               <AvatarImage source={{ uri: avatarUrl }} />
             ) : (
               <AvatarPlaceholder>
-                <Ionicons name="person" size={24} color="white" />
+                <Ionicons name="person" size={20} color="white" />
               </AvatarPlaceholder>
             )}
           </AvatarButton>

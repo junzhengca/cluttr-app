@@ -9,6 +9,7 @@ import { Location } from '../types/inventory';
 import { locations } from '../data/locations';
 import { getAllCategories } from '../services/CategoryService';
 import { createItem } from '../services/InventoryService';
+import { filterItemCategories } from '../utils/categoryUtils';
 
 const Backdrop = styled(BottomSheetBackdrop)`
   background-color: rgba(0, 0, 0, 0.5);
@@ -194,10 +195,7 @@ export const CreateItemBottomSheet: React.FC<CreateItemBottomSheetProps> = ({
 
   // Filter to get only item-type categories (exclude location categories)
   const itemTypeCategories = useMemo(() => {
-    return categories.filter((cat) => {
-      const locationIds = ['living-room', 'kitchen', 'bedroom', 'study', 'storage', 'all'];
-      return !locationIds.includes(cat.id);
-    });
+    return filterItemCategories(categories);
   }, [categories]);
 
   useEffect(() => {

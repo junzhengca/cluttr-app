@@ -3,6 +3,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { RootStackParamList } from './types';
 import { TabNavigator } from './TabNavigator';
 import { SettingsScreen } from '../screens/SettingsScreen';
+import { ItemDetailsScreen } from '../screens/ItemDetailsScreen';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -15,6 +16,7 @@ export const RootStack: React.FC = () => {
     >
       <Stack.Screen name="MainTabs" component={TabNavigator} />
       <Stack.Screen name="Settings" component={SettingsScreen} />
+      <Stack.Screen name="ItemDetails" component={ItemDetailsScreen} />
     </Stack.Navigator>
   );
 };

@@ -6,7 +6,6 @@ export type HomeStackParamList = {
 
 export type InventoryStackParamList = {
   Inventory: undefined;
-  ItemDetails: { itemId: string };
 };
 
 export type NotesStackParamList = {
@@ -22,6 +21,7 @@ export type TabParamList = {
 export type RootStackParamList = {
   MainTabs: NavigatorScreenParams<TabParamList>;
   Settings: undefined;
+  ItemDetails: { itemId: string };
 };
 
 declare global {

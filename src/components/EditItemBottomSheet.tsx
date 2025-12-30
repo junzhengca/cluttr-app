@@ -9,6 +9,8 @@ import { Category, InventoryItem } from '../types/inventory';
 import { locations } from '../data/locations';
 import { getAllCategories } from '../services/CategoryService';
 import { getItemById, updateItem } from '../services/InventoryService';
+import { formatDate } from '../utils/formatters';
+import { filterItemCategories } from '../utils/categoryUtils';
 
 const Backdrop = styled(BottomSheetBackdrop)`
   background-color: rgba(0, 0, 0, 0.5);
@@ -228,15 +230,6 @@ interface EditItemBottomSheetProps {
   onItemUpdated?: () => void;
 }
 
-const formatDateForDisplay = (date: Date | null): string => {
-  if (!date) return '未设置';
-  return date.toLocaleDateString('zh-CN', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-  });
-};
-
 export const EditItemBottomSheet: React.FC<EditItemBottomSheetProps> = ({
   bottomSheetRef,
   itemId,
@@ -262,10 +255,7 @@ export const EditItemBottomSheet: React.FC<EditItemBottomSheetProps> = ({
 
   // Filter to get only item-type categories (exclude location categories)
   const itemTypeCategories = useMemo(() => {
-    return categories.filter((cat) => {
-      const locationIds = ['living-room', 'kitchen', 'bedroom', 'study', 'storage', 'all'];
-      return !locationIds.includes(cat.id);
-    });
+    return filterItemCategories(categories);
   }, [categories]);
 
   useEffect(() => {
@@ -579,7 +569,7 @@ export const EditItemBottomSheet: React.FC<EditItemBottomSheetProps> = ({
         <FormSection>
           <Label>购买时间</Label>
           <DatePickerContainer>
-            <DateText>{formatDateForDisplay(purchaseDate)}</DateText>
+            <DateText>{formatDate(purchaseDate)}</DateText>
             <DatePickerButton onPress={() => setShowPurchaseDatePicker(true)}>
               <Ionicons name="calendar-outline" size={20} color={theme.colors.primary} />
             </DatePickerButton>
@@ -598,7 +588,7 @@ export const EditItemBottomSheet: React.FC<EditItemBottomSheetProps> = ({
         <FormSection>
           <Label>过期时间</Label>
           <DatePickerContainer>
-            <DateText>{formatDateForDisplay(expiryDate)}</DateText>
+            <DateText>{formatDate(expiryDate)}</DateText>
             <DatePickerButton onPress={() => setShowExpiryDatePicker(true)}>
               <Ionicons name="calendar-outline" size={20} color={theme.colors.primary} />
             </DatePickerButton>

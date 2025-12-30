@@ -5,6 +5,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { InventoryItem } from '../types/inventory';
 import { useSettings } from '../contexts/SettingsContext';
 import { getCurrencySymbol } from './CurrencySelector';
+import { formatPrice } from '../utils/formatters';
+import { getLightColor } from '../utils/colors';
 
 const Card = styled(TouchableOpacity)`
   flex-direction: row;
@@ -88,19 +90,6 @@ export const ItemCard: React.FC<ItemCardProps> = ({ item, onPress }) => {
     }
   };
 
-  const formatPrice = (price: number) => {
-    return `${currencySymbol} ${price.toLocaleString()}`;
-  };
-
-  // Helper to get a light version of the icon color for background
-  const getLightColor = (color: string) => {
-    // If it's a hex color, add transparency
-    if (color.startsWith('#')) {
-      return color + '15'; // ~8% opacity for soft background
-    }
-    return color;
-  };
-
   return (
     <Card onPress={handlePress} activeOpacity={0.8}>
       <IconContainer backgroundColor={getLightColor(item.iconColor)}>
@@ -112,7 +101,7 @@ export const ItemCard: React.FC<ItemCardProps> = ({ item, onPress }) => {
         <LocationText>
           {item.location} • {item.detailedLocation}
         </LocationText>
-        <PriceText>{formatPrice(item.price)}</PriceText>
+        <PriceText>{formatPrice(item.price, currencySymbol)}</PriceText>
       </ContentContainer>
       
       {item.amount && item.amount > 0 && (

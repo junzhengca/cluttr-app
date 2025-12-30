@@ -14,6 +14,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { PageHeader } from '../components/PageHeader';
 import { RootStackParamList } from '../navigation/types';
 import { useTodos } from '../contexts/TodoContext';
+import { useTheme } from '../theme/ThemeProvider';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -27,27 +28,35 @@ const Content = styled(ScrollView)`
   padding: ${({ theme }) => theme.spacing.lg}px;
 `;
 
-const AddTodoContainer = styled.View`
+const AddTodoContainer = styled.View<{ isFocused: boolean }>`
   flex-direction: row;
   align-items: center;
   background-color: ${({ theme }) => theme.colors.surface};
-  border-radius: ${({ theme }) => theme.borderRadius.lg}px;
-  padding: ${({ theme }) => theme.spacing.sm}px;
-  margin-bottom: ${({ theme }) => theme.spacing.lg}px;
+  border-radius: ${({ theme }) => theme.borderRadius.xl}px;
+  padding-horizontal: ${({ theme }) => theme.spacing.md}px;
+  margin-bottom: ${({ theme }) => theme.spacing.md}px;
+  height: 48px;
+  border-width: 1.5px;
+  border-color: ${({ theme, isFocused }) =>
+    isFocused ? theme.colors.inputFocus : theme.colors.borderLight};
 `;
 
 const TodoInput = styled(TextInput)`
   flex: 1;
-  padding: ${({ theme }) => theme.spacing.sm}px;
   font-size: ${({ theme }) => theme.typography.fontSize.md}px;
   color: ${({ theme }) => theme.colors.text};
+  height: 100%;
+  padding-vertical: 0;
 `;
 
 const AddButton = styled.TouchableOpacity`
   background-color: ${({ theme }) => theme.colors.primary};
   border-radius: ${({ theme }) => theme.borderRadius.md}px;
-  padding: ${({ theme }) => theme.spacing.sm}px;
   margin-left: ${({ theme }) => theme.spacing.sm}px;
+  height: 28px;
+  width: 28px;
+  align-items: center;
+  justify-content: center;
 `;
 
 const SectionTitle = styled.Text`
@@ -71,16 +80,25 @@ const EmptyStateText = styled.Text`
 
 const TodoItemContainer = styled.View`
   background-color: ${({ theme }) => theme.colors.surface};
-  border-radius: ${({ theme }) => theme.borderRadius.md}px;
+  border-radius: ${({ theme }) => theme.borderRadius.xxl}px;
   padding: ${({ theme }) => theme.spacing.md}px;
-  margin-bottom: ${({ theme }) => theme.spacing.sm}px;
+  margin-bottom: ${({ theme }) => theme.spacing.md}px;
   flex-direction: row;
   align-items: center;
+  position: relative;
+  
+  /* Subtle shadow for the card */
+  shadow-color: #000;
+  shadow-offset: 0px 2px;
+  shadow-opacity: 0.05;
+  shadow-radius: 8px;
+  elevation: 2;
 `;
 
 const TodoText = styled.Text<{ completed: boolean }>`
   flex: 1;
   font-size: ${({ theme }) => theme.typography.fontSize.md}px;
+  font-weight: ${({ theme, completed }) => (completed ? theme.typography.fontWeight.regular : theme.typography.fontWeight.bold)};
   color: ${({ theme, completed }) => (completed ? theme.colors.textSecondary : theme.colors.text)};
   text-decoration-line: ${({ completed }) => (completed ? 'line-through' : 'none')};
 `;
@@ -125,8 +143,10 @@ export const NotesScreen: React.FC = () => {
   const navigation = useNavigation<NavigationProp>();
   const { pendingTodos, completedTodos, loading, refreshTodos, addTodo, toggleTodoCompletion, removeTodo } =
     useTodos();
+  const theme = useTheme();
 
   const [newTodoText, setNewTodoText] = useState('');
+  const [isFocused, setIsFocused] = useState(false);
 
   useEffect(() => {
     refreshTodos();
@@ -226,16 +246,19 @@ export const NotesScreen: React.FC = () => {
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{ paddingBottom: bottomPadding }}
         >
-          <AddTodoContainer>
+          <AddTodoContainer isFocused={isFocused}>
             <TodoInput
               placeholder="Add a new todo..."
-              placeholderTextColor="#999"
+              placeholderTextColor={theme.colors.textLight}
               value={newTodoText}
               onChangeText={setNewTodoText}
               onSubmitEditing={handleAddTodo}
+              onFocus={() => setIsFocused(true)}
+              onBlur={() => setIsFocused(false)}
+              autoCorrect={false}
             />
             <AddButton onPress={handleAddTodo} activeOpacity={0.7}>
-              <Ionicons name="add" size={24} color="white" />
+              <Ionicons name="add" size={18} color="white" />
             </AddButton>
           </AddTodoContainer>
 

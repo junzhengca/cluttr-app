@@ -9,11 +9,12 @@ import { SearchInput } from '../components/SearchInput';
 import { CategorySelector } from '../components/CategorySelector';
 import { ItemCard } from '../components/ItemCard';
 import { InventoryItem } from '../types/inventory';
-import { InventoryStackParamList } from '../navigation/types';
+import { RootStackParamList } from '../navigation/types';
 import { getAllItems } from '../services/InventoryService';
 import { useInventory } from '../contexts/InventoryContext';
+import { calculateBottomPadding } from '../utils/layout';
 
-type NavigationProp = NativeStackNavigationProp<InventoryStackParamList>;
+type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 const Container = styled.View`
   flex: 1;
@@ -78,7 +79,10 @@ export const InventoryScreen: React.FC = () => {
   };
 
   const handleItemPress = (item: InventoryItem) => {
-    navigation.navigate('ItemDetails', { itemId: item.id });
+    const rootNavigation = navigation.getParent();
+    if (rootNavigation) {
+      rootNavigation.navigate('ItemDetails', { itemId: item.id });
+    }
   };
 
   const handleSettingsPress = () => {
@@ -89,8 +93,8 @@ export const InventoryScreen: React.FC = () => {
     }
   };
 
-  // Calculate bottom padding: nav bar height (60) + margin (16*2) + safe area + extra spacing
-  const bottomPadding = 60 + 32 + insets.bottom + 24;
+  // Calculate bottom padding for scrollable content
+  const bottomPadding = calculateBottomPadding(insets.bottom);
 
   if (isLoading) {
     return (

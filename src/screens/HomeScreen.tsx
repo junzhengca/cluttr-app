@@ -12,6 +12,7 @@ import { RecentlyAdded } from '../components/RecentlyAdded';
 import { InventoryItem } from '../types/inventory';
 import { RootStackParamList } from '../navigation/types';
 import { getAllItems, searchItems } from '../services/InventoryService';
+import { calculateBottomPadding } from '../utils/layout';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -69,14 +70,10 @@ export const HomeScreen: React.FC = () => {
   };
 
   const handleItemPress = (item: InventoryItem) => {
-    // Navigate to ItemDetails in InventoryTab
-    // Get the tab navigator (parent of HomeStack)
-    const tabNavigator = navigation.getParent();
-    if (tabNavigator) {
-      tabNavigator.navigate('InventoryTab', {
-        screen: 'ItemDetails',
-        params: { itemId: item.id },
-      } as any);
+    // Navigate to ItemDetails in RootStack
+    const rootNavigation = navigation.getParent();
+    if (rootNavigation) {
+      rootNavigation.navigate('ItemDetails', { itemId: item.id });
     }
   };
 
@@ -89,8 +86,8 @@ export const HomeScreen: React.FC = () => {
     navigation.navigate('Settings');
   };
 
-  // Calculate bottom padding: nav bar height (60) + margin (16*2) + safe area + extra spacing
-  const bottomPadding = 60 + 32 + insets.bottom + 24;
+  // Calculate bottom padding for scrollable content
+  const bottomPadding = calculateBottomPadding(insets.bottom);
 
   if (isLoading) {
     return (

@@ -1,5 +1,6 @@
 import { TodoItem } from '../types/inventory';
 import { readFile, writeFile } from './FileSystemService';
+import { generateTodoId } from '../utils/idGenerator';
 
 const TODOS_FILE = 'todos.json';
 
@@ -30,7 +31,7 @@ export const createTodo = async (text: string): Promise<TodoItem | null> => {
   try {
     const todos = await getAllTodos();
     const newTodo: TodoItem = {
-      id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+      id: generateTodoId(),
       text: text.trim(),
       completed: false,
       createdAt: new Date().toISOString(),

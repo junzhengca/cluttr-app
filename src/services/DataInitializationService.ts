@@ -1,7 +1,8 @@
 import { Category, InventoryItem, TodoItem } from '../types/inventory';
 import { Settings, defaultSettings } from '../types/settings';
 import { fileExists, writeFile, readFile } from './FileSystemService';
-import { locationCategories as defaultLocationCategories, itemCategories as defaultItemCategories } from '../data/defaultCategories';
+import { itemCategories as defaultItemCategories } from '../data/defaultCategories';
+import { getLocationIdsSet } from '../utils/locationUtils';
 
 const ITEMS_FILE = 'items.json';
 const CATEGORIES_FILE = 'categories.json';
@@ -27,23 +28,14 @@ export const initializeDataFiles = async (): Promise<void> => {
   try {
     // Initialize categories
     if (!(await fileExists(CATEGORIES_FILE))) {
-      // Combine location categories (excluding "all") and item categories
-      const locationCats: Category[] = defaultLocationCategories
-        .filter((cat) => cat.id !== 'all')
-        .map((cat) => ({
-          ...cat,
-          isCustom: false,
-        }));
-      
+      // Only save item categories to categories.json (NOT locations)
       const itemCats: Category[] = defaultItemCategories.map((cat) => ({
         ...cat,
         isCustom: false,
       }));
-      
-      const allCategories = [...locationCats, ...itemCats];
-      
+
       await writeFile<CategoriesData>(CATEGORIES_FILE, {
-        categories: allCategories,
+        categories: itemCats,
       });
       console.log('Categories file initialized');
     } else {
@@ -51,14 +43,18 @@ export const initializeDataFiles = async (): Promise<void> => {
       const existingData = await readFile<CategoriesData>(CATEGORIES_FILE);
       const existingCategories = existingData?.categories || [];
       const existingIds = new Set(existingCategories.map(cat => cat.id));
-      
+
+      // Filter out any location categories that might have been incorrectly added
+      const locationIds = getLocationIdsSet();
+      const filteredCategories = existingCategories.filter(cat => !locationIds.has(cat.id));
+
       const missingItemCategories = defaultItemCategories.filter(cat => !existingIds.has(cat.id));
-      if (missingItemCategories.length > 0) {
-        const updatedCategories = [...existingCategories, ...missingItemCategories];
+      if (missingItemCategories.length > 0 || filteredCategories.length !== existingCategories.length) {
+        const updatedCategories = [...filteredCategories, ...missingItemCategories];
         await writeFile<CategoriesData>(CATEGORIES_FILE, {
           categories: updatedCategories,
         });
-        console.log('Added missing item categories');
+        console.log('Added missing item categories and removed location categories');
       }
     }
     

@@ -6,6 +6,8 @@ import { InventoryItem } from '../types/inventory';
 import { Theme } from '../theme/types';
 import { useSettings } from '../contexts/SettingsContext';
 import { getCurrencySymbol } from './CurrencySelector';
+import { countExpiringItems } from '../utils/dateUtils';
+import { formatCurrency } from '../utils/formatters';
 
 const StyledScrollView = styled(ScrollView)`
   margin-bottom: ${({ theme }) => theme.spacing.lg}px;
@@ -93,22 +95,7 @@ export const SummaryCards: React.FC<SummaryCardsProps> = ({ items }) => {
   }, 0);
 
   // Calculate expiring items (items expiring within 7 days)
-  const expiringCount = items.filter((item) => {
-    if (!item.expiryDate) return false;
-    const now = new Date();
-    const sevenDaysFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
-    const expiryDate = new Date(item.expiryDate);
-    return expiryDate <= sevenDaysFromNow && expiryDate >= now;
-  }).length;
-
-  // Format currency value exactly as in design: [symbol] 1.1w or [symbol] 5,000
-  const formatValue = (value: number): string => {
-    if (value >= 10000) {
-      const wan = value / 10000;
-      return `${currencySymbol} ${wan.toFixed(1)}w`;
-    }
-    return `${currencySymbol} ${value.toLocaleString()}`;
-  };
+  const expiringCount = countExpiringItems(items, 7);
 
   return (
     <StyledScrollView 
@@ -128,7 +115,7 @@ export const SummaryCards: React.FC<SummaryCardsProps> = ({ items }) => {
           </CardHeader>
           <CardContent>
             <Label isPrimary>资产估值</Label>
-            <Value isPrimary>{formatValue(totalValue)}</Value>
+            <Value isPrimary>{formatCurrency(totalValue, currencySymbol, true)}</Value>
           </CardContent>
         </Card>
 

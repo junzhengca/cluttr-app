@@ -10,6 +10,7 @@ import { LanguageSelector } from '../components/LanguageSelector';
 import { ExportDataButton } from '../components/ExportDataButton';
 import { LogoutButton } from '../components/LogoutButton';
 import { useSettings } from '../contexts/SettingsContext';
+import { calculateBottomPadding } from '../utils/layout';
 
 const Container = styled.View`
   flex: 1;
@@ -72,8 +73,8 @@ export const SettingsScreen: React.FC = () => {
     }
   };
 
-  // Calculate bottom padding: nav bar height (60) + margin (16*2) + safe area + extra spacing
-  const bottomPadding = 60 + 32 + insets.bottom + 24;
+  // Calculate bottom padding for scrollable content
+  const bottomPadding = calculateBottomPadding(insets.bottom);
 
   if (isLoading || !settings) {
     return (
