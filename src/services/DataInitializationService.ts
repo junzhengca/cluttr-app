@@ -1,4 +1,4 @@
-import { Category, InventoryItem } from '../types/inventory';
+import { Category, InventoryItem, TodoItem } from '../types/inventory';
 import { Settings, defaultSettings } from '../types/settings';
 import { fileExists, writeFile, readFile } from './FileSystemService';
 import { locationCategories as defaultLocationCategories, itemCategories as defaultItemCategories } from '../data/defaultCategories';
@@ -6,6 +6,7 @@ import { locationCategories as defaultLocationCategories, itemCategories as defa
 const ITEMS_FILE = 'items.json';
 const CATEGORIES_FILE = 'categories.json';
 const SETTINGS_FILE = 'settings.json';
+const TODOS_FILE = 'todos.json';
 
 interface ItemsData {
   items: InventoryItem[];
@@ -13,6 +14,10 @@ interface ItemsData {
 
 interface CategoriesData {
   categories: Category[];
+}
+
+interface TodosData {
+  todos: TodoItem[];
 }
 
 /**
@@ -71,6 +76,14 @@ export const initializeDataFiles = async (): Promise<void> => {
       await writeFile<Settings>(SETTINGS_FILE, defaultSettings);
       console.log('Settings file initialized');
     }
+
+    // Initialize todos
+    if (!(await fileExists(TODOS_FILE))) {
+      await writeFile<TodosData>(TODOS_FILE, {
+        todos: [],
+      });
+      console.log('Todos file initialized');
+    }
   } catch (error) {
     console.error('Error initializing data files:', error);
     throw error;
@@ -84,7 +97,8 @@ export const isDataInitialized = async (): Promise<boolean> => {
   const itemsExist = await fileExists(ITEMS_FILE);
   const categoriesExist = await fileExists(CATEGORIES_FILE);
   const settingsExist = await fileExists(SETTINGS_FILE);
-  
-  return itemsExist && categoriesExist && settingsExist;
+  const todosExist = await fileExists(TODOS_FILE);
+
+  return itemsExist && categoriesExist && settingsExist && todosExist;
 };
 

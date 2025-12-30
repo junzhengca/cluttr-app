@@ -1,11 +1,19 @@
-import React from 'react';
-import { ScrollView } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import {
+  ScrollView,
+  TextInput,
+  TouchableOpacity,
+  Alert,
+} from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import styled from 'styled-components/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
+import { GestureHandlerRootView, Swipeable } from 'react-native-gesture-handler';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { PageHeader } from '../components/PageHeader';
 import { RootStackParamList } from '../navigation/types';
+import { useTodos } from '../contexts/TodoContext';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -19,32 +27,243 @@ const Content = styled(ScrollView)`
   padding: ${({ theme }) => theme.spacing.lg}px;
 `;
 
+const AddTodoContainer = styled.View`
+  flex-direction: row;
+  align-items: center;
+  background-color: ${({ theme }) => theme.colors.surface};
+  border-radius: ${({ theme }) => theme.borderRadius.lg}px;
+  padding: ${({ theme }) => theme.spacing.sm}px;
+  margin-bottom: ${({ theme }) => theme.spacing.lg}px;
+`;
+
+const TodoInput = styled(TextInput)`
+  flex: 1;
+  padding: ${({ theme }) => theme.spacing.sm}px;
+  font-size: ${({ theme }) => theme.typography.fontSize.md}px;
+  color: ${({ theme }) => theme.colors.text};
+`;
+
+const AddButton = styled.TouchableOpacity`
+  background-color: ${({ theme }) => theme.colors.primary};
+  border-radius: ${({ theme }) => theme.borderRadius.md}px;
+  padding: ${({ theme }) => theme.spacing.sm}px;
+  margin-left: ${({ theme }) => theme.spacing.sm}px;
+`;
+
+const SectionTitle = styled.Text`
+  font-size: ${({ theme }) => theme.typography.fontSize.lg}px;
+  font-weight: 600;
+  color: ${({ theme }) => theme.colors.text};
+  margin-bottom: ${({ theme }) => theme.spacing.md}px;
+`;
+
+const EmptyState = styled.View`
+  align-items: center;
+  justify-content: center;
+  padding: ${({ theme }) => theme.spacing.xl}px;
+`;
+
+const EmptyStateText = styled.Text`
+  font-size: ${({ theme }) => theme.typography.fontSize.md}px;
+  color: ${({ theme }) => theme.colors.textSecondary};
+  text-align: center;
+`;
+
+const TodoItemContainer = styled.View`
+  background-color: ${({ theme }) => theme.colors.surface};
+  border-radius: ${({ theme }) => theme.borderRadius.md}px;
+  padding: ${({ theme }) => theme.spacing.md}px;
+  margin-bottom: ${({ theme }) => theme.spacing.sm}px;
+  flex-direction: row;
+  align-items: center;
+`;
+
+const TodoText = styled.Text<{ completed: boolean }>`
+  flex: 1;
+  font-size: ${({ theme }) => theme.typography.fontSize.md}px;
+  color: ${({ theme, completed }) => (completed ? theme.colors.textSecondary : theme.colors.text)};
+  text-decoration-line: ${({ completed }) => (completed ? 'line-through' : 'none')};
+`;
+
+const Checkbox = styled.TouchableOpacity`
+  width: 24px;
+  height: 24px;
+  border-radius: 12px;
+  border-width: 2px;
+  border-color: ${({ theme, checked }) => (checked ? theme.colors.primary : theme.colors.border)};
+  background-color: ${({ theme, checked }) => (checked ? theme.colors.primary : 'transparent')};
+  align-items: center;
+  justify-content: center;
+  margin-right: ${({ theme }) => theme.spacing.md}px;
+`;
+
+const DeleteButton = styled.TouchableOpacity`
+  padding: ${({ theme }) => theme.spacing.sm}px;
+`;
+
+const SwipeActionsContainer = styled.View`
+  flex-direction: row;
+  margin-top: ${({ theme }) => theme.spacing.sm}px;
+`;
+
+const DeleteAction = styled.View`
+  background-color: #ff3b30;
+  justify-content: center;
+  align-items: flex-end;
+  padding-right: ${({ theme }) => theme.spacing.lg}px;
+  width: 80px;
+`;
+
+const DeleteActionText = styled.Text`
+  color: white;
+  font-weight: 600;
+  font-size: ${({ theme }) => theme.typography.fontSize.md}px;
+`;
+
 export const NotesScreen: React.FC = () => {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<NavigationProp>();
+  const { pendingTodos, completedTodos, loading, refreshTodos, addTodo, toggleTodoCompletion, removeTodo } =
+    useTodos();
+
+  const [newTodoText, setNewTodoText] = useState('');
+
+  useEffect(() => {
+    refreshTodos();
+  }, [refreshTodos]);
 
   const handleSettingsPress = () => {
     navigation.navigate('Settings');
   };
 
+  const handleAddTodo = async () => {
+    if (newTodoText.trim()) {
+      await addTodo(newTodoText.trim());
+      setNewTodoText('');
+    }
+  };
+
+  const handleToggleTodo = async (id: string) => {
+    await toggleTodoCompletion(id);
+  };
+
+  const handleDeleteTodo = (id: string) => {
+    Alert.alert('Delete Todo', 'Are you sure you want to delete this todo?', [
+      {
+        text: 'Cancel',
+        style: 'cancel',
+      },
+      {
+        text: 'Delete',
+        style: 'destructive',
+        onPress: async () => {
+          await removeTodo(id);
+        },
+      },
+    ]);
+  };
+
+  const renderDeleteAction = () => (
+    <DeleteAction>
+      <DeleteActionText>Delete</DeleteActionText>
+    </DeleteAction>
+  );
+
+  const renderTodoItem = (todo: any) => (
+    <TodoItemContainer key={todo.id}>
+      <Checkbox
+        checked={todo.completed}
+        onPress={() => handleToggleTodo(todo.id)}
+        activeOpacity={0.7}
+      >
+        {todo.completed && <Ionicons name="checkmark" size={16} color="white" />}
+      </Checkbox>
+      <TodoText completed={todo.completed}>{todo.text}</TodoText>
+      <DeleteButton onPress={() => handleDeleteTodo(todo.id)} activeOpacity={0.7}>
+        <Ionicons name="trash-outline" size={20} color="#ff3b30" />
+      </DeleteButton>
+    </TodoItemContainer>
+  );
+
+  const renderSwipeableTodo = (todo: any) => {
+    return (
+      <Swipeable
+        key={todo.id}
+        renderRightActions={renderDeleteAction}
+        onSwipeableOpen={() => handleDeleteTodo(todo.id)}
+      >
+        {renderTodoItem(todo)}
+      </Swipeable>
+    );
+  };
+
   // Calculate bottom padding: nav bar height (60) + margin (16*2) + safe area + extra spacing
   const bottomPadding = 60 + 32 + insets.bottom + 24;
 
+  if (loading) {
+    return (
+      <Container>
+        <PageHeader
+          icon="document-text"
+          title="Notes"
+          subtitle="Your todos"
+          onSettingsPress={handleSettingsPress}
+        />
+      </Container>
+    );
+  }
+
   return (
-    <Container>
-      <PageHeader
-        icon="document-text"
-        title="Notes"
-        subtitle="Your notes and reminders"
-        onSettingsPress={handleSettingsPress}
-      />
-      <Content 
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: bottomPadding }}
-      >
-        {/* Screen content goes here */}
-      </Content>
-    </Container>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <Container>
+        <PageHeader
+          icon="document-text"
+          title="Notes"
+          subtitle="Your todos"
+          onSettingsPress={handleSettingsPress}
+        />
+        <Content
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{ paddingBottom: bottomPadding }}
+        >
+          <AddTodoContainer>
+            <TodoInput
+              placeholder="Add a new todo..."
+              placeholderTextColor="#999"
+              value={newTodoText}
+              onChangeText={setNewTodoText}
+              onSubmitEditing={handleAddTodo}
+            />
+            <AddButton onPress={handleAddTodo} activeOpacity={0.7}>
+              <Ionicons name="add" size={24} color="white" />
+            </AddButton>
+          </AddTodoContainer>
+
+          {pendingTodos.length > 0 && (
+            <>
+              <SectionTitle>Pending ({pendingTodos.length})</SectionTitle>
+              {pendingTodos.map(renderSwipeableTodo)}
+            </>
+          )}
+
+          {completedTodos.length > 0 && (
+            <>
+              <SectionTitle style={{ marginTop: 20 }}>
+                Completed ({completedTodos.length})
+              </SectionTitle>
+              {completedTodos.map(renderTodoItem)}
+            </>
+          )}
+
+          {pendingTodos.length === 0 && completedTodos.length === 0 && (
+            <EmptyState>
+              <Ionicons name="clipboard-outline" size={64} color="#ccc" />
+              <EmptyStateText style={{ marginTop: 16 }}>No todos yet</EmptyStateText>
+              <EmptyStateText>Add a todo above to get started!</EmptyStateText>
+            </EmptyState>
+          )}
+        </Content>
+      </Container>
+    </GestureHandlerRootView>
   );
 };
-
