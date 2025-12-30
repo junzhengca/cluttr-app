@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { ScrollView } from 'react-native';
+import { ScrollView, TouchableOpacity, View, Text } from 'react-native';
 import styled from 'styled-components/native';
-import { TouchableOpacity } from 'react-native';
 import { Category } from '../types/inventory';
 import { getAllCategories } from '../services/CategoryService';
+import type { StyledProps } from '../utils/styledComponents';
 
-const Container = styled.View`
-  margin-bottom: ${({ theme }) => theme.spacing.md}px;
+const Container = styled(View)`
+  margin-bottom: ${({ theme }: StyledProps) => theme.spacing.md}px;
 `;
 
 const ScrollContainer = styled(ScrollView)`
@@ -22,7 +22,7 @@ const CategoryButton = styled(TouchableOpacity)<{ isSelected: boolean }>`
   border-width: 1.5px;
   border-color: ${({ theme, isSelected }) =>
     isSelected ? theme.colors.primary : theme.colors.border};
-  margin-right: ${({ theme }) => theme.spacing.sm}px;
+  margin-right: ${({ theme }: StyledProps) => theme.spacing.sm}px;
   
   /* Elevation for Android */
   elevation: ${({ isSelected }) => (isSelected ? 4 : 0)};
@@ -34,9 +34,9 @@ const CategoryButton = styled(TouchableOpacity)<{ isSelected: boolean }>`
   shadow-radius: 2px;
 `;
 
-const CategoryText = styled.Text<{ isSelected: boolean }>`
-  font-size: ${({ theme }) => theme.typography.fontSize.md}px;
-  font-weight: ${({ theme }) => theme.typography.fontWeight.bold};
+const CategoryText = styled(Text)<{ isSelected: boolean }>`
+  font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.md}px;
+  font-weight: ${({ theme }: StyledProps) => theme.typography.fontWeight.bold};
   color: ${({ theme, isSelected }) =>
     isSelected ? theme.colors.surface : theme.colors.textSecondary};
 `;

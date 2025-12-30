@@ -1,5 +1,5 @@
 import React from 'react';
-import { ScrollView } from 'react-native';
+import { ScrollView, View, Text } from 'react-native';
 import styled, { useTheme } from 'styled-components/native';
 import { Ionicons } from '@expo/vector-icons';
 import { InventoryItem } from '../types/inventory';
@@ -8,24 +8,25 @@ import { useSettings } from '../contexts/SettingsContext';
 import { getCurrencySymbol } from './CurrencySelector';
 import { countExpiringItems } from '../utils/dateUtils';
 import { formatCurrency } from '../utils/formatters';
+import type { StyledProps } from '../utils/styledComponents';
 
 const StyledScrollView = styled(ScrollView)`
-  margin-bottom: ${({ theme }) => theme.spacing.lg}px;
+  margin-bottom: ${({ theme }: StyledProps) => theme.spacing.lg}px;
 `;
 
-const Container = styled.View`
+const Container = styled(View)`
   flex-direction: row;
-  padding-right: ${({ theme }) => theme.spacing.lg}px;
-  gap: ${({ theme }) => theme.spacing.md}px;
+  padding-right: ${({ theme }: StyledProps) => theme.spacing.lg}px;
+  gap: ${({ theme }: StyledProps) => theme.spacing.md}px;
 `;
 
-const Card = styled.View<{ isPrimary?: boolean }>`
+const Card = styled(View)<{ isPrimary?: boolean }>`
   width: 140px;
   height: 160px;
   background-color: ${({ theme, isPrimary }) =>
     isPrimary ? theme.colors.primary : theme.colors.surface};
   border-radius: 24px;
-  padding: ${({ theme }) => theme.spacing.md}px;
+  padding: ${({ theme }: StyledProps) => theme.spacing.md}px;
   justify-content: space-between;
   elevation: 4;
   shadow-color: #000;
@@ -34,7 +35,7 @@ const Card = styled.View<{ isPrimary?: boolean }>`
   shadow-radius: 8px;
 `;
 
-const IconContainer = styled.View<{ bgColor?: string }>`
+const IconContainer = styled(View)<{ bgColor?: string }>`
   width: 44px;
   height: 44px;
   border-radius: 14px;
@@ -43,13 +44,13 @@ const IconContainer = styled.View<{ bgColor?: string }>`
   background-color: ${({ bgColor }) => bgColor || 'transparent'};
 `;
 
-const CardHeader = styled.View`
+const CardHeader = styled(View)`
   flex-direction: row;
   justify-content: space-between;
   align-items: flex-start;
 `;
 
-const NotificationDot = styled.View`
+const NotificationDot = styled(View)`
   width: 10px;
   height: 10px;
   border-radius: 5px;
@@ -58,19 +59,19 @@ const NotificationDot = styled.View`
   margin-right: 2px;
 `;
 
-const CardContent = styled.View``;
+const CardContent = styled(View)``;
 
-const Label = styled.Text<{ isPrimary?: boolean }>`
-  font-size: ${({ theme }) => theme.typography.fontSize.sm}px;
-  font-weight: ${({ theme }) => theme.typography.fontWeight.bold};
+const Label = styled(Text)<{ isPrimary?: boolean }>`
+  font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.sm}px;
+  font-weight: ${({ theme }: StyledProps) => theme.typography.fontWeight.bold};
   color: ${({ theme, isPrimary }) =>
     isPrimary ? 'rgba(255, 255, 255, 0.9)' : theme.colors.textSecondary};
   margin-bottom: 6px;
 `;
 
-const Value = styled.Text<{ isPrimary?: boolean }>`
+const Value = styled(Text)<{ isPrimary?: boolean }>`
   font-size: 28px;
-  font-weight: ${({ theme }) => theme.typography.fontWeight.bold};
+  font-weight: ${({ theme }: StyledProps) => theme.typography.fontWeight.bold};
   color: ${({ theme, isPrimary }) =>
     isPrimary ? theme.colors.surface : theme.colors.text};
 `;

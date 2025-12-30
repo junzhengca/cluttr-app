@@ -1,21 +1,22 @@
 import React from 'react';
-import { TouchableOpacity } from 'react-native';
+import { TouchableOpacity, View, Text } from 'react-native';
 import styled from 'styled-components/native';
 import { Ionicons } from '@expo/vector-icons';
+import type { StyledProps } from '../utils/styledComponents';
 
 interface ExportDataButtonProps {
   onPress?: () => void;
 }
 
 const Button = styled(TouchableOpacity)`
-  background-color: ${({ theme }) => theme.colors.surface};
-  border-radius: ${({ theme }) => theme.borderRadius.md}px;
-  padding: ${({ theme }) => theme.spacing.md}px;
+  background-color: ${({ theme }: StyledProps) => theme.colors.surface};
+  border-radius: ${({ theme }: StyledProps) => theme.borderRadius.md}px;
+  padding: ${({ theme }: StyledProps) => theme.spacing.md}px;
   flex-direction: row;
   align-items: center;
   border-width: 1px;
-  border-color: ${({ theme }) => theme.colors.border};
-  margin-bottom: ${({ theme }) => theme.spacing.sm}px;
+  border-color: ${({ theme }: StyledProps) => theme.colors.border};
+  margin-bottom: ${({ theme }: StyledProps) => theme.spacing.sm}px;
   elevation: 1;
   shadow-color: #000;
   shadow-offset: 0px 1px;
@@ -23,22 +24,22 @@ const Button = styled(TouchableOpacity)`
   shadow-radius: 2px;
 `;
 
-const IconContainer = styled.View`
+const IconContainer = styled(View)`
   width: 24px;
   height: 24px;
-  margin-right: ${({ theme }) => theme.spacing.md}px;
+  margin-right: ${({ theme }: StyledProps) => theme.spacing.md}px;
   align-items: center;
   justify-content: center;
 `;
 
 const Icon = styled(Ionicons)`
-  color: ${({ theme }) => theme.colors.textSecondary};
+  color: ${({ theme }: StyledProps) => theme.colors.textSecondary};
 `;
 
-const ButtonText = styled.Text`
-  font-size: ${({ theme }) => theme.typography.fontSize.md}px;
-  font-weight: ${({ theme }) => theme.typography.fontWeight.medium};
-  color: ${({ theme }) => theme.colors.text};
+const ButtonText = styled(Text)`
+  font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.md}px;
+  font-weight: ${({ theme }: StyledProps) => theme.typography.fontWeight.medium};
+  color: ${({ theme }: StyledProps) => theme.colors.text};
   flex: 1;
 `;
 

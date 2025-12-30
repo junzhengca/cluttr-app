@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { FlatList, ActivityIndicator } from 'react-native';
+import { FlatList, ActivityIndicator, View } from 'react-native';
 import styled from 'styled-components/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import type { StyledProps } from '../utils/styledComponents';
+
 import { PageHeader } from '../components/PageHeader';
 import { SearchInput } from '../components/SearchInput';
 import { CategorySelector } from '../components/CategorySelector';
@@ -16,21 +18,21 @@ import { calculateBottomPadding } from '../utils/layout';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
-const Container = styled.View`
+const Container = styled(View)`
   flex: 1;
-  background-color: ${({ theme }) => theme.colors.background};
+  background-color: ${({ theme }: StyledProps) => theme.colors.background};
 `;
 
-const Content = styled.View`
+const Content = styled(View)`
   flex: 1;
-  padding: ${({ theme }) => theme.spacing.lg}px;
+  padding: ${({ theme }: StyledProps) => theme.spacing.lg}px;
 `;
 
-const ListContainer = styled.View`
+const ListContainer = styled(View)`
   flex: 1;
 `;
 
-const LoadingContainer = styled.View`
+const LoadingContainer = styled(View)`
   flex: 1;
   justify-content: center;
   align-items: center;
@@ -39,6 +41,7 @@ const LoadingContainer = styled.View`
 export const InventoryScreen: React.FC = () => {
   const [items, setItems] = useState<InventoryItem[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [searchQuery, setSearchQuery] = useState<string>('');
   const [isLoading, setIsLoading] = useState(true);
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<NavigationProp>();
@@ -64,15 +67,31 @@ export const InventoryScreen: React.FC = () => {
     setRefreshCallback(loadItems);
   }, [setRefreshCallback]);
 
-  // Filter items based on selected category
+  // Filter items based on selected category and search query
   const filteredItems = useMemo(() => {
-    if (selectedCategory === 'all') {
-      return items;
+    let filtered = items;
+
+    // Filter by category
+    if (selectedCategory !== 'all') {
+      filtered = filtered.filter(
+        (item) => item.category === selectedCategory
+      );
     }
-    return items.filter(
-      (item) => item.category === selectedCategory
-    );
-  }, [selectedCategory, items]);
+
+    // Filter by search query
+    if (searchQuery.trim()) {
+      const lowerQuery = searchQuery.toLowerCase();
+      filtered = filtered.filter(
+        (item) =>
+          item.name.toLowerCase().includes(lowerQuery) ||
+          item.location.toLowerCase().includes(lowerQuery) ||
+          item.detailedLocation.toLowerCase().includes(lowerQuery) ||
+          item.tags?.some((tag) => tag.toLowerCase().includes(lowerQuery))
+      );
+    }
+
+    return filtered;
+  }, [selectedCategory, searchQuery, items]);
 
   const handleCategoryChange = (categoryId: string) => {
     setSelectedCategory(categoryId);
@@ -121,7 +140,10 @@ export const InventoryScreen: React.FC = () => {
         onSettingsPress={handleSettingsPress}
       />
       <Content>
-        <SearchInput />
+        <SearchInput 
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+        />
         <CategorySelector 
           selectedCategory={selectedCategory}
           onCategoryChange={handleCategoryChange} 

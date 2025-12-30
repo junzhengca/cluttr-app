@@ -1,7 +1,8 @@
 import React from 'react';
-import { TouchableOpacity } from 'react-native';
+import { TouchableOpacity, View, Text } from 'react-native';
 import styled from 'styled-components/native';
 import { Ionicons } from '@expo/vector-icons';
+import type { StyledProps } from '../utils/styledComponents';
 
 export type LanguageOption = {
   id: string;
@@ -15,45 +16,45 @@ interface LanguageSelectorProps {
   onLanguageSelect?: (languageId: string) => void;
 }
 
-const Container = styled.View`
-  margin-bottom: ${({ theme }) => theme.spacing.xl}px;
+const Container = styled(View)`
+  margin-bottom: ${({ theme }: StyledProps) => theme.spacing.xl}px;
 `;
 
-const Header = styled.View`
+const Header = styled(View)`
   flex-direction: row;
   align-items: center;
-  margin-bottom: ${({ theme }) => theme.spacing.md}px;
+  margin-bottom: ${({ theme }: StyledProps) => theme.spacing.md}px;
 `;
 
-const IconContainer = styled.View`
+const IconContainer = styled(View)`
   width: 24px;
   height: 24px;
-  margin-right: ${({ theme }) => theme.spacing.sm}px;
+  margin-right: ${({ theme }: StyledProps) => theme.spacing.sm}px;
   align-items: center;
   justify-content: center;
 `;
 
 const Icon = styled(Ionicons)`
-  color: ${({ theme }) => theme.colors.text};
+  color: ${({ theme }: StyledProps) => theme.colors.text};
 `;
 
-const Title = styled.Text`
-  font-size: ${({ theme }) => theme.typography.fontSize.md}px;
-  font-weight: ${({ theme }) => theme.typography.fontWeight.bold};
-  color: ${({ theme }) => theme.colors.text};
+const Title = styled(Text)`
+  font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.md}px;
+  font-weight: ${({ theme }: StyledProps) => theme.typography.fontWeight.bold};
+  color: ${({ theme }: StyledProps) => theme.colors.text};
 `;
 
-const OptionsContainer = styled.View`
+const OptionsContainer = styled(View)`
   flex-direction: row;
   justify-content: flex-start;
-  gap: ${({ theme }) => theme.spacing.md}px;
+  gap: ${({ theme }: StyledProps) => theme.spacing.md}px;
 `;
 
 const LanguageButton = styled(TouchableOpacity)<{ isSelected: boolean }>`
   flex: 1;
-  padding-vertical: ${({ theme }) => theme.spacing.md}px;
-  padding-horizontal: ${({ theme }) => theme.spacing.lg}px;
-  border-radius: ${({ theme }) => theme.borderRadius.xl}px;
+  padding-vertical: ${({ theme }: StyledProps) => theme.spacing.md}px;
+  padding-horizontal: ${({ theme }: StyledProps) => theme.spacing.lg}px;
+  border-radius: ${({ theme }: StyledProps) => theme.borderRadius.xl}px;
   background-color: #ffffff;
   border-width: 2px;
   border-color: ${({ theme, isSelected }) =>
@@ -61,23 +62,23 @@ const LanguageButton = styled(TouchableOpacity)<{ isSelected: boolean }>`
   flex-direction: row;
   align-items: center;
   justify-content: center;
-  gap: ${({ theme }) => theme.spacing.sm}px;
+  gap: ${({ theme }: StyledProps) => theme.spacing.sm}px;
 `;
 
-const FlagContainer = styled.View`
+const FlagContainer = styled(View)`
   width: 24px;
   height: 24px;
   align-items: center;
   justify-content: center;
 `;
 
-const FlagText = styled.Text`
+const FlagText = styled(Text)`
   font-size: 18px;
 `;
 
-const LanguageButtonText = styled.Text<{ isSelected: boolean }>`
-  font-size: ${({ theme }) => theme.typography.fontSize.sm}px;
-  font-weight: ${({ theme }) => theme.typography.fontWeight.bold};
+const LanguageButtonText = styled(Text)<{ isSelected: boolean }>`
+  font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.sm}px;
+  font-weight: ${({ theme }: StyledProps) => theme.typography.fontWeight.bold};
   color: ${({ theme, isSelected }) =>
     isSelected ? theme.colors.primary : theme.colors.textLight};
 `;

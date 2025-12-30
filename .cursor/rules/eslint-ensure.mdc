@@ -1,0 +1,5 @@
+---
+alwaysApply: true
+---
+
+Always run eslint to make sure your edit passes all lint rules.

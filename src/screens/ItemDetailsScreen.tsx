@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Alert, ActivityIndicator, ScrollView } from 'react-native';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { Alert, ActivityIndicator, ScrollView, View, Text } from 'react-native';
 import styled from 'styled-components/native';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -21,6 +21,8 @@ import { BottomActionBar } from '../components/BottomActionBar';
 import { formatDate, formatPrice } from '../utils/formatters';
 import { getLightColor } from '../utils/colors';
 import { calculateBottomActionBarPadding } from '../utils/layout';
+import type { Theme } from '../theme/types';
+import type { StyledProps } from '../utils/styledComponents';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 type RouteProp = {
@@ -29,28 +31,28 @@ type RouteProp = {
   params: { itemId: string };
 };
 
-const Container = styled.View`
+const Container = styled(View)`
   flex: 1;
-  background-color: ${({ theme }) => theme.colors.background};
+  background-color: ${({ theme }: { theme: Theme }) => theme.colors.background};
 `;
 
-const ScrollContainer = styled.View`
+const ScrollContainer = styled(View)`
   flex: 1;
   overflow: hidden;
 `;
 
 const Content = styled(ScrollView)`
-  padding: ${({ theme }) => theme.spacing.lg}px;
+  padding: ${({ theme }: StyledProps) => theme.spacing.lg}px;
 `;
 
-const IconContainer = styled.View<{ backgroundColor: string }>`
+const IconContainer = styled(View)<{ backgroundColor: string }>`
   width: 100px;
   height: 100px;
-  border-radius: ${({ theme }) => theme.borderRadius.xl}px;
-  background-color: ${({ backgroundColor }) => backgroundColor};
+  border-radius: ${({ theme }: StyledProps) => theme.borderRadius.xl}px;
+  background-color: ${({ backgroundColor }: { backgroundColor: string }) => backgroundColor};
   align-items: center;
   justify-content: center;
-  margin-bottom: ${({ theme }) => theme.spacing.lg}px;
+  margin-bottom: ${({ theme }: StyledProps) => theme.spacing.lg}px;
   shadow-color: #000;
   shadow-offset: 0px 4px;
   shadow-opacity: 0.1;
@@ -58,111 +60,111 @@ const IconContainer = styled.View<{ backgroundColor: string }>`
   elevation: 4;
 `;
 
-const HeaderSection = styled.View`
+const HeaderSection = styled(View)`
   align-items: center;
-  padding: 0 ${({ theme }) => theme.spacing.lg}px;
-  margin-bottom: ${({ theme }) => theme.spacing.xl}px;
+  padding: 0 ${({ theme }: StyledProps) => theme.spacing.lg}px;
+  margin-bottom: ${({ theme }: StyledProps) => theme.spacing.xl}px;
 `;
 
-const CategoryText = styled.Text`
-  font-size: ${({ theme }) => theme.typography.fontSize.md}px;
-  color: ${({ theme }) => theme.colors.textLight};
+const CategoryText = styled(Text)`
+  font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.md}px;
+  color: ${({ theme }: StyledProps) => theme.colors.textLight};
   text-align: center;
-  margin-bottom: ${({ theme }) => theme.spacing.sm}px;
+  margin-bottom: ${({ theme }: StyledProps) => theme.spacing.sm}px;
 `;
 
-const Section = styled.View`
-  background-color: ${({ theme }) => theme.colors.surface};
-  border-radius: ${({ theme }) => theme.borderRadius.lg}px;
-  padding: ${({ theme }) => theme.spacing.lg}px;
-  margin-bottom: ${({ theme }) => theme.spacing.md}px;
+const Section = styled(View)`
+  background-color: ${({ theme }: StyledProps) => theme.colors.surface};
+  border-radius: ${({ theme }: StyledProps) => theme.borderRadius.lg}px;
+  padding: ${({ theme }: StyledProps) => theme.spacing.lg}px;
+  margin-bottom: ${({ theme }: StyledProps) => theme.spacing.md}px;
   border-width: 1px;
-  border-color: ${({ theme }) => theme.colors.border};
+  border-color: ${({ theme }: StyledProps) => theme.colors.border};
 `;
 
-const SectionTitle = styled.Text`
-  font-size: ${({ theme }) => theme.typography.fontSize.lg}px;
-  font-weight: ${({ theme }) => theme.typography.fontWeight.bold};
-  color: ${({ theme }) => theme.colors.text};
-  margin-bottom: ${({ theme }) => theme.spacing.md}px;
+const SectionTitle = styled(Text)`
+  font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.lg}px;
+  font-weight: ${({ theme }: StyledProps) => theme.typography.fontWeight.bold};
+  color: ${({ theme }: StyledProps) => theme.colors.text};
+  margin-bottom: ${({ theme }: StyledProps) => theme.spacing.md}px;
 `;
 
-const PropertyRow = styled.View`
+const PropertyRow = styled(View)`
   flex-direction: row;
   align-items: center;
-  padding-vertical: ${({ theme }) => theme.spacing.sm}px;
+  padding-vertical: ${({ theme }: StyledProps) => theme.spacing.sm}px;
   border-bottom-width: 1px;
-  border-color: ${({ theme }) => theme.colors.borderLight};
+  border-color: ${({ theme }: StyledProps) => theme.colors.borderLight};
 `;
 
-const PropertyRowLast = styled.View`
+const PropertyRowLast = styled(View)`
   flex-direction: row;
   align-items: center;
-  padding-vertical: ${({ theme }) => theme.spacing.sm}px;
+  padding-vertical: ${({ theme }: StyledProps) => theme.spacing.sm}px;
 `;
 
-const PropertyIcon = styled.View`
+const PropertyIcon = styled(View)`
   width: 36px;
   height: 36px;
   border-radius: 18px;
-  background-color: ${({ theme }) => theme.colors.borderLight};
+  background-color: ${({ theme }: StyledProps) => theme.colors.borderLight};
   align-items: center;
   justify-content: center;
-  margin-right: ${({ theme }) => theme.spacing.md}px;
+  margin-right: ${({ theme }: StyledProps) => theme.spacing.md}px;
 `;
 
-const PropertyContent = styled.View`
+const PropertyContent = styled(View)`
   flex: 1;
 `;
 
-const PropertyLabel = styled.Text`
-  font-size: ${({ theme }) => theme.typography.fontSize.sm}px;
-  color: ${({ theme }) => theme.colors.textLight};
+const PropertyLabel = styled(Text)`
+  font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.sm}px;
+  color: ${({ theme }: StyledProps) => theme.colors.textLight};
   margin-bottom: 2px;
 `;
 
-const PropertyValue = styled.Text`
-  font-size: ${({ theme }) => theme.typography.fontSize.md}px;
-  color: ${({ theme }) => theme.colors.text};
+const PropertyValue = styled(Text)`
+  font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.md}px;
+  color: ${({ theme }: StyledProps) => theme.colors.text};
 `;
 
-const TagsContainer = styled.View`
+const TagsContainer = styled(View)`
   flex-direction: row;
   flex-wrap: wrap;
-  gap: ${({ theme }) => theme.spacing.sm}px;
+  gap: ${({ theme }: StyledProps) => theme.spacing.sm}px;
 `;
 
-const Tag = styled.View`
-  background-color: ${({ theme }) => theme.colors.borderLight};
-  border-radius: ${({ theme }) => theme.borderRadius.full}px;
-  padding-horizontal: ${({ theme }) => theme.spacing.md}px;
-  padding-vertical: ${({ theme }) => theme.spacing.sm}px;
+const Tag = styled(View)`
+  background-color: ${({ theme }: StyledProps) => theme.colors.borderLight};
+  border-radius: ${({ theme }: StyledProps) => theme.borderRadius.full}px;
+  padding-horizontal: ${({ theme }: StyledProps) => theme.spacing.md}px;
+  padding-vertical: ${({ theme }: StyledProps) => theme.spacing.sm}px;
 `;
 
-const TagText = styled.Text`
-  font-size: ${({ theme }) => theme.typography.fontSize.sm}px;
-  color: ${({ theme }) => theme.colors.textSecondary};
+const TagText = styled(Text)`
+  font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.sm}px;
+  color: ${({ theme }: StyledProps) => theme.colors.textSecondary};
 `;
 
-const LoadingContainer = styled.View`
+const LoadingContainer = styled(View)`
   flex: 1;
   justify-content: center;
   align-items: center;
 `;
 
-const ErrorContainer = styled.View`
+const ErrorContainer = styled(View)`
   flex: 1;
   justify-content: center;
   align-items: center;
-  padding: ${({ theme }) => theme.spacing.xl}px;
+  padding: ${({ theme }: StyledProps) => theme.spacing.xl}px;
   padding-bottom: 120px;
 `;
 
-const ErrorText = styled.Text`
-  font-size: ${({ theme }) => theme.typography.fontSize.md}px;
-  color: ${({ theme }) => theme.colors.textSecondary};
+const ErrorText = styled(Text)`
+  font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.md}px;
+  color: ${({ theme }: StyledProps) => theme.colors.textSecondary};
   text-align: center;
-  margin-bottom: ${({ theme }) => theme.spacing.lg}px;
+  margin-bottom: ${({ theme }: StyledProps) => theme.spacing.lg}px;
 `;
 
 
@@ -179,15 +181,11 @@ export const ItemDetailsScreen: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [locationName, setLocationName] = useState<string>('');
   const [categoryName, setCategoryName] = useState<string>('');
-  const editBottomSheetRef = useRef<BottomSheetModal>(null);
+  const editBottomSheetRef = useRef<BottomSheetModal | null>(null);
 
   const currencySymbol = getCurrencySymbol(settings.currency);
 
-  useEffect(() => {
-    loadItem();
-  }, [itemId]);
-
-  const loadItem = async () => {
+  const loadItem = useCallback(async () => {
     setIsLoading(true);
     try {
       const itemData = await getItemById(itemId);
@@ -209,7 +207,11 @@ export const ItemDetailsScreen: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [itemId, navigation]);
+
+  useEffect(() => {
+    loadItem();
+  }, [loadItem]);
 
   const handleDelete = () => {
     Alert.alert('确认删除', '确定要删除这个物品吗？此操作无法撤销。', [

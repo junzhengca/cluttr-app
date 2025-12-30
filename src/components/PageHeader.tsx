@@ -1,10 +1,10 @@
 import React from 'react';
-import { TouchableOpacity, Image } from 'react-native';
+import { TouchableOpacity, Image, View, Text } from 'react-native';
 import styled from 'styled-components/native';
 import { Ionicons } from '@expo/vector-icons';
-import { useTheme } from '../theme/ThemeProvider';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
+import type { StyledProps } from '../utils/styledComponents';
 
 interface PageHeaderProps {
   icon: keyof typeof Ionicons.glyphMap;
@@ -19,66 +19,66 @@ interface PageHeaderProps {
   showRightButtons?: boolean;
 }
 
-const HeaderContainer = styled.View<{ topInset: number }>`
-  background-color: ${({ theme }) => theme.colors.primaryLightest};
+const HeaderContainer = styled(View)<{ topInset: number }>`
+  background-color: ${({ theme }: StyledProps) => theme.colors.primaryLightest};
   padding-top: ${({ topInset }) => topInset + 10}px;
-  padding-horizontal: ${({ theme }) => theme.spacing.lg}px;
-  padding-bottom: ${({ theme }) => theme.spacing.sm}px;
+  padding-horizontal: ${({ theme }: StyledProps) => theme.spacing.lg}px;
+  padding-bottom: ${({ theme }: StyledProps) => theme.spacing.sm}px;
   flex-direction: row;
   align-items: center;
   justify-content: space-between;
 `;
 
-const LeftSection = styled.View`
+const LeftSection = styled(View)`
   flex-direction: row;
   align-items: center;
   flex: 1;
 `;
 
-const IconContainer = styled.View`
+const IconContainer = styled(View)`
   width: 48px;
   height: 48px;
-  border-radius: ${({ theme }) => theme.borderRadius.full}px;
-  background-color: ${({ theme }) => theme.colors.primaryExtraLight};
+  border-radius: ${({ theme }: StyledProps) => theme.borderRadius.full}px;
+  background-color: ${({ theme }: StyledProps) => theme.colors.primaryExtraLight};
   align-items: center;
   justify-content: center;
-  margin-right: ${({ theme }) => theme.spacing.md}px;
+  margin-right: ${({ theme }: StyledProps) => theme.spacing.md}px;
 `;
 
 const Icon = styled(Ionicons)`
-  color: ${({ theme }) => theme.colors.primary};
+  color: ${({ theme }: StyledProps) => theme.colors.primary};
 `;
 
-const TextContainer = styled.View`
+const TextContainer = styled(View)`
   flex: 1;
   justify-content: center;
 `;
 
-const Title = styled.Text`
-  font-size: ${({ theme }) => theme.typography.fontSize.xxl}px;
-  font-weight: ${({ theme }) => theme.typography.fontWeight.bold};
+const Title = styled(Text)`
+  font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.xxl}px;
+  font-weight: ${({ theme }: StyledProps) => theme.typography.fontWeight.bold};
   color: #1a1a1a;
   line-height: 28px;
 `;
 
-const Subtitle = styled.Text`
-  font-size: ${({ theme }) => theme.typography.fontSize.sm}px;
-  font-weight: ${({ theme }) => theme.typography.fontWeight.medium};
-  color: ${({ theme }) => theme.colors.textSecondary};
+const Subtitle = styled(Text)`
+  font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.sm}px;
+  font-weight: ${({ theme }: StyledProps) => theme.typography.fontWeight.medium};
+  color: ${({ theme }: StyledProps) => theme.colors.textSecondary};
   margin-top: 2px;
 `;
 
-const RightSection = styled.View`
+const RightSection = styled(View)`
   flex-direction: row;
   align-items: center;
-  gap: ${({ theme }) => theme.spacing.sm}px;
+  gap: ${({ theme }: StyledProps) => theme.spacing.sm}px;
 `;
 
 const ActionButton = styled(TouchableOpacity)`
   width: 40px;
   height: 40px;
-  border-radius: ${({ theme }) => theme.borderRadius.full}px;
-  background-color: ${({ theme }) => theme.colors.surface};
+  border-radius: ${({ theme }: StyledProps) => theme.borderRadius.full}px;
+  background-color: ${({ theme }: StyledProps) => theme.colors.surface};
   align-items: center;
   justify-content: center;
   elevation: 2;
@@ -89,15 +89,15 @@ const ActionButton = styled(TouchableOpacity)`
 `;
 
 const ActionIcon = styled(Ionicons)`
-  color: ${({ theme }) => theme.colors.textLight};
+  color: ${({ theme }: StyledProps) => theme.colors.textLight};
 `;
 
 const BackButton = styled(ActionButton)`
-  margin-right: ${({ theme }) => theme.spacing.md}px;
+  margin-right: ${({ theme }: StyledProps) => theme.spacing.md}px;
 `;
 
 const BackIcon = styled(Ionicons)`
-  color: ${({ theme }) => theme.colors.textLight};
+  color: ${({ theme }: StyledProps) => theme.colors.textLight};
 `;
 
 const AvatarButton = styled(ActionButton)`
@@ -110,10 +110,10 @@ const AvatarImage = styled(Image)`
   height: 100%;
 `;
 
-const AvatarPlaceholder = styled.View`
+const AvatarPlaceholder = styled(View)`
   width: 100%;
   height: 100%;
-  background-color: ${({ theme }) => theme.colors.primaryLight};
+  background-color: ${({ theme }: StyledProps) => theme.colors.primaryLight};
   align-items: center;
   justify-content: center;
 `;
@@ -130,7 +130,6 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
   onBackPress,
   showRightButtons = true,
 }) => {
-  const theme = useTheme();
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
 

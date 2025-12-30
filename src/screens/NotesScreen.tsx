@@ -4,6 +4,8 @@ import {
   TextInput,
   TouchableOpacity,
   Alert,
+  Text,
+  View,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import styled from 'styled-components/native';
@@ -11,30 +13,33 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { GestureHandlerRootView, Swipeable } from 'react-native-gesture-handler';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import type { StyledProps } from '../utils/styledComponents';
+
 import { PageHeader } from '../components/PageHeader';
 import { RootStackParamList } from '../navigation/types';
 import { useTodos } from '../contexts/TodoContext';
 import { useTheme } from '../theme/ThemeProvider';
+import { TodoItem } from '../types/inventory';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
-const Container = styled.View`
+const Container = styled(View)`
   flex: 1;
-  background-color: ${({ theme }) => theme.colors.background};
+  background-color: ${({ theme }: StyledProps) => theme.colors.background};
 `;
 
 const Content = styled(ScrollView)`
   flex: 1;
-  padding: ${({ theme }) => theme.spacing.lg}px;
+  padding: ${({ theme }: StyledProps) => theme.spacing.lg}px;
 `;
 
-const AddTodoContainer = styled.View<{ isFocused: boolean }>`
+const AddTodoContainer = styled(View)<{ isFocused: boolean }>`
   flex-direction: row;
   align-items: center;
-  background-color: ${({ theme }) => theme.colors.surface};
-  border-radius: ${({ theme }) => theme.borderRadius.xl}px;
-  padding-horizontal: ${({ theme }) => theme.spacing.md}px;
-  margin-bottom: ${({ theme }) => theme.spacing.md}px;
+  background-color: ${({ theme }: StyledProps) => theme.colors.surface};
+  border-radius: ${({ theme }: StyledProps) => theme.borderRadius.xl}px;
+  padding-horizontal: ${({ theme }: StyledProps) => theme.spacing.md}px;
+  margin-bottom: ${({ theme }: StyledProps) => theme.spacing.md}px;
   height: 48px;
   border-width: 1.5px;
   border-color: ${({ theme, isFocused }) =>
@@ -43,46 +48,46 @@ const AddTodoContainer = styled.View<{ isFocused: boolean }>`
 
 const TodoInput = styled(TextInput)`
   flex: 1;
-  font-size: ${({ theme }) => theme.typography.fontSize.md}px;
-  color: ${({ theme }) => theme.colors.text};
+  font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.md}px;
+  color: ${({ theme }: StyledProps) => theme.colors.text};
   height: 100%;
   padding-vertical: 0;
 `;
 
-const AddButton = styled.TouchableOpacity`
-  background-color: ${({ theme }) => theme.colors.primary};
-  border-radius: ${({ theme }) => theme.borderRadius.md}px;
-  margin-left: ${({ theme }) => theme.spacing.sm}px;
+const AddButton = styled(TouchableOpacity)`
+  background-color: ${({ theme }: StyledProps) => theme.colors.primary};
+  border-radius: ${({ theme }: StyledProps) => theme.borderRadius.md}px;
+  margin-left: ${({ theme }: StyledProps) => theme.spacing.sm}px;
   height: 28px;
   width: 28px;
   align-items: center;
   justify-content: center;
 `;
 
-const SectionTitle = styled.Text`
-  font-size: ${({ theme }) => theme.typography.fontSize.lg}px;
+const SectionTitle = styled(Text)`
+  font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.lg}px;
   font-weight: 600;
-  color: ${({ theme }) => theme.colors.text};
-  margin-bottom: ${({ theme }) => theme.spacing.md}px;
+  color: ${({ theme }: StyledProps) => theme.colors.text};
+  margin-bottom: ${({ theme }: StyledProps) => theme.spacing.md}px;
 `;
 
-const EmptyState = styled.View`
+const EmptyState = styled(View)`
   align-items: center;
   justify-content: center;
-  padding: ${({ theme }) => theme.spacing.xl}px;
+  padding: ${({ theme }: StyledProps) => theme.spacing.xl}px;
 `;
 
-const EmptyStateText = styled.Text`
-  font-size: ${({ theme }) => theme.typography.fontSize.md}px;
-  color: ${({ theme }) => theme.colors.textSecondary};
+const EmptyStateText = styled(Text)`
+  font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.md}px;
+  color: ${({ theme }: StyledProps) => theme.colors.textSecondary};
   text-align: center;
 `;
 
-const TodoItemContainer = styled.View`
-  background-color: ${({ theme }) => theme.colors.surface};
-  border-radius: ${({ theme }) => theme.borderRadius.xxl}px;
-  padding: ${({ theme }) => theme.spacing.md}px;
-  margin-bottom: ${({ theme }) => theme.spacing.md}px;
+const TodoItemContainer = styled(View)`
+  background-color: ${({ theme }: StyledProps) => theme.colors.surface};
+  border-radius: ${({ theme }: StyledProps) => theme.borderRadius.xxl}px;
+  padding: ${({ theme }: StyledProps) => theme.spacing.md}px;
+  margin-bottom: ${({ theme }: StyledProps) => theme.spacing.md}px;
   flex-direction: row;
   align-items: center;
   position: relative;
@@ -95,15 +100,15 @@ const TodoItemContainer = styled.View`
   elevation: 2;
 `;
 
-const TodoText = styled.Text<{ completed: boolean }>`
+const TodoText = styled(Text)<{ completed: boolean }>`
   flex: 1;
-  font-size: ${({ theme }) => theme.typography.fontSize.md}px;
+  font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.md}px;
   font-weight: ${({ theme, completed }) => (completed ? theme.typography.fontWeight.regular : theme.typography.fontWeight.bold)};
   color: ${({ theme, completed }) => (completed ? theme.colors.textSecondary : theme.colors.text)};
   text-decoration-line: ${({ completed }) => (completed ? 'line-through' : 'none')};
 `;
 
-const Checkbox = styled.TouchableOpacity`
+const Checkbox = styled(TouchableOpacity)`
   width: 24px;
   height: 24px;
   border-radius: 12px;
@@ -112,30 +117,30 @@ const Checkbox = styled.TouchableOpacity`
   background-color: ${({ theme, checked }) => (checked ? theme.colors.primary : 'transparent')};
   align-items: center;
   justify-content: center;
-  margin-right: ${({ theme }) => theme.spacing.md}px;
+  margin-right: ${({ theme }: StyledProps) => theme.spacing.md}px;
 `;
 
-const DeleteButton = styled.TouchableOpacity`
-  padding: ${({ theme }) => theme.spacing.sm}px;
+const DeleteButton = styled(TouchableOpacity)`
+  padding: ${({ theme }: StyledProps) => theme.spacing.sm}px;
 `;
 
-const SwipeActionsContainer = styled.View`
+const _SwipeActionsContainer = styled(View)`
   flex-direction: row;
-  margin-top: ${({ theme }) => theme.spacing.sm}px;
+  margin-top: ${({ theme }: StyledProps) => theme.spacing.sm}px;
 `;
 
-const DeleteAction = styled.View`
+const DeleteAction = styled(View)`
   background-color: #ff3b30;
   justify-content: center;
   align-items: flex-end;
-  padding-right: ${({ theme }) => theme.spacing.lg}px;
+  padding-right: ${({ theme }: StyledProps) => theme.spacing.lg}px;
   width: 80px;
 `;
 
-const DeleteActionText = styled.Text`
+const DeleteActionText = styled(Text)`
   color: white;
   font-weight: 600;
-  font-size: ${({ theme }) => theme.typography.fontSize.md}px;
+  font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.md}px;
 `;
 
 export const NotesScreen: React.FC = () => {
@@ -189,7 +194,7 @@ export const NotesScreen: React.FC = () => {
     </DeleteAction>
   );
 
-  const renderTodoItem = (todo: any) => (
+  const renderTodoItem = (todo: TodoItem) => (
     <TodoItemContainer key={todo.id}>
       <Checkbox
         checked={todo.completed}
@@ -205,7 +210,7 @@ export const NotesScreen: React.FC = () => {
     </TodoItemContainer>
   );
 
-  const renderSwipeableTodo = (todo: any) => {
+  const renderSwipeableTodo = (todo: TodoItem) => {
     return (
       <Swipeable
         key={todo.id}

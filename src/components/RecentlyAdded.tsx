@@ -1,51 +1,52 @@
 import React, { useMemo } from 'react';
-import { TouchableOpacity } from 'react-native';
+import { TouchableOpacity, View, Text } from 'react-native';
 import styled from 'styled-components/native';
 import { Ionicons } from '@expo/vector-icons';
 import { InventoryItem } from '../types/inventory';
 import { ItemCard } from './ItemCard';
+import type { StyledProps } from '../utils/styledComponents';
 
-const Container = styled.View`
-  margin-top: ${({ theme }) => theme.spacing.lg}px;
+const Container = styled(View)`
+  margin-top: ${({ theme }: StyledProps) => theme.spacing.lg}px;
 `;
 
-const Header = styled.View`
+const Header = styled(View)`
   flex-direction: row;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: ${({ theme }) => theme.spacing.md}px;
+  margin-bottom: ${({ theme }: StyledProps) => theme.spacing.md}px;
 `;
 
-const Title = styled.Text`
-  font-size: ${({ theme }) => theme.typography.fontSize.lg}px;
-  font-weight: ${({ theme }) => theme.typography.fontWeight.bold};
-  color: ${({ theme }) => theme.colors.text};
+const Title = styled(Text)`
+  font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.lg}px;
+  font-weight: ${({ theme }: StyledProps) => theme.typography.fontWeight.bold};
+  color: ${({ theme }: StyledProps) => theme.colors.text};
 `;
 
-const ItemsContainer = styled.View`
-  margin-bottom: ${({ theme }) => theme.spacing.md}px;
+const ItemsContainer = styled(View)`
+  margin-bottom: ${({ theme }: StyledProps) => theme.spacing.md}px;
 `;
 
 const ViewAllButton = styled(TouchableOpacity)`
-  background-color: ${({ theme }) => theme.colors.primaryExtraLight};
-  border: 1px solid ${({ theme }) => theme.colors.primaryLight};
-  border-radius: ${({ theme }) => theme.borderRadius.full}px;
-  padding-vertical: ${({ theme }) => theme.spacing.md}px;
+  background-color: ${({ theme }: StyledProps) => theme.colors.primaryExtraLight};
+  border: 1px solid ${({ theme }: StyledProps) => theme.colors.primaryLight};
+  border-radius: ${({ theme }: StyledProps) => theme.borderRadius.full}px;
+  padding-vertical: ${({ theme }: StyledProps) => theme.spacing.md}px;
   flex-direction: row;
   align-items: center;
   justify-content: center;
-  margin-top: ${({ theme }) => theme.spacing.sm}px;
-  gap: ${({ theme }) => theme.spacing.xs}px;
+  margin-top: ${({ theme }: StyledProps) => theme.spacing.sm}px;
+  gap: ${({ theme }: StyledProps) => theme.spacing.xs}px;
 `;
 
-const ViewAllText = styled.Text`
-  font-size: ${({ theme }) => theme.typography.fontSize.lg}px;
-  font-weight: ${({ theme }) => theme.typography.fontWeight.bold};
-  color: ${({ theme }) => theme.colors.primary};
+const ViewAllText = styled(Text)`
+  font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.lg}px;
+  font-weight: ${({ theme }: StyledProps) => theme.typography.fontWeight.bold};
+  color: ${({ theme }: StyledProps) => theme.colors.primary};
 `;
 
 const ViewAllIcon = styled(Ionicons)`
-  color: ${({ theme }) => theme.colors.primary};
+  color: ${({ theme }: StyledProps) => theme.colors.primary};
 `;
 
 interface RecentlyAddedProps {

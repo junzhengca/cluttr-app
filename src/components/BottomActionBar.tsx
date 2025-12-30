@@ -1,8 +1,8 @@
 import React from 'react';
-import { View } from 'react-native';
+import { View, TouchableOpacity, Text } from 'react-native';
 import styled from 'styled-components/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useTheme } from '../theme/ThemeProvider';
+import type { StyledProps } from '../utils/styledComponents';
 
 export interface ActionButton {
   label: string;
@@ -17,17 +17,17 @@ interface BottomActionBarProps {
   safeArea?: boolean;
 }
 
-const BottomBarContainer = styled.View<{ bottomInset: number; showSafeArea: boolean }>`
+const BottomBarContainer = styled(View)<{ bottomInset: number; showSafeArea: boolean }>`
   position: absolute;
   bottom: 0;
   left: 0;
   right: 0;
-  background-color: ${({ theme }) => theme.colors.surface};
-  padding-horizontal: ${({ theme }) => theme.spacing.lg}px;
-  padding-vertical: ${({ theme }) => theme.spacing.md}px;
+  background-color: ${({ theme }: StyledProps) => theme.colors.surface};
+  padding-horizontal: ${({ theme }: StyledProps) => theme.spacing.lg}px;
+  padding-vertical: ${({ theme }: StyledProps) => theme.spacing.md}px;
   padding-bottom: ${({ bottomInset, showSafeArea }) => showSafeArea ? bottomInset + 12 : 12}px;
   border-top-width: 1px;
-  border-top-color: ${({ theme }) => theme.colors.borderLight};
+  border-top-color: ${({ theme }: StyledProps) => theme.colors.borderLight};
   shadow-color: #000;
   shadow-offset: 0px -4px;
   shadow-opacity: 0.05;
@@ -35,15 +35,15 @@ const BottomBarContainer = styled.View<{ bottomInset: number; showSafeArea: bool
   elevation: 8;
 `;
 
-const ActionsContainer = styled.View`
+const ActionsContainer = styled(View)`
   flex-direction: row;
-  gap: ${({ theme }) => theme.spacing.md}px;
+  gap: ${({ theme }: StyledProps) => theme.spacing.md}px;
 `;
 
-const StyledTouchableOpacity = styled.TouchableOpacity<{ variant: 'outlined' | 'filled' | 'danger' }>`
+const StyledTouchableOpacity = styled(TouchableOpacity)<{ variant: 'outlined' | 'filled' | 'danger' }>`
   flex: 1;
-  border-radius: ${({ theme }) => theme.borderRadius.md}px;
-  padding: ${({ theme }) => theme.spacing.sm + 2}px;
+  border-radius: ${({ theme }: StyledProps) => theme.borderRadius.md}px;
+  padding: ${({ theme }: StyledProps) => theme.spacing.sm + 2}px;
   align-items: center;
   justify-content: center;
   flex-direction: row;
@@ -70,22 +70,21 @@ const StyledTouchableOpacity = styled.TouchableOpacity<{ variant: 'outlined' | '
   elevation: ${({ variant }) => (variant === 'filled' ? 4 : 2)};
 `;
 
-const ButtonText = styled.Text<{ variant: 'outlined' | 'filled' | 'danger' }>`
-  font-size: ${({ theme }) => theme.typography.fontSize.sm}px;
-  font-weight: ${({ theme }) => theme.typography.fontWeight.medium};
+const ButtonText = styled(Text)<{ variant: 'outlined' | 'filled' | 'danger' }>`
+  font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.sm}px;
+  font-weight: ${({ theme }: StyledProps) => theme.typography.fontWeight.medium};
   color: ${({ theme, variant }) => {
     if (variant === 'filled') return theme.colors.surface;
     if (variant === 'danger') return theme.colors.error;
     return theme.colors.text;
   }};
-  margin-left: ${({ theme }) => theme.spacing.xs}px;
+  margin-left: ${({ theme }: StyledProps) => theme.spacing.xs}px;
 `;
 
 export const BottomActionBar: React.FC<BottomActionBarProps> = ({
   actions,
   safeArea = true,
 }) => {
-  const theme = useTheme();
   const insets = useSafeAreaInsets();
 
   return (

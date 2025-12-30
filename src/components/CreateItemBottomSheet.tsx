@@ -1,80 +1,81 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { TouchableOpacity, Alert, View, Platform, ScrollView } from 'react-native';
+import { TouchableOpacity, Alert, View, ScrollView, Text } from 'react-native';
 import styled from 'styled-components/native';
 import { BottomSheetModal, BottomSheetBackdrop, BottomSheetScrollView, BottomSheetTextInput } from '@gorhom/bottom-sheet';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../theme/ThemeProvider';
+import type { StyledProps } from '../utils/styledComponents';
 import { Category } from '../types/inventory';
-import { Location } from '../types/inventory';
 import { locations } from '../data/locations';
 import { getAllCategories } from '../services/CategoryService';
 import { createItem } from '../services/InventoryService';
 import { filterItemCategories } from '../utils/categoryUtils';
+import { CategoryManagerBottomSheet } from './CategoryManagerBottomSheet';
 
 const Backdrop = styled(BottomSheetBackdrop)`
   background-color: rgba(0, 0, 0, 0.5);
 `;
 
-const Header = styled.View`
+const Header = styled(View)`
   flex-direction: row;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: ${({ theme }) => theme.spacing.lg}px;
+  margin-bottom: ${({ theme }: StyledProps) => theme.spacing.lg}px;
 `;
 
-const HeaderLeft = styled.View`
+const HeaderLeft = styled(View)`
   flex: 1;
 `;
 
-const Title = styled.Text`
-  font-size: ${({ theme }) => theme.typography.fontSize.xxl}px;
-  font-weight: ${({ theme }) => theme.typography.fontWeight.bold};
-  color: ${({ theme }) => theme.colors.text};
-  margin-bottom: ${({ theme }) => theme.spacing.xs}px;
+const Title = styled(Text)`
+  font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.xxl}px;
+  font-weight: ${({ theme }: StyledProps) => theme.typography.fontWeight.bold};
+  color: ${({ theme }: StyledProps) => theme.colors.text};
+  margin-bottom: ${({ theme }: StyledProps) => theme.spacing.xs}px;
 `;
 
-const Subtitle = styled.Text`
-  font-size: ${({ theme }) => theme.typography.fontSize.md}px;
-  color: ${({ theme }) => theme.colors.textSecondary};
+const Subtitle = styled(Text)`
+  font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.md}px;
+  color: ${({ theme }: StyledProps) => theme.colors.textSecondary};
 `;
 
 const CloseButton = styled(TouchableOpacity)`
   width: 32px;
   height: 32px;
   border-radius: 16px;
-  background-color: ${({ theme }) => theme.colors.borderLight};
+  background-color: ${({ theme }: StyledProps) => theme.colors.borderLight};
   align-items: center;
   justify-content: center;
 `;
 
-const FormSection = styled.View`
-  margin-bottom: ${({ theme }) => theme.spacing.lg}px;
+const FormSection = styled(View)`
+  margin-bottom: ${({ theme }: StyledProps) => theme.spacing.lg}px;
 `;
 
-const Label = styled.Text`
-  font-size: ${({ theme }) => theme.typography.fontSize.md}px;
-  font-weight: ${({ theme }) => theme.typography.fontWeight.medium};
-  color: ${({ theme }) => theme.colors.text};
-  margin-bottom: ${({ theme }) => theme.spacing.sm}px;
+const Label = styled(Text)`
+  font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.md}px;
+  font-weight: ${({ theme }: StyledProps) => theme.typography.fontWeight.medium};
+  color: ${({ theme }: StyledProps) => theme.colors.text};
+  margin-bottom: ${({ theme }: StyledProps) => theme.spacing.sm}px;
 `;
 
 const Input = styled(BottomSheetTextInput)`
-  background-color: ${({ theme }) => theme.colors.surface};
+  background-color: ${({ theme }: StyledProps) => theme.colors.surface};
   border-width: 1px;
-  border-color: ${({ theme }) => theme.colors.border};
-  border-radius: ${({ theme }) => theme.borderRadius.md}px;
-  padding: ${({ theme }) => theme.spacing.md}px;
-  font-size: ${({ theme }) => theme.typography.fontSize.md}px;
-  color: ${({ theme }) => theme.colors.text};
+  border-color: ${({ theme }: StyledProps) => theme.colors.border};
+  border-radius: ${({ theme }: StyledProps) => theme.borderRadius.md}px;
+  padding: ${({ theme }: StyledProps) => theme.spacing.md}px;
+  font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.md}px;
+  color: ${({ theme }: StyledProps) => theme.colors.text};
 `;
 
-const CategorySection = styled.View``;
+const CategorySection = styled(View)``;
 
-const CategoryHeader = styled.View`
+const CategoryHeader = styled(View)`
   flex-direction: row;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: ${({ theme }) => theme.spacing.sm}px;
+  margin-bottom: ${({ theme }: StyledProps) => theme.spacing.sm}px;
 `;
 
 const ManageCategoriesButton = styled(TouchableOpacity)`
@@ -82,16 +83,16 @@ const ManageCategoriesButton = styled(TouchableOpacity)`
   align-items: center;
 `;
 
-const ManageCategoriesText = styled.Text`
-  font-size: ${({ theme }) => theme.typography.fontSize.sm}px;
-  color: ${({ theme }) => theme.colors.primary};
-  margin-left: ${({ theme }) => theme.spacing.xs}px;
+const ManageCategoriesText = styled(Text)`
+  font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.sm}px;
+  color: ${({ theme }: StyledProps) => theme.colors.primary};
+  margin-left: ${({ theme }: StyledProps) => theme.spacing.xs}px;
 `;
 
-const CategoryGrid = styled.View`
+const CategoryGrid = styled(View)`
   flex-direction: row;
   flex-wrap: wrap;
-  margin: -${({ theme }) => theme.spacing.xs}px;
+  margin: -${({ theme }: StyledProps) => theme.spacing.xs}px;
 `;
 
 const CategoryButton = styled(TouchableOpacity)<{ isSelected: boolean }>`
@@ -103,18 +104,18 @@ const CategoryButton = styled(TouchableOpacity)<{ isSelected: boolean }>`
   border-width: 1.5px;
   border-color: ${({ theme, isSelected }) =>
     isSelected ? theme.colors.primary : theme.colors.border};
-  border-radius: ${({ theme }) => theme.borderRadius.md}px;
+  border-radius: ${({ theme }: StyledProps) => theme.borderRadius.md}px;
   align-items: center;
   justify-content: center;
-  padding: ${({ theme }) => theme.spacing.sm}px;
+  padding: ${({ theme }: StyledProps) => theme.spacing.sm}px;
 `;
 
-const CategoryIcon = styled.View<{ color?: string }>`
-  margin-bottom: ${({ theme }) => theme.spacing.xs}px;
+const CategoryIcon = styled(View)<{ color?: string }>`
+  margin-bottom: ${({ theme }: StyledProps) => theme.spacing.xs}px;
 `;
 
-const CategoryLabel = styled.Text<{ isSelected: boolean }>`
-  font-size: ${({ theme }) => theme.typography.fontSize.sm}px;
+const CategoryLabel = styled(Text)<{ isSelected: boolean }>`
+  font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.sm}px;
   color: ${({ theme, isSelected }) =>
     isSelected ? theme.colors.primary : theme.colors.text};
   text-align: center;
@@ -122,8 +123,8 @@ const CategoryLabel = styled.Text<{ isSelected: boolean }>`
 
 const AddCategoryButton = styled(CategoryButton)`
   border-style: dashed;
-  border-color: ${({ theme }) => theme.colors.border};
-  background-color: ${({ theme }) => theme.colors.background};
+  border-color: ${({ theme }: StyledProps) => theme.colors.border};
+  background-color: ${({ theme }: StyledProps) => theme.colors.background};
 `;
 
 const LocationScrollView = styled(ScrollView)`
@@ -131,26 +132,26 @@ const LocationScrollView = styled(ScrollView)`
 `;
 
 const LocationButton = styled(TouchableOpacity)<{ isSelected: boolean }>`
-  padding-horizontal: ${({ theme }) => theme.spacing.md}px;
-  padding-vertical: ${({ theme }) => theme.spacing.sm}px;
-  border-radius: ${({ theme }) => theme.borderRadius.full}px;
+  padding-horizontal: ${({ theme }: StyledProps) => theme.spacing.md}px;
+  padding-vertical: ${({ theme }: StyledProps) => theme.spacing.sm}px;
+  border-radius: ${({ theme }: StyledProps) => theme.borderRadius.full}px;
   background-color: ${({ theme, isSelected }) =>
     isSelected ? theme.colors.primary : theme.colors.surface};
   border-width: 1px;
   border-color: ${({ theme, isSelected }) =>
     isSelected ? theme.colors.primary : theme.colors.border};
-  margin-right: ${({ theme }) => theme.spacing.sm}px;
+  margin-right: ${({ theme }: StyledProps) => theme.spacing.sm}px;
 `;
 
-const LocationText = styled.Text<{ isSelected: boolean }>`
-  font-size: ${({ theme }) => theme.typography.fontSize.md}px;
+const LocationText = styled(Text)<{ isSelected: boolean }>`
+  font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.md}px;
   color: ${({ theme, isSelected }) =>
     isSelected ? theme.colors.surface : theme.colors.text};
 `;
 
-const Row = styled.View`
+const Row = styled(View)`
   flex-direction: row;
-  gap: ${({ theme }) => theme.spacing.md}px;
+  gap: ${({ theme }: StyledProps) => theme.spacing.md}px;
 `;
 
 const HalfInput = styled(Input)`
@@ -158,20 +159,20 @@ const HalfInput = styled(Input)`
 `;
 
 const SubmitButton = styled(TouchableOpacity)`
-  background-color: ${({ theme }) => theme.colors.primary};
-  border-radius: ${({ theme }) => theme.borderRadius.md}px;
-  padding: ${({ theme }) => theme.spacing.md}px;
+  background-color: ${({ theme }: StyledProps) => theme.colors.primary};
+  border-radius: ${({ theme }: StyledProps) => theme.borderRadius.md}px;
+  padding: ${({ theme }: StyledProps) => theme.spacing.md}px;
   align-items: center;
   justify-content: center;
   flex-direction: row;
-  margin-top: ${({ theme }) => theme.spacing.lg}px;
+  margin-top: ${({ theme }: StyledProps) => theme.spacing.lg}px;
 `;
 
-const SubmitButtonText = styled.Text`
-  font-size: ${({ theme }) => theme.typography.fontSize.lg}px;
-  font-weight: ${({ theme }) => theme.typography.fontWeight.bold};
-  color: ${({ theme }) => theme.colors.surface};
-  margin-left: ${({ theme }) => theme.spacing.sm}px;
+const SubmitButtonText = styled(Text)`
+  font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.lg}px;
+  font-weight: ${({ theme }: StyledProps) => theme.typography.fontWeight.bold};
+  color: ${({ theme }: StyledProps) => theme.colors.surface};
+  margin-left: ${({ theme }: StyledProps) => theme.spacing.sm}px;
 `;
 
 interface CreateItemBottomSheetProps {
@@ -191,25 +192,31 @@ export const CreateItemBottomSheet: React.FC<CreateItemBottomSheetProps> = ({
   const [detailedLocation, setDetailedLocation] = useState('');
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const scrollViewRef = React.useRef<any>(null);
+  const scrollViewRef = React.useRef<ScrollView>(null);
+  const categoryManagerRef = React.useRef<BottomSheetModal>(null);
 
   // Filter to get only item-type categories (exclude location categories)
   const itemTypeCategories = useMemo(() => {
     return filterItemCategories(categories);
   }, [categories]);
 
-  useEffect(() => {
-    const loadCategories = async () => {
-      try {
-        const allCategories = await getAllCategories();
-        setCategories(allCategories);
-      } catch (error) {
-        console.error('Error loading categories:', error);
-        // Categories will remain empty array if loading fails
-      }
-    };
-    loadCategories();
+  const loadCategories = useCallback(async () => {
+    try {
+      const allCategories = await getAllCategories();
+      setCategories(allCategories);
+    } catch (error) {
+      console.error('Error loading categories:', error);
+      // Categories will remain empty array if loading fails
+    }
   }, []);
+
+  useEffect(() => {
+    loadCategories();
+  }, [loadCategories]);
+
+  const handleCategoriesChanged = useCallback(() => {
+    loadCategories();
+  }, [loadCategories]);
 
   const snapPoints = useMemo(() => ['90%'], []);
 
@@ -275,7 +282,7 @@ export const CreateItemBottomSheet: React.FC<CreateItemBottomSheetProps> = ({
   }, [name, selectedCategory, selectedLocation, price, detailedLocation, categories, theme, handleClose, onItemCreated]);
 
   const renderBackdrop = useCallback(
-    (props: any) => <Backdrop {...props} disappearsOnIndex={-1} appearsOnIndex={0} />,
+    (props: Parameters<typeof BottomSheetBackdrop>[0]) => <Backdrop {...props} disappearsOnIndex={-1} appearsOnIndex={0} />,
     []
   );
 
@@ -324,7 +331,7 @@ export const CreateItemBottomSheet: React.FC<CreateItemBottomSheetProps> = ({
             <CategorySection>
               <CategoryHeader>
                 <Label>分类</Label>
-                <ManageCategoriesButton>
+                <ManageCategoriesButton onPress={() => categoryManagerRef.current?.present()} activeOpacity={0.7}>
                   <Ionicons name="create-outline" size={16} color={theme.colors.primary} />
                   <ManageCategoriesText>管理分类</ManageCategoriesText>
                 </ManageCategoriesButton>
@@ -351,7 +358,7 @@ export const CreateItemBottomSheet: React.FC<CreateItemBottomSheetProps> = ({
                     </CategoryLabel>
                   </CategoryButton>
                 ))}
-                <AddCategoryButton onPress={() => {}} activeOpacity={0.7}>
+                <AddCategoryButton onPress={() => categoryManagerRef.current?.present()} activeOpacity={0.7}>
                   <Ionicons name="add" size={32} color={theme.colors.textLight} />
                   <CategoryLabel isSelected={false}>添加</CategoryLabel>
                 </AddCategoryButton>
@@ -406,6 +413,10 @@ export const CreateItemBottomSheet: React.FC<CreateItemBottomSheetProps> = ({
             <SubmitButtonText>放入小家</SubmitButtonText>
           </SubmitButton>
       </BottomSheetScrollView>
+      <CategoryManagerBottomSheet
+        bottomSheetRef={categoryManagerRef}
+        onCategoriesChanged={handleCategoriesChanged}
+      />
     </BottomSheetModal>
   );
 };

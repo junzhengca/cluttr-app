@@ -1,7 +1,9 @@
 import React from 'react';
-import { ScrollView, ActivityIndicator } from 'react-native';
+import { ScrollView, ActivityIndicator, View, Text } from 'react-native';
 import styled from 'styled-components/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import type { StyledProps } from '../utils/styledComponents';
+
 import { PageHeader } from '../components/PageHeader';
 import { AccountDetailsSection } from '../components/AccountDetailsSection';
 import { ThemeChooser } from '../components/ThemeChooser';
@@ -12,37 +14,37 @@ import { LogoutButton } from '../components/LogoutButton';
 import { useSettings } from '../contexts/SettingsContext';
 import { calculateBottomPadding } from '../utils/layout';
 
-const Container = styled.View`
+const Container = styled(View)`
   flex: 1;
-  background-color: ${({ theme }) => theme.colors.background};
+  background-color: ${({ theme }: StyledProps) => theme.colors.background};
 `;
 
 const Content = styled(ScrollView)`
   flex: 1;
-  padding: ${({ theme }) => theme.spacing.lg}px;
+  padding: ${({ theme }: StyledProps) => theme.spacing.lg}px;
 `;
 
-const SettingsSection = styled.View`
-  margin-bottom: ${({ theme }) => theme.spacing.xl}px;
+const SettingsSection = styled(View)`
+  margin-bottom: ${({ theme }: StyledProps) => theme.spacing.xl}px;
 `;
 
-const SectionTitle = styled.Text`
-  font-size: ${({ theme }) => theme.typography.fontSize.lg}px;
-  font-weight: ${({ theme }) => theme.typography.fontWeight.bold};
-  color: ${({ theme }) => theme.colors.text};
-  margin-bottom: ${({ theme }) => theme.spacing.md}px;
+const SectionTitle = styled(Text)`
+  font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.lg}px;
+  font-weight: ${({ theme }: StyledProps) => theme.typography.fontWeight.bold};
+  color: ${({ theme }: StyledProps) => theme.colors.text};
+  margin-bottom: ${({ theme }: StyledProps) => theme.spacing.md}px;
 `;
 
-const VersionText = styled.Text`
-  font-size: ${({ theme }) => theme.typography.fontSize.sm}px;
-  font-weight: ${({ theme }) => theme.typography.fontWeight.regular};
-  color: ${({ theme }) => theme.colors.textLight};
+const VersionText = styled(Text)`
+  font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.sm}px;
+  font-weight: ${({ theme }: StyledProps) => theme.typography.fontWeight.regular};
+  color: ${({ theme }: StyledProps) => theme.colors.textLight};
   text-align: center;
-  margin-top: ${({ theme }) => theme.spacing.lg}px;
-  margin-bottom: ${({ theme }) => theme.spacing.md}px;
+  margin-top: ${({ theme }: StyledProps) => theme.spacing.lg}px;
+  margin-bottom: ${({ theme }: StyledProps) => theme.spacing.md}px;
 `;
 
-const LoadingContainer = styled.View`
+const LoadingContainer = styled(View)`
   flex: 1;
   justify-content: center;
   align-items: center;

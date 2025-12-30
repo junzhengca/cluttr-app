@@ -1,87 +1,100 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { TouchableOpacity, Alert, Platform, ScrollView } from 'react-native';
+import { TouchableOpacity, Alert, Platform, ScrollView, View, Text } from 'react-native';
 import styled from 'styled-components/native';
 import { BottomSheetModal, BottomSheetBackdrop, BottomSheetScrollView, BottomSheetTextInput } from '@gorhom/bottom-sheet';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../theme/ThemeProvider';
+import type { StyledProps } from '../utils/styledComponents';
 import { Category, InventoryItem } from '../types/inventory';
 import { locations } from '../data/locations';
 import { getAllCategories } from '../services/CategoryService';
 import { getItemById, updateItem } from '../services/InventoryService';
 import { formatDate } from '../utils/formatters';
 import { filterItemCategories } from '../utils/categoryUtils';
+import { CategoryManagerBottomSheet } from './CategoryManagerBottomSheet';
 
 const Backdrop = styled(BottomSheetBackdrop)`
   background-color: rgba(0, 0, 0, 0.5);
 `;
 
-const Header = styled.View`
+const Header = styled(View)`
   flex-direction: row;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: ${({ theme }) => theme.spacing.lg}px;
+  margin-bottom: ${({ theme }: StyledProps) => theme.spacing.lg}px;
 `;
 
-const HeaderLeft = styled.View`
+const HeaderLeft = styled(View)`
   flex: 1;
 `;
 
-const Title = styled.Text`
-  font-size: ${({ theme }) => theme.typography.fontSize.xxl}px;
-  font-weight: ${({ theme }) => theme.typography.fontWeight.bold};
-  color: ${({ theme }) => theme.colors.text};
-  margin-bottom: ${({ theme }) => theme.spacing.xs}px;
+const Title = styled(Text)`
+  font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.xxl}px;
+  font-weight: ${({ theme }: StyledProps) => theme.typography.fontWeight.bold};
+  color: ${({ theme }: StyledProps) => theme.colors.text};
+  margin-bottom: ${({ theme }: StyledProps) => theme.spacing.xs}px;
 `;
 
-const Subtitle = styled.Text`
-  font-size: ${({ theme }) => theme.typography.fontSize.md}px;
-  color: ${({ theme }) => theme.colors.textSecondary};
+const Subtitle = styled(Text)`
+  font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.md}px;
+  color: ${({ theme }: StyledProps) => theme.colors.textSecondary};
 `;
 
 const CloseButton = styled(TouchableOpacity)`
   width: 32px;
   height: 32px;
   border-radius: 16px;
-  background-color: ${({ theme }) => theme.colors.borderLight};
+  background-color: ${({ theme }: StyledProps) => theme.colors.borderLight};
   align-items: center;
   justify-content: center;
 `;
 
-const FormSection = styled.View`
-  margin-bottom: ${({ theme }) => theme.spacing.lg}px;
+const FormSection = styled(View)`
+  margin-bottom: ${({ theme }: StyledProps) => theme.spacing.lg}px;
 `;
 
-const Label = styled.Text`
-  font-size: ${({ theme }) => theme.typography.fontSize.md}px;
-  font-weight: ${({ theme }) => theme.typography.fontWeight.medium};
-  color: ${({ theme }) => theme.colors.text};
-  margin-bottom: ${({ theme }) => theme.spacing.sm}px;
+const Label = styled(Text)`
+  font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.md}px;
+  font-weight: ${({ theme }: StyledProps) => theme.typography.fontWeight.medium};
+  color: ${({ theme }: StyledProps) => theme.colors.text};
+  margin-bottom: ${({ theme }: StyledProps) => theme.spacing.sm}px;
 `;
 
 const Input = styled(BottomSheetTextInput)`
-  background-color: ${({ theme }) => theme.colors.surface};
+  background-color: ${({ theme }: StyledProps) => theme.colors.surface};
   border-width: 1px;
-  border-color: ${({ theme }) => theme.colors.border};
-  border-radius: ${({ theme }) => theme.borderRadius.md}px;
-  padding: ${({ theme }) => theme.spacing.md}px;
-  font-size: ${({ theme }) => theme.typography.fontSize.md}px;
-  color: ${({ theme }) => theme.colors.text};
+  border-color: ${({ theme }: StyledProps) => theme.colors.border};
+  border-radius: ${({ theme }: StyledProps) => theme.borderRadius.md}px;
+  padding: ${({ theme }: StyledProps) => theme.spacing.md}px;
+  font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.md}px;
+  color: ${({ theme }: StyledProps) => theme.colors.text};
 `;
 
-const CategorySection = styled.View``;
+const CategorySection = styled(View)``;
 
-const CategoryHeader = styled.View`
+const CategoryHeader = styled(View)`
   flex-direction: row;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: ${({ theme }) => theme.spacing.sm}px;
+  margin-bottom: ${({ theme }: StyledProps) => theme.spacing.sm}px;
 `;
 
-const CategoryGrid = styled.View`
+const ManageCategoriesButton = styled(TouchableOpacity)`
+  flex-direction: row;
+  align-items: center;
+`;
+
+const ManageCategoriesText = styled(Text)`
+  font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.sm}px;
+  color: ${({ theme }: StyledProps) => theme.colors.primary};
+  margin-left: ${({ theme }: StyledProps) => theme.spacing.xs}px;
+`;
+
+const CategoryGrid = styled(View)`
   flex-direction: row;
   flex-wrap: wrap;
-  margin: -${({ theme }) => theme.spacing.xs}px;
+  margin: -${({ theme }: StyledProps) => theme.spacing.xs}px;
 `;
 
 const CategoryButton = styled(TouchableOpacity)<{ isSelected: boolean }>`
@@ -93,18 +106,24 @@ const CategoryButton = styled(TouchableOpacity)<{ isSelected: boolean }>`
   border-width: 1.5px;
   border-color: ${({ theme, isSelected }) =>
     isSelected ? theme.colors.primary : theme.colors.border};
-  border-radius: ${({ theme }) => theme.borderRadius.md}px;
+  border-radius: ${({ theme }: StyledProps) => theme.borderRadius.md}px;
   align-items: center;
   justify-content: center;
-  padding: ${({ theme }) => theme.spacing.sm}px;
+  padding: ${({ theme }: StyledProps) => theme.spacing.sm}px;
 `;
 
-const CategoryIcon = styled.View<{ color?: string }>`
-  margin-bottom: ${({ theme }) => theme.spacing.xs}px;
+const AddCategoryButton = styled(CategoryButton)`
+  border-style: dashed;
+  border-color: ${({ theme }: StyledProps) => theme.colors.border};
+  background-color: ${({ theme }: StyledProps) => theme.colors.background};
 `;
 
-const CategoryLabel = styled.Text<{ isSelected: boolean }>`
-  font-size: ${({ theme }) => theme.typography.fontSize.sm}px;
+const CategoryIcon = styled(View)<{ color?: string }>`
+  margin-bottom: ${({ theme }: StyledProps) => theme.spacing.xs}px;
+`;
+
+const CategoryLabel = styled(Text)<{ isSelected: boolean }>`
+  font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.sm}px;
   color: ${({ theme, isSelected }) =>
     isSelected ? theme.colors.primary : theme.colors.text};
   text-align: center;
@@ -115,84 +134,84 @@ const LocationScrollView = styled(ScrollView)`
 `;
 
 const LocationButton = styled(TouchableOpacity)<{ isSelected: boolean }>`
-  padding-horizontal: ${({ theme }) => theme.spacing.md}px;
-  padding-vertical: ${({ theme }) => theme.spacing.sm}px;
-  border-radius: ${({ theme }) => theme.borderRadius.full}px;
+  padding-horizontal: ${({ theme }: StyledProps) => theme.spacing.md}px;
+  padding-vertical: ${({ theme }: StyledProps) => theme.spacing.sm}px;
+  border-radius: ${({ theme }: StyledProps) => theme.borderRadius.full}px;
   background-color: ${({ theme, isSelected }) =>
     isSelected ? theme.colors.primary : theme.colors.surface};
   border-width: 1px;
   border-color: ${({ theme, isSelected }) =>
     isSelected ? theme.colors.primary : theme.colors.border};
-  margin-right: ${({ theme }) => theme.spacing.sm}px;
+  margin-right: ${({ theme }: StyledProps) => theme.spacing.sm}px;
 `;
 
-const LocationText = styled.Text<{ isSelected: boolean }>`
-  font-size: ${({ theme }) => theme.typography.fontSize.md}px;
+const LocationText = styled(Text)<{ isSelected: boolean }>`
+  font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.md}px;
   color: ${({ theme, isSelected }) =>
     isSelected ? theme.colors.surface : theme.colors.text};
 `;
 
-const Row = styled.View`
+const Row = styled(View)`
   flex-direction: row;
-  gap: ${({ theme }) => theme.spacing.md}px;
+  gap: ${({ theme }: StyledProps) => theme.spacing.md}px;
 `;
 
 const HalfInput = styled(Input)`
   flex: 1;
 `;
 
-const DatePickerContainer = styled.View`
-  background-color: ${({ theme }) => theme.colors.surface};
+const DatePickerContainer = styled(View)`
+  background-color: ${({ theme }: StyledProps) => theme.colors.surface};
   border-width: 1px;
-  border-color: ${({ theme }) => theme.colors.border};
-  border-radius: ${({ theme }) => theme.borderRadius.md}px;
-  padding: ${({ theme }) => theme.spacing.md}px;
+  border-color: ${({ theme }: StyledProps) => theme.colors.border};
+  border-radius: ${({ theme }: StyledProps) => theme.borderRadius.md}px;
+  padding: ${({ theme }: StyledProps) => theme.spacing.md}px;
   flex-direction: row;
   align-items: center;
   justify-content: space-between;
 `;
 
-const DateText = styled.Text`
-  font-size: ${({ theme }) => theme.typography.fontSize.md}px;
-  color: ${({ theme }) => theme.colors.text};
+const DateText = styled(Text)`
+  font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.md}px;
+  color: ${({ theme }: StyledProps) => theme.colors.text};
   flex: 1;
 `;
 
 const DatePickerButton = styled(TouchableOpacity)`
-  padding: ${({ theme }) => theme.spacing.xs}px;
+  padding: ${({ theme }: StyledProps) => theme.spacing.xs}px;
 `;
 
-const TagsContainer = styled.View`
+const TagsContainer = styled(View)`
   flex-direction: row;
   flex-wrap: wrap;
-  gap: ${({ theme }) => theme.spacing.sm}px;
-  margin-bottom: ${({ theme }) => theme.spacing.sm}px;
+  gap: ${({ theme }: StyledProps) => theme.spacing.sm}px;
+  margin-bottom: ${({ theme }: StyledProps) => theme.spacing.sm}px;
 `;
 
-const Tag = styled.View`
+const Tag = styled(View)`
   flex-direction: row;
   align-items: center;
-  background-color: ${({ theme }) => theme.colors.primaryLightest};
-  border-radius: ${({ theme }) => theme.borderRadius.full}px;
-  padding-horizontal: ${({ theme }) => theme.spacing.md}px;
-  padding-vertical: ${({ theme }) => theme.spacing.xs}px;
+  background-color: ${({ theme }: StyledProps) => theme.colors.primaryLightest};
+  border-radius: ${({ theme }: StyledProps) => theme.borderRadius.full}px;
+  padding-horizontal: ${({ theme }: StyledProps) => theme.spacing.md}px;
+  padding-vertical: ${({ theme }: StyledProps) => theme.spacing.xs}px;
   border-width: 1px;
-  border-color: ${({ theme }) => theme.colors.primary};
+  border-color: ${({ theme }: StyledProps) => theme.colors.primary};
 `;
 
-const TagText = styled.Text`
-  font-size: ${({ theme }) => theme.typography.fontSize.sm}px;
-  color: ${({ theme }) => theme.colors.primary};
-  margin-right: ${({ theme }) => theme.spacing.xs}px;
+const TagText = styled(Text)`
+  font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.sm}px;
+  color: ${({ theme }: StyledProps) => theme.colors.primary};
+  margin-right: ${({ theme }: StyledProps) => theme.spacing.xs}px;
 `;
 
 const TagRemoveButton = styled(TouchableOpacity)`
-  margin-left: ${({ theme }) => theme.spacing.xs}px;
+  margin-left: ${({ theme }: StyledProps) => theme.spacing.xs}px;
 `;
 
-const TagInputContainer = styled.View`
+const TagInputContainer = styled(View)`
   flex-direction: row;
-  gap: ${({ theme }) => theme.spacing.sm}px;
+  gap: ${({ theme }: StyledProps) => theme.spacing.sm}px;
 `;
 
 const TagInput = styled(Input)`
@@ -200,32 +219,32 @@ const TagInput = styled(Input)`
 `;
 
 const AddTagButton = styled(TouchableOpacity)`
-  background-color: ${({ theme }) => theme.colors.primary};
-  border-radius: ${({ theme }) => theme.borderRadius.md}px;
-  padding: ${({ theme }) => theme.spacing.md}px;
+  background-color: ${({ theme }: StyledProps) => theme.colors.primary};
+  border-radius: ${({ theme }: StyledProps) => theme.borderRadius.md}px;
+  padding: ${({ theme }: StyledProps) => theme.spacing.md}px;
   align-items: center;
   justify-content: center;
 `;
 
 const SubmitButton = styled(TouchableOpacity)`
-  background-color: ${({ theme }) => theme.colors.primary};
-  border-radius: ${({ theme }) => theme.borderRadius.md}px;
-  padding: ${({ theme }) => theme.spacing.md}px;
+  background-color: ${({ theme }: StyledProps) => theme.colors.primary};
+  border-radius: ${({ theme }: StyledProps) => theme.borderRadius.md}px;
+  padding: ${({ theme }: StyledProps) => theme.spacing.md}px;
   align-items: center;
   justify-content: center;
   flex-direction: row;
-  margin-top: ${({ theme }) => theme.spacing.lg}px;
+  margin-top: ${({ theme }: StyledProps) => theme.spacing.lg}px;
 `;
 
-const SubmitButtonText = styled.Text`
-  font-size: ${({ theme }) => theme.typography.fontSize.lg}px;
-  font-weight: ${({ theme }) => theme.typography.fontWeight.bold};
-  color: ${({ theme }) => theme.colors.surface};
-  margin-left: ${({ theme }) => theme.spacing.sm}px;
+const SubmitButtonText = styled(Text)`
+  font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.lg}px;
+  font-weight: ${({ theme }: StyledProps) => theme.typography.fontWeight.bold};
+  color: ${({ theme }: StyledProps) => theme.colors.surface};
+  margin-left: ${({ theme }: StyledProps) => theme.spacing.sm}px;
 `;
 
 interface EditItemBottomSheetProps {
-  bottomSheetRef: React.RefObject<BottomSheetModal>;
+  bottomSheetRef: React.RefObject<BottomSheetModal | null>;
   itemId: string;
   onItemUpdated?: () => void;
 }
@@ -251,7 +270,8 @@ export const EditItemBottomSheet: React.FC<EditItemBottomSheetProps> = ({
   const [showExpiryDatePicker, setShowExpiryDatePicker] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const scrollViewRef = React.useRef<any>(null);
+  const scrollViewRef = React.useRef<ScrollView>(null);
+  const categoryManagerRef = React.useRef<BottomSheetModal>(null);
 
   // Filter to get only item-type categories (exclude location categories)
   const itemTypeCategories = useMemo(() => {
@@ -294,6 +314,19 @@ export const EditItemBottomSheet: React.FC<EditItemBottomSheetProps> = ({
     }
   }, [itemId]);
 
+  const loadCategoriesCallback = useCallback(async () => {
+    try {
+      const allCategories = await getAllCategories();
+      setCategories(allCategories);
+    } catch (error) {
+      console.error('Error loading categories:', error);
+    }
+  }, []);
+
+  const handleCategoriesChanged = useCallback(() => {
+    loadCategoriesCallback();
+  }, [loadCategoriesCallback]);
+
   const snapPoints = useMemo(() => ['90%'], []);
 
   const keyboardBehavior = useMemo(() => 'interactive', []);
@@ -315,7 +348,7 @@ export const EditItemBottomSheet: React.FC<EditItemBottomSheetProps> = ({
     setTags(tags.filter((tag) => tag !== tagToRemove));
   }, [tags]);
 
-  const handlePurchaseDateChange = useCallback((event: any, selectedDate?: Date) => {
+  const handlePurchaseDateChange = useCallback((_event: unknown, selectedDate?: Date) => {
     if (Platform.OS === 'android') {
       setShowPurchaseDatePicker(false);
     }
@@ -327,7 +360,7 @@ export const EditItemBottomSheet: React.FC<EditItemBottomSheetProps> = ({
     }
   }, []);
 
-  const handleExpiryDateChange = useCallback((event: any, selectedDate?: Date) => {
+  const handleExpiryDateChange = useCallback((_event: unknown, selectedDate?: Date) => {
     if (Platform.OS === 'android') {
       setShowExpiryDatePicker(false);
     }
@@ -409,7 +442,7 @@ export const EditItemBottomSheet: React.FC<EditItemBottomSheetProps> = ({
   ]);
 
   const renderBackdrop = useCallback(
-    (props: any) => <Backdrop {...props} disappearsOnIndex={-1} appearsOnIndex={0} />,
+    (props: Parameters<typeof BottomSheetBackdrop>[0]) => <Backdrop {...props} disappearsOnIndex={-1} appearsOnIndex={0} />,
     []
   );
 
@@ -458,6 +491,10 @@ export const EditItemBottomSheet: React.FC<EditItemBottomSheetProps> = ({
           <CategorySection>
             <CategoryHeader>
               <Label>分类</Label>
+              <ManageCategoriesButton onPress={() => categoryManagerRef.current?.present()} activeOpacity={0.7}>
+                <Ionicons name="create-outline" size={16} color={theme.colors.primary} />
+                <ManageCategoriesText>管理分类</ManageCategoriesText>
+              </ManageCategoriesButton>
             </CategoryHeader>
             <CategoryGrid>
               {itemTypeCategories.map((category) => (
@@ -481,6 +518,10 @@ export const EditItemBottomSheet: React.FC<EditItemBottomSheetProps> = ({
                   </CategoryLabel>
                 </CategoryButton>
               ))}
+              <AddCategoryButton onPress={() => categoryManagerRef.current?.present()} activeOpacity={0.7}>
+                <Ionicons name="add" size={32} color={theme.colors.textLight} />
+                <CategoryLabel isSelected={false}>添加</CategoryLabel>
+              </AddCategoryButton>
             </CategoryGrid>
           </CategorySection>
         </FormSection>
@@ -609,6 +650,10 @@ export const EditItemBottomSheet: React.FC<EditItemBottomSheetProps> = ({
           <SubmitButtonText>保存修改</SubmitButtonText>
         </SubmitButton>
       </BottomSheetScrollView>
+      <CategoryManagerBottomSheet
+        bottomSheetRef={categoryManagerRef}
+        onCategoriesChanged={handleCategoriesChanged}
+      />
     </BottomSheetModal>
   );
 };

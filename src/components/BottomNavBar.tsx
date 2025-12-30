@@ -2,6 +2,7 @@ import React, { useRef } from 'react';
 import { TouchableOpacity, View } from 'react-native';
 import styled from 'styled-components/native';
 import { useTheme } from '../theme/ThemeProvider';
+import type { StyledProps } from '../utils/styledComponents';
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { TabParamList } from '../navigation/types';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -10,7 +11,7 @@ import { BottomSheetModal } from '@gorhom/bottom-sheet';
 import { CreateItemBottomSheet } from './CreateItemBottomSheet';
 import { useInventory } from '../contexts/InventoryContext';
 
-const NavBarContainer = styled.View<{ bottomInset: number }>`
+const NavBarContainer = styled(View)<{ bottomInset: number }>`
   position: absolute;
   bottom: 0;
   left: 0;
@@ -22,13 +23,13 @@ const NavBarContainer = styled.View<{ bottomInset: number }>`
   pointer-events: box-none;
 `;
 
-const NavBar = styled.View`
+const NavBar = styled(View)`
   flex-direction: row;
   align-items: center;
-  background-color: ${({ theme }) => theme.colors.surface};
-  border-radius: ${({ theme }) => theme.borderRadius.full}px;
-  margin: 0 ${({ theme }) => theme.spacing.md}px;
-  padding: ${({ theme }) => theme.spacing.sm}px;
+  background-color: ${({ theme }: StyledProps) => theme.colors.surface};
+  border-radius: ${({ theme }: StyledProps) => theme.borderRadius.full}px;
+  margin: 0 ${({ theme }: StyledProps) => theme.spacing.md}px;
+  padding: ${({ theme }: StyledProps) => theme.spacing.sm}px;
   shadow-color: #000;
   shadow-offset: 0px 4px;
   shadow-opacity: 0.1;
@@ -38,10 +39,10 @@ const NavBar = styled.View`
   border-color: rgba(0, 0, 0, 0.05);
 `;
 
-const TabButtonsContainer = styled.View`
+const TabButtonsContainer = styled(View)`
   flex-direction: row;
   align-items: center;
-  padding-left: ${({ theme }) => theme.spacing.md}px;
+  padding-left: ${({ theme }: StyledProps) => theme.spacing.md}px;
 `;
 
 const TabButton = styled(TouchableOpacity)<{ isActive: boolean }>`
@@ -49,21 +50,21 @@ const TabButton = styled(TouchableOpacity)<{ isActive: boolean }>`
   height: 48px;
   align-items: center;
   justify-content: center;
-  margin-right: ${({ theme }) => theme.spacing.xs}px;
+  margin-right: ${({ theme }: StyledProps) => theme.spacing.xs}px;
 `;
 
-const Separator = styled.View`
+const Separator = styled(View)`
   width: 1px;
   height: 24px;
-  background-color: ${({ theme }) => theme.colors.borderLight};
-  margin: 0 ${({ theme }) => theme.spacing.sm}px;
+  background-color: ${({ theme }: StyledProps) => theme.colors.borderLight};
+  margin: 0 ${({ theme }: StyledProps) => theme.spacing.sm}px;
 `;
 
-const ActionButtonsContainer = styled.View`
+const ActionButtonsContainer = styled(View)`
   flex-direction: row;
   align-items: center;
-  padding-right: ${({ theme }) => theme.spacing.xs}px;
-  gap: ${({ theme }) => theme.spacing.sm}px;
+  padding-right: ${({ theme }: StyledProps) => theme.spacing.xs}px;
+  gap: ${({ theme }: StyledProps) => theme.spacing.sm}px;
 `;
 
 const ActionButton = styled(TouchableOpacity)`
@@ -75,26 +76,26 @@ const ActionButton = styled(TouchableOpacity)`
 `;
 
 const AddButton = styled(ActionButton)`
-  background-color: ${({ theme }) => theme.colors.primary};
+  background-color: ${({ theme }: StyledProps) => theme.colors.primary};
 `;
 
 const AIButton = styled(ActionButton)`
-  background-color: ${({ theme }) => theme.colors.primaryLightest};
+  background-color: ${({ theme }: StyledProps) => theme.colors.primaryLightest};
   width: 48px;
   height: 48px;
   border-radius: 24px;
 `;
 
-const NotificationBadge = styled.View`
+const NotificationBadge = styled(View)`
   position: absolute;
   top: 0px;
   right: 0px;
   width: 12px;
   height: 12px;
   border-radius: 6px;
-  background-color: ${({ theme }) => theme.colors.notification};
+  background-color: ${({ theme }: StyledProps) => theme.colors.notification};
   border-width: 2px;
-  border-color: ${({ theme }) => theme.colors.surface};
+  border-color: ${({ theme }: StyledProps) => theme.colors.surface};
 `;
 
 export const BottomNavBar: React.FC<BottomTabBarProps> = ({ state, navigation }) => {
@@ -132,8 +133,8 @@ export const BottomNavBar: React.FC<BottomTabBarProps> = ({ state, navigation })
               const isFocused = state.index === index;
               const routeName = route.name as keyof TabParamList;
 
-              let iconName: any = 'home-outline';
-              let IconComponent: any = Ionicons;
+              let iconName: string = 'home-outline';
+              let IconComponent: typeof Ionicons | typeof MaterialCommunityIcons = Ionicons;
 
               if (routeName === 'InventoryTab') {
                 iconName = 'list-outline';
