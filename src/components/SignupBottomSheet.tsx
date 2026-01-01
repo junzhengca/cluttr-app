@@ -126,11 +126,13 @@ const BenefitText = styled(Text)`
 interface SignupBottomSheetProps {
   bottomSheetRef: React.RefObject<BottomSheetModal>;
   onLoginPress?: () => void;
+  onSignupSuccess?: () => void;
 }
 
 export const SignupBottomSheet: React.FC<SignupBottomSheetProps> = ({
   bottomSheetRef,
   onLoginPress,
+  onSignupSuccess,
 }) => {
   const { t } = useTranslation();
   const theme = useTheme();
@@ -216,13 +218,20 @@ export const SignupBottomSheet: React.FC<SignupBottomSheetProps> = ({
     try {
       await signup(email.trim(), password);
       handleClose();
+      // Call onSignupSuccess callback after successful signup
+      if (onSignupSuccess) {
+        // Small delay to ensure signup modal is closed
+        setTimeout(() => {
+          onSignupSuccess();
+        }, 300);
+      }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : t('signup.errors.failed');
       setError(errorMessage);
     } finally {
       setIsLoading(false);
     }
-  }, [email, password, confirmPassword, signup, handleClose, t]);
+  }, [email, password, confirmPassword, signup, handleClose, onSignupSuccess, t]);
 
   const handleLoginPress = useCallback(() => {
     handleClose();

@@ -1,7 +1,8 @@
-import { useCallback } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { useDispatch, useSelector, TypedUseSelectorHook } from 'react-redux';
 import type { RootState, AppDispatch } from './index';
 import { selectPendingTodos, selectCompletedTodos } from './slices/todoSlice';
+import { clearUpdateResult } from './slices/settingsSlice';
 import { User } from '../types/api';
 import { Settings } from '../types/settings';
 
@@ -70,10 +71,41 @@ export const useSettings = () => {
   const dispatch = useAppDispatch();
   const settings = useAppSelector((state) => state.settings.settings);
   const isLoading = useAppSelector((state) => state.settings.isLoading);
+  const lastUpdateSuccess = useAppSelector((state) => state.settings.lastUpdateSuccess);
+  const pendingResolversRef = useRef<((value: boolean) => void)[]>([]);
+
+  // Resolve pending promises when update result changes
+  useEffect(() => {
+    if (lastUpdateSuccess !== null && pendingResolversRef.current.length > 0) {
+      const resolvers = [...pendingResolversRef.current];
+      pendingResolversRef.current = [];
+      resolvers.forEach((resolve) => resolve(lastUpdateSuccess));
+      // Clear the result after resolving
+      dispatch(clearUpdateResult());
+    }
+  }, [lastUpdateSuccess, dispatch]);
 
   const updateSettings = useCallback(
-    (updates: Partial<Settings>) => {
-      dispatch({ type: 'settings/UPDATE_SETTINGS', payload: updates });
+    (updates: Partial<Settings>): Promise<boolean> => {
+      return new Promise((resolve) => {
+        // Clear previous result
+        dispatch(clearUpdateResult());
+        
+        // Add resolver to pending list
+        pendingResolversRef.current.push(resolve);
+        
+        // Dispatch update action
+        dispatch({ type: 'settings/UPDATE_SETTINGS', payload: updates });
+        
+        // Timeout after 2 seconds if no result
+        setTimeout(() => {
+          const index = pendingResolversRef.current.indexOf(resolve);
+          if (index !== -1) {
+            pendingResolversRef.current.splice(index, 1);
+            resolve(false);
+          }
+        }, 2000);
+      });
     },
     [dispatch]
   );

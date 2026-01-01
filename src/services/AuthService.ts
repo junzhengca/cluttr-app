@@ -3,12 +3,10 @@ import { readFile, writeFile, deleteFile } from './FileSystemService';
 import { User } from '../types/api';
 
 const ACCESS_TOKEN_KEY = 'access_token';
-const REFRESH_TOKEN_KEY = 'refresh_token';
 const USER_FILE = 'user.json';
 
 interface AuthTokens {
   accessToken: string;
-  refreshToken: string;
 }
 
 /**
@@ -17,15 +15,13 @@ interface AuthTokens {
 export const getAuthTokens = async (): Promise<AuthTokens | null> => {
   try {
     const accessToken = await SecureStore.getItemAsync(ACCESS_TOKEN_KEY);
-    const refreshToken = await SecureStore.getItemAsync(REFRESH_TOKEN_KEY);
 
-    if (!accessToken || !refreshToken) {
+    if (!accessToken) {
       return null;
     }
 
     return {
       accessToken,
-      refreshToken,
     };
   } catch (error) {
     console.error('Error getting auth tokens:', error);
@@ -37,11 +33,10 @@ export const getAuthTokens = async (): Promise<AuthTokens | null> => {
  * Save authentication tokens
  */
 export const saveAuthTokens = async (
-  accessToken: string,
-  refreshToken: string
+  accessToken: string
 ): Promise<boolean> => {
   try {
-    // Validate that tokens are strings and not empty
+    // Validate that token is a string and not empty
     if (!accessToken || typeof accessToken !== 'string') {
       console.error('Error saving auth tokens: accessToken is invalid', {
         type: typeof accessToken,
@@ -50,16 +45,7 @@ export const saveAuthTokens = async (
       return false;
     }
 
-    if (!refreshToken || typeof refreshToken !== 'string') {
-      console.error('Error saving auth tokens: refreshToken is invalid', {
-        type: typeof refreshToken,
-        value: refreshToken,
-      });
-      return false;
-    }
-
     await SecureStore.setItemAsync(ACCESS_TOKEN_KEY, accessToken);
-    await SecureStore.setItemAsync(REFRESH_TOKEN_KEY, refreshToken);
     return true;
   } catch (error) {
     console.error('Error saving auth tokens:', error);
@@ -73,7 +59,6 @@ export const saveAuthTokens = async (
 export const clearAuthTokens = async (): Promise<boolean> => {
   try {
     await SecureStore.deleteItemAsync(ACCESS_TOKEN_KEY);
-    await SecureStore.deleteItemAsync(REFRESH_TOKEN_KEY);
     return true;
   } catch (error) {
     console.error('Error clearing auth tokens:', error);

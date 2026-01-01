@@ -9,14 +9,6 @@ export interface SignupRequest {
   password: string;
 }
 
-export interface RefreshTokenRequest {
-  refreshToken: string;
-}
-
-export interface LogoutRequest {
-  refreshToken: string;
-}
-
 export interface UploadImageRequest {
   image: string;
 }
@@ -33,7 +25,6 @@ export interface UpdateAvatarUrlRequest {
 // Response types
 export interface AuthResponse {
   accessToken: string;
-  refreshToken: string;
   user?: User;
 }
 

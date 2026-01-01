@@ -20,7 +20,6 @@ import {
   saveUser,
 } from '../../services/AuthService';
 import { User } from '../../types/api';
-import { isTokenExpired } from '../../utils/jwtUtils';
 import * as SecureStore from 'expo-secure-store';
 import type { RootState } from '../types';
 
@@ -54,12 +53,6 @@ function* initializeApiClientSaga(action: { type: string; payload: string }) {
     const apiBaseUrl = action.payload;
     const apiClient = new ApiClient(apiBaseUrl);
 
-    // Set up token refresh callback
-    apiClient.setOnTokenRefresh((tokens) => {
-      console.log('[AuthSaga] Token refreshed via callback');
-      saveAuthTokens(tokens.accessToken, tokens.refreshToken);
-    });
-
     // Set up auth error callback
     apiClient.setOnAuthError(() => {
       console.log('[AuthSaga] Auth error callback triggered');
@@ -92,68 +85,15 @@ function* checkAuthSaga() {
   }
 
   try {
-    const tokens: { accessToken: string; refreshToken: string } | null = yield call(getAuthTokens);
+    const tokens: { accessToken: string } | null = yield call(getAuthTokens);
 
-    if (!tokens || !tokens.refreshToken) {
+    if (!tokens || !tokens.accessToken) {
       yield put(setLoading(false));
       return;
     }
 
-    // Check if refresh token is expired
-    if (isTokenExpired(tokens.refreshToken, true)) {
-      // Refresh token is expired, clear all auth data
-      console.log('[AuthSaga] Refresh token expired, clearing auth data');
-      yield call(handleAuthError);
-      yield put(setLoading(false));
-      return;
-    }
-
-    // Refresh token is valid, check if access token needs refresh
-    if (!tokens.accessToken || isTokenExpired(tokens.accessToken, false)) {
-      // Access token is expired or missing, refresh it
-      try {
-        console.log('[AuthSaga] Refreshing access token...');
-        const refreshResponse = yield call(
-          apiClient.refreshAccessToken.bind(apiClient),
-          tokens.refreshToken
-        );
-
-        // Validate token before saving
-        // Note: Refresh token endpoint only returns accessToken, not a new refreshToken
-        if (!refreshResponse?.accessToken) {
-          console.error('[AuthSaga] Invalid token response:', refreshResponse);
-          throw new Error('Invalid token response: missing accessToken');
-        }
-
-        // Save new access token, but keep existing refresh token
-        // The refresh token is long-lived and doesn't change on each refresh
-        const newAccessToken = refreshResponse.accessToken;
-        const existingRefreshToken = tokens.refreshToken; // Keep the existing refresh token
-        
-        const saved = yield call(saveAuthTokens, newAccessToken, existingRefreshToken);
-        if (!saved) {
-          throw new Error('Failed to save authentication tokens');
-        }
-
-        // Set tokens in API client
-        apiClient.setAuthToken(newAccessToken);
-        apiClient.setRefreshToken(existingRefreshToken);
-
-        // Update tokens for verification
-        tokens.accessToken = newAccessToken;
-        // refreshToken stays the same
-      } catch (error) {
-        // Refresh failed, clear auth data
-        console.error('[AuthSaga] Token refresh failed:', error);
-        yield call(handleAuthError);
-        yield put(setLoading(false));
-        return;
-      }
-    } else {
-      // Both tokens are valid, set them in API client
-      apiClient.setAuthToken(tokens.accessToken);
-      apiClient.setRefreshToken(tokens.refreshToken);
-    }
+    // Set access token in API client
+    apiClient.setAuthToken(tokens.accessToken);
 
     // Verify auth by calling /me endpoint
     try {
@@ -207,27 +147,26 @@ function* loginSaga(action: { type: string; payload: { email: string; password: 
   try {
     const response = yield call(apiClient.login.bind(apiClient), email, password);
 
-    // Validate tokens before saving
-    if (!response?.accessToken || !response?.refreshToken) {
+    // Validate token before saving
+    if (!response?.accessToken) {
       console.error('[AuthSaga] Invalid login response:', response);
-      throw new Error('Invalid login response: missing accessToken or refreshToken');
+      throw new Error('Invalid login response: missing accessToken');
     }
 
-    // Save tokens
-    const saved = yield call(saveAuthTokens, response.accessToken, response.refreshToken);
+    // Save token
+    const saved = yield call(saveAuthTokens, response.accessToken);
     if (!saved) {
-      throw new Error('Failed to save authentication tokens');
+      throw new Error('Failed to save authentication token');
     }
 
-    // Verify tokens were saved
+    // Verify token was saved
     const savedTokens = yield call(getAuthTokens);
-    if (!savedTokens || !savedTokens.accessToken || !savedTokens.refreshToken) {
-      throw new Error('Failed to save authentication tokens');
+    if (!savedTokens || !savedTokens.accessToken) {
+      throw new Error('Failed to save authentication token');
     }
 
-    // Set tokens in API client
+    // Set token in API client
     apiClient.setAuthToken(response.accessToken);
-    apiClient.setRefreshToken(response.refreshToken);
 
     // Always get full user info from /me endpoint to ensure we have complete data including avatar
     const userData: User = yield call(apiClient.getCurrentUser.bind(apiClient));
@@ -267,27 +206,26 @@ function* signupSaga(action: { type: string; payload: { email: string; password:
   try {
     const response = yield call(apiClient.signup.bind(apiClient), email, password);
 
-    // Validate tokens before saving
-    if (!response?.accessToken || !response?.refreshToken) {
+    // Validate token before saving
+    if (!response?.accessToken) {
       console.error('[AuthSaga] Invalid signup response:', response);
-      throw new Error('Invalid signup response: missing accessToken or refreshToken');
+      throw new Error('Invalid signup response: missing accessToken');
     }
 
-    // Save tokens
-    const saved = yield call(saveAuthTokens, response.accessToken, response.refreshToken);
+    // Save token
+    const saved = yield call(saveAuthTokens, response.accessToken);
     if (!saved) {
-      throw new Error('Failed to save authentication tokens');
+      throw new Error('Failed to save authentication token');
     }
 
-    // Verify tokens were saved
+    // Verify token was saved
     const savedTokens = yield call(getAuthTokens);
-    if (!savedTokens || !savedTokens.accessToken || !savedTokens.refreshToken) {
-      throw new Error('Failed to save authentication tokens');
+    if (!savedTokens || !savedTokens.accessToken) {
+      throw new Error('Failed to save authentication token');
     }
 
-    // Set tokens in API client
+    // Set token in API client
     apiClient.setAuthToken(response.accessToken);
-    apiClient.setRefreshToken(response.refreshToken);
 
     // Always get full user info from /me endpoint to ensure we have complete data including avatar
     const userData: User = yield call(apiClient.getCurrentUser.bind(apiClient));
@@ -318,26 +256,8 @@ function* signupSaga(action: { type: string; payload: { email: string; password:
 
 function* logoutSaga() {
   console.log('[AuthSaga] logout() called - attempting to disable sync and clear auth');
-  const apiClient: ApiClient = yield select((state: RootState) => state.auth.apiClient);
-
-  if (!apiClient) {
-    yield call(handleAuthError);
-    return;
-  }
-
+  
   try {
-    const tokens = yield call(getAuthTokens);
-    if (tokens?.refreshToken) {
-      try {
-        yield call(apiClient.logout.bind(apiClient), tokens.refreshToken);
-      } catch (error) {
-        console.error('[AuthSaga] Logout API call failed:', error);
-        // Continue with local logout even if API call fails
-      }
-    }
-  } catch (error) {
-    console.error('[AuthSaga] Error during logout:', error);
-  } finally {
     // Disable sync on explicit logout (persist state)
     try {
       yield call(SecureStore.setItemAsync, 'sync_enabled', 'false');
@@ -347,6 +267,9 @@ function* logoutSaga() {
     }
     yield call(handleAuthError);
     console.log('[AuthSaga] Logout successful');
+  } catch (error) {
+    console.error('[AuthSaga] Error during logout:', error);
+    yield call(handleAuthError);
   }
 }
 

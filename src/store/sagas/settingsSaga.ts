@@ -1,5 +1,5 @@
 import { call, put, takeLatest } from 'redux-saga/effects';
-import { setSettings, setLoading } from '../slices/settingsSlice';
+import { setSettings, setLoading, setUpdateResult } from '../slices/settingsSlice';
 import { getSettings, updateSettings as updateSettingsService } from '../../services/SettingsService';
 import { Settings } from '../../types/settings';
 import i18n from '../../i18n/i18n';
@@ -30,16 +30,21 @@ function* loadSettingsSaga() {
 
 function* updateSettingsSaga(action: { type: string; payload: Partial<Settings> }) {
   try {
-    const updated: Settings | false = yield call(updateSettingsService, action.payload);
+    const updated: Settings | null = yield call(updateSettingsService, action.payload);
     if (updated) {
       yield put(setSettings(updated));
+      yield put(setUpdateResult(true));
       // Update i18n language when language setting changes
       if (action.payload.language) {
         i18n.changeLanguage(action.payload.language);
       }
+    } else {
+      yield put(setUpdateResult(false));
+      console.error('[SettingsSaga] Failed to update settings: updateSettingsService returned null');
     }
   } catch (error) {
     console.error('[SettingsSaga] Error updating settings:', error);
+    yield put(setUpdateResult(false));
   }
 }
 

@@ -15,6 +15,7 @@ import { ItemCard } from '../components/ItemCard';
 import { EmptyState } from '../components/EmptyState';
 import { LoginBottomSheet } from '../components/LoginBottomSheet';
 import { SignupBottomSheet } from '../components/SignupBottomSheet';
+import { EnableSyncBottomSheet } from '../components/EnableSyncBottomSheet';
 import { InventoryItem } from '../types/inventory';
 import { RootStackParamList } from '../navigation/types';
 import { useInventory, useSelectedCategory, useAuth } from '../store/hooks';
@@ -53,6 +54,7 @@ export const InventoryScreen: React.FC = () => {
   const { user, isAuthenticated } = useAuth();
   const loginBottomSheetRef = useRef<BottomSheetModal>(null);
   const signupBottomSheetRef = useRef<BottomSheetModal>(null);
+  const enableSyncBottomSheetRef = useRef<BottomSheetModal>(null);
 
   useEffect(() => {
     loadItems();
@@ -137,6 +139,19 @@ export const InventoryScreen: React.FC = () => {
     loginBottomSheetRef.current?.present();
   };
 
+  const handleLoginSuccess = async () => {
+    // Always show the enable sync prompt after login
+    enableSyncBottomSheetRef.current?.present();
+  };
+
+  const handleSyncPromptSkip = async () => {
+    // No-op: just close the modal
+  };
+
+  const handleSyncPromptEnable = async () => {
+    // No-op: sync enabling is handled by EnableSyncBottomSheet
+  };
+
   // Calculate bottom padding for scrollable content
   const bottomPadding = calculateBottomPadding(insets.bottom);
 
@@ -157,10 +172,16 @@ export const InventoryScreen: React.FC = () => {
         <LoginBottomSheet
           bottomSheetRef={loginBottomSheetRef}
           onSignupPress={handleSignupPress}
+          onLoginSuccess={handleLoginSuccess}
         />
         <SignupBottomSheet
           bottomSheetRef={signupBottomSheetRef}
           onLoginPress={handleLoginPress}
+        />
+        <EnableSyncBottomSheet
+          bottomSheetRef={enableSyncBottomSheetRef}
+          onSkip={handleSyncPromptSkip}
+          onEnableSync={handleSyncPromptEnable}
         />
       </Container>
     );
@@ -210,10 +231,16 @@ export const InventoryScreen: React.FC = () => {
       <LoginBottomSheet
         bottomSheetRef={loginBottomSheetRef}
         onSignupPress={handleSignupPress}
+        onLoginSuccess={handleLoginSuccess}
       />
       <SignupBottomSheet
         bottomSheetRef={signupBottomSheetRef}
         onLoginPress={handleLoginPress}
+      />
+      <EnableSyncBottomSheet
+        bottomSheetRef={enableSyncBottomSheetRef}
+        onSkip={handleSyncPromptSkip}
+        onEnableSync={handleSyncPromptEnable}
       />
     </Container>
   );

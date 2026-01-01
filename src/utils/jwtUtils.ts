@@ -21,12 +21,10 @@ export const decodeJWT = (token: string): Record<string, unknown> | null => {
 
 /**
  * Check if a JWT token is expired
- * Returns true if token is expired or invalid
+ * Returns true if token is invalid (tokens never expire, so only validation is performed)
  * @param token - The JWT token to check
- * @param isRefreshToken - Whether this is a refresh token (default: false)
- *                       Refresh tokens without exp claim are considered valid
  */
-export const isTokenExpired = (token: string | null, isRefreshToken = false): boolean => {
+export const isTokenExpired = (token: string | null): boolean => {
   if (!token) {
     console.warn('[JWT] Token is null or empty');
     return true;
@@ -38,29 +36,7 @@ export const isTokenExpired = (token: string | null, isRefreshToken = false): bo
     return true;
   }
 
-  // Refresh tokens without exp claim are considered valid (they don't expire)
-  if (isRefreshToken && !decoded.exp) {
-    return false;
-  }
-
-  // For access tokens, they must have exp claim
-  if (!decoded.exp) {
-    console.warn('[JWT] Access token has no exp claim');
-    return true;
-  }
-
-  const expirationTime = decoded.exp as number;
-  const currentTime = Math.floor(Date.now() / 1000);
-  const secondsUntilExpiration = expirationTime - currentTime;
-
-  // Add 60 second buffer to refresh before actual expiration
-  const isExpired = secondsUntilExpiration < 60;
-
-  // Only log if token is about to expire or has expired
-  if (isExpired || secondsUntilExpiration < 300) {
-    console.log(`[JWT] Token ${isExpired ? 'expired' : 'expiring soon'}: ${secondsUntilExpiration}s remaining (${isRefreshToken ? 'refresh' : 'access'} token)`);
-  }
-
-  return isExpired;
+  // Tokens never expire, so this function only validates token format
+  return false;
 };
 

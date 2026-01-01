@@ -23,6 +23,7 @@ import { EmptyState } from '../components/EmptyState';
 import { EditTodoBottomSheet } from '../components/EditTodoBottomSheet';
 import { LoginBottomSheet } from '../components/LoginBottomSheet';
 import { SignupBottomSheet } from '../components/SignupBottomSheet';
+import { EnableSyncBottomSheet } from '../components/EnableSyncBottomSheet';
 import { SharePanel } from '../components/SharePanel';
 import { RootStackParamList } from '../navigation/types';
 import { useTodos, useAuth } from '../store/hooks';
@@ -146,6 +147,7 @@ export const NotesScreen: React.FC = () => {
   const editBottomSheetRef = useRef<BottomSheetModal>(null);
   const loginBottomSheetRef = useRef<BottomSheetModal>(null);
   const signupBottomSheetRef = useRef<BottomSheetModal>(null);
+  const enableSyncBottomSheetRef = useRef<BottomSheetModal>(null);
   const swipeableRefs = useRef<Map<string, Swipeable>>(new Map());
 
   useEffect(() => {
@@ -180,6 +182,19 @@ export const NotesScreen: React.FC = () => {
   const handleLoginPress = () => {
     signupBottomSheetRef.current?.dismiss();
     loginBottomSheetRef.current?.present();
+  };
+
+  const handleLoginSuccess = async () => {
+    // Always show the enable sync prompt after login
+    enableSyncBottomSheetRef.current?.present();
+  };
+
+  const handleSyncPromptSkip = async () => {
+    // No-op: just close the modal
+  };
+
+  const handleSyncPromptEnable = async () => {
+    // No-op: sync enabling is handled by EnableSyncBottomSheet
   };
 
   const handleAddTodo = async () => {
@@ -300,10 +315,16 @@ export const NotesScreen: React.FC = () => {
         <LoginBottomSheet
           bottomSheetRef={loginBottomSheetRef}
           onSignupPress={handleSignupPress}
+          onLoginSuccess={handleLoginSuccess}
         />
         <SignupBottomSheet
           bottomSheetRef={signupBottomSheetRef}
           onLoginPress={handleLoginPress}
+        />
+        <EnableSyncBottomSheet
+          bottomSheetRef={enableSyncBottomSheetRef}
+          onSkip={handleSyncPromptSkip}
+          onEnableSync={handleSyncPromptEnable}
         />
       </Container>
     );
@@ -387,10 +408,16 @@ export const NotesScreen: React.FC = () => {
         <LoginBottomSheet
           bottomSheetRef={loginBottomSheetRef}
           onSignupPress={handleSignupPress}
+          onLoginSuccess={handleLoginSuccess}
         />
         <SignupBottomSheet
           bottomSheetRef={signupBottomSheetRef}
           onLoginPress={handleLoginPress}
+        />
+        <EnableSyncBottomSheet
+          bottomSheetRef={enableSyncBottomSheetRef}
+          onSkip={handleSyncPromptSkip}
+          onEnableSync={handleSyncPromptEnable}
         />
       </Container>
     </GestureHandlerRootView>

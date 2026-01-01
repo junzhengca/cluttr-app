@@ -77,74 +77,6 @@
           }
         },
         {
-          "name": "Refresh token",
-          "request": {
-            "method": "POST",
-            "header": [],
-            "auth": {
-              "type": "noauth"
-            },
-            "description": "",
-            "url": {
-              "raw": "{{API_ENDPOINT}}/api/auth/refresh",
-              "protocol": "",
-              "host": [
-                "{{API_ENDPOINT}}"
-              ],
-              "path": [
-                "api",
-                "auth",
-                "refresh"
-              ],
-              "query": [],
-              "variable": []
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"refreshToken\": \"{{REFRESH_TOKEN}}\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            }
-          }
-        },
-        {
-          "name": "Logout",
-          "request": {
-            "method": "POST",
-            "header": [],
-            "auth": {
-              "type": "noauth"
-            },
-            "description": "",
-            "url": {
-              "raw": "{{API_ENDPOINT}}/api/auth/logout",
-              "protocol": "",
-              "host": [
-                "{{API_ENDPOINT}}"
-              ],
-              "path": [
-                "api",
-                "auth",
-                "logout"
-              ],
-              "query": [],
-              "variable": []
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"refreshToken\": \"{{REFRESH_TOKEN}}\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            }
-          }
-        },
-        {
           "name": "Current user",
           "request": {
             "method": "GET",
@@ -1047,11 +979,6 @@
     },
     {
       "key": "AUTH_TOKEN",
-      "value": "",
-      "type": "default"
-    },
-    {
-      "key": "REFRESH_TOKEN",
       "value": "",
       "type": "default"
     }

@@ -386,6 +386,25 @@
       "passwordTooShort": "密码至少需要6个字符",
       "failed": "注册失败，请重试。"
     }
+  },
+  "enableSync": {
+    "title": "启用同步？",
+    "subtitle": "让您的数据在所有设备上保持同步",
+    "checkingData": "正在检查您的数据...",
+    "warning": {
+      "title": "数据合并警告",
+      "message": "此设备上有本地数据。如果启用同步，您的本地数据将与云端数据合并。这可能会导致重复的物品或待办事项。"
+    },
+    "benefits": {
+      "sync": "跨设备同步数据 - 永不丢失您的库存",
+      "devices": "从任何设备访问您的库存",
+      "backup": "在云端自动备份您的数据"
+    },
+    "buttons": {
+      "skip": "跳过",
+      "enable": "启用同步",
+      "enabling": "启用中..."
+    }
   }
 }
 

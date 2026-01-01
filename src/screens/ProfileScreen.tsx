@@ -161,7 +161,6 @@ export const ProfileScreen: React.FC = () => {
     const tokens = await getAuthTokens();
     if (tokens) {
       apiClient.setAuthToken(tokens.accessToken);
-      apiClient.setRefreshToken(tokens.refreshToken);
       return apiClient;
     }
     return null;

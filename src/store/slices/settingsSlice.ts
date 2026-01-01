@@ -4,6 +4,7 @@ import { Settings } from '../../types/settings';
 interface SettingsState {
   settings: Settings;
   isLoading: boolean;
+  lastUpdateSuccess: boolean | null;
 }
 
 const initialState: SettingsState = {
@@ -13,6 +14,7 @@ const initialState: SettingsState = {
     language: 'zh-cn',
   },
   isLoading: true,
+  lastUpdateSuccess: null,
 };
 
 const settingsSlice = createSlice({
@@ -25,9 +27,15 @@ const settingsSlice = createSlice({
     setLoading: (state, action: PayloadAction<boolean>) => {
       state.isLoading = action.payload;
     },
+    setUpdateResult: (state, action: PayloadAction<boolean>) => {
+      state.lastUpdateSuccess = action.payload;
+    },
+    clearUpdateResult: (state) => {
+      state.lastUpdateSuccess = null;
+    },
   },
 });
 
-export const { setSettings, setLoading } = settingsSlice.actions;
+export const { setSettings, setLoading, setUpdateResult, clearUpdateResult } = settingsSlice.actions;
 export default settingsSlice.reducer;
 

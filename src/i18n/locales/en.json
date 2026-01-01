@@ -386,6 +386,25 @@
       "passwordTooShort": "Password must be at least 6 characters",
       "failed": "Signup failed. Please try again."
     }
+  },
+  "enableSync": {
+    "title": "Enable Sync?",
+    "subtitle": "Keep your data synchronized across all your devices",
+    "checkingData": "Checking your data...",
+    "warning": {
+      "title": "Data Merge Warning",
+      "message": "You have local data on this device. If you enable sync, your local data will be merged with your cloud data. This may result in duplicate items or todos."
+    },
+    "benefits": {
+      "sync": "Sync your data across devices - never lose your inventory",
+      "devices": "Access your inventory from any device",
+      "backup": "Automatic backup of your data in the cloud"
+    },
+    "buttons": {
+      "skip": "Skip",
+      "enable": "Enable Sync",
+      "enabling": "Enabling..."
+    }
   }
 }
 

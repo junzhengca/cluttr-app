@@ -1,8 +1,6 @@
 import {
   LoginRequest,
   SignupRequest,
-  RefreshTokenRequest,
-  LogoutRequest,
   UploadImageRequest,
   UpdatePasswordRequest,
   UpdateAvatarUrlRequest,
@@ -10,7 +8,6 @@ import {
   User,
   UploadImageResponse,
 } from '../types/api';
-import { isTokenExpired } from '../utils/jwtUtils';
 
 interface RequestOptions {
   method: string;
@@ -21,8 +18,6 @@ interface RequestOptions {
 export class ApiClient {
   private baseUrl: string;
   private authToken: string | null = null;
-  private refreshToken: string | null = null;
-  private onTokenRefresh?: (tokens: { accessToken: string; refreshToken: string }) => void;
   private onAuthError?: () => void;
 
   constructor(baseUrl: string) {
@@ -44,27 +39,6 @@ export class ApiClient {
   }
 
   /**
-   * Set the refresh token
-   */
-  setRefreshToken(token: string | null): void {
-    this.refreshToken = token;
-  }
-
-  /**
-   * Get the current refresh token
-   */
-  getRefreshToken(): string | null {
-    return this.refreshToken;
-  }
-
-  /**
-   * Set callback for token refresh
-   */
-  setOnTokenRefresh(callback: (tokens: { accessToken: string; refreshToken: string }) => void): void {
-    this.onTokenRefresh = callback;
-  }
-
-  /**
    * Set callback for authentication errors
    */
   setOnAuthError(callback: () => void): void {
@@ -72,42 +46,11 @@ export class ApiClient {
   }
 
   /**
-   * Attempt to refresh the access token
-   */
-  private async attemptTokenRefresh(): Promise<boolean> {
-    if (!this.refreshToken) {
-      return false;
-    }
-
-    try {
-      const response = await this.refreshAccessToken(this.refreshToken);
-      this.authToken = response.accessToken;
-      this.refreshToken = response.refreshToken;
-
-      if (this.onTokenRefresh) {
-        this.onTokenRefresh({
-          accessToken: response.accessToken,
-          refreshToken: response.refreshToken,
-        });
-      }
-
-      return true;
-    } catch (error) {
-      console.error('Token refresh failed:', error);
-      if (this.onAuthError) {
-        this.onAuthError();
-      }
-      return false;
-    }
-  }
-
-  /**
    * Request helper (public for use by SyncService)
    */
   public async request<T>(
     endpoint: string,
-    options: RequestOptions,
-    retryOn401 = true
+    options: RequestOptions
   ): Promise<T> {
     const url = `${this.baseUrl}${endpoint}`;
     const isSyncRequest = endpoint.startsWith('/api/sync/');
@@ -129,14 +72,6 @@ export class ApiClient {
         console.log('[ApiClient] Request Body: (none)');
       }
       console.log('[ApiClient] Timestamp:', new Date().toISOString());
-    }
-    
-    // Check if token is expired before making request
-    if (options.requiresAuth && this.authToken && isTokenExpired(this.authToken)) {
-      const refreshed = await this.attemptTokenRefresh();
-      if (!refreshed) {
-        throw new Error('Token expired and refresh failed');
-      }
     }
 
     const headers: Record<string, string> = {
@@ -183,103 +118,17 @@ export class ApiClient {
         console.log('[ApiClient] Response Headers:', JSON.stringify(Object.fromEntries(response.headers.entries()), null, 2));
       }
 
-      // Handle 401 Unauthorized - try to refresh token and retry once
-      if (response.status === 401 && options.requiresAuth && retryOn401) {
+      // Handle 401 Unauthorized - trigger auth error callback
+      if (response.status === 401 && options.requiresAuth) {
         if (isSyncRequest) {
-          console.log('[ApiClient] Received 401, attempting token refresh and retry...');
+          console.log('[ApiClient] Received 401, triggering auth error callback...');
         }
-        const refreshed = await this.attemptTokenRefresh();
-        if (refreshed) {
-          // Retry the request with new token
-          if (this.authToken) {
-            headers.Authorization = `Bearer ${this.authToken}`;
-          }
-          const retryStartTime = Date.now();
-          const retryResponse = await fetch(url, {
-            ...fetchOptions,
-            headers,
-          });
-          const retryDuration = Date.now() - retryStartTime;
-
-          if (!retryResponse.ok) {
-            // If retry also fails, it's a real auth error
-            if (retryResponse.status === 401 && this.onAuthError) {
-              this.onAuthError();
-            }
-            let errorMessage = `Request failed with status ${retryResponse.status}`;
-            let responseBody: unknown = null;
-            
-            // Clone response to read body without consuming the original
-            const clonedRetryResponse = retryResponse.clone();
-            try {
-              const errorData = await clonedRetryResponse.json();
-              responseBody = errorData;
-              errorMessage = errorData.message || errorMessage;
-            } catch {
-              // If response is not JSON, try to get text
-              try {
-                const text = await retryResponse.text();
-                responseBody = text;
-                if (text) {
-                  errorMessage = text;
-                }
-              } catch {
-                // If response is not text, use default error message
-              }
-            }
-            
-            // Verbose logging for sync error responses
-            if (isSyncRequest) {
-              console.error('[ApiClient] ========== SYNC REQUEST FAILED (RETRY) ==========');
-              console.error('[ApiClient] Endpoint:', endpoint);
-              console.error('[ApiClient] Status:', retryResponse.status, retryResponse.statusText);
-              console.error('[ApiClient] Retry Duration:', retryDuration, 'ms');
-              console.error('[ApiClient] Error Message:', errorMessage);
-              console.error('[ApiClient] Response Body:', JSON.stringify(responseBody, null, 2));
-              console.error('[ApiClient] ================================================');
-            }
-            
-            // Create error with response body attached for verbose logging
-            const error = new Error(errorMessage);
-            (error as Error & { responseBody?: unknown }).responseBody = responseBody;
-            (error as Error & { status?: number }).status = retryResponse.status;
-            throw error;
-          }
-
-          // Handle empty responses (e.g., 204 No Content)
-          if (retryResponse.status === 204 || retryResponse.headers.get('content-length') === '0') {
-            if (isSyncRequest) {
-              console.log('[ApiClient] Response Body: (empty - 204 No Content)');
-              console.log('[ApiClient] Total Duration (with retry):', Date.now() - requestStartTime, 'ms');
-              console.log('[ApiClient] ========== SYNC REQUEST COMPLETE ==========');
-            }
-            return {} as T;
-          }
-
-          const retryResponseData = await retryResponse.json();
-          
-          // Verbose logging for successful sync retry responses
-          if (isSyncRequest) {
-            const responseStr = JSON.stringify(retryResponseData);
-            const responseSize = new Blob([responseStr]).size;
-            console.log('[ApiClient] Response Body Size:', responseSize, 'bytes');
-            console.log('[ApiClient] Response Body:', JSON.stringify(retryResponseData, null, 2));
-            console.log('[ApiClient] Total Duration (with retry):', Date.now() - requestStartTime, 'ms');
-            console.log('[ApiClient] ========== SYNC REQUEST COMPLETE ==========');
-          }
-          
-          return retryResponseData;
-        } else {
-          // Refresh failed, throw error
-          throw new Error('Authentication failed');
+        if (this.onAuthError) {
+          this.onAuthError();
         }
       }
 
       if (!response.ok) {
-        // Handle 401 that we couldn't retry
-        if (response.status === 401 && options.requiresAuth && this.onAuthError) {
-          this.onAuthError();
-        }
         let errorMessage = `Request failed with status ${response.status}`;
         let responseBody: unknown = null;
         
@@ -381,30 +230,6 @@ export class ApiClient {
   async signup(email: string, password: string): Promise<AuthResponse> {
     const request: SignupRequest = { email, password };
     return this.request<AuthResponse>('/api/auth/signup', {
-      method: 'POST',
-      body: request,
-      requiresAuth: false,
-    });
-  }
-
-  /**
-   * Refresh access token using refresh token
-   */
-  async refreshAccessToken(refreshToken: string): Promise<AuthResponse> {
-    const request: RefreshTokenRequest = { refreshToken };
-    return this.request<AuthResponse>('/api/auth/refresh', {
-      method: 'POST',
-      body: request,
-      requiresAuth: false,
-    });
-  }
-
-  /**
-   * Logout with refresh token
-   */
-  async logout(refreshToken: string): Promise<void> {
-    const request: LogoutRequest = { refreshToken };
-    return this.request<void>('/api/auth/logout', {
       method: 'POST',
       body: request,
       requiresAuth: false,

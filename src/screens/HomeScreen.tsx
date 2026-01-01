@@ -17,10 +17,12 @@ import { RecentlyAdded } from '../components/RecentlyAdded';
 import { EmptyState } from '../components/EmptyState';
 import { LoginBottomSheet } from '../components/LoginBottomSheet';
 import { SignupBottomSheet } from '../components/SignupBottomSheet';
+import { EnableSyncBottomSheet } from '../components/EnableSyncBottomSheet';
 import { InventoryItem } from '../types/inventory';
 import { RootStackParamList, TabParamList } from '../navigation/types';
-import { useInventory, useSelectedCategory, useAuth } from '../store/hooks';
+import { useInventory, useSelectedCategory, useAuth, useSync } from '../store/hooks';
 import { calculateBottomPadding } from '../utils/layout';
+import * as SecureStore from 'expo-secure-store';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -49,12 +51,45 @@ export const HomeScreen: React.FC = () => {
   const { items, loading: isLoading, loadItems } = useInventory();
   const { setHomeCategory, setInventoryCategory } = useSelectedCategory();
   const { user, isAuthenticated } = useAuth();
+  const { isSyncEnabled } = useSync();
   const loginBottomSheetRef = useRef<BottomSheetModal>(null);
   const signupBottomSheetRef = useRef<BottomSheetModal>(null);
+  const enableSyncBottomSheetRef = useRef<BottomSheetModal>(null);
 
   useEffect(() => {
     loadItems();
   }, [loadItems]);
+
+  const handleLoginSuccess = async () => {
+    // Always show the enable sync prompt after login
+    enableSyncBottomSheetRef.current?.present();
+  };
+
+  const handleSignupSuccess = async () => {
+    // Check if we should show the enable sync prompt
+    if (isSyncEnabled) {
+      return;
+    }
+
+    // Check if we've already shown the prompt
+    const hasShownPrompt = await SecureStore.getItemAsync('has_shown_sync_prompt');
+    if (hasShownPrompt === 'true') {
+      return;
+    }
+
+    // Show the enable sync prompt
+    enableSyncBottomSheetRef.current?.present();
+  };
+
+  const handleSyncPromptSkip = async () => {
+    // Mark that we've shown the prompt
+    await SecureStore.setItemAsync('has_shown_sync_prompt', 'true');
+  };
+
+  const handleSyncPromptEnable = async () => {
+    // Mark that we've shown the prompt
+    await SecureStore.setItemAsync('has_shown_sync_prompt', 'true');
+  };
 
   // Filter items based on selected category and search query
   const filteredItems = useMemo(() => {
@@ -158,10 +193,17 @@ export const HomeScreen: React.FC = () => {
         <LoginBottomSheet
           bottomSheetRef={loginBottomSheetRef}
           onSignupPress={handleSignupPress}
+          onLoginSuccess={handleLoginSuccess}
         />
         <SignupBottomSheet
           bottomSheetRef={signupBottomSheetRef}
           onLoginPress={handleLoginPress}
+          onSignupSuccess={handleSignupSuccess}
+        />
+        <EnableSyncBottomSheet
+          bottomSheetRef={enableSyncBottomSheetRef}
+          onSkip={handleSyncPromptSkip}
+          onEnableSync={handleSyncPromptEnable}
         />
       </Container>
     );
@@ -210,10 +252,17 @@ export const HomeScreen: React.FC = () => {
       <LoginBottomSheet
         bottomSheetRef={loginBottomSheetRef}
         onSignupPress={handleSignupPress}
+        onLoginSuccess={handleLoginSuccess}
       />
       <SignupBottomSheet
         bottomSheetRef={signupBottomSheetRef}
         onLoginPress={handleLoginPress}
+        onSignupSuccess={handleSignupSuccess}
+      />
+      <EnableSyncBottomSheet
+        bottomSheetRef={enableSyncBottomSheetRef}
+        onSkip={handleSyncPromptSkip}
+        onEnableSync={handleSyncPromptEnable}
       />
     </Container>
   );
