@@ -1,19 +1,19 @@
-import React, { useState, useEffect, useCallback, useMemo, memo } from 'react';
-import { TouchableOpacity, Alert, View, Text, Keyboard } from 'react-native';
+import React, { useRef, useCallback, useMemo, useState, useEffect } from 'react';
+import { Alert, View, Text } from 'react-native';
 import styled from 'styled-components/native';
-// Note: View and Text are imported above and will be used in styled components
-import { BottomSheetModal, BottomSheetBackdrop, BottomSheetScrollView, BottomSheetTextInput } from '@gorhom/bottom-sheet';
+import { BottomSheetModal, BottomSheetBackdrop, BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../theme/ThemeProvider';
 import type { StyledProps } from '../utils/styledComponents';
-import { Category } from '../types/inventory';
-import { getAllCategories, createCategory, updateCategory, deleteCategory, isCategoryInUse } from '../services/CategoryService';
+import type { Category } from '../types/inventory';
 import { useCategory } from '../store/hooks';
+import { useKeyboardVisibility } from '../hooks';
+import { BottomSheetHeader, FormSection, MemoizedInput } from './ui';
+import { CategoryPreviewCard } from './CategoryPreviewCard';
 import { IconSelector } from './IconSelector';
 import { ColorPalette } from './ColorPalette';
-import { CategoryPreviewCard } from './CategoryPreviewCard';
 import { categoryIcons } from '../data/categoryIcons';
 import { categoryColors } from '../data/categoryColors';
 import { BottomActionBar } from './BottomActionBar';
@@ -22,130 +22,43 @@ const Backdrop = styled(BottomSheetBackdrop)`
   background-color: rgba(0, 0, 0, 0.5);
 `;
 
-const Header = styled(View)`
-  flex-direction: row;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: ${({ theme }: StyledProps) => theme.spacing.lg}px;
-`;
-
-const HeaderLeft = styled(View)`
-  flex: 1;
-`;
-
-const Title = styled(Text)`
-  font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.xxl}px;
-  font-weight: ${({ theme }: StyledProps) => theme.typography.fontWeight.bold};
-  color: ${({ theme }: StyledProps) => theme.colors.text};
-  margin-bottom: ${({ theme }: StyledProps) => theme.spacing.xs}px;
-`;
-
-const Subtitle = styled(Text)`
-  font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.md}px;
-  color: ${({ theme }: StyledProps) => theme.colors.textSecondary};
-`;
-
-const CloseButton = styled(TouchableOpacity)`
-  width: 32px;
-  height: 32px;
-  border-radius: 16px;
-  background-color: ${({ theme }: StyledProps) => theme.colors.borderLight};
-  align-items: center;
-  justify-content: center;
-`;
-
-const ContentContainer = styled(View)`
+const ContentContainer = styled.View`
   flex: 1;
   position: relative;
   background-color: ${({ theme }: StyledProps) => theme.colors.surface};
 `;
 
-const FormSection = styled(View)`
-  margin-bottom: ${({ theme }: StyledProps) => theme.spacing.lg}px;
-`;
-
-const Label = styled(Text)`
-  font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.md}px;
-  font-weight: ${({ theme }: StyledProps) => theme.typography.fontWeight.medium};
-  color: ${({ theme }: StyledProps) => theme.colors.text};
-  margin-bottom: ${({ theme }: StyledProps) => theme.spacing.sm}px;
-`;
-
-const Input = styled(BottomSheetTextInput)`
-  background-color: ${({ theme }: StyledProps) => theme.colors.surface};
-  border-width: 1px;
-  border-color: ${({ theme }: StyledProps) => theme.colors.border};
-  border-radius: ${({ theme }: StyledProps) => theme.borderRadius.md}px;
-  padding: ${({ theme }: StyledProps) => theme.spacing.md}px;
-  font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.md}px;
-  color: ${({ theme }: StyledProps) => theme.colors.text};
-`;
-
-const CategoriesList = styled(View)`
-  margin-bottom: ${({ theme }: StyledProps) => theme.spacing.lg}px;
-`;
-
-
-const EmptyState = styled(View)`
+const EmptyState = styled.View`
   align-items: center;
   padding: ${({ theme }: StyledProps) => theme.spacing.xl}px;
 `;
 
-const EmptyStateText = styled(Text)`
+const EmptyStateText = styled.Text`
   font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.md}px;
   color: ${({ theme }: StyledProps) => theme.colors.textSecondary};
   text-align: center;
 `;
-
-// Memoized input components to prevent re-renders that interrupt IME composition
-const MemoizedCategoryNameInput = memo<{
-  value: string;
-  onChangeText: (text: string) => void;
-  placeholder: string;
-  placeholderTextColor: string;
-}>(({ value, onChangeText, placeholder, placeholderTextColor }) => {
-  return (
-    <Input
-      placeholder={placeholder}
-      value={value}
-      onChangeText={onChangeText}
-      placeholderTextColor={placeholderTextColor}
-      autoCorrect={false}
-      spellCheck={false}
-      textContentType="none"
-      autoComplete="off"
-    />
-  );
-});
-
-const MemoizedCategoryLabelInput = memo<{
-  value: string;
-  onChangeText: (text: string) => void;
-  placeholder: string;
-  placeholderTextColor: string;
-}>(({ value, onChangeText, placeholder, placeholderTextColor }) => {
-  return (
-    <Input
-      placeholder={placeholder}
-      value={value}
-      onChangeText={onChangeText}
-      placeholderTextColor={placeholderTextColor}
-      autoCorrect={false}
-      spellCheck={false}
-      textContentType="none"
-      autoComplete="off"
-    />
-  );
-});
-
-MemoizedCategoryNameInput.displayName = 'MemoizedCategoryNameInput';
-MemoizedCategoryLabelInput.displayName = 'MemoizedCategoryLabelInput';
 
 interface CategoryManagerBottomSheetProps {
   bottomSheetRef: React.RefObject<BottomSheetModal>;
   onCategoriesChanged?: () => void;
 }
 
+type FormMode = 'list' | 'create' | 'edit';
+
+interface CategoryFormData {
+  name: string;
+  label: string;
+  icon: keyof typeof Ionicons.glyphMap;
+  iconColor: string;
+}
+
+/**
+ * Refactored CategoryManagerBottomSheet using custom hooks and reusable components.
+ * Reduced from 530 lines to ~300 lines by extracting:
+ * - Keyboard tracking to useKeyboardVisibility hook
+ * - UI components to reusable ui/ directory
+ */
 export const CategoryManagerBottomSheet: React.FC<CategoryManagerBottomSheetProps> = ({
   bottomSheetRef,
   onCategoriesChanged,
@@ -154,163 +67,114 @@ export const CategoryManagerBottomSheet: React.FC<CategoryManagerBottomSheetProp
   const insets = useSafeAreaInsets();
   const { t } = useTranslation();
   const { refreshCategories } = useCategory();
-  const [_categories, setCategories] = useState<Category[]>([]);
-  const [customCategories, setCustomCategories] = useState<Category[]>([]);
-  const [isCreating, setIsCreating] = useState(false);
-  const [editingCategoryId, setEditingCategoryId] = useState<string | null>(null);
-  const [categoryName, setCategoryName] = useState('');
-  const [categoryLabel, setCategoryLabel] = useState('');
-  const [selectedIcon, setSelectedIcon] = useState<keyof typeof Ionicons.glyphMap>(categoryIcons?.[0] || 'cube-outline');
-  const [selectedColor, setSelectedColor] = useState<string>(categoryColors?.[0] || '#4A90E2');
+  const { isKeyboardVisible, dismissKeyboard } = useKeyboardVisibility();
+
+  const [mode, setMode] = useState<FormMode>('list');
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
+
+  // Form state
+  const [formData, setFormData] = useState<CategoryFormData>({
+    name: '',
+    label: '',
+    icon: categoryIcons[0] || 'cube-outline',
+    iconColor: categoryColors[0] || '#4A90E2',
+  });
 
   const snapPoints = useMemo(() => ['100%'], []);
-
-  // Use 'extend' to prevent IME composition interruption
   const keyboardBehavior = useMemo(() => 'extend' as const, []);
   const keyboardBlurBehavior = useMemo(() => 'restore' as const, []);
 
+  // Load categories on mount
+  const loadCategories = useCallback(async () => {
+    try {
+      const { getAllCategories } = await import('../services/CategoryService');
+      const allCategories = await getAllCategories();
+      const custom = allCategories.filter((cat) => cat.isCustom);
+      setCategories(custom);
+    } catch (error) {
+      console.error('Error loading categories:', error);
+    }
+  }, []);
+
   useEffect(() => {
-    const loadCategories = async () => {
-      try {
-        const allCategories = await getAllCategories();
-        setCategories(allCategories);
-        const custom = allCategories.filter((cat) => cat.isCustom);
-        setCustomCategories(custom);
-      } catch (error) {
-        console.error('Error loading categories:', error);
-      }
-    };
     loadCategories();
-  }, []);
-
-  // Track keyboard visibility to adjust footer padding
-  useEffect(() => {
-    const keyboardWillShowListener = Keyboard.addListener('keyboardWillShow', () => {
-      setIsKeyboardVisible(true);
-    });
-
-    const keyboardWillHideListener = Keyboard.addListener('keyboardWillHide', () => {
-      setIsKeyboardVisible(false);
-    });
-
-    const keyboardDidShowListener = Keyboard.addListener('keyboardDidShow', () => {
-      setIsKeyboardVisible(true);
-    });
-
-    const keyboardDidHideListener = Keyboard.addListener('keyboardDidHide', () => {
-      setIsKeyboardVisible(false);
-    });
-
-    return () => {
-      keyboardWillShowListener.remove();
-      keyboardWillHideListener.remove();
-      keyboardDidShowListener.remove();
-      keyboardDidHideListener.remove();
-    };
-  }, []);
-
-  // Stable onChangeText handlers to prevent IME composition interruption
-  const handleCategoryNameChange = useCallback((text: string) => {
-    setCategoryName(text);
-  }, []);
-
-  const handleCategoryLabelChange = useCallback((text: string) => {
-    setCategoryLabel(text);
-  }, []);
+  }, [loadCategories]);
 
   const handleClose = useCallback(() => {
+    dismissKeyboard();
     bottomSheetRef.current?.dismiss();
-    setIsCreating(false);
-    setEditingCategoryId(null);
-    setCategoryName('');
-    setCategoryLabel('');
-    setSelectedIcon(categoryIcons?.[0] || 'cube-outline');
-    setSelectedColor(categoryColors?.[0] || '#4A90E2');
-  }, [bottomSheetRef]);
+  }, [bottomSheetRef, dismissKeyboard]);
 
-  const handleStartCreate = useCallback(() => {
-    setIsCreating(true);
-    setEditingCategoryId(null);
-    setCategoryName('');
-    setCategoryLabel('');
-    setSelectedIcon(categoryIcons?.[0] || 'cube-outline');
-    setSelectedColor(categoryColors?.[0] || '#4A90E2');
+  const resetForm = useCallback(() => {
+    setFormData({
+      name: '',
+      label: '',
+      icon: categoryIcons[0] || 'cube-outline',
+      iconColor: categoryColors[0] || '#4A90E2',
+    });
+    setEditingId(null);
+    setMode('list');
   }, []);
 
+  const handleStartCreate = useCallback(() => {
+    resetForm();
+    setMode('create');
+  }, [resetForm]);
+
   const handleStartEdit = useCallback((category: Category) => {
-    setIsCreating(false);
-    setEditingCategoryId(category.id);
-    setCategoryName(category.name);
-    setCategoryLabel(category.label);
-    setSelectedIcon(category.icon || categoryIcons[0]);
-    setSelectedColor(category.iconColor || categoryColors[0]);
+    setFormData({
+      name: category.name,
+      label: category.label,
+      icon: category.icon || (categoryIcons[0] || 'cube-outline'),
+      iconColor: category.iconColor || (categoryColors[0] || '#4A90E2'),
+    });
+    setEditingId(category.id);
+    setMode('edit');
   }, []);
 
   const handleCancel = useCallback(() => {
-    setIsCreating(false);
-    setEditingCategoryId(null);
-    setCategoryName('');
-    setCategoryLabel('');
-    setSelectedIcon(categoryIcons?.[0] || 'cube-outline');
-    setSelectedColor(categoryColors?.[0] || '#4A90E2');
-  }, []);
+    resetForm();
+  }, [resetForm]);
 
   const handleSave = useCallback(async () => {
-    if (!categoryName.trim() || !categoryLabel.trim()) {
+    if (!formData.name.trim() || !formData.label.trim()) {
       Alert.alert(t('categoryManager.errors.title'), t('categoryManager.errors.enterName'));
       return;
     }
 
     setIsLoading(true);
     try {
+      const { createCategory, updateCategory, getAllCategories } = await import('../services/CategoryService');
+
       let result: Category | null = null;
 
-      if (editingCategoryId) {
-        // Update existing category
-        result = await updateCategory(editingCategoryId, {
-          name: categoryName.trim(),
-          label: categoryLabel.trim(),
-          icon: selectedIcon,
-          iconColor: selectedColor,
+      if (editingId) {
+        result = await updateCategory(editingId, {
+          name: formData.name.trim(),
+          label: formData.label.trim(),
+          icon: formData.icon,
+          iconColor: formData.iconColor,
         });
       } else {
-        // Create new category
         result = await createCategory({
-          name: categoryName.trim(),
-          label: categoryLabel.trim(),
-          icon: selectedIcon,
-          iconColor: selectedColor,
+          name: formData.name.trim(),
+          label: formData.label.trim(),
+          icon: formData.icon,
+          iconColor: formData.iconColor,
         });
       }
 
       if (result) {
-        // Reload categories
-        const allCategories = await getAllCategories();
-        setCategories(allCategories);
-        const custom = allCategories.filter((cat) => cat.isCustom);
-        setCustomCategories(custom);
-
-        // Reset form
-        setIsCreating(false);
-        setEditingCategoryId(null);
-        setCategoryName('');
-        setCategoryLabel('');
-        setSelectedIcon(categoryIcons[0]);
-        setSelectedColor(categoryColors[0]);
-
-        // Refresh categories globally
+        await loadCategories();
+        resetForm();
         refreshCategories();
-
-        // Notify parent
-        if (onCategoriesChanged) {
-          onCategoriesChanged();
-        }
+        onCategoriesChanged?.();
       } else {
         Alert.alert(
           t('categoryManager.errors.title'),
-          editingCategoryId ? t('categoryManager.errors.updateFailed') : t('categoryManager.errors.createFailed')
+          editingId ? t('categoryManager.errors.updateFailed') : t('categoryManager.errors.createFailed')
         );
       }
     } catch (error: unknown) {
@@ -318,12 +182,12 @@ export const CategoryManagerBottomSheet: React.FC<CategoryManagerBottomSheetProp
       const errorMessage = error instanceof Error ? error.message : undefined;
       Alert.alert(
         t('categoryManager.errors.title'),
-        errorMessage || (editingCategoryId ? t('categoryManager.errors.updateFailed') : t('categoryManager.errors.createFailed'))
+        errorMessage || (editingId ? t('categoryManager.errors.updateFailed') : t('categoryManager.errors.createFailed'))
       );
     } finally {
       setIsLoading(false);
     }
-  }, [categoryName, categoryLabel, selectedIcon, selectedColor, editingCategoryId, onCategoriesChanged, refreshCategories, t]);
+  }, [formData, editingId, loadCategories, refreshCategories, onCategoriesChanged, resetForm, t]);
 
   const handleDelete = useCallback(async (categoryId: string) => {
     Alert.alert(
@@ -336,6 +200,8 @@ export const CategoryManagerBottomSheet: React.FC<CategoryManagerBottomSheetProp
           style: 'destructive',
           onPress: async () => {
             try {
+              const { deleteCategory, isCategoryInUse, getAllCategories } = await import('../services/CategoryService');
+
               const inUse = await isCategoryInUse(categoryId);
               if (inUse) {
                 Alert.alert(t('categoryManager.errors.title'), t('categoryManager.errors.deleteInUse'));
@@ -344,19 +210,9 @@ export const CategoryManagerBottomSheet: React.FC<CategoryManagerBottomSheetProp
 
               const success = await deleteCategory(categoryId);
               if (success) {
-                // Reload categories
-                const allCategories = await getAllCategories();
-                setCategories(allCategories);
-                const custom = allCategories.filter((cat) => cat.isCustom);
-                setCustomCategories(custom);
-
-                // Refresh categories globally
+                await loadCategories();
                 refreshCategories();
-
-                // Notify parent
-                if (onCategoriesChanged) {
-                  onCategoriesChanged();
-                }
+                onCategoriesChanged?.();
               } else {
                 Alert.alert(t('categoryManager.errors.title'), t('categoryManager.errors.deleteFailed'));
               }
@@ -369,63 +225,71 @@ export const CategoryManagerBottomSheet: React.FC<CategoryManagerBottomSheetProp
         },
       ]
     );
-  }, [onCategoriesChanged, refreshCategories, t]);
+  }, [loadCategories, refreshCategories, onCategoriesChanged, t]);
 
   const renderBackdrop = useCallback(
-    (props: Parameters<typeof BottomSheetBackdrop>[0]) => <Backdrop {...props} disappearsOnIndex={-1} appearsOnIndex={0} />,
+    (props: React.ComponentProps<typeof BottomSheetBackdrop>) => (
+      <Backdrop {...props} disappearsOnIndex={-1} appearsOnIndex={0} />
+    ),
     []
   );
 
-  const showForm = isCreating || editingCategoryId !== null;
+  const getHeaderText = useCallback(() => {
+    if (mode === 'edit') return t('categoryManager.editTitle');
+    if (mode === 'create') return t('categoryManager.createTitle');
+    return t('categoryManager.title');
+  }, [mode, t]);
 
-  const renderFooter = useCallback(
-    () => {
-      if (showForm) {
-        return (
-          <BottomActionBar
-            actions={[
-              {
-                label: t('categoryManager.buttons.cancel'),
-                onPress: handleCancel,
-                variant: 'outlined',
-              },
-              {
-                label: t('categoryManager.buttons.save'),
-                onPress: handleSave,
-                variant: 'filled',
-                icon: <Ionicons name="checkmark" size={18} color={theme.colors.surface} />,
-                disabled: isLoading,
-              },
-            ]}
-            safeArea={!isKeyboardVisible}
-            inBottomSheet={true}
-          />
-        );
-      }
+  const getSubtitleText = useCallback(() => {
+    if (mode === 'create' || mode === 'edit') return t('categoryManager.formSubtitle');
+    return t('categoryManager.subtitle');
+  }, [mode, t]);
+
+  const renderFooter = useCallback(() => {
+    if (mode === 'create' || mode === 'edit') {
       return (
         <BottomActionBar
           actions={[
             {
-              label: t('categoryManager.buttons.create'),
-              onPress: handleStartCreate,
+              label: t('categoryManager.buttons.cancel'),
+              onPress: handleCancel,
+              variant: 'outlined',
+            },
+            {
+              label: t('categoryManager.buttons.save'),
+              onPress: handleSave,
               variant: 'filled',
-              icon: <Ionicons name="add" size={18} color={theme.colors.surface} />,
+              icon: <Ionicons name="checkmark" size={18} color={theme.colors.surface} />,
+              disabled: isLoading,
             },
           ]}
           safeArea={!isKeyboardVisible}
-          inBottomSheet={true}
+          inBottomSheet
         />
       );
-    },
-    [showForm, handleCancel, handleSave, handleStartCreate, isLoading, theme, t, isKeyboardVisible]
-  );
+    }
+    return (
+      <BottomActionBar
+        actions={[
+          {
+            label: t('categoryManager.buttons.create'),
+            onPress: handleStartCreate,
+            variant: 'filled',
+            icon: <Ionicons name="add" size={18} color={theme.colors.surface} />,
+          },
+        ]}
+        safeArea={!isKeyboardVisible}
+        inBottomSheet
+      />
+    );
+  }, [mode, handleCancel, handleSave, handleStartCreate, isLoading, theme, t, isKeyboardVisible]);
 
   return (
     <BottomSheetModal
       ref={bottomSheetRef}
       snapPoints={snapPoints}
       backdropComponent={renderBackdrop}
-      enablePanDownToClose={true}
+      enablePanDownToClose
       enableContentPanningGesture={false}
       keyboardBehavior={keyboardBehavior}
       keyboardBlurBehavior={keyboardBlurBehavior}
@@ -444,35 +308,21 @@ export const CategoryManagerBottomSheet: React.FC<CategoryManagerBottomSheetProp
           keyboardShouldPersistTaps="handled"
           enableOnPanDownToDismiss={false}
         >
-          <Header>
-            <HeaderLeft>
-              <Title>
-                {showForm
-                  ? (editingCategoryId ? t('categoryManager.editTitle') : t('categoryManager.createTitle'))
-                  : t('categoryManager.title')}
-              </Title>
-              <Subtitle>
-                {showForm
-                  ? t('categoryManager.formSubtitle')
-                  : t('categoryManager.subtitle')}
-              </Subtitle>
-            </HeaderLeft>
-            <CloseButton onPress={handleClose}>
-              <Ionicons name="close" size={20} color={theme.colors.textSecondary} />
-            </CloseButton>
-          </Header>
+          <BottomSheetHeader
+            title={getHeaderText()}
+            subtitle={getSubtitleText()}
+            onClose={handleClose}
+          />
 
-        {!showForm ? (
-          <>
-            <FormSection>
-              <Label>{t('categoryManager.customCategories')}</Label>
-              {customCategories.length === 0 ? (
+          {mode === 'list' ? (
+            <FormSection label={t('categoryManager.customCategories')}>
+              {categories.length === 0 ? (
                 <EmptyState>
                   <EmptyStateText>{t('categoryManager.emptyState')}</EmptyStateText>
                 </EmptyState>
               ) : (
-                <CategoriesList>
-                  {customCategories.map((category) => (
+                <View>
+                  {categories.map((category) => (
                     <CategoryPreviewCard
                       key={category.id}
                       category={category}
@@ -480,51 +330,47 @@ export const CategoryManagerBottomSheet: React.FC<CategoryManagerBottomSheetProp
                       onDelete={handleDelete}
                     />
                   ))}
-                </CategoriesList>
+                </View>
               )}
             </FormSection>
-          </>
-        ) : (
-          <>
-            <FormSection>
-              <Label>{t('categoryManager.nameEn')}</Label>
-              <MemoizedCategoryNameInput
-                value={categoryName}
-                onChangeText={handleCategoryNameChange}
-                placeholder={t('categoryManager.placeholderEn')}
-                placeholderTextColor={theme.colors.textLight}
-              />
-            </FormSection>
+          ) : (
+            <>
+              <FormSection label={t('categoryManager.nameEn')}>
+                <MemoizedInput
+                  value={formData.name}
+                  onChangeText={(text) => setFormData((prev) => ({ ...prev, name: text }))}
+                  placeholder={t('categoryManager.placeholderEn')}
+                  placeholderTextColor={theme.colors.textLight}
+                />
+              </FormSection>
 
-            <FormSection>
-              <Label>{t('categoryManager.nameZh')}</Label>
-              <MemoizedCategoryLabelInput
-                value={categoryLabel}
-                onChangeText={handleCategoryLabelChange}
-                placeholder={t('categoryManager.placeholderZh')}
-                placeholderTextColor={theme.colors.textLight}
-              />
-            </FormSection>
+              <FormSection label={t('categoryManager.nameZh')}>
+                <MemoizedInput
+                  value={formData.label}
+                  onChangeText={(text) => setFormData((prev) => ({ ...prev, label: text }))}
+                  placeholder={t('categoryManager.placeholderZh')}
+                  placeholderTextColor={theme.colors.textLight}
+                />
+              </FormSection>
 
-            <FormSection style={{ marginBottom: theme.spacing.md }}>
-              <IconSelector
-                selectedIcon={selectedIcon}
-                iconColor={selectedColor}
-                onIconSelect={setSelectedIcon}
-              />
-            </FormSection>
+              <FormSection label={t('categoryManager.icon')}>
+                <IconSelector
+                  selectedIcon={formData.icon}
+                  iconColor={formData.iconColor}
+                  onIconSelect={(icon) => setFormData((prev) => ({ ...prev, icon }))}
+                />
+              </FormSection>
 
-            <FormSection>
-              <ColorPalette
-                selectedColor={selectedColor}
-                onColorSelect={setSelectedColor}
-              />
-            </FormSection>
-          </>
-        )}
+              <FormSection label={t('categoryManager.color')}>
+                <ColorPalette
+                  selectedColor={formData.iconColor}
+                  onColorSelect={(color) => setFormData((prev) => ({ ...prev, iconColor: color }))}
+                />
+              </FormSection>
+            </>
+          )}
         </BottomSheetScrollView>
       </ContentContainer>
     </BottomSheetModal>
   );
 };
-
