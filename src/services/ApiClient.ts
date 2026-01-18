@@ -1,6 +1,7 @@
 import {
   LoginRequest,
   SignupRequest,
+  GoogleAuthRequest,
   UploadImageRequest,
   UpdatePasswordRequest,
   UpdateAvatarUrlRequest,
@@ -408,6 +409,18 @@ export class ApiClient {
   async signup(email: string, password: string): Promise<AuthResponse> {
     const request: SignupRequest = { email, password };
     return this.request<AuthResponse>('/api/auth/signup', {
+      method: 'POST',
+      body: request,
+      requiresAuth: false,
+    });
+  }
+
+  /**
+   * Authenticate with Google OAuth
+   */
+  async googleAuth(idToken: string, platform: 'ios' | 'android'): Promise<AuthResponse> {
+    const request: GoogleAuthRequest = { idToken, platform };
+    return this.request<AuthResponse>('/api/auth/google', {
       method: 'POST',
       body: request,
       requiresAuth: false,

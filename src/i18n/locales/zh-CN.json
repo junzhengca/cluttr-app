@@ -290,6 +290,10 @@
     "email": "邮箱",
     "memberSince": "注册时间",
     "lastUpdated": "最后更新",
+    "auth": {
+      "title": "登录或注册",
+      "subtitle": "创建账户或登录以跨设备同步您的数据"
+    },
     "sync": {
       "title": "同步设置",
       "enableSync": "启用同步",
@@ -354,9 +358,22 @@
     "submit": "登录",
     "submitting": "登录中...",
     "link": "还没有账户？注册",
+    "loginWithGoogle": "使用 Google 登录",
     "errors": {
       "emptyFields": "请输入邮箱和密码",
-      "failed": "登录失败，请重试。"
+      "failed": "登录失败，请重试。",
+      "googleLoginFailed": {
+        "title": "Google 登录失败",
+        "message": "使用 Google 登录失败，请重试。"
+      },
+      "emailAlreadyRegistered": {
+        "title": "账户已存在",
+        "message": "该邮箱已使用邮箱密码注册。请使用邮箱和密码登录。"
+      },
+      "invalidGoogleAccount": {
+        "title": "无效的 Google 账户",
+        "message": "无效的 Google 账户，请重试。"
+      }
     }
   },
   "signup": {
@@ -457,6 +474,11 @@
       "title": "即将推出",
       "description": "分享功能将在未来的更新中提供"
     }
+  },
+  "toast": {
+    "loginSuccess": "登录成功",
+    "logoutSuccess": "登出成功",
+    "signupSuccess": "账户创建成功"
   }
 }
 

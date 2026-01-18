@@ -19,6 +19,7 @@ import { loadSettings } from './src/store/sagas/settingsSaga';
 import { loadTodos } from './src/store/sagas/todoSaga';
 import { loadItems } from './src/store/sagas/inventorySaga';
 import { useAppDispatch } from './src/store/hooks';
+import { ToastProvider } from './src/components/ToastProvider';
 
 // TODO: Configure your API base URL here or use environment variables
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL || 'https://your-api-url.com';
@@ -109,11 +110,13 @@ export default function App() {
         <Provider store={store}>
           <I18nextProvider i18n={i18n}>
             <ThemeProvider>
-              <BottomSheetModalProvider>
-                <NavigationContainer>
-                  <AppInner />
-                </NavigationContainer>
-              </BottomSheetModalProvider>
+              <ToastProvider>
+                <BottomSheetModalProvider>
+                  <NavigationContainer>
+                    <AppInner />
+                  </NavigationContainer>
+                </BottomSheetModalProvider>
+              </ToastProvider>
             </ThemeProvider>
           </I18nextProvider>
         </Provider>

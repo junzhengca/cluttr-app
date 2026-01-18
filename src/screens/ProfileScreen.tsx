@@ -1,10 +1,11 @@
-import React, { useCallback, useState, useEffect } from 'react';
+import React, { useCallback, useState, useEffect, useRef } from 'react';
 import { ScrollView, ActivityIndicator, View, Text, Alert, TouchableOpacity, Platform } from 'react-native';
 import { Image } from 'expo-image';
 import styled from 'styled-components/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
+import { BottomSheetModal } from '@gorhom/bottom-sheet';
 import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system/legacy';
 import * as ImageManipulator from 'expo-image-manipulator';
@@ -13,12 +14,16 @@ import type { StyledProps, StyledPropsWith } from '../utils/styledComponents';
 import { PageHeader } from '../components/PageHeader';
 import { LogoutButton } from '../components/LogoutButton';
 import { Toggle } from '../components/Toggle';
+import { LoginBottomSheet } from '../components/LoginBottomSheet';
+import { SignupBottomSheet } from '../components/SignupBottomSheet';
+import { Button } from '../components/ui/Button';
 import { useAuth, useSync } from '../store/hooks';
 import { useTheme } from '../theme/ThemeProvider';
 import { calculateBottomPadding } from '../utils/layout';
 import { formatDate } from '../utils/formatters';
 import { ApiClient } from '../services/ApiClient';
 import { getAuthTokens } from '../services/AuthService';
+import { signInWithGoogle } from '../services/GoogleAuthService';
 
 const Container = styled(View)`
   flex: 1;
@@ -141,8 +146,42 @@ const SyncButtonText = styled(Text)`
   color: ${({ theme }: StyledProps) => theme.colors.surface};
 `;
 
+const AuthButtonContainer = styled(View)`
+  width: 100%;
+  margin-bottom: ${({ theme }: StyledProps) => theme.spacing.md}px;
+  align-items: center;
+`;
+
+const ButtonWrapper = styled(View)`
+  width: 100%;
+  margin-bottom: ${({ theme }: StyledProps) => theme.spacing.sm}px;
+`;
+
+const AuthSection = styled(View)`
+  align-items: center;
+  margin-bottom: ${({ theme }: StyledProps) => theme.spacing.xl}px;
+  padding: ${({ theme }: StyledProps) => theme.spacing.xl}px;
+  background-color: ${({ theme }: StyledProps) => theme.colors.surface};
+  border-radius: ${({ theme }: StyledProps) => theme.borderRadius.lg}px;
+`;
+
+const AuthTitle = styled(Text)`
+  font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.xl}px;
+  font-weight: ${({ theme }: StyledProps) => theme.typography.fontWeight.bold};
+  color: ${({ theme }: StyledProps) => theme.colors.text};
+  margin-bottom: ${({ theme }: StyledProps) => theme.spacing.md}px;
+  text-align: center;
+`;
+
+const AuthSubtitle = styled(Text)`
+  font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.md}px;
+  color: ${({ theme }: StyledProps) => theme.colors.textSecondary};
+  margin-bottom: ${({ theme }: StyledProps) => theme.spacing.xl}px;
+  text-align: center;
+`;
+
 export const ProfileScreen: React.FC = () => {
-  const { user, isLoading, logout, updateUser } = useAuth();
+  const { user, isAuthenticated, isLoading, error, logout, updateUser, googleLogin } = useAuth();
   const { enabled: syncEnabled, loading: syncLoading, lastSyncTime, error: syncError, enableSync, disableSync, syncAll } = useSync();
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
@@ -150,6 +189,8 @@ export const ProfileScreen: React.FC = () => {
   const theme = useTheme();
   const [isUploading, setIsUploading] = useState(false);
   const [localSyncEnabled, setLocalSyncEnabled] = useState(false);
+  const loginBottomSheetRef = useRef<BottomSheetModal>(null);
+  const signupBottomSheetRef = useRef<BottomSheetModal>(null);
 
   const getLocale = useCallback(() => {
     return i18n.language === 'zh' || i18n.language === 'zh-CN' ? 'zh-CN' : 'en-US';
@@ -312,6 +353,65 @@ export const ProfileScreen: React.FC = () => {
     setLocalSyncEnabled(syncEnabled);
   }, [syncEnabled]);
 
+  const handleLoginPress = useCallback(() => {
+    signupBottomSheetRef.current?.dismiss();
+    loginBottomSheetRef.current?.present();
+  }, []);
+
+  const handleSignupPress = useCallback(() => {
+    loginBottomSheetRef.current?.dismiss();
+    signupBottomSheetRef.current?.present();
+  }, []);
+
+  const handleLoginSuccess = useCallback(() => {
+    // User will be automatically updated via auth state
+  }, []);
+
+  const handleSignupSuccess = useCallback(() => {
+    // User will be automatically updated via auth state
+  }, []);
+
+  const handleGoogleLogin = useCallback(async () => {
+    try {
+      const idToken = await signInWithGoogle();
+      if (idToken) {
+        // Get platform (ios or android)
+        const platform = Platform.OS === 'ios' ? 'ios' : 'android';
+        
+        // Call googleLogin hook which will dispatch the action
+        googleLogin(idToken, platform);
+        
+        // Close bottom sheets if open
+        loginBottomSheetRef.current?.dismiss();
+        signupBottomSheetRef.current?.dismiss();
+      }
+    } catch (error) {
+      console.error('Google login error:', error);
+      Alert.alert(
+        t('login.errors.googleLoginFailed.title') || 'Google Login Failed',
+        error instanceof Error ? error.message : t('login.errors.googleLoginFailed.message') || 'Failed to sign in with Google. Please try again.'
+      );
+    }
+  }, [t, googleLogin]);
+
+  // Handle auth errors from Google login
+  useEffect(() => {
+    if (error && !isLoading) {
+      // Check if error is related to Google login (409 conflict or other auth errors)
+      let errorMessage = error;
+      let errorTitle = t('login.errors.googleLoginFailed.title') || 'Google Login Failed';
+      
+      if (error.includes('Email already registered with email/password')) {
+        errorMessage = t('login.errors.emailAlreadyRegistered.message') || 'Email already registered with email/password. Please login with email and password.';
+        errorTitle = t('login.errors.emailAlreadyRegistered.title') || 'Account Already Exists';
+      } else if (error.includes('Invalid Google account')) {
+        errorMessage = t('login.errors.invalidGoogleAccount.message') || 'Invalid Google account. Please try again.';
+      }
+      
+      Alert.alert(errorTitle, errorMessage);
+    }
+  }, [error, isLoading, t]);
+
   // Calculate bottom padding for scrollable content
   const bottomPadding = calculateBottomPadding(insets.bottom);
 
@@ -332,22 +432,61 @@ export const ProfileScreen: React.FC = () => {
     );
   }
 
-  if (!user) {
+  if (!user || !isAuthenticated) {
     return (
       <Container>
         <PageHeader
           icon="person"
           title={t('profile.title')}
           subtitle={t('profile.subtitle')}
-          showBackButton={false}
+          showBackButton={true}
           showRightButtons={false}
         />
         <Content
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{ paddingBottom: bottomPadding }}
         >
-          <Text>{t('profile.noUserData')}</Text>
+          <AuthSection>
+            <AuthTitle>{t('profile.auth.title')}</AuthTitle>
+            <AuthSubtitle>{t('profile.auth.subtitle')}</AuthSubtitle>
+            <AuthButtonContainer>
+              <ButtonWrapper>
+                <Button
+                  onPress={handleLoginPress}
+                  label={t('login.submit')}
+                  icon="log-in"
+                  variant="primary"
+                />
+              </ButtonWrapper>
+              <ButtonWrapper>
+                <Button
+                  onPress={handleSignupPress}
+                  label={t('signup.submit')}
+                  icon="person-add"
+                  variant="secondary"
+                />
+              </ButtonWrapper>
+              <ButtonWrapper>
+                <Button
+                  onPress={handleGoogleLogin}
+                  label={t('login.loginWithGoogle')}
+                  icon="logo-google"
+                  variant="secondary"
+                />
+              </ButtonWrapper>
+            </AuthButtonContainer>
+          </AuthSection>
         </Content>
+        <LoginBottomSheet
+          bottomSheetRef={loginBottomSheetRef}
+          onSignupPress={handleSignupPress}
+          onLoginSuccess={handleLoginSuccess}
+        />
+        <SignupBottomSheet
+          bottomSheetRef={signupBottomSheetRef}
+          onLoginPress={handleLoginPress}
+          onSignupSuccess={handleSignupSuccess}
+        />
       </Container>
     );
   }
@@ -443,6 +582,16 @@ export const ProfileScreen: React.FC = () => {
 
         <LogoutButton onPress={handleLogout} />
       </Content>
+      <LoginBottomSheet
+        bottomSheetRef={loginBottomSheetRef}
+        onSignupPress={handleSignupPress}
+        onLoginSuccess={handleLoginSuccess}
+      />
+      <SignupBottomSheet
+        bottomSheetRef={signupBottomSheetRef}
+        onLoginPress={handleLoginPress}
+        onSignupSuccess={handleSignupSuccess}
+      />
     </Container>
   );
 };

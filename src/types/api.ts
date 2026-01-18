@@ -9,6 +9,11 @@ export interface SignupRequest {
   password: string;
 }
 
+export interface GoogleAuthRequest {
+  idToken: string;
+  platform: 'ios' | 'android';
+}
+
 export interface UploadImageRequest {
   image: string;
 }

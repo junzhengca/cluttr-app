@@ -23,6 +23,8 @@ import {
 import { User, ErrorDetails } from '../../types/api';
 import * as SecureStore from 'expo-secure-store';
 import type { RootState } from '../types';
+import { getGlobalToast } from '../../components/ToastProvider';
+import i18n from '../../i18n/i18n';
 
 // Global error handler - will be set by App.tsx
 let globalErrorHandler: ((errorDetails: ErrorDetails) => void) | null = null;
@@ -36,6 +38,7 @@ export const setGlobalErrorHandler = (handler: (errorDetails: ErrorDetails) => v
 const CHECK_AUTH = 'auth/CHECK_AUTH';
 const LOGIN = 'auth/LOGIN';
 const SIGNUP = 'auth/SIGNUP';
+const GOOGLE_LOGIN = 'auth/GOOGLE_LOGIN';
 const LOGOUT = 'auth/LOGOUT';
 const UPDATE_USER = 'auth/UPDATE_USER';
 const INITIALIZE_API_CLIENT = 'auth/INITIALIZE_API_CLIENT';
@@ -49,6 +52,10 @@ export const login = (email: string, password: string) => ({
 export const signup = (email: string, password: string) => ({
   type: SIGNUP,
   payload: { email, password },
+});
+export const googleLogin = (idToken: string, platform: string) => ({
+  type: GOOGLE_LOGIN,
+  payload: { idToken, platform },
 });
 export const logout = () => ({ type: LOGOUT });
 export const updateUser = (userData: User) => ({ type: UPDATE_USER, payload: userData });
@@ -225,6 +232,12 @@ function* loginSaga(action: { type: string; payload: { email: string; password: 
     // Initialize sync service after successful login
     yield put(initializeSync());
     
+    // Show success toast
+    const toast = getGlobalToast();
+    if (toast) {
+      toast(i18n.t('toast.loginSuccess'), 'success');
+    }
+    
     console.log('[AuthSaga] Login successful');
   } catch (error) {
     console.error('[AuthSaga] Login error:', error);
@@ -286,10 +299,113 @@ function* signupSaga(action: { type: string; payload: { email: string; password:
     // Initialize sync service after successful signup
     yield put(initializeSync());
     
+    // Show success toast
+    const toast = getGlobalToast();
+    if (toast) {
+      toast(i18n.t('toast.signupSuccess'), 'success');
+    }
+    
     console.log('[AuthSaga] Signup successful');
   } catch (error) {
     console.error('[AuthSaga] Signup error:', error);
     throw error;
+  }
+}
+
+function* googleLoginSaga(action: { type: string; payload: { idToken: string; platform: string } }) {
+  const { idToken, platform } = action.payload;
+  const apiClient: ApiClient = yield select((state: RootState) => state.auth.apiClient);
+
+  // Clear any previous errors and set loading
+  yield put(setError(null));
+  yield put(setLoading(true));
+
+  if (!apiClient) {
+    const errorMessage = 'API client not initialized';
+    yield put(setError(errorMessage));
+    yield put(setLoading(false));
+    return;
+  }
+
+  try {
+    const response = yield call(apiClient.googleAuth.bind(apiClient), idToken, platform as 'ios' | 'android');
+
+    // Validate token before saving
+    if (!response?.accessToken) {
+      console.error('[AuthSaga] Invalid Google login response:', response);
+      const errorMessage = 'Invalid Google login response: missing accessToken';
+      yield put(setError(errorMessage));
+      yield put(setLoading(false));
+      return;
+    }
+
+    // Save token
+    const saved = yield call(saveAuthTokens, response.accessToken);
+    if (!saved) {
+      const errorMessage = 'Failed to save authentication token';
+      yield put(setError(errorMessage));
+      yield put(setLoading(false));
+      return;
+    }
+
+    // Verify token was saved
+    const savedTokens = yield call(getAuthTokens);
+    if (!savedTokens || !savedTokens.accessToken) {
+      const errorMessage = 'Failed to save authentication token';
+      yield put(setError(errorMessage));
+      yield put(setLoading(false));
+      return;
+    }
+
+    // Set token in API client
+    apiClient.setAuthToken(response.accessToken);
+
+    // Always get full user info from /me endpoint to ensure we have complete data including avatar
+    const userData: User = yield call(apiClient.getCurrentUser.bind(apiClient));
+
+    console.log('[AuthSaga] User data from /me endpoint:', {
+      hasAvatar: !!userData?.avatarUrl,
+      avatarUrl: userData?.avatarUrl,
+      email: userData?.email,
+    });
+
+    // Save user
+    if (userData) {
+      yield call(saveUser, userData);
+      yield put(setUser(userData));
+    }
+
+    yield put(setAuthenticated(true));
+    yield put(setError(null)); // Clear error on success
+    yield put(setLoading(false));
+    
+    // Initialize sync service after successful Google login
+    yield put(initializeSync());
+    
+    // Show success toast
+    const toast = getGlobalToast();
+    if (toast) {
+      toast(i18n.t('toast.loginSuccess'), 'success');
+    }
+    
+    console.log('[AuthSaga] Google login successful');
+  } catch (error) {
+    console.error('[AuthSaga] Google login error:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Google login failed. Please try again.';
+    
+    // Handle specific error cases
+    const errorWithStatus = error as Error & { status?: number; responseBody?: unknown };
+    if (errorWithStatus.status === 409) {
+      // Email already registered with email/password
+      yield put(setError('Email already registered with email/password. Please login with email and password.'));
+    } else if (errorWithStatus.status === 401) {
+      // Invalid Google ID token
+      yield put(setError('Invalid Google account. Please try again.'));
+    } else {
+      yield put(setError(errorMessage));
+    }
+    
+    yield put(setLoading(false));
   }
 }
 
@@ -305,6 +421,13 @@ function* logoutSaga() {
       console.error('[AuthSaga] Error disabling sync on logout:', error);
     }
     yield call(handleAuthError);
+    
+    // Show success toast
+    const toast = getGlobalToast();
+    if (toast) {
+      toast(i18n.t('toast.logoutSuccess'), 'success');
+    }
+    
     console.log('[AuthSaga] Logout successful');
   } catch (error) {
     console.error('[AuthSaga] Error during logout:', error);
@@ -328,6 +451,7 @@ export function* authSaga() {
   yield takeLatest(CHECK_AUTH, checkAuthSaga);
   yield takeLatest(LOGIN, loginSaga);
   yield takeLatest(SIGNUP, signupSaga);
+  yield takeLatest(GOOGLE_LOGIN, googleLoginSaga);
   yield takeLatest(LOGOUT, logoutSaga);
   yield takeLatest(UPDATE_USER, updateUserSaga);
 }

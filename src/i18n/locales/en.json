@@ -290,6 +290,10 @@
     "email": "Email",
     "memberSince": "Member since",
     "lastUpdated": "Last updated",
+    "auth": {
+      "title": "Sign In or Sign Up",
+      "subtitle": "Create an account or sign in to sync your data across devices"
+    },
     "sync": {
       "title": "Sync Settings",
       "enableSync": "Enable Sync",
@@ -354,9 +358,22 @@
     "submit": "Log In",
     "submitting": "Logging in...",
     "link": "Don't have an account? Sign up",
+    "loginWithGoogle": "Login with Google",
     "errors": {
       "emptyFields": "Please enter both email and password",
-      "failed": "Login failed. Please try again."
+      "failed": "Login failed. Please try again.",
+      "googleLoginFailed": {
+        "title": "Google Login Failed",
+        "message": "Failed to sign in with Google. Please try again."
+      },
+      "emailAlreadyRegistered": {
+        "title": "Account Already Exists",
+        "message": "Email already registered with email/password. Please login with email and password."
+      },
+      "invalidGoogleAccount": {
+        "title": "Invalid Google Account",
+        "message": "Invalid Google account. Please try again."
+      }
     }
   },
   "signup": {
@@ -457,6 +474,11 @@
       "title": "Coming Soon",
       "description": "Share functionality will be available in a future update"
     }
+  },
+  "toast": {
+    "loginSuccess": "Successfully logged in",
+    "logoutSuccess": "Successfully logged out",
+    "signupSuccess": "Account created successfully"
   }
 }
 

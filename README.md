@@ -10,6 +10,108 @@ A React Native application for managing home inventory built with Expo.
 - For iOS builds: Xcode and iOS development tools
 - For Android builds: Android Studio and Android SDK
 
+## Environment Variables
+
+The following environment variables are required for the application to function properly:
+
+### Google OAuth
+
+The app uses **iOS and Android OAuth client IDs** (not Web client IDs) with custom URI schemes for reliable authentication.
+
+**Required Environment Variables:**
+- `EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID` - Google OAuth 2.0 iOS Client ID
+- `EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID` - Google OAuth 2.0 Android Client ID
+
+#### Setting up Google OAuth
+
+**Step 1: Create OAuth Client IDs in Google Cloud Console**
+
+1. Go to [Google Cloud Console](https://console.cloud.google.com/)
+2. Create a new project or select an existing one
+3. Enable the **Google Identity API**:
+   - Navigate to "APIs & Services" → "Library"
+   - Search for "Google Identity API" and enable it
+
+4. **Create iOS OAuth Client ID:**
+   - Navigate to "APIs & Services" → "Credentials"
+   - Click "Create Credentials" → "OAuth client ID"
+   - Select **"iOS"** as the application type
+   - Enter your iOS bundle identifier: `com.stoatworks.homeinventory`
+   - Click "Create"
+   - Copy the **Client ID** and set it as `EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID` in your environment
+
+5. **Create Android OAuth Client ID:**
+   - Still in "Credentials", click "Create Credentials" → "OAuth client ID" again
+   - Select **"Android"** as the application type
+   - Enter your Android package name: `com.stoatworks.homeinventory`
+   - For "SHA-1 certificate fingerprint", you'll need to get this from your keystore:
+     - For development: Run `keytool -list -v -keystore ~/.android/debug.keystore -alias androiddebugkey -storepass android -keypass android`
+     - For production: Use your production keystore's SHA-1
+   - Click "Create"
+   - Copy the **Client ID** and set it as `EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID` in your environment
+
+**Step 2: Configure Redirect URI**
+
+The app uses a custom URI scheme for OAuth redirects: `com.stoatworks.homeinventory://`
+
+1. **For iOS Client ID:**
+   - In Google Cloud Console, edit your iOS OAuth client
+   - Under "Authorized redirect URIs", add: `com.stoatworks.homeinventory://`
+   - Click "Save"
+
+2. **For Android Client ID:**
+   - In Google Cloud Console, edit your Android OAuth client
+   - Under "Authorized redirect URIs", add: `com.stoatworks.homeinventory://`
+   - Click "Save"
+
+**Step 3: Verify app.json Configuration**
+
+Ensure your `app.json` has the scheme configured (it should already be set):
+
+```json
+{
+  "expo": {
+    "scheme": "com.stoatworks.homeinventory",
+    "ios": {
+      "bundleIdentifier": "com.stoatworks.homeinventory"
+    },
+    "android": {
+      "package": "com.stoatworks.homeinventory"
+    }
+  }
+}
+```
+
+**Important Notes:**
+- **Use iOS/Android client IDs, NOT Web client IDs** - Web client IDs don't support custom scheme URIs
+- The redirect URI is `com.stoatworks.homeinventory://` (from the `scheme` in `app.json`)
+- Both iOS and Android client IDs must have the same redirect URI configured
+- The app automatically selects the correct client ID based on the platform (iOS or Android)
+- Make sure your bundle identifier (iOS) and package name (Android) match what you configured in Google Cloud Console
+
+**Troubleshooting:**
+
+1. **"Custom scheme URIs are not allowed for 'WEB' client type"**
+   - You're using a Web client ID instead of iOS/Android client IDs
+   - Create separate iOS and Android OAuth clients in Google Cloud Console
+
+2. **"Something went wrong trying to finish signing in"**
+   - Check that the redirect URI `com.stoatworks.homeinventory://` is added to both iOS and Android OAuth clients
+   - Verify the bundle identifier/package name matches in both `app.json` and Google Cloud Console
+   - Check console logs for `[GoogleAuth]` messages to see what's happening
+
+3. **OAuth flow doesn't redirect back to app**
+   - Ensure the `scheme` is set in `app.json`
+   - Rebuild the app after changing the scheme: `npx expo prebuild --clean`
+   - For development builds, make sure you're using a development build (not Expo Go)
+
+4. **Android SHA-1 Certificate**
+   - For development: Use the debug keystore SHA-1
+   - For production: Use your production keystore SHA-1
+   - You can add multiple SHA-1 fingerprints to the same Android OAuth client
+
+You can set environment variables by creating a `.env` file in the project root, or by setting them in your shell environment before running the app.
+
 ## Installation
 
 ### Install Dependencies

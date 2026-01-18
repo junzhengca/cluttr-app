@@ -35,6 +35,13 @@ export const useAuth = () => {
     [dispatch]
   );
 
+  const googleLogin = useCallback(
+    (idToken: string, platform: 'ios' | 'android') => {
+      dispatch({ type: 'auth/GOOGLE_LOGIN', payload: { idToken, platform } });
+    },
+    [dispatch]
+  );
+
   const logout = useCallback(() => {
     dispatch({ type: 'auth/LOGOUT' });
   }, [dispatch]);
@@ -61,6 +68,7 @@ export const useAuth = () => {
     error,
     login,
     signup,
+    googleLogin,
     logout,
     checkAuth,
     updateUser,
