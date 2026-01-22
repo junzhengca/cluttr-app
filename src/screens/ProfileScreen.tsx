@@ -51,7 +51,7 @@ const AvatarContainer = styled(TouchableOpacity)`
   border-radius: 50px;
   overflow: hidden;
   margin-bottom: ${({ theme }: StyledProps) => theme.spacing.md}px;
-  border-width: 3px;
+  border-width: 4px;
   border-color: ${({ theme }: StyledProps) => theme.colors.primary};
 `;
 

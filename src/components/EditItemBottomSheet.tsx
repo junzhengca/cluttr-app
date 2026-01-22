@@ -223,7 +223,7 @@ export const EditItemBottomSheet: React.FC<EditItemBottomSheetProps> = ({
         <BottomSheetScrollView
           style={{ flex: 1 }}
           contentContainerStyle={{
-            paddingHorizontal: theme.spacing.lg,
+            paddingHorizontal: theme.spacing.md,
             paddingBottom: theme.spacing.lg,
           }}
           showsVerticalScrollIndicator={false}

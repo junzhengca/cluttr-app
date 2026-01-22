@@ -8,7 +8,7 @@ import type { StyledProps } from '../utils/styledComponents';
 import { BaseCard } from './BaseCard';
 
 const Container = styled(View)`
-  padding: ${({ theme }: StyledProps) => theme.spacing.md}px;
+  margin-top: ${({ theme }: StyledProps) => theme.spacing.xl}px;
 `;
 
 const Title = styled(Text)`

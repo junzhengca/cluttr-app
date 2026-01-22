@@ -346,7 +346,11 @@ export const LoginBottomSheet: React.FC<LoginBottomSheetProps> = ({
       <ContentContainer>
         <BottomSheetScrollView
           style={{ flex: 1 }}
-          contentContainerStyle={{ padding: theme.spacing.lg, paddingBottom: theme.spacing.lg }}
+          contentContainerStyle={{ 
+            paddingHorizontal: theme.spacing.md, 
+            paddingTop: theme.spacing.lg,
+            paddingBottom: theme.spacing.lg 
+          }}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
           enableOnPanDownToDismiss={false}

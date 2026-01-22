@@ -35,6 +35,8 @@ const AvatarContainer = styled(View)`
   background-color: ${({ theme }: StyledProps) => theme.colors.primaryLight};
   align-items: center;
   justify-content: center;
+  border-width: 2px;
+  border-color: ${({ theme }: StyledProps) => theme.colors.primary};
 `;
 
 const AvatarImage = styled(Image)`

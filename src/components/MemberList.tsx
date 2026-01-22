@@ -57,7 +57,7 @@ const InviteIconContainer = styled(View)`
   width: 48px;
   height: 48px;
   border-radius: 24px;
-  background-color: ${({ theme }: StyledProps) => theme.colors.primaryLight};
+  background-color: ${({ theme }: StyledProps) => theme.colors.primaryExtraLight};
   align-items: center;
   justify-content: center;
   margin-right: ${({ theme }: StyledProps) => theme.spacing.md}px;

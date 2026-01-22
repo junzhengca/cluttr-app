@@ -101,7 +101,7 @@ const BackIcon = styled(Ionicons)`
 
 const AvatarButton = styled(ActionButton)`
   overflow: hidden;
-  border: 1px solid white;
+  border: 2px solid ${({ theme }: StyledProps) => theme.colors.primary};
 `;
 
 const AvatarImage = styled(Image)`

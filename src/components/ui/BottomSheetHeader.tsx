@@ -10,7 +10,7 @@ const HeaderContainer = styled(View)`
   justify-content: space-between;
   align-items: center;
   height: 80px;
-  padding-horizontal: ${({ theme }: StyledProps) => theme.spacing.lg}px;
+  padding-horizontal: ${({ theme }: StyledProps) => theme.spacing.md}px;
   background-color: ${({ theme }: StyledProps) => theme.colors.surface};
 `;
 

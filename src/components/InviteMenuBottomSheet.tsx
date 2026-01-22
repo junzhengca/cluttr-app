@@ -17,7 +17,7 @@ const ContentContainer = styled(View)`
 const OptionContainer = styled(TouchableOpacity)`
   flex-direction: row;
   align-items: center;
-  padding: ${({ theme }: StyledProps) => theme.spacing.lg}px;
+  padding: ${({ theme }: StyledProps) => theme.spacing.md}px;
   background-color: ${({ theme }: StyledProps) => theme.colors.surface};
   border-radius: ${({ theme }: StyledProps) => theme.borderRadius.xl}px;
   margin-bottom: ${({ theme }: StyledProps) => theme.spacing.md}px;
@@ -27,7 +27,7 @@ const IconContainer = styled(View)`
   width: 48px;
   height: 48px;
   border-radius: 24px;
-  background-color: ${({ theme }: StyledProps) => theme.colors.primaryLight};
+  background-color: ${({ theme }: StyledProps) => theme.colors.primaryExtraLight};
   align-items: center;
   justify-content: center;
   margin-right: ${({ theme }: StyledProps) => theme.spacing.md}px;
@@ -50,7 +50,7 @@ const OptionDescription = styled.Text`
 `;
 
 const QRCodeViewContainer = styled(View)`
-  padding: ${({ theme }: StyledProps) => theme.spacing.lg}px;
+  padding: ${({ theme }: StyledProps) => theme.spacing.md}px;
 `;
 
 interface InviteMenuBottomSheetProps {
@@ -129,6 +129,7 @@ export const InviteMenuBottomSheet: React.FC<InviteMenuBottomSheetProps> = ({
       enablePanDownToClose
       enableContentPanningGesture={false}
       enableHandlePanningGesture={false}
+      handleComponent={null}
       topInset={insets.top}
       index={0}
       enableDynamicSizing={false}
@@ -146,7 +147,7 @@ export const InviteMenuBottomSheet: React.FC<InviteMenuBottomSheetProps> = ({
         <BottomSheetScrollView
           style={{ flex: 1 }}
           contentContainerStyle={{
-            paddingHorizontal: theme.spacing.lg,
+            paddingHorizontal: theme.spacing.md,
             paddingBottom: theme.spacing.lg,
           }}
           showsVerticalScrollIndicator={false}
