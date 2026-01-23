@@ -1,13 +1,13 @@
 {
   "expo": {
-    "name": "HomeInventory",
-    "slug": "HomeInventory",
+    "name": "Cluttr",
+    "slug": "cluttr",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
-    "scheme": "com.stoatworks.homeinventory",
+    "scheme": "com.cluttrapp.cluttr",
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
@@ -15,7 +15,7 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.stoatworks.homeinventory",
+      "bundleIdentifier": "com.cluttrapp.cluttr",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
         "NSPhotoLibraryUsageDescription": "This app needs access to your photo library to upload avatar images.",
@@ -23,20 +23,18 @@
       }
     },
     "android": {
-      "package": "com.stoatworks.homeinventory",
+      "package": "com.cluttrapp.cluttr",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "permissions": [
+        "android.permission.RECORD_AUDIO"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    },
-    "extra": {
-      "eas": {
-        "projectId": "43c2c75a-7cea-49b5-853b-209f084afd61"
-      }
     },
     "plugins": [
       "expo-font",
@@ -48,6 +46,11 @@
           "cameraPermission": "The app accesses your camera to let you take photos for your avatar."
         }
       ]
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "08491de0-9ea6-4512-b863-2b4161121d7d"
+      }
+    }
   }
 }

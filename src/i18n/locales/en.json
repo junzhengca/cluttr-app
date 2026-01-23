@@ -555,7 +555,7 @@
       "showQRCodeDescription": "Display QR code for easy scanning",
       "shareLink": "Share Link",
       "shareLinkDescription": "Share invitation link via message or email",
-      "shareTitle": "Join my Home Inventory",
+      "shareTitle": "Join my Cluttr",
       "qrCode": {
         "title": "Invitation QR Code",
         "subtitle": "Scan to join",

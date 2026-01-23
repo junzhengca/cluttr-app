@@ -555,7 +555,7 @@
       "showQRCodeDescription": "显示二维码以便扫描",
       "shareLink": "分享链接",
       "shareLinkDescription": "通过消息或邮件分享邀请链接",
-      "shareTitle": "加入我的家庭库存",
+      "shareTitle": "加入我的 Cluttr",
       "qrCode": {
         "title": "邀请二维码",
         "subtitle": "扫描加入",

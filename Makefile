@@ -106,6 +106,10 @@ build-android-internal-local-app:
 build-all-internal-local-app: build-ios-internal-local-app build-android-internal-local-app
 	@echo "All internal distribution builds completed!"
 
+build-ios-production-local:
+	@echo "Building iOS production variant locally..."
+	eas build --profile production --platform ios --local
+
 # Clean build artifacts
 clean:
 	@echo "Cleaning build artifacts..."

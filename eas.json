@@ -22,10 +22,16 @@
       "android": {
         "buildType": "apk"
       }
+    },
+    "production": {
+      "developmentClient": false,
+      "distribution": "store",
+      "ios": {
+        "simulator": false
+      }
     }
   },
   "submit": {
     "production": {}
   }
 }
-

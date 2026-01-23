@@ -1,6 +1,6 @@
 # Household Sharing API Documentation
 
-This document describes how household sharing works in the HomeInventoryServer application.
+This document describes how household sharing works in the CluttrServer application.
 
 ## Overview
 

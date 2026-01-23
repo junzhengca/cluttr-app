@@ -157,7 +157,7 @@ export const ShareScreen: React.FC = () => {
   const getInvitationLink = useCallback(() => {
     // Generate invitation link - using a placeholder domain for now
     // In production, this should come from app configuration
-    const baseUrl = process.env.EXPO_PUBLIC_INVITE_BASE_URL || 'https://homeinventory.app/invite';
+    const baseUrl = process.env.EXPO_PUBLIC_INVITE_BASE_URL || 'https://cluttr.app/invite';
     return `${baseUrl}/${invitationCode}`;
   }, [invitationCode]);
 

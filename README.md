@@ -1,4 +1,4 @@
-# HomeInventory
+# Cluttr
 
 A React Native application for managing home inventory built with Expo.
 
@@ -36,14 +36,14 @@ The app uses **iOS and Android OAuth client IDs** (not Web client IDs) with cust
    - Navigate to "APIs & Services" → "Credentials"
    - Click "Create Credentials" → "OAuth client ID"
    - Select **"iOS"** as the application type
-   - Enter your iOS bundle identifier: `com.stoatworks.homeinventory`
+   - Enter your iOS bundle identifier: `com.cluttrapp.cluttr`
    - Click "Create"
    - Copy the **Client ID** and set it as `EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID` in your environment
 
 5. **Create Android OAuth Client ID:**
    - Still in "Credentials", click "Create Credentials" → "OAuth client ID" again
    - Select **"Android"** as the application type
-   - Enter your Android package name: `com.stoatworks.homeinventory`
+   - Enter your Android package name: `com.cluttrapp.cluttr`
    - For "SHA-1 certificate fingerprint", you'll need to get this from your keystore:
      - For development: Run `keytool -list -v -keystore ~/.android/debug.keystore -alias androiddebugkey -storepass android -keypass android`
      - For production: Use your production keystore's SHA-1
@@ -52,16 +52,16 @@ The app uses **iOS and Android OAuth client IDs** (not Web client IDs) with cust
 
 **Step 2: Configure Redirect URI**
 
-The app uses a custom URI scheme for OAuth redirects: `com.stoatworks.homeinventory://`
+The app uses a custom URI scheme for OAuth redirects: `com.cluttrapp.cluttr://`
 
 1. **For iOS Client ID:**
    - In Google Cloud Console, edit your iOS OAuth client
-   - Under "Authorized redirect URIs", add: `com.stoatworks.homeinventory://`
+   - Under "Authorized redirect URIs", add: `com.cluttrapp.cluttr://`
    - Click "Save"
 
 2. **For Android Client ID:**
    - In Google Cloud Console, edit your Android OAuth client
-   - Under "Authorized redirect URIs", add: `com.stoatworks.homeinventory://`
+   - Under "Authorized redirect URIs", add: `com.cluttrapp.cluttr://`
    - Click "Save"
 
 **Step 3: Verify app.json Configuration**
@@ -71,12 +71,12 @@ Ensure your `app.json` has the scheme configured (it should already be set):
 ```json
 {
   "expo": {
-    "scheme": "com.stoatworks.homeinventory",
+    "scheme": "com.cluttrapp.cluttr",
     "ios": {
-      "bundleIdentifier": "com.stoatworks.homeinventory"
+      "bundleIdentifier": "com.cluttrapp.cluttr"
     },
     "android": {
-      "package": "com.stoatworks.homeinventory"
+      "package": "com.cluttrapp.cluttr"
     }
   }
 }
@@ -84,7 +84,7 @@ Ensure your `app.json` has the scheme configured (it should already be set):
 
 **Important Notes:**
 - **Use iOS/Android client IDs, NOT Web client IDs** - Web client IDs don't support custom scheme URIs
-- The redirect URI is `com.stoatworks.homeinventory://` (from the `scheme` in `app.json`)
+- The redirect URI is `com.cluttrapp.cluttr://` (from the `scheme` in `app.json`)
 - Both iOS and Android client IDs must have the same redirect URI configured
 - The app automatically selects the correct client ID based on the platform (iOS or Android)
 - Make sure your bundle identifier (iOS) and package name (Android) match what you configured in Google Cloud Console
@@ -96,7 +96,7 @@ Ensure your `app.json` has the scheme configured (it should already be set):
    - Create separate iOS and Android OAuth clients in Google Cloud Console
 
 2. **"Something went wrong trying to finish signing in"**
-   - Check that the redirect URI `com.stoatworks.homeinventory://` is added to both iOS and Android OAuth clients
+   - Check that the redirect URI `com.cluttrapp.cluttr://` is added to both iOS and Android OAuth clients
    - Verify the bundle identifier/package name matches in both `app.json` and Google Cloud Console
    - Check console logs for `[GoogleAuth]` messages to see what's happening
 

@@ -34,7 +34,7 @@ const getGoogleClientId = (): string => {
 
 /**
  * Get the redirect URI using custom scheme (not proxy)
- * The redirect URI format is: <scheme>:// (e.g., com.stoatworks.homeinventory://)
+ * The redirect URI format is: <scheme>:// (e.g., com.cluttrapp.cluttr://)
  */
 const getRedirectUri = (): string => {
   // Use custom scheme (not proxy) - this works with iOS/Android client IDs
