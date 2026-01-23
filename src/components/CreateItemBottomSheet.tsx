@@ -18,9 +18,15 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../theme/ThemeProvider';
 import type { StyledProps } from '../utils/styledComponents';
+import { InventoryItem } from '../types/inventory';
 import { useInventory } from '../store/hooks';
 import { useKeyboardVisibility } from '../hooks';
-import { BottomSheetHeader, FormSection, UncontrolledInput, NumberInput } from './ui';
+import {
+  BottomSheetHeader,
+  FormSection,
+  UncontrolledInput,
+  NumberInput,
+} from './ui';
 import { LocationField, StatusField } from './form';
 import { IconColorPicker } from './IconColorPicker';
 import { BottomActionBar } from './BottomActionBar';
@@ -62,6 +68,7 @@ const HalfInput = styled(UncontrolledInput)`
 interface CreateItemBottomSheetProps {
   bottomSheetRef: React.RefObject<BottomSheetModal>;
   onItemCreated?: () => void;
+  initialData?: Partial<InventoryItem> | null;
 }
 
 /**
@@ -74,6 +81,7 @@ interface CreateItemBottomSheetProps {
 export const CreateItemBottomSheet: React.FC<CreateItemBottomSheetProps> = ({
   bottomSheetRef,
   onItemCreated,
+  initialData,
 }) => {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
@@ -87,15 +95,23 @@ export const CreateItemBottomSheet: React.FC<CreateItemBottomSheetProps> = ({
   const amountInputRef = useRef<TextInput>(null);
   const warningThresholdInputRef = useRef<TextInput>(null);
 
-  // Form state using refs to prevent IME interruption
+  // Form state using refs to prevent IME interruption during typing
   const nameValueRef = useRef('');
   const priceValueRef = useRef('0');
   const detailedLocationValueRef = useRef('');
   const amountValueRef = useRef('1');
   const warningThresholdValueRef = useRef('0');
 
+  // State for initial/default values (used for defaultValue prop on uncontrolled inputs)
+  const [defaultName, setDefaultName] = useState('');
+  const [defaultPrice, setDefaultPrice] = useState('0');
+  const [defaultDetailedLocation, setDefaultDetailedLocation] = useState('');
+  const [defaultAmount, setDefaultAmount] = useState('1');
+  const [defaultWarningThreshold, setDefaultWarningThreshold] = useState('0');
+
   // Regular state for icon/color/location/status/dates (doesn't affect IME)
-  const [selectedIcon, setSelectedIcon] = useState<keyof typeof Ionicons.glyphMap>('cube-outline');
+  const [selectedIcon, setSelectedIcon] =
+    useState<keyof typeof Ionicons.glyphMap>('cube-outline');
   const [selectedColor, setSelectedColor] = useState<string>('#95A5A6');
   const [selectedLocation, setSelectedLocation] = useState<string>('');
   const [selectedStatus, setSelectedStatus] = useState<string>('using');
@@ -105,22 +121,19 @@ export const CreateItemBottomSheet: React.FC<CreateItemBottomSheetProps> = ({
   const [formKey, setFormKey] = useState(0); // Force remount on reset
 
   // Auto-select icon/color when sheet opens
-  const handleSheetChange = useCallback(
-    (index: number) => {
-      if (index === -1) {
-        Keyboard.dismiss();
-        return;
-      }
+  const handleSheetChange = useCallback((index: number) => {
+    if (index === -1) {
+      Keyboard.dismiss();
+      return;
+    }
 
-      if (index === 0) {
-        // Focus name input
-        if (nameInputRef.current) {
-          nameInputRef.current.focus();
-        }
+    if (index === 0) {
+      // Focus name input
+      if (nameInputRef.current) {
+        nameInputRef.current.focus();
       }
-    },
-    []
-  );
+    }
+  }, []);
 
   // Auto-select first location if none selected
   useEffect(() => {
@@ -131,16 +144,68 @@ export const CreateItemBottomSheet: React.FC<CreateItemBottomSheetProps> = ({
     }
   }, [selectedLocation]);
 
+  useEffect(() => {
+    if (initialData) {
+      // Update both refs (for submit) and state (for defaultValue)
+      const name = initialData.name ?? '';
+      const price = initialData.price?.toString() ?? '0';
+      const detailedLocation = initialData.detailedLocation ?? '';
+      const amount =
+        initialData.amount !== undefined && initialData.amount !== null
+          ? initialData.amount.toString()
+          : '1';
+      const warningThreshold =
+        initialData.warningThreshold !== undefined &&
+        initialData.warningThreshold !== null
+          ? initialData.warningThreshold.toString()
+          : '0';
+
+      // Update refs for form submission
+      nameValueRef.current = name;
+      priceValueRef.current = price;
+      detailedLocationValueRef.current = detailedLocation;
+      amountValueRef.current = amount;
+      warningThresholdValueRef.current = warningThreshold;
+
+      // Update state for defaultValue props (triggers re-render with correct values)
+      setDefaultName(name);
+      setDefaultPrice(price);
+      setDefaultDetailedLocation(detailedLocation);
+      setDefaultAmount(amount);
+      setDefaultWarningThreshold(warningThreshold);
+
+      if (initialData.icon) setSelectedIcon(initialData.icon);
+      if (initialData.iconColor) setSelectedColor(initialData.iconColor);
+      if (initialData.location) setSelectedLocation(initialData.location);
+      if (initialData.status) setSelectedStatus(initialData.status);
+      if (initialData.purchaseDate)
+        setPurchaseDate(new Date(initialData.purchaseDate));
+      if (initialData.expiryDate)
+        setExpiryDate(new Date(initialData.expiryDate));
+
+      setFormKey((prev) => prev + 1);
+    }
+  }, [initialData]);
+
   const handleClose = useCallback(() => {
     Keyboard.dismiss();
     bottomSheetRef.current?.dismiss();
 
-    // Reset form
+    // Reset refs
     nameValueRef.current = '';
     priceValueRef.current = '0';
     detailedLocationValueRef.current = '';
     amountValueRef.current = '1';
     warningThresholdValueRef.current = '0';
+
+    // Reset state for defaultValue props
+    setDefaultName('');
+    setDefaultPrice('0');
+    setDefaultDetailedLocation('');
+    setDefaultAmount('1');
+    setDefaultWarningThreshold('0');
+
+    // Reset other state
     setSelectedIcon('cube-outline');
     setSelectedColor('#95A5A6');
     setSelectedStatus('using');
@@ -291,10 +356,7 @@ export const CreateItemBottomSheet: React.FC<CreateItemBottomSheetProps> = ({
   }, []);
 
   // Memoize placeholder strings to prevent re-renders
-  const namePlaceholder = useMemo(
-    () => t('createItem.placeholders.name'),
-    [t]
-  );
+  const namePlaceholder = useMemo(() => t('createItem.placeholders.name'), [t]);
   const pricePlaceholder = useMemo(
     () => t('createItem.placeholders.price'),
     [t]
@@ -357,7 +419,7 @@ export const CreateItemBottomSheet: React.FC<CreateItemBottomSheetProps> = ({
                 />
                 <UncontrolledInput
                   ref={nameInputRef}
-                  defaultValue={nameValueRef.current}
+                  defaultValue={defaultName}
                   onChangeText={handleNameChangeText}
                   onBlur={handleNameBlur}
                   placeholder={namePlaceholder}
@@ -389,7 +451,7 @@ export const CreateItemBottomSheet: React.FC<CreateItemBottomSheetProps> = ({
                 >
                   <HalfInput
                     ref={priceInputRef}
-                    defaultValue={priceValueRef.current}
+                    defaultValue={defaultPrice}
                     onChangeText={handlePriceChangeText}
                     onBlur={handlePriceBlur}
                     placeholder={pricePlaceholder}
@@ -405,7 +467,7 @@ export const CreateItemBottomSheet: React.FC<CreateItemBottomSheetProps> = ({
                 >
                   <HalfInput
                     ref={detailedLocationInputRef}
-                    defaultValue={detailedLocationValueRef.current}
+                    defaultValue={defaultDetailedLocation}
                     onChangeText={handleDetailedLocationChangeText}
                     onBlur={handleDetailedLocationBlur}
                     placeholder={detailedLocationPlaceholder}
@@ -423,7 +485,7 @@ export const CreateItemBottomSheet: React.FC<CreateItemBottomSheetProps> = ({
                 >
                   <NumberInput
                     ref={amountInputRef}
-                    defaultValue={amountValueRef.current}
+                    defaultValue={defaultAmount}
                     onChangeText={handleAmountChangeText}
                     onBlur={handleAmountBlur}
                     placeholder={amountPlaceholder}
@@ -440,7 +502,7 @@ export const CreateItemBottomSheet: React.FC<CreateItemBottomSheetProps> = ({
                 >
                   <NumberInput
                     ref={warningThresholdInputRef}
-                    defaultValue={warningThresholdValueRef.current}
+                    defaultValue={defaultWarningThreshold}
                     onChangeText={handleWarningThresholdChangeText}
                     onBlur={handleWarningThresholdBlur}
                     placeholder={warningThresholdPlaceholder}

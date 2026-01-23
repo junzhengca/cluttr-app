@@ -1,5 +1,20 @@
-import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { FlatList, ActivityIndicator, View, Dimensions, TouchableOpacity, Text } from 'react-native';
+import React, {
+  useState,
+  useMemo,
+  useEffect,
+  useRef,
+  useCallback,
+} from 'react';
+import {
+  FlatList,
+  ActivityIndicator,
+  View,
+  Dimensions,
+  TouchableOpacity,
+  Text,
+  Alert,
+  Platform,
+} from 'react-native';
 import styled from 'styled-components/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
@@ -7,6 +22,9 @@ import { BottomSheetModal } from '@gorhom/bottom-sheet';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useTranslation } from 'react-i18next';
 import { Ionicons } from '@expo/vector-icons';
+import * as ImagePicker from 'expo-image-picker';
+import * as ImageManipulator from 'expo-image-manipulator';
+import * as FileSystem from 'expo-file-system/legacy';
 import { useTheme } from '../theme/ThemeProvider';
 import type { StyledProps } from '../utils/styledComponents';
 
@@ -66,7 +84,8 @@ const FilterToggleText = styled(Text)`
   font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.md}px;
   color: ${({ theme }: StyledProps) => theme.colors.text};
   margin-left: ${({ theme }: StyledProps) => theme.spacing.xs}px;
-  font-weight: ${({ theme }: StyledProps) => theme.typography.fontWeight.medium};
+  font-weight: ${({ theme }: StyledProps) =>
+    theme.typography.fontWeight.medium};
 `;
 
 const LoadingContainer = styled(View)`
@@ -78,14 +97,21 @@ const LoadingContainer = styled(View)`
 export const HomeScreen: React.FC = () => {
   const { t } = useTranslation();
   const [searchQuery, setSearchQuery] = useState<string>('');
-  const [selectedLocationId, setSelectedLocationId] = useState<string | null>(null);
+  const [selectedLocationId, setSelectedLocationId] = useState<string | null>(
+    null
+  );
   const [selectedStatusId, setSelectedStatusId] = useState<string | null>(null);
-  const [filterMode, setFilterMode] = useState<'location' | 'status'>('location');
+  const [filterMode, setFilterMode] = useState<'location' | 'status'>(
+    'location'
+  );
+  const [isAIRecognizing, setIsAIRecognizing] = useState(false);
+  const [recognizedItemData, setRecognizedItemData] =
+    useState<Partial<InventoryItem> | null>(null);
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<NavigationProp>();
   const { items, loading: isLoading, loadItems } = useInventory();
   const { isSyncEnabled } = useSync();
-  const { user } = useAuth();
+  const { user, getApiClient } = useAuth();
   const theme = useTheme();
   const loginBottomSheetRef = useRef<BottomSheetModal>(null);
   const signupBottomSheetRef = useRef<BottomSheetModal>(null);
@@ -116,7 +142,9 @@ export const HomeScreen: React.FC = () => {
     }
 
     // Check if we've already shown the prompt
-    const hasShownPrompt = await SecureStore.getItemAsync('has_shown_sync_prompt');
+    const hasShownPrompt = await SecureStore.getItemAsync(
+      'has_shown_sync_prompt'
+    );
     if (hasShownPrompt === 'true') {
       return;
     }
@@ -138,7 +166,7 @@ export const HomeScreen: React.FC = () => {
   // Calculate counts for locations and statuses
   const locationCounts = useMemo(() => {
     const counts: Record<string, number> = {};
-    items.forEach(item => {
+    items.forEach((item) => {
       counts[item.location] = (counts[item.location] || 0) + 1;
     });
     return counts;
@@ -146,7 +174,7 @@ export const HomeScreen: React.FC = () => {
 
   const statusCounts = useMemo(() => {
     const counts: Record<string, number> = {};
-    items.forEach(item => {
+    items.forEach((item) => {
       counts[item.status] = (counts[item.status] || 0) + 1;
     });
     return counts;
@@ -158,7 +186,9 @@ export const HomeScreen: React.FC = () => {
 
     // Filter by location first
     if (selectedLocationId !== null) {
-      filtered = filtered.filter((item) => item.location === selectedLocationId);
+      filtered = filtered.filter(
+        (item) => item.location === selectedLocationId
+      );
     }
 
     // Filter by status
@@ -198,13 +228,128 @@ export const HomeScreen: React.FC = () => {
   };
 
   const handleManualAdd = () => {
+    setRecognizedItemData(null);
     createItemBottomSheetRef.current?.present();
   };
 
-  const handleAIAutomatic = () => {
-    console.log('AI automatic button pressed');
-    // TODO: Implement AI automatic functionality
+  const handleItemCreated = () => {
+    setRecognizedItemData(null);
   };
+
+  const handleAIAutomatic = useCallback(async () => {
+    try {
+      setIsAIRecognizing(true);
+      let result;
+
+      // Try to use camera first (if not on web)
+      if (Platform.OS !== 'web') {
+        try {
+          // Request camera permissions
+          const cameraPermission =
+            await ImagePicker.requestCameraPermissionsAsync();
+
+          if (cameraPermission.granted) {
+            // Try to launch camera
+            result = await ImagePicker.launchCameraAsync({
+              mediaTypes: ['images'],
+              allowsEditing: true,
+              quality: 0.8,
+            });
+          } else {
+            // Permission denied, use image picker
+            throw new Error('Camera permission denied');
+          }
+        } catch {
+          // Camera not available or failed (e.g., on simulator), use image picker
+          result = await ImagePicker.launchImageLibraryAsync({
+            mediaTypes: ['images'],
+            allowsEditing: true,
+            quality: 0.8,
+          });
+        }
+      } else {
+        // On web, use image picker
+        result = await ImagePicker.launchImageLibraryAsync({
+          mediaTypes: ['images'],
+          allowsEditing: true,
+          quality: 0.8,
+        });
+      }
+
+      if (result.canceled) {
+        setIsAIRecognizing(false);
+        return;
+      }
+
+      if (!result.assets || result.assets.length === 0) {
+        setIsAIRecognizing(false);
+        return;
+      }
+
+      const imageUri = result.assets[0].uri;
+      // Get original dimensions, default to reasonable values if not available
+      const originalWidth = result.assets[0].width || 1920;
+      const originalHeight = result.assets[0].height || 1080;
+
+      // Calculate dimensions to maintain aspect ratio with max 720p (1280x720)
+      let targetWidth = originalWidth;
+      let targetHeight = originalHeight;
+      const maxWidth = 1280;
+      const maxHeight = 720;
+
+      if (originalWidth > maxWidth || originalHeight > maxHeight) {
+        const aspectRatio = originalWidth / originalHeight;
+
+        if (originalWidth > originalHeight) {
+          // Landscape: constrain by width
+          targetWidth = maxWidth;
+          targetHeight = Math.round(maxWidth / aspectRatio);
+        } else if (originalHeight > originalWidth) {
+          // Portrait: constrain by height
+          targetHeight = maxHeight;
+          targetWidth = Math.round(maxHeight * aspectRatio);
+        } else {
+          // Square: use max dimension
+          targetWidth = Math.min(maxWidth, maxHeight);
+          targetHeight = targetWidth;
+        }
+      }
+
+      // Resize image to max 720p
+      const manipulatedImage = await ImageManipulator.manipulateAsync(
+        imageUri,
+        [{ resize: { width: targetWidth, height: targetHeight } }],
+        { compress: 0.8, format: ImageManipulator.SaveFormat.JPEG }
+      );
+
+      // Convert resized image to base64
+      const base64 = await FileSystem.readAsStringAsync(manipulatedImage.uri, {
+        encoding: 'base64',
+      });
+
+      // Call AI recognition API
+      const apiClient = getApiClient();
+      if (!apiClient) {
+        throw new Error('API client not available');
+      }
+
+      const recognizedItem = await apiClient.recognizeItem(base64);
+
+      setRecognizedItemData(recognizedItem);
+
+      createItemBottomSheetRef.current?.present();
+    } catch (error) {
+      console.error('AI automatic image capture error:', error);
+      Alert.alert(
+        t('createItem.errors.title'),
+        error instanceof Error
+          ? error.message
+          : 'Failed to capture image. Please try again.'
+      );
+    } finally {
+      setIsAIRecognizing(false);
+    }
+  }, [t, getApiClient]);
 
   const handleAvatarPress = () => {
     const rootNavigation = navigation.getParent();
@@ -245,7 +390,11 @@ export const HomeScreen: React.FC = () => {
           onSkip={handleSyncPromptSkip}
           onEnableSync={handleSyncPromptEnable}
         />
-        <CreateItemBottomSheet bottomSheetRef={createItemBottomSheetRef} />
+        <CreateItemBottomSheet
+          bottomSheetRef={createItemBottomSheetRef}
+          initialData={recognizedItemData}
+          onItemCreated={handleItemCreated}
+        />
       </Container>
     );
   }
@@ -261,17 +410,22 @@ export const HomeScreen: React.FC = () => {
         onAvatarPress={handleAvatarPress}
       />
       <Content>
-        <SearchInput
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-        />
+        <SearchInput value={searchQuery} onChangeText={setSearchQuery} />
         <FilterRow>
           <FilterToggleBtn
-            onPress={() => setFilterMode(prev => prev === 'location' ? 'status' : 'location')}
+            onPress={() =>
+              setFilterMode((prev) =>
+                prev === 'location' ? 'status' : 'location'
+              )
+            }
             activeOpacity={0.7}
           >
             <Ionicons
-              name={filterMode === 'location' ? 'location-outline' : 'pricetag-outline'}
+              name={
+                filterMode === 'location'
+                  ? 'location-outline'
+                  : 'pricetag-outline'
+              }
               size={18}
               color={theme.colors.primary}
             />
@@ -298,9 +452,13 @@ export const HomeScreen: React.FC = () => {
             <EmptyState
               icon="list-outline"
               title={t('inventory.empty.title')}
-              description={searchQuery.trim() || selectedLocationId !== null || selectedStatusId !== null
-                ? t('inventory.empty.filtered')
-                : t('inventory.empty.description')}
+              description={
+                searchQuery.trim() ||
+                  selectedLocationId !== null ||
+                  selectedStatusId !== null
+                  ? t('inventory.empty.filtered')
+                  : t('inventory.empty.description')
+              }
             />
           ) : (
             <FlatList
@@ -317,7 +475,7 @@ export const HomeScreen: React.FC = () => {
                 marginBottom: 12,
               }}
               showsVerticalScrollIndicator={false}
-              contentContainerStyle={{ 
+              contentContainerStyle={{
                 paddingBottom: bottomPadding,
               }}
             />
@@ -339,12 +497,16 @@ export const HomeScreen: React.FC = () => {
         onSkip={handleSyncPromptSkip}
         onEnableSync={handleSyncPromptEnable}
       />
-      <CreateItemBottomSheet bottomSheetRef={createItemBottomSheetRef} />
+      <CreateItemBottomSheet
+        bottomSheetRef={createItemBottomSheetRef}
+        initialData={recognizedItemData}
+        onItemCreated={handleItemCreated}
+      />
       <FloatingActionButton
         onManualAdd={handleManualAdd}
         onAIAutomatic={handleAIAutomatic}
+        isAIRecognizing={isAIRecognizing}
       />
     </Container>
   );
 };
-

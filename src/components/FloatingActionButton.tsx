@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { TouchableOpacity, View, Text, Pressable } from 'react-native';
+import { TouchableOpacity, View, Text, Pressable, ActivityIndicator } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, {
   useAnimatedStyle,
@@ -105,12 +105,14 @@ interface FloatingActionButtonProps {
   onManualAdd: () => void;
   onAIAutomatic: () => void;
   bottomOffset?: number;
+  isAIRecognizing?: boolean;
 }
 
 export const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({
   onManualAdd,
   onAIAutomatic,
   bottomOffset = 0,
+  isAIRecognizing = false,
 }) => {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
@@ -291,14 +293,25 @@ export const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({
         </ActionButtonWrapper>
 
         {/* Main FAB */}
-        <TouchableOpacity onPress={toggleExpanded} activeOpacity={0.8} style={{ position: 'absolute', bottom: 0, right: 0 }}>
+        <TouchableOpacity
+          onPress={toggleExpanded}
+          activeOpacity={0.8}
+          style={{ position: 'absolute', bottom: 0, right: 0 }}
+          disabled={isAIRecognizing}
+        >
           <MainFAB style={mainFABStyle}>
-            <Animated.View style={[{ position: 'absolute' }, addIconOpacity]}>
-              <Ionicons name="add" size={32} color={theme.colors.surface} />
-            </Animated.View>
-            <Animated.View style={[{ position: 'absolute' }, closeIconOpacity]}>
-              <Ionicons name="close" size={32} color={theme.colors.surface} />
-            </Animated.View>
+            {isAIRecognizing ? (
+              <ActivityIndicator size="small" color={theme.colors.surface} />
+            ) : (
+              <>
+                <Animated.View style={[{ position: 'absolute' }, addIconOpacity]}>
+                  <Ionicons name="add" size={32} color={theme.colors.surface} />
+                </Animated.View>
+                <Animated.View style={[{ position: 'absolute' }, closeIconOpacity]}>
+                  <Ionicons name="close" size={32} color={theme.colors.surface} />
+                </Animated.View>
+              </>
+            )}
           </MainFAB>
         </TouchableOpacity>
       </ActionsContainer>

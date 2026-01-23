@@ -20,8 +20,15 @@ export const getAuthTokens = async (): Promise<AuthTokens | null> => {
       return null;
     }
 
+    // Trim whitespace from token to prevent auth errors
+    const trimmedToken = accessToken.trim();
+    if (!trimmedToken) {
+      console.warn('Access token is empty after trimming');
+      return null;
+    }
+
     return {
-      accessToken,
+      accessToken: trimmedToken,
     };
   } catch (error) {
     console.error('Error getting auth tokens:', error);

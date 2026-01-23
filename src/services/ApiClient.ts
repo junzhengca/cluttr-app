@@ -7,6 +7,7 @@ import {
   UpdateAvatarUrlRequest,
   UpdateNicknameRequest,
   UpdateAccountSettingsRequest,
+  RecognizeItemRequest,
   AuthResponse,
   User,
   UploadImageResponse,
@@ -14,6 +15,7 @@ import {
   UpdateAccountSettingsResponse,
   ListMembersResponse,
   RegenerateInvitationResponse,
+  RecognizeItemResponse,
   ErrorDetails,
   RetryAttempt,
 } from '../types/api';
@@ -41,7 +43,8 @@ export class ApiClient {
    * Set the authentication token for subsequent requests
    */
   setAuthToken(token: string | null): void {
-    this.authToken = token;
+    // Trim whitespace from token to prevent auth errors
+    this.authToken = token ? token.trim() : null;
   }
 
   /**
@@ -452,6 +455,18 @@ export class ApiClient {
       method: 'POST',
       body: request,
       requiresAuth: true,
+    });
+  }
+
+  /**
+   * Recognize an inventory item from an image using AI
+   */
+  async recognizeItem(image: string): Promise<RecognizeItemResponse> {
+    const request: RecognizeItemRequest = { image };
+    return this.request<RecognizeItemResponse>('/api/ai/recognize-item', {
+      method: 'POST',
+      body: request,
+      requiresAuth: false,
     });
   }
 

@@ -1,3 +1,5 @@
+import { InventoryItem } from './inventory';
+
 // Request types
 export interface LoginRequest {
   email: string;
@@ -36,7 +38,12 @@ export interface UpdateAccountSettingsRequest {
   canShareTodos?: boolean;
 }
 
+export interface RecognizeItemRequest {
+  image: string;
+}
+
 // Response types
+export type RecognizeItemResponse = InventoryItem;
 export interface AuthResponse {
   accessToken: string;
   user?: User;

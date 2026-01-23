@@ -122,7 +122,7 @@
       "forest": "森林",
       "lilac": "丁香"
     },
-    "version": "当前版本 v2.2.0",
+    "versionPrefix": "当前版本",
     "clearData": {
       "button": "清除所有数据",
       "confirm": {

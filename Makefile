@@ -1,4 +1,4 @@
-.PHONY: help build-ios build-android build-all build-ios-local build-android-local build-ios-internal-local build-android-internal-local build-all-internal-local build-ios-internal build-android-internal build-all-internal build-ios-internal-local-app build-android-internal-local-app build-all-internal-local-app install-eas install-deps register-device clean
+.PHONY: help build-ios build-android build-all build-ios-local build-android-local build-all-internal-local build-ios-internal build-android-internal build-all-internal build-ios-internal-local-app build-android-internal-local-app build-all-internal-local-app increment-ios-build-number build-ios-production-local install-eas install-deps register-device clean
 
 # Default target
 help:
@@ -11,15 +11,14 @@ help:
 	@echo "  make build-all       - Build both iOS and Android simulator clients"
 	@echo "  make build-ios-local - Build iOS simulator locally (requires local setup)"
 	@echo "  make build-android-local - Build Android emulator locally (requires local setup)"
-	@echo "  make build-ios-internal-local - Build iOS internal distribution variant locally"
-	@echo "  make build-android-internal-local - Build Android internal distribution variant locally"
-	@echo "  make build-all-internal-local - Build both iOS and Android internal distribution variants locally"
+	@echo "  make build-all-internal-local - Build both iOS and Android development clients locally"
 	@echo "  make build-ios-internal - Build iOS internal distribution IPA (not development client)"
 	@echo "  make build-android-internal - Build Android internal distribution APK (not development client)"
 	@echo "  make build-all-internal - Build both iOS and Android internal distribution builds"
 	@echo "  make build-ios-internal-local-app - Build iOS internal distribution IPA locally (not development client)"
 	@echo "  make build-android-internal-local-app - Build Android internal distribution APK locally (not development client)"
 	@echo "  make build-all-internal-local-app - Build both iOS and Android internal distribution builds locally"
+	@echo "  make build-ios-production-local - Build iOS production variant locally"
 	@echo "  make clean           - Clean build artifacts"
 
 # Install all dependencies
@@ -64,19 +63,9 @@ build-android-local:
 	@echo "Building Android emulator development client locally..."
 	eas build --profile development --platform android --local
 
-# Build iOS internal distribution variant locally
-build-ios-internal-local:
-	@echo "Building iOS internal distribution variant locally..."
-	eas build --profile development --platform ios --local
-
-# Build Android internal distribution variant locally
-build-android-internal-local:
-	@echo "Building Android internal distribution variant locally..."
-	eas build --profile development --platform android --local
-
-# Build both iOS and Android internal distribution variants locally
-build-all-internal-local: build-ios-internal-local build-android-internal-local
-	@echo "All internal distribution builds completed!"
+# Build both iOS and Android development clients locally
+build-all-internal-local: build-ios-local build-android-local
+	@echo "All development client builds completed!"
 
 # Build iOS internal distribution IPA (not development client) - cloud build
 build-ios-internal:
@@ -106,7 +95,13 @@ build-android-internal-local-app:
 build-all-internal-local-app: build-ios-internal-local-app build-android-internal-local-app
 	@echo "All internal distribution builds completed!"
 
-build-ios-production-local:
+# Increment iOS build number
+increment-ios-build-number:
+	@echo "Incrementing iOS build number..."
+	@node -e "const fs = require('fs'); const appJson = JSON.parse(fs.readFileSync('app.json', 'utf8')); const currentBuildNumber = parseInt(appJson.expo.ios.buildNumber || '1', 10); const newBuildNumber = (currentBuildNumber + 1).toString(); appJson.expo.ios.buildNumber = newBuildNumber; fs.writeFileSync('app.json', JSON.stringify(appJson, null, 2) + '\n'); console.log('Build number incremented from', currentBuildNumber, 'to', newBuildNumber);"
+
+# Build iOS production variant locally
+build-ios-production-local: increment-ios-build-number
 	@echo "Building iOS production variant locally..."
 	eas build --profile production --platform ios --local
 

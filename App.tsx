@@ -24,7 +24,7 @@ import { setShowNicknameSetup } from './src/store/slices/authSlice';
 import { ToastProvider } from './src/components/ToastProvider';
 
 // TODO: Configure your API base URL here or use environment variables
-const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL || 'https://home-inventory-api.logiccore.digital';
+const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL || 'https://homeinventoryserver-production.up.railway.app';
 
 // Inner component to handle initialization
 function AppInner() {

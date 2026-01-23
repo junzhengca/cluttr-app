@@ -21,8 +21,6 @@ import type { StyledProps } from '../utils/styledComponents';
 import { useAuth, useAppDispatch } from '../store/hooks';
 import { useKeyboardVisibility } from '../hooks';
 import { BottomActionBar } from './BottomActionBar';
-import { ApiClient } from '../services/ApiClient';
-import { getAuthTokens } from '../services/AuthService';
 import { setShowNicknameSetup } from '../store/slices/authSlice';
 
 const Backdrop = styled(BottomSheetBackdrop)`
@@ -168,7 +166,7 @@ export const SetupNicknameBottomSheet: React.FC<
   const insets = useSafeAreaInsets();
   const { t } = useTranslation();
   const dispatch = useAppDispatch();
-  const { user, updateUser, logout } = useAuth();
+  const { user, updateUser, logout, getApiClient } = useAuth();
   const { isKeyboardVisible } = useKeyboardVisibility();
 
   const nicknameInputRef = useRef<TextInput>(null);
@@ -237,18 +235,14 @@ export const SetupNicknameBottomSheet: React.FC<
     setError(null);
 
     try {
-      // Get API client
-      const API_BASE_URL =
-        process.env.EXPO_PUBLIC_API_BASE_URL ||
-        'https://home-inventory-api.logiccore.digital';
-      const apiClient = new ApiClient(API_BASE_URL);
-      const tokens = await getAuthTokens();
-      if (!tokens) {
-        throw new Error('Not authenticated');
+      // Get API client from Redux (already initialized with correct base URL and token)
+      const apiClient = getApiClient();
+      if (!apiClient) {
+        throw new Error('API client not initialized');
       }
-      apiClient.setAuthToken(tokens.accessToken);
 
       // Update nickname
+      console.log('[SetupNickname] Updating nickname');
       const updatedUser = await apiClient.updateNickname(currentNickname);
 
       // Update user state
@@ -262,11 +256,16 @@ export const SetupNicknameBottomSheet: React.FC<
       onNicknameSet?.();
     } catch (error) {
       console.error('Error updating nickname:', error);
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      console.error('[SetupNickname] Error details:', {
+        message: errorMessage,
+        errorType: error instanceof Error ? error.constructor.name : typeof error,
+      });
       setError(t('setupNickname.errors.updateFailed'));
     } finally {
       setIsLoading(false);
     }
-  }, [t, updateUser, handleClose, onNicknameSet, dispatch]);
+  }, [t, updateUser, handleClose, onNicknameSet, dispatch, getApiClient]);
 
   const handleLogout = useCallback(() => {
     handleClose();

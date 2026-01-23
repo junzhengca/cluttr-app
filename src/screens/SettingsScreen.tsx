@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useTranslation } from 'react-i18next';
+import Constants from 'expo-constants';
 import type { StyledProps } from '../utils/styledComponents';
 
 import { PageHeader } from '../components/PageHeader';
@@ -93,6 +94,9 @@ export const SettingsScreen: React.FC = () => {
   // Calculate bottom padding for scrollable content
   const bottomPadding = calculateBottomPadding(insets.bottom);
 
+  // Get version from app.json
+  const appVersion = Constants.expoConfig?.version || '1.0.0';
+
   if (isLoading || !settings) {
     return (
       <Container>
@@ -152,7 +156,9 @@ export const SettingsScreen: React.FC = () => {
         </SettingsSection>
 
         {/* Version Info */}
-        <VersionText>{t('settings.version')}</VersionText>
+        <VersionText>
+          {t('settings.versionPrefix')} v{appVersion}
+        </VersionText>
       </Content>
     </Container>
   );

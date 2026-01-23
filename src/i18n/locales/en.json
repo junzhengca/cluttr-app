@@ -122,7 +122,7 @@
       "forest": "Forest",
       "lilac": "Lilac"
     },
-    "version": "Current version v2.2.0",
+    "versionPrefix": "Current version",
     "clearData": {
       "button": "Clear All Data",
       "confirm": {
