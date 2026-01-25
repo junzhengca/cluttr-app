@@ -114,6 +114,9 @@
     "subtitle": "Make your home more comfortable",
     "preferences": "Preferences",
     "dataAndSecurity": "Data & Security",
+    "experimental": "Experimental",
+    "darkMode": "Dark Mode",
+    "darkModeDescription": "Enable dark theme for the app",
     "theme": "Theme Color",
     "currency": "Currency",
     "themeNames": {
@@ -302,8 +305,10 @@
     "label": "Icon & Color",
     "value": "Change appearance",
     "title": "Select Icon & Color",
+    "subtitle": "Customize the icon and color",
     "colorLabel": "Color",
-    "iconLabel": "Icon"
+    "iconLabel": "Icon",
+    "save": "Save"
   },
   "profile": {
     "title": "Profile",
@@ -577,6 +582,18 @@
     "nicknameHelper": "This is the name other users will see.",
     "submit": "Enter my home",
     "logoutLink": "Not your account? Log out",
+    "errors": {
+      "title": "Error",
+      "enterNickname": "Please enter a nickname",
+      "updateFailed": "Failed to update nickname, please try again"
+    }
+  },
+  "editNickname": {
+    "title": "Edit Nickname",
+    "subtitle": "Change your display name",
+    "nicknameLabel": "Nickname",
+    "nicknameHelper": "This is the name other users will see.",
+    "submit": "Save Changes",
     "errors": {
       "title": "Error",
       "enterNickname": "Please enter a nickname",

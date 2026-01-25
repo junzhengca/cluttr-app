@@ -1,44 +1,35 @@
-import React, { useRef, useCallback, useEffect } from 'react';
+import React, { useRef, useCallback, useImperativeHandle, forwardRef, useState } from 'react';
 import { BottomSheetModal } from '@gorhom/bottom-sheet';
 import { Ionicons } from '@expo/vector-icons';
+import type { InventoryItem } from '../../types/inventory';
 import { useInventory } from '../../store/hooks';
 import { ItemFormBottomSheet } from './ItemFormBottomSheet';
 
 export interface EditItemBottomSheetProps {
   bottomSheetRef: React.RefObject<BottomSheetModal | null>;
-  itemId: string;
   onItemUpdated?: () => void;
+}
+
+export interface EditItemBottomSheetRef {
+  present: (itemId: string) => void;
 }
 
 /**
  * Edit item bottom sheet using shared ItemFormBottomSheet component.
- * Reduced from ~537 lines to ~60 lines by sharing code with CreateItemBottomSheet.
  *
  * Uses uncontrolled inputs with refs to prevent IME composition interruption
  * for Chinese/Japanese input methods.
- *
- * Handles loading item data from the Redux store when the sheet opens.
  */
-export const EditItemBottomSheet: React.FC<EditItemBottomSheetProps> = ({
-  bottomSheetRef,
-  itemId,
-  onItemUpdated,
-}) => {
+export const EditItemBottomSheet = forwardRef<
+  EditItemBottomSheetRef,
+  EditItemBottomSheetProps
+>(({ bottomSheetRef, onItemUpdated }, ref) => {
   const { updateItem, items } = useInventory();
 
-  // Track items and current item for form initialization
-  const itemsRef = useRef(items);
+  // Track which item ID is currently being edited
   const currentItemIdRef = useRef<string | null>(null);
-
-  useEffect(() => {
-    itemsRef.current = items;
-  }, [items]);
-
-  // Get current item data from store
-  const getCurrentItemData = useCallback(() => {
-    if (!currentItemIdRef.current) return null;
-    return itemsRef.current.find((i) => i.id === currentItemIdRef.current) ?? null;
-  }, []);
+  // State for initial data (triggers form population in hook's useEffect)
+  const [initialData, setInitialData] = useState<Partial<InventoryItem> | null>(null);
 
   const handleSubmit = useCallback(
     async (values: {
@@ -54,8 +45,18 @@ export const EditItemBottomSheet: React.FC<EditItemBottomSheetProps> = ({
       purchaseDate?: string;
       expiryDate?: string;
     }) => {
-      if (!currentItemIdRef.current) return;
-      updateItem(currentItemIdRef.current, values);
+      console.log('[EditItemBottomSheet] handleSubmit called with icon:', values.icon, 'iconColor:', values.iconColor);
+      const itemId = currentItemIdRef.current;
+      console.log('[EditItemBottomSheet] currentItemIdRef.current:', itemId);
+      if (!itemId) {
+        console.log('[EditItemBottomSheet] NO itemId - returning early!');
+        return;
+      }
+      console.log('[EditItemBottomSheet] About to call updateItem with itemId:', itemId);
+      updateItem(itemId, values);
+      // Clear the ref after update is dispatched
+      currentItemIdRef.current = null;
+      console.log('[EditItemBottomSheet] updateItem called');
     },
     [updateItem]
   );
@@ -64,25 +65,56 @@ export const EditItemBottomSheet: React.FC<EditItemBottomSheetProps> = ({
     onItemUpdated?.();
   }, [onItemUpdated]);
 
-  const handleSheetOpen = useCallback(() => {
-    // Set the current item ID when sheet opens
-    currentItemIdRef.current = itemId;
-  }, [itemId]);
-
   const handleSheetClose = useCallback(() => {
-    // Clear the current item ID when sheet closes
-    currentItemIdRef.current = null;
+    // Don't clear currentItemIdRef here - it's needed for the form submission
+    // It will be cleared after successful update in handleSuccess
+    setInitialData(null);
   }, []);
+
+  // Expose present method
+  useImperativeHandle(
+    ref,
+    () => ({
+      present: (itemId: string) => {
+        console.log('[EditItemBottomSheet] present called with itemId:', itemId);
+        console.log('[EditItemBottomSheet] items:', items);
+
+        const item = items.find((i) => i.id === itemId);
+        if (!item) {
+          console.log('[EditItemBottomSheet] Item not found!');
+          return;
+        }
+
+        console.log('[EditItemBottomSheet] Item found:', item);
+        console.log('[EditItemBottomSheet] bottomSheetRef.current:', bottomSheetRef.current);
+
+        // Store the current item ID
+        currentItemIdRef.current = itemId;
+
+        // Set initialData - this triggers form population
+        setInitialData(item);
+
+        // Present the bottom sheet immediately
+        // The form will be populated on the next render cycle
+        setTimeout(() => {
+          console.log('[EditItemBottomSheet] Calling present()');
+          bottomSheetRef.current?.present();
+        }, 0);
+      },
+    }),
+    [items, bottomSheetRef]
+  );
 
   return (
     <ItemFormBottomSheet
       bottomSheetRef={bottomSheetRef}
       mode="edit"
-      initialData={getCurrentItemData()}
+      initialData={initialData}
       onSubmit={handleSubmit}
       onSuccess={handleSuccess}
-      onSheetOpen={handleSheetOpen}
       onSheetClose={handleSheetClose}
     />
   );
-};
+});
+
+EditItemBottomSheet.displayName = 'EditItemBottomSheet';

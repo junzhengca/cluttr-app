@@ -12,6 +12,7 @@ const initialState: SettingsState = {
     theme: 'forest',
     currency: 'cny',
     language: 'en',
+    darkMode: false,
   },
   isLoading: true,
   lastUpdateSuccess: null,

@@ -22,6 +22,7 @@ npm run format        # Format code with Prettier
 npm run format:check  # Check formatting
 npm run lint          # Run ESLint
 npm run lint:fix      # Fix ESLint issues automatically
+npm run build         # Run TypeScript compiler check
 ```
 
 ### Building (via Makefile)
@@ -141,7 +142,7 @@ Key points:
 - Sync to React state only on blur or submit
 - Reset form with `key` prop increment
 
-Example implementation in `src/components/organisms/SetupNicknameBottomSheet.tsx`.
+Example implementations in `src/components/organisms/SetupNicknameBottomSheet.tsx` and the reusable `src/hooks/useUncontrolledItemForm.ts` hook.
 
 ### Styled Components Pattern
 
@@ -162,6 +163,107 @@ The app heavily uses `@gorhom/bottom-sheet` for modal presentations:
 - Form inputs should use `BottomSheetTextInput` component
 - Always use `useKeyboardVisibility()` hook for dynamic padding
 - Set `android_keyboardInputMode="adjustResize"` for keyboard handling
+
+**CRITICAL**: Always set `backgroundStyle={{ backgroundColor: 'transparent' }}` on `BottomSheetModal` when using a custom `ContentContainer` with border radius. This prevents a double-layered visual artifact where both the modal and content container have their own backgrounds with different border radii.
+
+```typescript
+<BottomSheetModal
+  ref={bottomSheetRef}
+  snapPoints={snapPoints}
+  backgroundStyle={{ backgroundColor: 'transparent' }}  // Prevents double-layer artifact
+>
+  <ContentContainer>
+    {/* Content with consistent border radius */}
+  </ContentContainer>
+</BottomSheetModal>
+```
+
+### Modal Form Pattern
+
+**CRITICAL**: For modals with forms, ALWAYS pre-fill the form BEFORE presenting the modal. This ensures:
+1. Form is fully initialized with current values when shown
+2. Validation state is correct from the start
+3. No flicker or delay in form population
+
+**Pattern**: Use `forwardRef` with `useImperativeHandle` to expose a `present()` method that accepts initial data.
+
+```typescript
+// 1. Define a ref type with present method
+export interface EditSomethingBottomSheetRef {
+  present: (initialData: string | ItemType) => void;
+}
+
+// 2. Use forwardRef and useImperativeHandle
+export const EditSomethingBottomSheet = forwardRef<
+  EditSomethingBottomSheetRef,
+  EditSomethingBottomSheetProps
+>(({ bottomSheetRef, onSubmitted }, ref) => {
+  // State for initial data (triggers form population)
+  const [initialData, setInitialData] = useState<ItemType | null>(null);
+  const [defaultInputValue, setDefaultInputValue] = useState('');
+
+  // Populate form when initialData changes
+  useEffect(() => {
+    if (initialData) {
+      valueRef.current = initialData.value;
+      setDefaultInputValue(initialData.value);
+      setIsValid(initialData.value.trim().length > 0);
+    }
+  }, [initialData]);
+
+  // Expose present method
+  useImperativeHandle(
+    ref,
+    () => ({
+      present: (data: ItemType) => {
+        setInitialData(data);  // Triggers form population
+        setTimeout(() => {
+          bottomSheetRef.current?.present();  // Present after state update
+        }, 0);
+      },
+    }),
+    [bottomSheetRef]
+  );
+
+  // Reset form on close
+  const handleSheetClose = useCallback(() => {
+    setInitialData(null);
+    setDefaultInputValue('');
+    valueRef.current = '';
+    setIsValid(false);
+  }, []);
+
+  return (
+    <BottomSheetModal
+      ref={bottomSheetRef}
+      onChange={(index) => {
+        if (index === -1) handleSheetClose();
+      }}
+    >
+      <UncontrolledInput defaultValue={defaultInputValue} />
+    </BottomSheetModal>
+  );
+});
+```
+
+**Parent component usage**:
+```typescript
+// Need TWO refs:
+const bottomSheetModalRef = useRef<BottomSheetModal | null>(null);
+const editSheetRef = useRef<EditSomethingBottomSheetRef | null>(null);
+
+// Present with data
+<EditSomethingBottomSheet
+  ref={editSheetRef}
+  bottomSheetRef={bottomSheetModalRef}
+/>
+
+editSheetRef.current?.present(currentData);
+```
+
+Reference implementations:
+- `src/components/organisms/EditItemBottomSheet.tsx` - Complex form with multiple fields
+- `src/components/organisms/EditNicknameBottomSheet.tsx` - Simple single-field form
 
 ### Error Handling
 
@@ -199,6 +301,8 @@ src/
 - **NEVER** use Web OAuth client IDs - only iOS (`EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID`) and Android (`EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID`)
 - **NEVER** use `console.log()` - use the Logger from `src/utils/Logger.ts`
 - **NEVER** suppress type errors with `as any` or `@ts-ignore`
+- **NEVER** populate modal forms after presentation - ALWAYS pre-fill before presenting via `present(data)` method
+- **NEVER** omit `backgroundStyle={{ backgroundColor: 'transparent' }}` on `BottomSheetModal` when using custom `ContentContainer` - causes double-layer visual artifact
 
 ## Cursor Rules
 
@@ -206,6 +310,17 @@ The following Cursor rules in `.cursor/rules/` should be respected:
 
 1. **pinyin-input-pattern.mdc** - Use uncontrolled inputs for IME composition support
 2. **eslint-ensure.mdc** - Always run `npm run lint` after edits to ensure code passes lint rules
+
+## Post-Change Verification
+
+**CRITICAL**: After ANY code changes, you MUST run both lint and build checks to ensure code quality:
+
+```bash
+npm run lint    # Check for linting errors
+npm run build   # Run TypeScript compiler check
+```
+
+Both commands MUST pass with no errors before considering a change complete.
 
 ## Environment
 

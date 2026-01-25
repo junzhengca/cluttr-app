@@ -73,6 +73,7 @@ export const updateItem = async (
   updates: Partial<Omit<InventoryItem, 'id'>>
 ): Promise<InventoryItem | null> => {
   try {
+    console.log('[InventoryService] updateItem called with id:', id, 'updates:', updates);
     const items = await getAllItems();
     const index = items.findIndex((item) => item.id === id);
 
@@ -81,6 +82,7 @@ export const updateItem = async (
     }
 
     items[index] = { ...items[index], ...updates, updatedAt: new Date().toISOString() };
+    console.log('[InventoryService] Updated item to be written:', items[index]);
     const success = await writeFile<ItemsData>(ITEMS_FILE, { items });
 
     if (success) {

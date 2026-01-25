@@ -133,4 +133,4 @@ const handleClose = useCallback(() => {
 
 ## Example Files
 
-See `src/components/CreateItemBottomSheet.tsx` for a complete implementation example.
+See `src/components/organisms/SetupNicknameBottomSheet.tsx` and the reusable `src/hooks/useUncontrolledItemForm.ts` hook for complete implementation examples.

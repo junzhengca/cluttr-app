@@ -16,11 +16,11 @@ interface ThemeProviderProps {
 
 export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
   const { settings } = useSettings();
-  
-  // Generate theme based on selected theme ID
+
+  // Generate theme based on selected theme ID and dark mode setting
   const theme = useMemo(() => {
-    return generateTheme(settings.theme);
-  }, [settings.theme]);
+    return generateTheme(settings.theme, settings.darkMode);
+  }, [settings.theme, settings.darkMode]);
 
   return (
     <ThemeContext.Provider value={{ theme }}>

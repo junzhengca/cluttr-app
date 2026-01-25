@@ -102,7 +102,7 @@ export const BottomNavBar: React.FC<BottomTabBarProps> = ({ state, navigation })
                   <IconComponent
                     name={iconName as keyof typeof Ionicons.glyphMap & keyof typeof MaterialCommunityIcons.glyphMap}
                     size={24}
-                    color={isFocused ? theme.colors.text : theme.colors.textLight}
+                    color={isFocused ? theme.colors.primary : theme.colors.textLight}
                   />
                 </TabButton>
                 {index === 1 && <VerticalDivider />}

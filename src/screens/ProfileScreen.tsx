@@ -18,7 +18,8 @@ import {
   Toggle,
   LoginBottomSheet,
   SignupBottomSheet,
-  SetupNicknameBottomSheet,
+  EditNicknameBottomSheet,
+  type EditNicknameBottomSheetRef,
   Button,
 } from '../components';
 import { useAuth, useSync } from '../store/hooks';
@@ -210,7 +211,8 @@ export const ProfileScreen: React.FC = () => {
   const [localSyncEnabled, setLocalSyncEnabled] = useState(false);
   const loginBottomSheetRef = useRef<BottomSheetModal | null>(null);
   const signupBottomSheetRef = useRef<BottomSheetModal | null>(null);
-  const editNicknameBottomSheetRef = useRef<BottomSheetModal | null>(null);
+  const editNicknameBottomSheetModalRef = useRef<BottomSheetModal | null>(null);
+  const editNicknameBottomSheetRef = useRef<EditNicknameBottomSheetRef | null>(null);
 
   const getLocale = useCallback(() => {
     return i18n.language === 'zh' || i18n.language === 'zh-CN' ? 'zh-CN' : 'en-US';
@@ -529,7 +531,7 @@ export const ProfileScreen: React.FC = () => {
           </AvatarContainer>
           <UserNameContainer>
             <UserName>{user.nickname || user.email}</UserName>
-            <EditNicknameButton onPress={() => editNicknameBottomSheetRef.current?.present()}>
+            <EditNicknameButton onPress={() => editNicknameBottomSheetRef.current?.present(user.nickname || '')}>
               <Ionicons name="create-outline" size={20} color={theme.colors.primary} />
             </EditNicknameButton>
           </UserNameContainer>
@@ -613,9 +615,10 @@ export const ProfileScreen: React.FC = () => {
         onLoginPress={handleLoginPress}
         onSignupSuccess={handleSignupSuccess}
       />
-      <SetupNicknameBottomSheet
-        bottomSheetRef={editNicknameBottomSheetRef}
-        onNicknameSet={async () => {
+      <EditNicknameBottomSheet
+        ref={editNicknameBottomSheetRef}
+        bottomSheetRef={editNicknameBottomSheetModalRef}
+        onNicknameUpdated={async () => {
           // Refresh user data
           const apiClient = getApiClient();
           if (apiClient) {

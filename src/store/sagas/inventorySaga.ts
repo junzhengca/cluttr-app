@@ -99,6 +99,7 @@ function* createItemSaga(action: { type: string; payload: Omit<InventoryItem, 'i
 
 function* updateItemSaga(action: { type: string; payload: { id: string; updates: Partial<Omit<InventoryItem, 'id'>> } }) {
   const { id, updates } = action.payload;
+  console.log('[InventorySaga] updateItemSaga called with id:', id, 'updates:', updates);
 
   try {
     // Optimistically update to state
@@ -114,6 +115,8 @@ function* updateItemSaga(action: { type: string; payload: { id: string; updates:
 
     // Refresh to ensure sync (but don't set loading)
     const allItems: InventoryItem[] = yield call(getAllItems);
+    const updatedItemFromStorage = allItems.find((item) => item.id === id);
+    console.log('[InventorySaga] Item from storage after update:', updatedItemFromStorage);
     allItems.sort((a, b) => {
       const aTime = a.createdAt ? new Date(a.createdAt).getTime() : 0;
       const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0;

@@ -59,7 +59,7 @@ const TextContainer = styled(View)`
 const Title = styled(Text)`
   font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.xxl}px;
   font-weight: ${({ theme }: StyledProps) => theme.typography.fontWeight.bold};
-  color: #1a1a1a;
+  color: ${({ theme }: StyledProps) => theme.colors.text};
   line-height: 28px;
 `;
 

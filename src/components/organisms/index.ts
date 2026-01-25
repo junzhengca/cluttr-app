@@ -16,11 +16,11 @@ export { CreateItemBottomSheet } from './CreateItemBottomSheet';
 export type { CreateItemBottomSheetProps } from './CreateItemBottomSheet';
 
 export { EditItemBottomSheet } from './EditItemBottomSheet';
-export type { EditItemBottomSheetProps } from './EditItemBottomSheet';
+export type { EditItemBottomSheetProps, EditItemBottomSheetRef } from './EditItemBottomSheet';
 
 // Shared item form components
 export { ItemFormBottomSheet } from './ItemFormBottomSheet';
-export type { ItemFormBottomSheetProps, FormMode } from './ItemFormBottomSheet';
+export type { ItemFormBottomSheetProps, FormMode, ItemFormBottomSheetRef } from './ItemFormBottomSheet';
 
 export { ItemFormFields } from './ItemFormFields';
 export type { ItemFormFieldsProps } from './ItemFormFields';
@@ -42,6 +42,9 @@ export type { InviteMenuBottomSheetProps } from './InviteMenuBottomSheet';
 
 export { SetupNicknameBottomSheet } from './SetupNicknameBottomSheet';
 export type { SetupNicknameBottomSheetProps } from './SetupNicknameBottomSheet';
+
+export { EditNicknameBottomSheet } from './EditNicknameBottomSheet';
+export type { EditNicknameBottomSheetProps, EditNicknameBottomSheetRef } from './EditNicknameBottomSheet';
 
 export { EnableSyncBottomSheet } from './EnableSyncBottomSheet';
 export type { EnableSyncBottomSheetProps } from './EnableSyncBottomSheet';

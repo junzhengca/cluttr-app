@@ -15,6 +15,7 @@ import {
   LanguageSelector,
   ExportDataButton,
   ClearDataButton,
+  SettingsToggleItem,
 } from '../components';
 import { useSettings, useAuth } from '../store/hooks';
 import { calculateBottomPadding } from '../utils/layout';
@@ -93,6 +94,13 @@ export const SettingsScreen: React.FC = () => {
     }
   };
 
+  const handleDarkModeChange = async (value: boolean) => {
+    const success = await updateSettings({ darkMode: value });
+    if (!success) {
+      console.error('Failed to update dark mode setting');
+    }
+  };
+
   // Calculate bottom padding for scrollable content
   const bottomPadding = calculateBottomPadding(insets.bottom);
 
@@ -155,6 +163,17 @@ export const SettingsScreen: React.FC = () => {
           <SectionTitle>{t('settings.dataAndSecurity')}</SectionTitle>
           <ExportDataButton />
           <ClearDataButton />
+        </SettingsSection>
+
+        {/* Experimental Section */}
+        <SettingsSection>
+          <SectionTitle>{t('settings.experimental')}</SectionTitle>
+          <SettingsToggleItem
+            label={t('settings.darkMode')}
+            description={t('settings.darkModeDescription')}
+            value={settings.darkMode ?? false}
+            onValueChange={handleDarkModeChange}
+          />
         </SettingsSection>
 
         {/* Version Info */}

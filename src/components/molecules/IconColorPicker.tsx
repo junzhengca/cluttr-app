@@ -1,21 +1,23 @@
-import React, { useState, useCallback, useRef, useEffect } from 'react';
+import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import {
   TouchableOpacity,
   View,
-  Text,
-  Modal,
-  Pressable,
-  Animated,
-  Easing,
-  ScrollView,
+  Keyboard,
 } from 'react-native';
 import styled from 'styled-components/native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../theme/ThemeProvider';
+import {
+  BottomSheetModal,
+  BottomSheetBackdrop,
+  BottomSheetScrollView,
+} from '@gorhom/bottom-sheet';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { getLightColor } from '../../utils/colors';
 import { IconSelector } from './IconSelector';
 import { ColorPalette } from './ColorPalette';
+import { BottomSheetHeader, Button } from '../atoms';
 import type { StyledProps } from '../../utils/styledComponents';
 
 const PickerTrigger = styled(TouchableOpacity)`
@@ -35,58 +37,41 @@ const IconContainer = styled(View)<{ backgroundColor: string }>`
   border-color: ${({ theme }: StyledProps) => theme.colors.borderLight};
 `;
 
-const ModalContainer = styled(View)`
+const Backdrop = styled(BottomSheetBackdrop)`
+  background-color: rgba(0, 0, 0, 0.5);
+`;
+
+const ContentContainer = styled.View`
   flex: 1;
-  justify-content: flex-end;
-`;
-
-const ModalOverlay = styled(Animated.View)`
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: black;
-`;
-
-const ModalContent = styled(Animated.View)`
   background-color: ${({ theme }: StyledProps) => theme.colors.surface};
   border-top-left-radius: ${({ theme }: StyledProps) => theme.borderRadius.xl}px;
   border-top-right-radius: ${({ theme }: StyledProps) => theme.borderRadius.xl}px;
-  padding: ${({ theme }: StyledProps) => theme.spacing.lg}px;
-  max-height: 85%;
-`;
-
-const ModalHeader = styled(View)`
-  flex-direction: row;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: ${({ theme }: StyledProps) => theme.spacing.lg}px;
-`;
-
-const ModalTitle = styled(Text)`
-  font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.lg}px;
-  font-weight: ${({ theme }: StyledProps) => theme.typography.fontWeight.medium};
-  color: ${({ theme }: StyledProps) => theme.colors.text};
-`;
-
-const CloseButton = styled(TouchableOpacity)`
-  padding: ${({ theme }: StyledProps) => theme.spacing.xs}px;
-`;
-
-const ScrollContent = styled(ScrollView)`
-  margin-bottom: ${({ theme }: StyledProps) => theme.spacing.xl}px;
+  overflow: hidden;
 `;
 
 const Section = styled(View)`
   margin-bottom: ${({ theme }: StyledProps) => theme.spacing.lg}px;
 `;
 
-const SectionLabel = styled(Text)`
+const SectionLabel = styled.Text`
   font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.md}px;
   font-weight: ${({ theme }: StyledProps) => theme.typography.fontWeight.medium};
   color: ${({ theme }: StyledProps) => theme.colors.textSecondary};
   margin-bottom: ${({ theme }: StyledProps) => theme.spacing.sm}px;
+`;
+
+const FooterContainer = styled.View<{ bottomInset: number }>`
+  background-color: ${({ theme }: StyledProps) => theme.colors.surface};
+  padding-horizontal: ${({ theme }: StyledProps) => theme.spacing.lg}px;
+  padding-top: ${({ theme }: StyledProps) => theme.spacing.md}px;
+  padding-bottom: ${({ bottomInset, theme }: { bottomInset: number } & StyledProps) => bottomInset + theme.spacing.md}px;
+  border-bottom-left-radius: ${({ theme }: StyledProps) => theme.borderRadius.xl}px;
+  border-bottom-right-radius: ${({ theme }: StyledProps) => theme.borderRadius.xl}px;
+  shadow-color: #000;
+  shadow-offset: 0px -2px;
+  shadow-opacity: 0.03;
+  shadow-radius: 4px;
+  elevation: 2;
 `;
 
 export interface IconColorPickerProps {
@@ -103,61 +88,78 @@ export const IconColorPicker: React.FC<IconColorPickerProps> = ({
   onColorSelect,
 }) => {
   const theme = useTheme();
+  const insets = useSafeAreaInsets();
   const { t } = useTranslation();
-  const [showModal, setShowModal] = useState(false);
-  const [isAnimating, setIsAnimating] = useState(false);
 
-  // Animation values
-  const backdropOpacity = useRef(new Animated.Value(0)).current;
-  const slideY = useRef(new Animated.Value(1)).current;
+  const bottomSheetModalRef = useRef<BottomSheetModal | null>(null);
 
-  // Animate modal in/out
+  // Temporary state for selections (only applied on save)
+  const [tempIcon, setTempIcon] = useState<keyof typeof Ionicons.glyphMap>(icon);
+  const [tempColor, setTempColor] = useState<string>(color);
+
+  // Sync with props when they change from outside
   useEffect(() => {
-    if (showModal) {
-      setIsAnimating(true);
-      Animated.parallel([
-        Animated.timing(backdropOpacity, {
-          toValue: 0.5,
-          duration: 200,
-          useNativeDriver: true,
-        }),
-        Animated.timing(slideY, {
-          toValue: 0,
-          duration: 300,
-          easing: Easing.out(Easing.cubic),
-          useNativeDriver: true,
-        }),
-      ]).start(() => {
-        setIsAnimating(false);
-      });
-    }
-  }, [showModal, backdropOpacity, slideY]);
+    setTempIcon(icon);
+    setTempColor(color);
+  }, [icon, color]);
+
+  const snapPoints = useMemo(() => ['75%'], []);
+
+  const renderBackdrop = useCallback(
+    (props: React.ComponentProps<typeof BottomSheetBackdrop>) => (
+      <Backdrop {...props} disappearsOnIndex={-1} appearsOnIndex={0} />
+    ),
+    []
+  );
 
   const handleOpen = useCallback(() => {
-    setShowModal(true);
-  }, []);
+    // Dismiss keyboard before opening
+    Keyboard.dismiss();
+
+    // Reset temp state to current props values
+    setTempIcon(icon);
+    setTempColor(color);
+    bottomSheetModalRef.current?.present();
+  }, [icon, color]);
 
   const handleClose = useCallback(() => {
-    if (!isAnimating && showModal) {
-      setIsAnimating(true);
-      Animated.parallel([
-        Animated.timing(backdropOpacity, {
-          toValue: 0,
-          duration: 200,
-          useNativeDriver: true,
-        }),
-        Animated.timing(slideY, {
-          toValue: 1,
-          duration: 250,
-          easing: Easing.in(Easing.cubic),
-          useNativeDriver: true,
-        }),
-      ]).start(() => {
-        setShowModal(false);
-        setIsAnimating(false);
-      });
-    }
-  }, [isAnimating, showModal, backdropOpacity, slideY]);
+    bottomSheetModalRef.current?.dismiss();
+  }, []);
+
+  const handleSheetClose = useCallback(() => {
+    // Reset temp state when modal closes without saving
+    setTempIcon(icon);
+    setTempColor(color);
+  }, [icon, color]);
+
+  const handleSave = useCallback(() => {
+    // Apply the changes
+    onIconSelect(tempIcon);
+    onColorSelect(tempColor);
+    handleClose();
+  }, [tempIcon, tempColor, onIconSelect, onColorSelect, handleClose]);
+
+  const handleIconSelect = useCallback((selectedIcon: keyof typeof Ionicons.glyphMap) => {
+    setTempIcon(selectedIcon);
+  }, []);
+
+  const handleColorSelect = useCallback((selectedColor: string) => {
+    setTempColor(selectedColor);
+  }, []);
+
+  const renderFooter = useCallback(
+    () => (
+      <FooterContainer bottomInset={insets.bottom}>
+        <Button
+          label={t('iconColorPicker.save')}
+          onPress={handleSave}
+          variant="primary"
+          icon="checkmark"
+        />
+      </FooterContainer>
+    ),
+    [handleSave, insets.bottom, t]
+  );
 
   return (
     <>
@@ -167,63 +169,62 @@ export const IconColorPicker: React.FC<IconColorPickerProps> = ({
         </IconContainer>
       </PickerTrigger>
 
-      <Modal
-        visible={showModal}
-        transparent
-        animationType="none"
-        onRequestClose={handleClose}
+      <BottomSheetModal
+        ref={bottomSheetModalRef}
+        snapPoints={snapPoints}
+        backdropComponent={renderBackdrop}
+        enablePanDownToClose={true}
+        enableContentPanningGesture={false}
+        android_keyboardInputMode="adjustResize"
+        enableHandlePanningGesture={false}
+        handleComponent={null}
+        topInset={insets.top}
+        enableDynamicSizing={false}
+        footerComponent={renderFooter}
+        backgroundStyle={{ backgroundColor: 'transparent' }}
+        onChange={(index) => {
+          if (index === -1) {
+            handleSheetClose();
+          }
+        }}
       >
-        <ModalContainer>
-          <ModalOverlay
-            style={{ opacity: backdropOpacity }}
-            pointerEvents="box-none"
-          >
-            <Pressable style={{ flex: 1 }} onPress={handleClose}>
-              <View />
-            </Pressable>
-          </ModalOverlay>
-          <ModalContent
-            style={{
-              transform: [
-                {
-                  translateY: slideY.interpolate({
-                    inputRange: [0, 1],
-                    outputRange: [0, 600],
-                  }),
-                },
-              ],
+        <ContentContainer>
+          <BottomSheetHeader
+            title={t('iconColorPicker.title')}
+            subtitle={t('iconColorPicker.subtitle')}
+            onClose={handleClose}
+          />
+          <BottomSheetScrollView
+            style={{ flex: 1 }}
+            contentContainerStyle={{
+              paddingHorizontal: theme.spacing.lg,
+              paddingBottom: theme.spacing.lg,
             }}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+            enableOnPanDownToDismiss={false}
           >
-            <ModalHeader>
-              <ModalTitle>{t('iconColorPicker.title')}</ModalTitle>
-              <CloseButton onPress={handleClose}>
-                <Ionicons name="close" size={24} color={theme.colors.text} />
-              </CloseButton>
-            </ModalHeader>
+            <Section>
+              <SectionLabel>{t('iconColorPicker.colorLabel')}</SectionLabel>
+              <ColorPalette
+                selectedColor={tempColor}
+                onColorSelect={handleColorSelect}
+                showLabel={false}
+              />
+            </Section>
 
-            <ScrollContent showsVerticalScrollIndicator={false}>
-              <Section>
-                <SectionLabel>{t('iconColorPicker.colorLabel')}</SectionLabel>
-                <ColorPalette
-                  selectedColor={color}
-                  onColorSelect={onColorSelect}
-                  showLabel={false}
-                />
-              </Section>
-
-              <Section>
-                <SectionLabel>{t('iconColorPicker.iconLabel')}</SectionLabel>
-                <IconSelector
-                  selectedIcon={icon}
-                  iconColor={color}
-                  onIconSelect={onIconSelect}
-                  showLabel={false}
-                />
-              </Section>
-            </ScrollContent>
-          </ModalContent>
-        </ModalContainer>
-      </Modal>
+            <Section>
+              <SectionLabel>{t('iconColorPicker.iconLabel')}</SectionLabel>
+              <IconSelector
+                selectedIcon={tempIcon}
+                iconColor={tempColor}
+                onIconSelect={handleIconSelect}
+                showLabel={false}
+              />
+            </Section>
+          </BottomSheetScrollView>
+        </ContentContainer>
+      </BottomSheetModal>
     </>
   );
 };

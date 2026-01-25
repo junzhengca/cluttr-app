@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState, useEffect } from 'react';
+import React, { useCallback, useMemo, useState, forwardRef, useImperativeHandle } from 'react';
 import { Keyboard, Alert } from 'react-native';
 import styled from 'styled-components/native';
 import {
@@ -9,6 +9,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { Ionicons } from '@expo/vector-icons';
+import type { InventoryItem } from '../../types/inventory';
 import type { StyledProps } from '../../utils/styledComponents';
 import { useTheme } from '../../theme/ThemeProvider';
 import { useKeyboardVisibility } from '../../hooks/useKeyboardVisibility';
@@ -22,9 +23,8 @@ const Backdrop = styled(BottomSheetBackdrop)`
 
 const ContentContainer = styled.View`
   flex: 1;
-  background-color: ${({ theme }: StyledProps) => theme.colors.surface};
-  border-top-left-radius: 24px;
-  border-top-right-radius: 24px;
+  border-top-left-radius: ${({ theme }: StyledProps) => theme.borderRadius.xxl}px;
+  border-top-right-radius: ${({ theme }: StyledProps) => theme.borderRadius.xxl}px;
   overflow: hidden;
 `;
 
@@ -71,11 +71,18 @@ export interface ItemFormBottomSheetProps {
   getErrorMessage?: (key: string) => string;
 }
 
+export interface ItemFormBottomSheetRef {
+  populateForm: (data: Partial<InventoryItem>) => void;
+}
+
 /**
  * Shared bottom sheet component for item creation and editing.
  * Uses uncontrolled inputs with refs to prevent IME composition interruption.
  */
-export const ItemFormBottomSheet: React.FC<ItemFormBottomSheetProps> = ({
+export const ItemFormBottomSheet = forwardRef<
+  ItemFormBottomSheetRef,
+  ItemFormBottomSheetProps
+>(({
   bottomSheetRef,
   mode,
   initialData,
@@ -84,11 +91,19 @@ export const ItemFormBottomSheet: React.FC<ItemFormBottomSheetProps> = ({
   onSheetClose,
   onSuccess,
   getErrorMessage,
-}) => {
+}, ref) => {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
   const { t } = useTranslation();
   const { isKeyboardVisible } = useKeyboardVisibility();
+
+  const [isLoading, setIsLoading] = useState(false);
+  const [isFormValid, setIsFormValid] = useState(false);
+
+  // Callback for form validity changes from the hook
+  const handleFormValidChange = useCallback((isValid: boolean) => {
+    setIsFormValid(isValid);
+  }, []);
 
   // Form hook
   const {
@@ -107,9 +122,9 @@ export const ItemFormBottomSheet: React.FC<ItemFormBottomSheetProps> = ({
     setSelectedStatus,
     setPurchaseDate,
     setExpiryDate,
-    getIsFormValid,
     getFormValues,
     resetForm,
+    populateForm,
     handleNameChangeText,
     handlePriceChangeText,
     handleDetailedLocationChangeText,
@@ -120,15 +135,14 @@ export const ItemFormBottomSheet: React.FC<ItemFormBottomSheetProps> = ({
     handleDetailedLocationBlur,
     handleAmountBlur,
     handleWarningThresholdBlur,
-  } = useUncontrolledItemForm({ initialData });
+  } = useUncontrolledItemForm({ initialData, onFormValidChange: handleFormValidChange });
 
-  const [isLoading, setIsLoading] = useState(false);
-  const [isFormValid, setIsFormValid] = useState(false);
-
-  // Track form validity
-  useEffect(() => {
-    setIsFormValid(getIsFormValid());
-  }, [getIsFormValid]);
+  // Expose populateForm via imperative handle for parent to call synchronously
+  useImperativeHandle(
+    ref,
+    () => ({ populateForm }),
+    [populateForm]
+  );
 
   // Handle sheet changes
   const handleSheetChange = useCallback(
@@ -141,7 +155,7 @@ export const ItemFormBottomSheet: React.FC<ItemFormBottomSheetProps> = ({
       }
 
       if (index === 0) {
-        // Sheet opening - focus name input
+        // Sheet opening
         onSheetOpen?.();
         if (refs.nameInput.current) {
           refs.nameInput.current.focus();
@@ -160,6 +174,7 @@ export const ItemFormBottomSheet: React.FC<ItemFormBottomSheetProps> = ({
   // Handle submit
   const handleSubmit = useCallback(async () => {
     const formValues = getFormValues();
+    console.log('[ItemFormBottomSheet] handleSubmit formValues:', formValues);
 
     // Validation
     if (!formValues.name.trim()) {
@@ -187,6 +202,7 @@ export const ItemFormBottomSheet: React.FC<ItemFormBottomSheetProps> = ({
       const warningThresholdNum =
         parseInt(formValues.warningThreshold, 10) || 0;
 
+      console.log('[ItemFormBottomSheet] About to call onSubmit with icon:', formValues.icon, 'iconColor:', formValues.iconColor);
       await onSubmit({
         name: formValues.name.trim(),
         location: formValues.location,
@@ -200,6 +216,7 @@ export const ItemFormBottomSheet: React.FC<ItemFormBottomSheetProps> = ({
         purchaseDate: formValues.purchaseDate?.toISOString(),
         expiryDate: formValues.expiryDate?.toISOString(),
       });
+      console.log('[ItemFormBottomSheet] onSubmit completed successfully');
 
       handleClose();
       resetForm();
@@ -308,6 +325,7 @@ export const ItemFormBottomSheet: React.FC<ItemFormBottomSheetProps> = ({
       footerComponent={renderFooter}
       enableDynamicSizing={false}
       onChange={handleSheetChange}
+      backgroundStyle={{ backgroundColor: theme.colors.surface }}
     >
       <ContentContainer>
         <BottomSheetHeader
@@ -365,4 +383,6 @@ export const ItemFormBottomSheet: React.FC<ItemFormBottomSheetProps> = ({
       </ContentContainer>
     </BottomSheetModal>
   );
-};
+});
+
+ItemFormBottomSheet.displayName = 'ItemFormBottomSheet';

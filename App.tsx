@@ -32,6 +32,7 @@ function AppInner() {
   const [errorDetails, setErrorDetails] = useState<ErrorDetails | null>(null);
   const showNicknameSetup = useAppSelector((state) => state.auth.showNicknameSetup);
   const isAuthenticated = useAppSelector((state) => state.auth.isAuthenticated);
+  const darkMode = useAppSelector((state) => state.settings.settings?.darkMode);
 
   // Set up global error handler
   useEffect(() => {
@@ -84,7 +85,7 @@ function AppInner() {
   return (
     <>
       <RootStack />
-      <StatusBar style="auto" />
+      <StatusBar style={darkMode ? 'light' : 'dark'} />
       <ErrorBottomSheet
         bottomSheetRef={errorBottomSheetRef}
         errorDetails={errorDetails}

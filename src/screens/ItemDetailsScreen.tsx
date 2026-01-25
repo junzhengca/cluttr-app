@@ -17,6 +17,7 @@ import { locations } from '../data/locations';
 import {
   getCurrencySymbol,
   EditItemBottomSheet,
+  type EditItemBottomSheetRef,
   PageHeader,
   BottomActionBar,
 } from '../components';
@@ -175,7 +176,8 @@ export const ItemDetailsScreen: React.FC = () => {
   const [isLoading, setIsLoading] = useState(!itemFromRedux && itemsLoading);
   const [locationName, setLocationName] = useState<string>('');
   const [statusName, setStatusName] = useState<string>('');
-  const editBottomSheetRef = useRef<BottomSheetModal | null>(null);
+  const bottomSheetModalRef = useRef<BottomSheetModal>(null);
+  const editBottomSheetRef = useRef<EditItemBottomSheetRef>(null);
 
   const currencySymbol = getCurrencySymbol(settings.currency);
 
@@ -256,7 +258,7 @@ export const ItemDetailsScreen: React.FC = () => {
   };
 
   const handleModify = () => {
-    editBottomSheetRef.current?.present();
+    editBottomSheetRef.current?.present(itemId);
   };
 
   const handleItemUpdated = () => {
@@ -439,8 +441,8 @@ export const ItemDetailsScreen: React.FC = () => {
       />
 
       <EditItemBottomSheet
-        bottomSheetRef={editBottomSheetRef}
-        itemId={itemId}
+        ref={editBottomSheetRef}
+        bottomSheetRef={bottomSheetModalRef}
         onItemUpdated={handleItemUpdated}
       />
     </Container>

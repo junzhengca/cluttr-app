@@ -2,6 +2,7 @@ export interface Settings {
   theme: string; // Selected theme ID
   currency: string; // Selected currency ID
   language: string; // Selected language ID
+  darkMode: boolean; // Dark mode toggle
   createdAt?: string; // ISO date string
   updatedAt?: string; // ISO date string
 }
@@ -11,5 +12,6 @@ export const defaultSettings: Omit<Settings, 'createdAt' | 'updatedAt'> = {
   theme: 'forest',
   currency: 'cny',
   language: 'en',
+  darkMode: false,
 };
 

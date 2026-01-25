@@ -46,8 +46,8 @@ const baseTheme = {
   },
 };
 
-// Common colors that stay consistent across themes
-const commonColors = {
+// Common light mode colors
+const commonLightColors = {
   backgroundLight: '#FFFFFF',
   surface: '#FFFFFF',
   text: '#424242',
@@ -63,8 +63,25 @@ const commonColors = {
   notification: '#FFB300',
 };
 
-// Theme color palettes
-const themePalettes: Record<string, Omit<Theme['colors'], keyof typeof commonColors>> = {
+// Common dark mode colors
+const commonDarkColors = {
+  backgroundLight: '#1E1E1E',
+  surface: '#2A2A2A',
+  text: '#E0E0E0',
+  textSecondary: '#B0B0B0',
+  textLight: '#757575',
+  border: '#3A3A3A',
+  borderLight: '#333333',
+  error: '#EF5350',
+  errorLight: '#5C2B2B',
+  success: '#66BB6A',
+  successLight: '#2D4A31',
+  warning: '#FFA726',
+  notification: '#FFCA28',
+};
+
+// Theme color palettes (light mode)
+const themeLightPalettes: Record<string, Omit<Theme['colors'], keyof typeof commonLightColors>> = {
   'warm-sun': {
     primary: '#FF701E',
     primaryDark: '#E65100',
@@ -107,14 +124,63 @@ const themePalettes: Record<string, Omit<Theme['colors'], keyof typeof commonCol
   },
 };
 
+// Theme color palettes (dark mode)
+const themeDarkPalettes: Record<string, Omit<Theme['colors'], keyof typeof commonDarkColors>> = {
+  'warm-sun': {
+    primary: '#FF8A50',
+    primaryDark: '#FF701E',
+    primaryLight: '#FFB388',
+    primaryLightest: '#2D1E0A',
+    primaryExtraLight: '#1A1205',
+    secondary: '#FFB388',
+    background: '#121209',
+    inputFocus: '#4D3014',
+  },
+  'ocean': {
+    primary: '#4D82F5',
+    primaryDark: '#2463EB',
+    primaryLight: '#7DA3F7',
+    primaryLightest: '#0A1428',
+    primaryExtraLight: '#050C16',
+    secondary: '#7DA3F7',
+    background: '#0A0E14',
+    inputFocus: '#1A2840',
+  },
+  'forest': {
+    primary: '#26C09B',
+    primaryDark: '#00A67D',
+    primaryLight: '#5DD4B5',
+    primaryLightest: '#051A12',
+    primaryExtraLight: '#020F09',
+    secondary: '#5DD4B5',
+    background: '#080F0D',
+    inputFocus: '#0F2E24',
+  },
+  'lilac': {
+    primary: '#A46DFF',
+    primaryDark: '#8B46FF',
+    primaryLight: '#B99DFF',
+    primaryLightest: '#1A0D28',
+    primaryExtraLight: '#0E0616',
+    secondary: '#B99DFF',
+    background: '#0E0815',
+    inputFocus: '#2D1A40',
+  },
+};
+
 /**
- * Generate a theme based on the theme ID
+ * Generate a theme based on the theme ID and dark mode setting
  * @param themeId - The theme identifier (e.g., 'warm-sun', 'ocean', 'forest', 'lilac')
+ * @param darkMode - Whether to use dark mode colors
  * @returns A complete Theme object
  */
-export const generateTheme = (themeId: string): Theme => {
+export const generateTheme = (themeId: string, darkMode: boolean = false): Theme => {
   // Default to 'forest' if theme ID is invalid
-  const palette = themePalettes[themeId] || themePalettes['forest'];
+  const palette = darkMode
+    ? (themeDarkPalettes[themeId] || themeDarkPalettes['forest'])
+    : (themeLightPalettes[themeId] || themeLightPalettes['forest']);
+
+  const commonColors = darkMode ? commonDarkColors : commonLightColors;
 
   return {
     colors: {

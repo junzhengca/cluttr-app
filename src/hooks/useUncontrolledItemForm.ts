@@ -136,8 +136,16 @@ export const useUncontrolledItemForm = (
         setExpiryDate(new Date(initialData.expiryDate));
 
       setFormKey((prev) => prev + 1);
+
+      // Notify parent of validity state after initialization
+      // Check if form is valid after populating
+      const hasName = name.trim().length > 0;
+      const hasLocation = initialData.location
+        ? initialData.location.length > 0
+        : false;
+      onFormValidChange?.(hasName && hasLocation);
     }
-  }, [initialData]);
+  }, [initialData, onFormValidChange]);
 
   // Reset form to defaults
   const resetForm = useCallback(() => {
@@ -226,6 +234,53 @@ export const useUncontrolledItemForm = (
   const handleAmountBlur = useCallback(() => undefined, []);
   const handleWarningThresholdBlur = useCallback(() => undefined, []);
 
+  // Direct form population method (bypasses initialData prop/state)
+  const populateForm = useCallback(
+    (data: Partial<InventoryItem>) => {
+      const name = data.name ?? '';
+      const price = data.price?.toString() ?? '0';
+      const detailedLocation = data.detailedLocation ?? '';
+      const amount =
+        data.amount !== undefined && data.amount !== null
+          ? data.amount.toString()
+          : '1';
+      const warningThreshold =
+        data.warningThreshold !== undefined && data.warningThreshold !== null
+          ? data.warningThreshold.toString()
+          : '0';
+
+      // Update refs for form submission
+      nameValueRef.current = name;
+      priceValueRef.current = price;
+      detailedLocationValueRef.current = detailedLocation;
+      amountValueRef.current = amount;
+      warningThresholdValueRef.current = warningThreshold;
+
+      // Update state for defaultValue props
+      setDefaultName(name);
+      setDefaultPrice(price);
+      setDefaultDetailedLocation(detailedLocation);
+      setDefaultAmount(amount);
+      setDefaultWarningThreshold(warningThreshold);
+
+      if (data.icon) setSelectedIcon(data.icon);
+      if (data.iconColor) setSelectedColor(data.iconColor);
+      if (data.location) setSelectedLocation(data.location);
+      if (data.status) setSelectedStatus(data.status);
+      if (data.purchaseDate)
+        setPurchaseDate(new Date(data.purchaseDate));
+      if (data.expiryDate) setExpiryDate(new Date(data.expiryDate));
+
+      setFormKey((prev) => prev + 1);
+
+      // Notify parent of validity state
+      const hasName = name.trim().length > 0;
+      const hasLocation = data.location ? data.location.length > 0 : false;
+      onFormValidChange?.(hasName && hasLocation);
+    },
+    [onFormValidChange]
+  );
+
   return {
     // Refs
     refs: {
@@ -262,6 +317,7 @@ export const useUncontrolledItemForm = (
     getIsFormValid,
     getFormValues,
     resetForm,
+    populateForm,
     // Input handlers
     handleNameChangeText,
     handlePriceChangeText,

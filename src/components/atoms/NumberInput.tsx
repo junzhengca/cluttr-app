@@ -1,22 +1,28 @@
 import React, { memo, useCallback, useRef, useImperativeHandle, useState, useEffect } from 'react';
-import { TouchableOpacity, TextInput, StyleProp } from 'react-native';
+import { TouchableOpacity, TextInput, StyleProp, View } from 'react-native';
 import styled from 'styled-components/native';
 import { Ionicons } from '@expo/vector-icons';
 import type { StyledProps } from '../../utils/styledComponents';
 import { UncontrolledInput } from './UncontrolledInput';
 import { MemoizedInput } from './MemoizedInput';
 
-const Container = styled.View`
+const ContainerWrapper = styled(View)<{ hasError: boolean }>`
+  position: relative;
+`;
+
+const Container = styled(View)<{ hasError: boolean }>`
   flex-direction: row;
   align-items: center;
-  background-color: ${({ theme }: StyledProps) => theme.colors.surface};
+  background-color: ${({ theme, hasError }: StyledProps & { hasError: boolean }) =>
+    hasError ? theme.colors.errorLight : theme.colors.surface};
   border-width: 1px;
-  border-color: ${({ theme }: StyledProps) => theme.colors.border};
+  border-color: ${({ theme, hasError }: StyledProps & { hasError: boolean }) =>
+    hasError ? theme.colors.error : theme.colors.border};
   border-radius: ${({ theme }: StyledProps) => theme.borderRadius.md}px;
   overflow: hidden;
 `;
 
-const Button = styled(TouchableOpacity)<{ disabled?: boolean }>`
+const Button = styled(TouchableOpacity)<{ disabled?: boolean; hasError?: boolean }>`
   width: 48px;
   height: 48px;
   align-items: center;
@@ -28,14 +34,31 @@ const ButtonIcon = styled(Ionicons)`
   color: ${({ theme }: StyledProps) => theme.colors.text};
 `;
 
-const InputContainer = styled.View`
+const InputContainer = styled(View)`
+  flex: 1;
+`;
+
+const ErrorContainer = styled(View)`
+  flex-direction: row;
+  align-items: center;
+  margin-top: ${({ theme }: StyledProps) => theme.spacing.xs}px;
+  padding-horizontal: ${({ theme }: StyledProps) => theme.spacing.xs}px;
+`;
+
+const ErrorIconSmall = styled(View)`
+  margin-right: ${({ theme }: StyledProps) => theme.spacing.xs}px;
+`;
+
+const ErrorText = styled.Text`
+  font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.sm}px;
+  color: ${({ theme }: StyledProps) => theme.colors.error};
+  line-height: ${({ theme }: StyledProps) => theme.typography.fontSize.sm * theme.typography.lineHeight.normal}px;
   flex: 1;
 `;
 
 const commonInputStyle = {
   borderWidth: 0,
   backgroundColor: 'transparent',
-  textAlign: 'center' as const,
   height: 48,
   paddingVertical: 0,
   paddingHorizontal: 0,
@@ -52,6 +75,8 @@ export interface NumberInputProps {
   max?: number; // Optional maximum value
   style?: StyleProp<unknown>;
   keyboardType?: 'default' | 'numeric' | 'email-address' | 'phone-pad';
+  error?: boolean;
+  errorMessage?: string;
 }
 
 /**
@@ -68,6 +93,8 @@ export interface NumberInputProps {
  *   placeholder="1"
  *   placeholderTextColor={theme.colors.textLight}
  *   keyboardType="numeric"
+ *   error={hasError}
+ *   errorMessage="Quantity must be at least 1"
  * />
  */
 export const NumberInput = memo(
@@ -84,6 +111,8 @@ export const NumberInput = memo(
         max,
         style,
         keyboardType = 'numeric',
+        error = false,
+        errorMessage,
       },
       ref
     ) => {
@@ -100,7 +129,7 @@ export const NumberInput = memo(
         return isNaN(parsed) ? 0 : parsed;
       }, []);
 
-      const [currentNumericValue, setCurrentNumericValue] = useState(() => 
+      const [currentNumericValue, setCurrentNumericValue] = useState(() =>
         parseValue(isControlled ? value : defaultValue)
       );
 
@@ -147,10 +176,10 @@ export const NumberInput = memo(
           }
 
           const valueString = constrainedValue.toString();
-          
+
           // Immediately update state for instant disabled state updates
           setCurrentNumericValue(constrainedValue);
-          
+
           // For uncontrolled mode: immediately update the input's displayed value using setNativeProps
           // This provides instant visual feedback without waiting for re-renders
           // For controlled mode: we can't use setNativeProps as React controls the value,
@@ -159,7 +188,7 @@ export const NumberInput = memo(
             inputRef.current.setNativeProps({ text: valueString });
             currentValueRef.current = valueString;
           }
-          
+
           // Call onChangeText for state management
           // For controlled mode, this will trigger parent update and re-render
           // For uncontrolled mode, this just updates the parent's ref
@@ -197,45 +226,66 @@ export const NumberInput = memo(
       const isMaxDisabled = max !== undefined && currentNumericValue >= max;
 
       return (
-        <Container style={style}>
-          <Button
-            onPress={handleDecrement}
-            disabled={isMinDisabled}
-            activeOpacity={0.7}
-          >
-            <ButtonIcon name="remove" size={24} />
-          </Button>
-          <InputContainer>
-            {isControlled ? (
-              <MemoizedInput
-                value={value || ''}
-                onChangeText={handleChangeText}
-                placeholder={placeholder}
-                placeholderTextColor={placeholderTextColor}
-                keyboardType={keyboardType}
-                style={commonInputStyle}
-              />
-            ) : (
-              <UncontrolledInput
-                ref={inputRef}
-                defaultValue={defaultValue || ''}
-                onChangeText={handleChangeText}
-                onBlur={onBlur ?? (() => {})}
-                placeholder={placeholder}
-                placeholderTextColor={placeholderTextColor}
-                keyboardType={keyboardType}
-                style={commonInputStyle}
-              />
-            )}
-          </InputContainer>
-          <Button
-            onPress={handleIncrement}
-            disabled={isMaxDisabled}
-            activeOpacity={0.7}
-          >
-            <ButtonIcon name="add" size={24} />
-          </Button>
-        </Container>
+        <View>
+          <ContainerWrapper hasError={error}>
+            <Container hasError={error} style={style}>
+              <Button
+                onPress={handleDecrement}
+                disabled={isMinDisabled}
+                activeOpacity={0.7}
+                hasError={error}
+              >
+                <ButtonIcon name="remove" size={24} />
+              </Button>
+              <InputContainer>
+                {isControlled ? (
+                  <MemoizedInput
+                    value={value || ''}
+                    onChangeText={handleChangeText}
+                    onBlur={onBlur ?? (() => {})}
+                    placeholder={placeholder}
+                    placeholderTextColor={placeholderTextColor}
+                    keyboardType={keyboardType}
+                    style={commonInputStyle}
+                    error={error}
+                    noBorder
+                    textAlign="center"
+                  />
+                ) : (
+                  <UncontrolledInput
+                    ref={inputRef}
+                    defaultValue={defaultValue || ''}
+                    onChangeText={handleChangeText}
+                    onBlur={onBlur ?? (() => {})}
+                    placeholder={placeholder}
+                    placeholderTextColor={placeholderTextColor}
+                    keyboardType={keyboardType}
+                    style={commonInputStyle}
+                    error={error}
+                    noBorder
+                    textAlign="center"
+                  />
+                )}
+              </InputContainer>
+              <Button
+                onPress={handleIncrement}
+                disabled={isMaxDisabled}
+                activeOpacity={0.7}
+                hasError={error}
+              >
+                <ButtonIcon name="add" size={24} />
+              </Button>
+            </Container>
+          </ContainerWrapper>
+          {error && errorMessage && (
+            <ErrorContainer>
+              <ErrorIconSmall>
+                <Ionicons name="warning" size={14} color="#EF5350" />
+              </ErrorIconSmall>
+              <ErrorText>{errorMessage}</ErrorText>
+            </ErrorContainer>
+          )}
+        </View>
       );
     }
   )

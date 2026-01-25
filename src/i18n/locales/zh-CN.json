@@ -114,6 +114,9 @@
     "subtitle": "让您的家更舒适",
     "preferences": "偏好设置",
     "dataAndSecurity": "数据与安全",
+    "experimental": "实验性功能",
+    "darkMode": "深色模式",
+    "darkModeDescription": "启用应用的深色主题",
     "theme": "主题颜色",
     "currency": "货币单位",
     "themeNames": {
@@ -302,8 +305,10 @@
     "label": "图标与颜色",
     "value": "修改外观",
     "title": "选择图标与颜色",
+    "subtitle": "自定义图标和颜色",
     "colorLabel": "颜色",
-    "iconLabel": "图标"
+    "iconLabel": "图标",
+    "save": "保存"
   },
   "profile": {
     "title": "个人资料",
@@ -577,6 +582,18 @@
     "nicknameHelper": "这是其他用户看到的您的名字",
     "submit": "进入我的家",
     "logoutLink": "不是您的账号?退出登录",
+    "errors": {
+      "title": "错误",
+      "enterNickname": "请输入昵称",
+      "updateFailed": "更新昵称失败，请重试"
+    }
+  },
+  "editNickname": {
+    "title": "编辑昵称",
+    "subtitle": "修改您的显示名称",
+    "nicknameLabel": "昵称",
+    "nicknameHelper": "这是其他用户看到的您的名字",
+    "submit": "保存修改",
     "errors": {
       "title": "错误",
       "enterNickname": "请输入昵称",

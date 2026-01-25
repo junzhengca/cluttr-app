@@ -65,7 +65,7 @@ const OptionContainer = styled(TouchableOpacity)<{ isSelected: boolean; color: s
   border-radius: ${({ theme }: StyledProps) => theme.borderRadius.xl}px;
   border-width: 2px;
   border-color: ${({ theme, isSelected, color }: StyledPropsWith<{ isSelected: boolean; color: string }>) => (isSelected ? color : theme.colors.borderLight)};
-  background-color: #ffffff;
+  background-color: ${({ theme }: StyledProps) => theme.colors.surface};
   min-width: 90px;
 `;
 

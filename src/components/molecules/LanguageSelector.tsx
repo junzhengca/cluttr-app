@@ -56,7 +56,7 @@ const LanguageButton = styled(TouchableOpacity)<{ isSelected: boolean }>`
   padding-vertical: ${({ theme }: StyledProps) => theme.spacing.md}px;
   padding-horizontal: ${({ theme }: StyledProps) => theme.spacing.lg}px;
   border-radius: ${({ theme }: StyledProps) => theme.borderRadius.xl}px;
-  background-color: #ffffff;
+  background-color: ${({ theme }: StyledProps) => theme.colors.surface};
   border-width: 2px;
   border-color: ${({ theme, isSelected }: StyledPropsWith<{ isSelected: boolean }>) =>
     isSelected ? theme.colors.primary : theme.colors.borderLight};

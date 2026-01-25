@@ -58,6 +58,9 @@ export type { LanguageSelectorProps } from './LanguageSelector';
 export { ThemeChooser } from './ThemeChooser';
 export type { ThemeChooserProps } from './ThemeChooser';
 
+export { SettingsToggleItem } from './SettingsToggleItem';
+export type { SettingsToggleItemProps } from './SettingsToggleItem';
+
 // Action button molecules
 export { ClearDataButton } from './ClearDataButton';
 export type { ClearDataButtonProps } from './ClearDataButton';

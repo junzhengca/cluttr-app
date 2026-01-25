@@ -10,7 +10,7 @@ export type { BottomSheetHeaderProps } from './BottomSheetHeader';
 
 // Button component
 export { Button } from './Button';
-export type { ButtonProps } from './Button';
+export type { ButtonProps, ButtonVariant } from './Button';
 
 // Empty state component
 export { EmptyState } from './EmptyState';

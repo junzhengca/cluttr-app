@@ -286,6 +286,7 @@ export const useInventory = () => {
 
   const updateItem = useCallback(
     (id: string, updates: Partial<Omit<import('../types/inventory').InventoryItem, 'id'>>) => {
+      console.log('[useInventory] updateItem called with id:', id, 'updates:', updates);
       dispatch({ type: 'inventory/UPDATE_ITEM', payload: { id, updates } });
     },
     [dispatch]

@@ -76,7 +76,6 @@ const FilterToggleBtn = styled(TouchableOpacity)`
   background-color: ${({ theme }: StyledProps) => theme.colors.surface};
   flex-direction: row;
   align-items: center;
-  margin-right: ${({ theme }: StyledProps) => theme.spacing.sm}px;
   margin-bottom: ${({ theme }: StyledProps) => theme.spacing.md}px;
   border-width: 1px;
   border-color: ${({ theme }: StyledProps) => theme.colors.border};
@@ -88,6 +87,14 @@ const FilterToggleText = styled(Text)`
   margin-left: ${({ theme }: StyledProps) => theme.spacing.xs}px;
   font-weight: ${({ theme }: StyledProps) =>
     theme.typography.fontWeight.medium};
+`;
+
+const VerticalDivider = styled(View)`
+  width: 1px;
+  height: 34px;
+  background-color: ${({ theme }: StyledProps) => theme.colors.border};
+  margin-horizontal: ${({ theme }: StyledProps) => theme.spacing.sm}px;
+  margin-bottom: ${({ theme }: StyledProps) => theme.spacing.md}px;
 `;
 
 const LoadingContainer = styled(View)`
@@ -406,6 +413,7 @@ export const HomeScreen: React.FC = () => {
                 {t(`inventory.filterType.${filterMode}`)}
               </FilterToggleText>
             </FilterToggleBtn>
+            <VerticalDivider />
             {filterMode === 'location' ? (
               <LocationFilter
                 selectedLocationId={selectedLocationId}
