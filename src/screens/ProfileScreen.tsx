@@ -12,13 +12,15 @@ import * as FileSystem from 'expo-file-system/legacy';
 import * as ImageManipulator from 'expo-image-manipulator';
 import i18n from '../i18n/i18n';
 import type { StyledProps, StyledPropsWith } from '../utils/styledComponents';
-import { PageHeader } from '../components/PageHeader';
-import { LogoutButton } from '../components/LogoutButton';
-import { Toggle } from '../components/Toggle';
-import { LoginBottomSheet } from '../components/LoginBottomSheet';
-import { SignupBottomSheet } from '../components/SignupBottomSheet';
-import { SetupNicknameBottomSheet } from '../components/SetupNicknameBottomSheet';
-import { Button } from '../components/ui/Button';
+import {
+  PageHeader,
+  LogoutButton,
+  Toggle,
+  LoginBottomSheet,
+  SignupBottomSheet,
+  SetupNicknameBottomSheet,
+  Button,
+} from '../components';
 import { useAuth, useSync } from '../store/hooks';
 import { useTheme } from '../theme/ThemeProvider';
 import { calculateBottomPadding } from '../utils/layout';
@@ -206,9 +208,9 @@ export const ProfileScreen: React.FC = () => {
   const theme = useTheme();
   const [isUploading, setIsUploading] = useState(false);
   const [localSyncEnabled, setLocalSyncEnabled] = useState(false);
-  const loginBottomSheetRef = useRef<BottomSheetModal>(null);
-  const signupBottomSheetRef = useRef<BottomSheetModal>(null);
-  const editNicknameBottomSheetRef = useRef<BottomSheetModal>(null);
+  const loginBottomSheetRef = useRef<BottomSheetModal | null>(null);
+  const signupBottomSheetRef = useRef<BottomSheetModal | null>(null);
+  const editNicknameBottomSheetRef = useRef<BottomSheetModal | null>(null);
 
   const getLocale = useCallback(() => {
     return i18n.language === 'zh' || i18n.language === 'zh-CN' ? 'zh-CN' : 'en-US';

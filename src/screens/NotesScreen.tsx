@@ -20,12 +20,14 @@ import { BottomSheetModal } from '@gorhom/bottom-sheet';
 import type { StyledProps, StyledPropsWith } from '../utils/styledComponents';
 import { useTranslation } from 'react-i18next';
 
-import { PageHeader } from '../components/PageHeader';
-import { TodoCard } from '../components/TodoCard';
-import { EmptyState } from '../components/EmptyState';
-import { LoginBottomSheet } from '../components/LoginBottomSheet';
-import { SignupBottomSheet } from '../components/SignupBottomSheet';
-import { EnableSyncBottomSheet } from '../components/EnableSyncBottomSheet';
+import {
+  PageHeader,
+  TodoCard,
+  EmptyState,
+  LoginBottomSheet,
+  SignupBottomSheet,
+  EnableSyncBottomSheet,
+} from '../components';
 import { useTodos, useAuth } from '../store/hooks';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/types';
@@ -188,9 +190,9 @@ export const NotesScreen: React.FC = () => {
   const [showNotesField, setShowNotesField] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
 
-  const loginBottomSheetRef = useRef<BottomSheetModal>(null);
-  const signupBottomSheetRef = useRef<BottomSheetModal>(null);
-  const enableSyncBottomSheetRef = useRef<BottomSheetModal>(null);
+  const loginBottomSheetRef = useRef<BottomSheetModal | null>(null);
+  const signupBottomSheetRef = useRef<BottomSheetModal | null>(null);
+  const enableSyncBottomSheetRef = useRef<BottomSheetModal | null>(null);
   const swipeableRefs = useRef<Map<string, Swipeable>>(new Map());
 
   // Animation values for notes field - height cannot use native driver

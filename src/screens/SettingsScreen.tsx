@@ -8,12 +8,14 @@ import { useTranslation } from 'react-i18next';
 import Constants from 'expo-constants';
 import type { StyledProps } from '../utils/styledComponents';
 
-import { PageHeader } from '../components/PageHeader';
-import { ThemeChooser } from '../components/ThemeChooser';
-import { CurrencySelector } from '../components/CurrencySelector';
-import { LanguageSelector } from '../components/LanguageSelector';
-import { ExportDataButton } from '../components/ExportDataButton';
-import { ClearDataButton } from '../components/ClearDataButton';
+import {
+  PageHeader,
+  ThemeChooser,
+  CurrencySelector,
+  LanguageSelector,
+  ExportDataButton,
+  ClearDataButton,
+} from '../components';
 import { useSettings, useAuth } from '../store/hooks';
 import { calculateBottomPadding } from '../utils/layout';
 import { RootStackParamList } from '../navigation/types';

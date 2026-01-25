@@ -7,12 +7,14 @@ import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useTranslation } from 'react-i18next';
 import type { StyledProps } from '../utils/styledComponents';
-import { PageHeader } from '../components/PageHeader';
-import { PermissionConfigPanel } from '../components/PermissionConfigPanel';
-import { EmptyState } from '../components/EmptyState';
-import { Button } from '../components/ui/Button';
-import { MemberList } from '../components/MemberList';
-import { InviteMenuBottomSheet } from '../components/InviteMenuBottomSheet';
+import {
+  PageHeader,
+  PermissionConfigPanel,
+  EmptyState,
+  Button,
+  MemberList,
+  InviteMenuBottomSheet,
+} from '../components';
 import { calculateBottomPadding } from '../utils/layout';
 import { RootStackParamList } from '../navigation/types';
 import { useAuth } from '../store/hooks';
@@ -56,7 +58,7 @@ export const ShareScreen: React.FC = () => {
   const navigation = useNavigation<NavigationProp>();
   const { user, isAuthenticated, getApiClient } = useAuth();
   const { showToast } = useToast();
-  const inviteMenuBottomSheetRef = useRef<BottomSheetModal>(null);
+  const inviteMenuBottomSheetRef = useRef<BottomSheetModal | null>(null);
   
   const [canShareInventory, setCanShareInventory] = useState(false);
   const [canShareTodos, setCanShareTodos] = useState(false);

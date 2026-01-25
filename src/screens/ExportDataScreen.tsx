@@ -6,7 +6,7 @@ import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { StyledProps } from '../utils/styledComponents';
-import { PageHeader } from '../components/PageHeader';
+import { PageHeader } from '../components';
 import { listJsonFiles } from '../services/FileSystemService';
 import { calculateBottomPadding } from '../utils/layout';
 import type { RootStackParamList } from '../navigation/types';

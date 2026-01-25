@@ -28,17 +28,19 @@ import * as FileSystem from 'expo-file-system/legacy';
 import { useTheme } from '../theme/ThemeProvider';
 import type { StyledProps } from '../utils/styledComponents';
 
-import { PageHeader } from '../components/PageHeader';
-import { SearchInput } from '../components/SearchInput';
-import { LocationFilter } from '../components/LocationFilter';
-import { StatusFilter } from '../components/StatusFilter';
-import { ItemCard } from '../components/ItemCard';
-import { EmptyState } from '../components/EmptyState';
-import { LoginBottomSheet } from '../components/LoginBottomSheet';
-import { SignupBottomSheet } from '../components/SignupBottomSheet';
-import { EnableSyncBottomSheet } from '../components/EnableSyncBottomSheet';
-import { FloatingActionButton } from '../components/FloatingActionButton';
-import { CreateItemBottomSheet } from '../components/CreateItemBottomSheet';
+import {
+  PageHeader,
+  SearchInput,
+  LocationFilter,
+  StatusFilter,
+  ItemCard,
+  EmptyState,
+  LoginBottomSheet,
+  SignupBottomSheet,
+  EnableSyncBottomSheet,
+  FloatingActionButton,
+  CreateItemBottomSheet,
+} from '../components';
 import { InventoryItem } from '../types/inventory';
 import { RootStackParamList } from '../navigation/types';
 import { useInventory, useSync, useAuth } from '../store/hooks';
@@ -110,13 +112,13 @@ export const HomeScreen: React.FC = () => {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<NavigationProp>();
   const { items, loading: isLoading, loadItems } = useInventory();
-  const { isSyncEnabled } = useSync();
+  const { enabled: isSyncEnabled } = useSync();
   const { user, getApiClient } = useAuth();
   const theme = useTheme();
-  const loginBottomSheetRef = useRef<BottomSheetModal>(null);
-  const signupBottomSheetRef = useRef<BottomSheetModal>(null);
-  const enableSyncBottomSheetRef = useRef<BottomSheetModal>(null);
-  const createItemBottomSheetRef = useRef<BottomSheetModal>(null);
+  const loginBottomSheetRef = useRef<BottomSheetModal | null>(null);
+  const signupBottomSheetRef = useRef<BottomSheetModal | null>(null);
+  const enableSyncBottomSheetRef = useRef<BottomSheetModal | null>(null);
+  const createItemBottomSheetRef = useRef<BottomSheetModal | null>(null);
 
   // Calculate card width for 2-column grid to prevent the "last row single item" expansion issue
   const cardWidth = useMemo(() => {

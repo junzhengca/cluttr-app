@@ -9,7 +9,7 @@ import zhCN from './locales/zh-CN.json';
 i18n
   .use(initReactI18next) // Passes i18n down to react-i18next
   .init({
-    compatibilityJSON: 'v3', // Required for React Native
+    compatibilityJSON: 'v4',
     resources: {
       en: {
         translation: en,

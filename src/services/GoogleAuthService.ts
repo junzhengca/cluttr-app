@@ -38,9 +38,7 @@ const getGoogleClientId = (): string => {
  */
 const getRedirectUri = (): string => {
   // Use custom scheme (not proxy) - this works with iOS/Android client IDs
-  const redirectUri = AuthSession.makeRedirectUri({
-    useProxy: false,
-  });
+  const redirectUri = AuthSession.makeRedirectUri({});
 
   console.log('[GoogleAuth] Redirect URI (custom scheme):', redirectUri);
 
@@ -88,10 +86,12 @@ export const signInWithGoogle = async (): Promise<string | null> => {
     console.log(
       '[GoogleAuth] Starting OAuth flow with Authorization Code + PKCE...'
     );
+
+    // Manually specify auth and token endpoints for Google
     const result = await request.promptAsync({
       authorizationEndpoint: 'https://accounts.google.com/o/oauth2/v2/auth',
       tokenEndpoint: 'https://oauth2.googleapis.com/token',
-    });
+    } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
 
     console.log('[GoogleAuth] OAuth result type:', result.type);
     console.log('[GoogleAuth] OAuth result:', JSON.stringify(result, null, 2));

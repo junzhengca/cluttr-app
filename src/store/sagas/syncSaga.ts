@@ -12,6 +12,7 @@ import { silentRefreshItems } from './inventorySaga';
 import { silentRefreshTodos } from './todoSaga';
 import { syncCallbackRegistry } from '../../services/SyncCallbackRegistry';
 import SyncService, { SyncFileType, SyncEvent } from '../../services/SyncService';
+import { ApiClient } from '../../services/ApiClient';
 import type { RootState } from '../types';
 
 // Action types
@@ -35,8 +36,8 @@ export const syncAll = () => ({ type: SYNC_ALL });
 export const syncFile = (fileType: SyncFileType) => ({ type: SYNC_FILE, payload: fileType });
 export const registerSyncCallbacks = () => ({ type: REGISTER_SYNC_CALLBACKS });
 
-function* initializeSyncSaga(action: { type: string; payload?: string }) {
-  const apiClient = yield select((state: RootState) => state.auth.apiClient);
+function* initializeSyncSaga(action: { type: string; payload?: string }): Generator {
+  const apiClient = (yield select((state: RootState) => state.auth.apiClient)) as ApiClient | null;
 
   if (!apiClient) {
     console.log('[SyncSaga] API client not yet available, skipping initialization');
@@ -45,18 +46,18 @@ function* initializeSyncSaga(action: { type: string; payload?: string }) {
 
   try {
     const deviceName = action.payload;
-    const newSyncService: SyncService = yield call(() => new SyncService(apiClient));
+    const newSyncService: SyncService = (yield call(() => new SyncService(apiClient))) as SyncService;
     yield call(newSyncService.initialize.bind(newSyncService), deviceName);
 
     yield put(setSyncService(newSyncService));
 
     // Read persisted state from SyncService and set enabled state accordingly
-    const persistedEnabled: boolean = yield call(newSyncService.isEnabled.bind(newSyncService));
+    const persistedEnabled: boolean = (yield call(newSyncService.isEnabled.bind(newSyncService))) as boolean;
     console.log('[SyncSaga] Setting enabled state from persisted storage:', persistedEnabled);
     yield put(setSyncEnabled(persistedEnabled));
 
     // Load sync status
-    const status = yield call(newSyncService.getSyncStatus.bind(newSyncService));
+    const status = (yield call(newSyncService.getSyncStatus.bind(newSyncService))) as Awaited<ReturnType<SyncService['getSyncStatus']>>;
     if (status) {
       yield put(setSyncStatus(status));
     }
@@ -73,7 +74,7 @@ function* initializeSyncSaga(action: { type: string; payload?: string }) {
   }
 }
 
-function* watchSyncEvents(syncService: SyncService) {
+function* watchSyncEvents(syncService: SyncService): Generator {
   // Create an event channel for sync events
   const channel = eventChannel<SyncEvent>((emitter) => {
     const listener = (event: SyncEvent) => {
@@ -91,7 +92,7 @@ function* watchSyncEvents(syncService: SyncService) {
   try {
     // Watch for sync events from the channel
     while (true) {
-      const event: SyncEvent = yield take(channel);
+      const event: SyncEvent = (yield take(channel)) as SyncEvent;
 
       if (event.type === 'error') {
         yield put(setSyncError(event.error || 'Sync error occurred'));
@@ -104,7 +105,7 @@ function* watchSyncEvents(syncService: SyncService) {
       }
 
       // Refresh sync status after each event
-      const status = yield call(syncService.getSyncStatus.bind(syncService));
+      const status = (yield call(syncService.getSyncStatus.bind(syncService))) as Awaited<ReturnType<SyncService['getSyncStatus']>>;
       if (status) {
         yield put(setSyncStatus(status));
       }
@@ -129,12 +130,12 @@ function* watchSyncEvents(syncService: SyncService) {
   }
 }
 
-function* restoreSyncSaga() {
-  const { isAuthenticated, isLoading: isAuthLoading } = yield select((state: RootState) => ({
+function* restoreSyncSaga(): Generator {
+  const { isAuthenticated, isLoading: isAuthLoading } = (yield select((state: RootState) => ({
     isAuthenticated: state.auth.isAuthenticated,
     isLoading: state.auth.isLoading,
-  }));
-  const syncService: SyncService = yield select((state: RootState) => state.sync.syncService);
+  }))) as { isAuthenticated: boolean; isLoading: boolean };
+  const syncService: SyncService | null = (yield select((state: RootState) => state.sync.syncService)) as SyncService | null;
 
   // Wait for all prerequisites to be ready
   if (isAuthLoading) {
@@ -155,8 +156,8 @@ function* restoreSyncSaga() {
   }
 
   // User is authenticated - check if sync should be restored
-  const persistedEnabled: boolean = yield call(syncService.isEnabled.bind(syncService));
-  const currentEnabled = yield select((state: RootState) => state.sync.enabled);
+  const persistedEnabled: boolean = (yield call(syncService.isEnabled.bind(syncService))) as boolean;
+  const currentEnabled = (yield select((state: RootState) => state.sync.enabled)) as boolean;
 
   console.log('[SyncSaga] User authenticated, checking sync restoration:', {
     persistedEnabled,
@@ -183,12 +184,12 @@ function* restoreSyncSaga() {
   }
 }
 
-function* enableSyncSaga() {
-  let syncService: SyncService = yield select((state: RootState) => state.sync.syncService);
+function* enableSyncSaga(): Generator {
+  let syncService: SyncService | null = (yield select((state: RootState) => state.sync.syncService)) as SyncService | null;
 
   // If sync service is not initialized, initialize it first
   if (!syncService) {
-    const apiClient = yield select((state: RootState) => state.auth.apiClient);
+    const apiClient = (yield select((state: RootState) => state.auth.apiClient)) as ApiClient | null;
     if (!apiClient) {
       const errorMessage = 'API client not available. Please ensure you are logged in.';
       yield put(setSyncError(errorMessage));
@@ -197,7 +198,7 @@ function* enableSyncSaga() {
 
     try {
       console.log('[SyncSaga] Sync service not initialized, initializing now...');
-      const newSyncService: SyncService = yield call(() => new SyncService(apiClient));
+      const newSyncService: SyncService = (yield call(() => new SyncService(apiClient))) as SyncService;
       yield call(newSyncService.initialize.bind(newSyncService));
       yield put(setSyncService(newSyncService));
 
@@ -212,6 +213,11 @@ function* enableSyncSaga() {
       yield put(setSyncError(errorMessage));
       throw new Error(errorMessage);
     }
+  }
+
+  // At this point, syncService is guaranteed to be non-null
+  if (!syncService) {
+    throw new Error('Sync service initialization failed');
   }
 
   try {
@@ -233,8 +239,8 @@ function* enableSyncSaga() {
   }
 }
 
-function* disableSyncSaga() {
-  const syncService: SyncService = yield select((state: RootState) => state.sync.syncService);
+function* disableSyncSaga(): Generator {
+  const syncService: SyncService | null = (yield select((state: RootState) => state.sync.syncService)) as SyncService | null;
 
   if (!syncService) {
     // If sync service is not initialized, just set enabled to false
@@ -260,12 +266,12 @@ function* disableSyncSaga() {
   }
 }
 
-function* syncAllSaga() {
-  let syncService: SyncService = yield select((state: RootState) => state.sync.syncService);
+function* syncAllSaga(): Generator {
+  let syncService: SyncService | null = (yield select((state: RootState) => state.sync.syncService)) as SyncService | null;
 
   // If sync service is not initialized, initialize it first
   if (!syncService) {
-    const apiClient = yield select((state: RootState) => state.auth.apiClient);
+    const apiClient = (yield select((state: RootState) => state.auth.apiClient)) as ApiClient | null;
     if (!apiClient) {
       const errorMessage = 'API client not available. Please ensure you are logged in.';
       yield put(setSyncError(errorMessage));
@@ -274,7 +280,7 @@ function* syncAllSaga() {
 
     try {
       console.log('[SyncSaga] Sync service not initialized, initializing now...');
-      const newSyncService: SyncService = yield call(() => new SyncService(apiClient));
+      const newSyncService: SyncService = (yield call(() => new SyncService(apiClient))) as SyncService;
       yield call(newSyncService.initialize.bind(newSyncService));
       yield put(setSyncService(newSyncService));
 
@@ -289,6 +295,11 @@ function* syncAllSaga() {
       yield put(setSyncError(errorMessage));
       return;
     }
+  }
+
+  // At this point, syncService is guaranteed to be non-null
+  if (!syncService) {
+    return;
   }
 
   try {
@@ -306,13 +317,13 @@ function* syncAllSaga() {
   }
 }
 
-function* syncFileSaga(action: { type: string; payload: SyncFileType }) {
+function* syncFileSaga(action: { type: string; payload: SyncFileType }): Generator {
   const fileType = action.payload;
-  let syncService: SyncService = yield select((state: RootState) => state.sync.syncService);
+  let syncService: SyncService | null = (yield select((state: RootState) => state.sync.syncService)) as SyncService | null;
 
   // If sync service is not initialized, initialize it first
   if (!syncService) {
-    const apiClient = yield select((state: RootState) => state.auth.apiClient);
+    const apiClient = (yield select((state: RootState) => state.auth.apiClient)) as ApiClient | null;
     if (!apiClient) {
       const errorMessage = 'API client not available. Please ensure you are logged in.';
       yield put(setSyncError(errorMessage));
@@ -321,7 +332,7 @@ function* syncFileSaga(action: { type: string; payload: SyncFileType }) {
 
     try {
       console.log('[SyncSaga] Sync service not initialized, initializing now...');
-      const newSyncService: SyncService = yield call(() => new SyncService(apiClient));
+      const newSyncService: SyncService = (yield call(() => new SyncService(apiClient))) as SyncService;
       yield call(newSyncService.initialize.bind(newSyncService));
       yield put(setSyncService(newSyncService));
 
@@ -336,6 +347,11 @@ function* syncFileSaga(action: { type: string; payload: SyncFileType }) {
       yield put(setSyncError(errorMessage));
       return;
     }
+  }
+
+  // At this point, syncService is guaranteed to be non-null
+  if (!syncService) {
+    return;
   }
 
   try {
@@ -353,9 +369,9 @@ function* syncFileSaga(action: { type: string; payload: SyncFileType }) {
   }
 }
 
-function* registerSyncCallbacksSaga() {
-  const enabled = yield select((state: RootState) => state.sync.enabled);
-  const syncService: SyncService = yield select((state: RootState) => state.sync.syncService);
+function* registerSyncCallbacksSaga(): Generator {
+  const enabled = (yield select((state: RootState) => state.sync.enabled)) as boolean;
+  const syncService: SyncService | null = (yield select((state: RootState) => state.sync.syncService)) as SyncService | null;
 
   if (!enabled || !syncService) {
     // Unregister callbacks when sync is disabled

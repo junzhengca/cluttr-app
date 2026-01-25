@@ -1,0 +1,277 @@
+import React, { useRef, useCallback, useEffect, useState } from 'react';
+import { TextInput } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { locations } from '../data/locations';
+import type { InventoryItem } from '../types/inventory';
+
+export interface ItemFormValues {
+  name: string;
+  price: string;
+  detailedLocation: string;
+  amount: string;
+  warningThreshold: string;
+  icon: keyof typeof Ionicons.glyphMap;
+  iconColor: string;
+  location: string;
+  status: string;
+  purchaseDate: Date | null;
+  expiryDate: Date | null;
+}
+
+export interface ItemFormRefs {
+  nameInput: React.RefObject<TextInput | null>;
+  priceInput: React.RefObject<TextInput | null>;
+  detailedLocationInput: React.RefObject<TextInput | null>;
+  amountInput: React.RefObject<TextInput | null>;
+  warningThresholdInput: React.RefObject<TextInput | null>;
+}
+
+export interface UseUncontrolledItemFormOptions {
+  initialData?: Partial<InventoryItem> | null;
+  onFormValidChange?: (isValid: boolean) => void;
+}
+
+const DEFAULT_ICON: keyof typeof Ionicons.glyphMap = 'cube-outline';
+const DEFAULT_COLOR = '#95A5A6';
+const DEFAULT_STATUS = 'using';
+const DEFAULT_LOCATION = locations.length > 0 ? locations[0].id : '';
+
+/**
+ * Custom hook for managing item form state using uncontrolled inputs.
+ * Uses refs for text input values to prevent IME composition interruption
+ * for Chinese/Japanese input methods.
+ *
+ * @see .cursor/rules/pinyin-input-pattern.mdc
+ */
+export const useUncontrolledItemForm = (
+  options: UseUncontrolledItemFormOptions = {}
+) => {
+  const { initialData, onFormValidChange } = options;
+
+  // Input refs
+  const nameInputRef = useRef<TextInput>(null);
+  const priceInputRef = useRef<TextInput>(null);
+  const detailedLocationInputRef = useRef<TextInput>(null);
+  const amountInputRef = useRef<TextInput>(null);
+  const warningThresholdInputRef = useRef<TextInput>(null);
+
+  // Value refs (for uncontrolled inputs - prevents IME interruption)
+  const nameValueRef = useRef('');
+  const priceValueRef = useRef('0');
+  const detailedLocationValueRef = useRef('');
+  const amountValueRef = useRef('1');
+  const warningThresholdValueRef = useRef('0');
+
+  // Default value states (for defaultValue prop on uncontrolled inputs)
+  const [defaultName, setDefaultName] = useState('');
+  const [defaultPrice, setDefaultPrice] = useState('0');
+  const [defaultDetailedLocation, setDefaultDetailedLocation] = useState('');
+  const [defaultAmount, setDefaultAmount] = useState('1');
+  const [defaultWarningThreshold, setDefaultWarningThreshold] = useState('0');
+
+  // Force re-render when validity changes (for button state)
+  const [formKey, setFormKey] = useState(0);
+  const [, setValidityTick] = useState(0);
+
+  // Regular state for non-text fields (doesn't affect IME)
+  const [selectedIcon, setSelectedIcon] = useState<keyof typeof Ionicons.glyphMap>(
+    DEFAULT_ICON
+  );
+  const [selectedColor, setSelectedColor] = useState(DEFAULT_COLOR);
+  const [selectedLocation, setSelectedLocation] = useState(DEFAULT_LOCATION);
+  const [selectedStatus, setSelectedStatus] = useState(DEFAULT_STATUS);
+  const [purchaseDate, setPurchaseDate] = useState<Date | null>(null);
+  const [expiryDate, setExpiryDate] = useState<Date | null>(null);
+
+  // Computed validation
+  const getIsFormValid = useCallback(() => {
+    const hasName = nameValueRef.current.trim().length > 0;
+    const hasLocation = selectedLocation.length > 0;
+    return hasName && hasLocation;
+  }, [selectedLocation]);
+
+  // Trigger re-render when location changes (affects validity)
+  useEffect(() => {
+    setValidityTick((t) => t + 1);
+    onFormValidChange?.(getIsFormValid());
+  }, [selectedLocation, getIsFormValid, onFormValidChange]);
+
+  // Initialize form from initialData
+  useEffect(() => {
+    if (initialData) {
+      const name = initialData.name ?? '';
+      const price = initialData.price?.toString() ?? '0';
+      const detailedLocation = initialData.detailedLocation ?? '';
+      const amount =
+        initialData.amount !== undefined && initialData.amount !== null
+          ? initialData.amount.toString()
+          : '1';
+      const warningThreshold =
+        initialData.warningThreshold !== undefined &&
+        initialData.warningThreshold !== null
+          ? initialData.warningThreshold.toString()
+          : '0';
+
+      // Update refs for form submission
+      nameValueRef.current = name;
+      priceValueRef.current = price;
+      detailedLocationValueRef.current = detailedLocation;
+      amountValueRef.current = amount;
+      warningThresholdValueRef.current = warningThreshold;
+
+      // Update state for defaultValue props
+      setDefaultName(name);
+      setDefaultPrice(price);
+      setDefaultDetailedLocation(detailedLocation);
+      setDefaultAmount(amount);
+      setDefaultWarningThreshold(warningThreshold);
+
+      if (initialData.icon) setSelectedIcon(initialData.icon);
+      if (initialData.iconColor) setSelectedColor(initialData.iconColor);
+      if (initialData.location) setSelectedLocation(initialData.location);
+      if (initialData.status) setSelectedStatus(initialData.status);
+      if (initialData.purchaseDate)
+        setPurchaseDate(new Date(initialData.purchaseDate));
+      if (initialData.expiryDate)
+        setExpiryDate(new Date(initialData.expiryDate));
+
+      setFormKey((prev) => prev + 1);
+    }
+  }, [initialData]);
+
+  // Reset form to defaults
+  const resetForm = useCallback(() => {
+    // Reset refs
+    nameValueRef.current = '';
+    priceValueRef.current = '0';
+    detailedLocationValueRef.current = '';
+    amountValueRef.current = '1';
+    warningThresholdValueRef.current = '0';
+
+    // Reset default values
+    setDefaultName('');
+    setDefaultPrice('0');
+    setDefaultDetailedLocation('');
+    setDefaultAmount('1');
+    setDefaultWarningThreshold('0');
+
+    // Reset other state
+    setSelectedIcon(DEFAULT_ICON);
+    setSelectedColor(DEFAULT_COLOR);
+    setSelectedLocation(DEFAULT_LOCATION);
+    setSelectedStatus(DEFAULT_STATUS);
+    setPurchaseDate(null);
+    setExpiryDate(null);
+    setFormKey((prev) => prev + 1);
+  }, []);
+
+  // Get current form values for submission
+  const getFormValues = useCallback((): ItemFormValues => {
+    return {
+      name: nameValueRef.current,
+      price: priceValueRef.current,
+      detailedLocation: detailedLocationValueRef.current,
+      amount: amountValueRef.current,
+      warningThreshold: warningThresholdValueRef.current,
+      icon: selectedIcon,
+      iconColor: selectedColor,
+      location: selectedLocation,
+      status: selectedStatus,
+      purchaseDate,
+      expiryDate,
+    };
+  }, [
+    selectedIcon,
+    selectedColor,
+    selectedLocation,
+    selectedStatus,
+    purchaseDate,
+    expiryDate,
+  ]);
+
+  // Input change handlers
+  const handleNameChangeText = useCallback(
+    (text: string) => {
+      const wasValid = getIsFormValid();
+      nameValueRef.current = text;
+      const isValid = getIsFormValid();
+      if (wasValid !== isValid) {
+        setValidityTick((t) => t + 1);
+        onFormValidChange?.(isValid);
+      }
+    },
+    [getIsFormValid, onFormValidChange]
+  );
+
+  const handlePriceChangeText = useCallback((text: string) => {
+    priceValueRef.current = text;
+  }, []);
+
+  const handleDetailedLocationChangeText = useCallback((text: string) => {
+    detailedLocationValueRef.current = text;
+  }, []);
+
+  const handleAmountChangeText = useCallback((text: string) => {
+    amountValueRef.current = text;
+  }, []);
+
+  const handleWarningThresholdChangeText = useCallback((text: string) => {
+    warningThresholdValueRef.current = text;
+  }, []);
+
+  // Blur handlers (no-op for uncontrolled pattern, but kept for consistency)
+  const handleNameBlur = useCallback(() => undefined, []);
+  const handlePriceBlur = useCallback(() => undefined, []);
+  const handleDetailedLocationBlur = useCallback(() => undefined, []);
+  const handleAmountBlur = useCallback(() => undefined, []);
+  const handleWarningThresholdBlur = useCallback(() => undefined, []);
+
+  return {
+    // Refs
+    refs: {
+      nameInput: nameInputRef,
+      priceInput: priceInputRef,
+      detailedLocationInput: detailedLocationInputRef,
+      amountInput: amountInputRef,
+      warningThresholdInput: warningThresholdInputRef,
+    },
+    // Default values for uncontrolled inputs
+    defaultValues: {
+      name: defaultName,
+      price: defaultPrice,
+      detailedLocation: defaultDetailedLocation,
+      amount: defaultAmount,
+      warningThreshold: defaultWarningThreshold,
+    },
+    // State values
+    selectedIcon,
+    selectedColor,
+    selectedLocation,
+    selectedStatus,
+    purchaseDate,
+    expiryDate,
+    formKey,
+    // Setters
+    setSelectedIcon,
+    setSelectedColor,
+    setSelectedLocation,
+    setSelectedStatus,
+    setPurchaseDate,
+    setExpiryDate,
+    // Methods
+    getIsFormValid,
+    getFormValues,
+    resetForm,
+    // Input handlers
+    handleNameChangeText,
+    handlePriceChangeText,
+    handleDetailedLocationChangeText,
+    handleAmountChangeText,
+    handleWarningThresholdChangeText,
+    handleNameBlur,
+    handlePriceBlur,
+    handleDetailedLocationBlur,
+    handleAmountBlur,
+    handleWarningThresholdBlur,
+  };
+};

@@ -14,10 +14,12 @@ import { RootStackParamList } from '../navigation/types';
 import { InventoryItem } from '../types/inventory';
 import { getItemById } from '../services/InventoryService';
 import { locations } from '../data/locations';
-import { getCurrencySymbol } from '../components/CurrencySelector';
-import { EditItemBottomSheet } from '../components/EditItemBottomSheet';
-import { PageHeader } from '../components/PageHeader';
-import { BottomActionBar } from '../components/BottomActionBar';
+import {
+  getCurrencySymbol,
+  EditItemBottomSheet,
+  PageHeader,
+  BottomActionBar,
+} from '../components';
 import { formatDate, formatPrice } from '../utils/formatters';
 import { getLightColor } from '../utils/colors';
 import { calculateBottomActionBarPadding } from '../utils/layout';

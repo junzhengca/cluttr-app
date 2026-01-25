@@ -5,7 +5,7 @@ import { HomeStack } from './HomeStack';
 import { NotesStack } from './NotesStack';
 import { ShareStack } from './ShareStack';
 import { SettingsStack } from './SettingsStack';
-import { BottomNavBar } from '../components/BottomNavBar';
+import { BottomNavBar } from '../components';
 
 const Tab = createBottomTabNavigator<TabParamList>();
 

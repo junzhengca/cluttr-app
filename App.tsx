@@ -10,8 +10,7 @@ import { Provider } from 'react-redux';
 import { ThemeProvider } from './src/theme/ThemeProvider';
 import { RootStack } from './src/navigation/RootStack';
 import { initializeDataFiles } from './src/services/DataInitializationService';
-import { ErrorBottomSheet } from './src/components/ErrorBottomSheet';
-import { SetupNicknameBottomSheet } from './src/components/SetupNicknameBottomSheet';
+import { ErrorBottomSheet, SetupNicknameBottomSheet, ToastProvider } from './src/components';
 import { ErrorDetails } from './src/types/api';
 import i18n from './src/i18n/i18n';
 import { store } from './src/store';
@@ -21,7 +20,6 @@ import { loadTodos } from './src/store/sagas/todoSaga';
 import { loadItems } from './src/store/sagas/inventorySaga';
 import { useAppDispatch, useAppSelector } from './src/store/hooks';
 import { setShowNicknameSetup } from './src/store/slices/authSlice';
-import { ToastProvider } from './src/components/ToastProvider';
 
 // TODO: Configure your API base URL here or use environment variables
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL || 'https://homeinventoryserver-production.up.railway.app';
@@ -29,8 +27,8 @@ const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL || 'https://homeinvent
 // Inner component to handle initialization
 function AppInner() {
   const dispatch = useAppDispatch();
-  const errorBottomSheetRef = useRef<BottomSheetModal>(null);
-  const setupNicknameBottomSheetRef = useRef<BottomSheetModal>(null);
+  const errorBottomSheetRef = useRef<BottomSheetModal | null>(null);
+  const setupNicknameBottomSheetRef = useRef<BottomSheetModal | null>(null);
   const [errorDetails, setErrorDetails] = useState<ErrorDetails | null>(null);
   const showNicknameSetup = useAppSelector((state) => state.auth.showNicknameSetup);
   const isAuthenticated = useAppSelector((state) => state.auth.isAuthenticated);

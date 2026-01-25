@@ -28,11 +28,15 @@ npm run lint:fix      # Fix ESLint issues automatically
 ```bash
 make install-deps                    # Install dependencies with --legacy-peer-deps
 make install-eas                     # Install EAS CLI globally
-make build-ios-local                 # Build iOS simulator locally
-make build-android-local             # Build Android emulator locally
+make build-ios-local                 # Build iOS simulator locally (development)
+make build-android-local             # Build Android emulator locally (development)
+make build-all-internal-local        # Build both platforms locally (development)
 make build-ios-internal-local-app    # Build iOS internal distribution locally
 make build-android-internal-local-app # Build Android internal distribution locally
+make build-all-internal-local-app    # Build both platforms locally (internal)
+make build-ios-production-local      # Build iOS production variant locally (auto-increments build number)
 make clean                           # Clean build artifacts
+make register-device                 # Register a new device on EAS (interactive)
 ```
 
 See `make help` for all available targets.
@@ -137,7 +141,20 @@ Key points:
 - Sync to React state only on blur or submit
 - Reset form with `key` prop increment
 
-Example implementation in `src/components/SetupNicknameBottomSheet.tsx`.
+Example implementation in `src/components/organisms/SetupNicknameBottomSheet.tsx`.
+
+### Styled Components Pattern
+
+Inject theme via styled components:
+
+```typescript
+import { StyledProps } from '../utils/styledComponents';
+
+const StyledComponent = styled.View(({ theme }: StyledProps) => ({
+  backgroundColor: theme.colors.background,
+  padding: theme.spacing.md,
+}));
+```
 
 ### Bottom Sheet Modals
 
@@ -158,26 +175,37 @@ setGlobalErrorHandler(showErrorBottomSheet);
 
 ```
 src/
-├── components/          # Reusable UI components
-├── contexts/           # React contexts (minimal - mostly replaced by Redux hooks)
-├── data/               # Local data file management (JSON file I/O)
+├── components/          # Reusable UI components (atomic design pattern)
+│   ├── atoms/          # Basic UI elements (Button, Input, Toast, etc.)
+│   ├── molecules/      # Simple composites (ItemCard, TodoCard, SearchInput, etc.)
+│   └── organisms/      # Complex components (CreateItemBottomSheet, LoginBottomSheet, etc.)
+├── contexts/           # Largely replaced by Redux hooks (minimal usage)
+├── data/               # Static config (categories, locations, statuses)
 ├── hooks/              # Custom React hooks (useToast, useKeyboardVisibility, etc.)
-├── i18n/               # Internationalization setup
-├── navigation/         # React Navigation configuration
+├── i18n/               # i18next internationalization (en, zh-CN)
+├── navigation/         # React Navigation (2-level: RootStack → MainTabs)
 ├── screens/            # Screen components
-├── services/           # Business logic layer (ApiClient, AuthService, SyncService, etc.)
-├── store/              # Redux store, slices, sagas, hooks
-├── theme/              # Theme provider and styling configuration
+├── services/           # Business logic (ApiClient, AuthService, SyncService, etc.)
+├── store/              # Redux Toolkit + Saga (slices/, sagas/, hooks.ts)
+├── theme/              # Theme provider and styled-components configuration
 ├── types/              # TypeScript type definitions
-└── utils/              # Utility functions
+└── utils/              # Utility functions (Logger, formatters, validation)
 ```
+
+## Anti-Patterns to Avoid
+
+- **NEVER** manually initialize ApiClient in components - always use `useAuth().getApiClient()`
+- **NEVER** use controlled inputs (`value` prop) in bottom sheet modals - breaks IME composition
+- **NEVER** use Web OAuth client IDs - only iOS (`EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID`) and Android (`EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID`)
+- **NEVER** use `console.log()` - use the Logger from `src/utils/Logger.ts`
+- **NEVER** suppress type errors with `as any` or `@ts-ignore`
 
 ## Cursor Rules
 
-The following Cursor rules should be respected:
+The following Cursor rules in `.cursor/rules/` should be respected:
 
 1. **pinyin-input-pattern.mdc** - Use uncontrolled inputs for IME composition support
-2. **eslint-ensure.mdc** - Always run ESLint to ensure edits pass lint rules
+2. **eslint-ensure.mdc** - Always run `npm run lint` after edits to ensure code passes lint rules
 
 ## Environment
 

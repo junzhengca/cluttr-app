@@ -77,7 +77,8 @@ const CATEGORY_EMOJIS: Record<LogCategory, string> = {
  */
 function getEnvVar(key: string, defaultValue: string): string {
   // Try Constants.expoConfig.extra first (Expo SDK 46+), then Constants.manifest.extra
-  const extras = Constants.expoConfig?.extra || Constants.manifest?.extra || {};
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const extras = (Constants.expoConfig as any)?.extra || (Constants.manifest as any)?.extra || {};
   const value = extras[key];
   return value !== undefined ? String(value) : defaultValue;
 }
@@ -558,7 +559,7 @@ const logger = new Logger();
 
 // Export the singleton and scoped creator
 export default logger;
-export { logger, Logger, ScopedLogger, LogCategory, LogLevel };
+export { logger, Logger, ScopedLogger };
 
 // Convenience: export scoped loggers for common categories
 export const apiLogger = logger.scoped('api');

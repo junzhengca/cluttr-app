@@ -24,7 +24,7 @@ import {
 import { User, ErrorDetails } from '../../types/api';
 import * as SecureStore from 'expo-secure-store';
 import type { RootState } from '../types';
-import { getGlobalToast } from '../../components/ToastProvider';
+import { getGlobalToast } from '../../components/organisms/ToastProvider';
 import i18n from '../../i18n/i18n';
 
 // Global error handler - will be set by App.tsx
@@ -104,15 +104,15 @@ function* handleAuthError() {
   yield put(setSyncEnabled(false));
 }
 
-function* checkAuthSaga() {
-  const apiClient: ApiClient = yield select((state: RootState) => state.auth.apiClient);
+function* checkAuthSaga(): Generator {
+  const apiClient: ApiClient = (yield select((state: RootState) => state.auth.apiClient)) as ApiClient;
   if (!apiClient) {
     yield put(setLoading(false));
     return;
   }
 
   try {
-    const tokens: { accessToken: string } | null = yield call(getAuthTokens);
+    const tokens: { accessToken: string } | null = (yield call(getAuthTokens)) as { accessToken: string } | null;
 
     if (!tokens || !tokens.accessToken) {
       yield put(setLoading(false));
@@ -124,8 +124,8 @@ function* checkAuthSaga() {
 
     // Verify auth by calling /me endpoint
     try {
-      const currentUser: User = yield call(apiClient.getCurrentUser.bind(apiClient));
-      const savedUser: User | null = yield call(getUser);
+      const currentUser: User = (yield call(apiClient.getCurrentUser.bind(apiClient))) as User;
+      const savedUser: User | null = (yield call(getUser)) as User | null;
 
       console.log('[AuthSaga] /me endpoint response:', {
         hasAvatar: !!currentUser?.avatarUrl,
@@ -177,9 +177,9 @@ function* checkAuthSaga() {
   }
 }
 
-function* loginSaga(action: { type: string; payload: { email: string; password: string } }) {
+function* loginSaga(action: { type: string; payload: { email: string; password: string } }): Generator {
   const { email, password } = action.payload;
-  const apiClient: ApiClient = yield select((state: RootState) => state.auth.apiClient);
+  const apiClient: ApiClient = (yield select((state: RootState) => state.auth.apiClient)) as ApiClient;
 
   // Clear any previous errors and set loading
   yield put(setError(null));
@@ -193,7 +193,7 @@ function* loginSaga(action: { type: string; payload: { email: string; password: 
   }
 
   try {
-    const response = yield call(apiClient.login.bind(apiClient), email, password);
+    const response = (yield call(apiClient.login.bind(apiClient), email, password)) as { accessToken: string } | null;
 
     // Validate token before saving
     if (!response?.accessToken) {
@@ -205,7 +205,7 @@ function* loginSaga(action: { type: string; payload: { email: string; password: 
     }
 
     // Save token
-    const saved = yield call(saveAuthTokens, response.accessToken);
+    const saved = (yield call(saveAuthTokens, response.accessToken)) as boolean;
     if (!saved) {
       const errorMessage = 'Failed to save authentication token';
       yield put(setError(errorMessage));
@@ -214,7 +214,7 @@ function* loginSaga(action: { type: string; payload: { email: string; password: 
     }
 
     // Verify token was saved
-    const savedTokens = yield call(getAuthTokens);
+    const savedTokens = (yield call(getAuthTokens)) as { accessToken: string } | null;
     if (!savedTokens || !savedTokens.accessToken) {
       const errorMessage = 'Failed to save authentication token';
       yield put(setError(errorMessage));
@@ -226,7 +226,7 @@ function* loginSaga(action: { type: string; payload: { email: string; password: 
     apiClient.setAuthToken(response.accessToken);
 
     // Always get full user info from /me endpoint to ensure we have complete data including avatar
-    const userData: User = yield call(apiClient.getCurrentUser.bind(apiClient));
+    const userData: User = (yield call(apiClient.getCurrentUser.bind(apiClient))) as User;
 
     console.log('[AuthSaga] User data from /me endpoint:', {
       hasAvatar: !!userData?.avatarUrl,
@@ -238,7 +238,7 @@ function* loginSaga(action: { type: string; payload: { email: string; password: 
     if (userData) {
       yield call(saveUser, userData);
       yield put(setUser(userData));
-      
+
       // Check if nickname is missing
       if (!userData.nickname || userData.nickname.trim() === '') {
         yield put(setShowNicknameSetup(true));
@@ -250,16 +250,16 @@ function* loginSaga(action: { type: string; payload: { email: string; password: 
     yield put(setAuthenticated(true));
     yield put(setError(null)); // Clear error on success
     yield put(setLoading(false));
-    
+
     // Initialize sync service after successful login
     yield put(initializeSync());
-    
+
     // Show success toast
     const toast = getGlobalToast();
     if (toast) {
       toast(i18n.t('toast.loginSuccess'), 'success');
     }
-    
+
     console.log('[AuthSaga] Login successful');
   } catch (error) {
     console.error('[AuthSaga] Login error:', error);
@@ -269,16 +269,16 @@ function* loginSaga(action: { type: string; payload: { email: string; password: 
   }
 }
 
-function* signupSaga(action: { type: string; payload: { email: string; password: string } }) {
+function* signupSaga(action: { type: string; payload: { email: string; password: string } }): Generator {
   const { email, password } = action.payload;
-  const apiClient: ApiClient = yield select((state: RootState) => state.auth.apiClient);
+  const apiClient: ApiClient = (yield select((state: RootState) => state.auth.apiClient)) as ApiClient;
 
   if (!apiClient) {
     throw new Error('API client not initialized');
   }
 
   try {
-    const response = yield call(apiClient.signup.bind(apiClient), email, password);
+    const response = (yield call(apiClient.signup.bind(apiClient), email, password)) as { accessToken: string } | null;
 
     // Validate token before saving
     if (!response?.accessToken) {
@@ -287,13 +287,13 @@ function* signupSaga(action: { type: string; payload: { email: string; password:
     }
 
     // Save token
-    const saved = yield call(saveAuthTokens, response.accessToken);
+    const saved = (yield call(saveAuthTokens, response.accessToken)) as boolean;
     if (!saved) {
       throw new Error('Failed to save authentication token');
     }
 
     // Verify token was saved
-    const savedTokens = yield call(getAuthTokens);
+    const savedTokens = (yield call(getAuthTokens)) as { accessToken: string } | null;
     if (!savedTokens || !savedTokens.accessToken) {
       throw new Error('Failed to save authentication token');
     }
@@ -302,7 +302,7 @@ function* signupSaga(action: { type: string; payload: { email: string; password:
     apiClient.setAuthToken(response.accessToken);
 
     // Always get full user info from /me endpoint to ensure we have complete data including avatar
-    const userData: User = yield call(apiClient.getCurrentUser.bind(apiClient));
+    const userData: User = (yield call(apiClient.getCurrentUser.bind(apiClient))) as User;
 
     console.log('[AuthSaga] User data from /me endpoint:', {
       hasAvatar: !!userData?.avatarUrl,
@@ -314,7 +314,7 @@ function* signupSaga(action: { type: string; payload: { email: string; password:
     if (userData) {
       yield call(saveUser, userData);
       yield put(setUser(userData));
-      
+
       // Check if nickname is missing
       if (!userData.nickname || userData.nickname.trim() === '') {
         yield put(setShowNicknameSetup(true));
@@ -324,16 +324,16 @@ function* signupSaga(action: { type: string; payload: { email: string; password:
     }
 
     yield put(setAuthenticated(true));
-    
+
     // Initialize sync service after successful signup
     yield put(initializeSync());
-    
+
     // Show success toast
     const toast = getGlobalToast();
     if (toast) {
       toast(i18n.t('toast.signupSuccess'), 'success');
     }
-    
+
     console.log('[AuthSaga] Signup successful');
   } catch (error) {
     console.error('[AuthSaga] Signup error:', error);
@@ -341,9 +341,9 @@ function* signupSaga(action: { type: string; payload: { email: string; password:
   }
 }
 
-function* googleLoginSaga(action: { type: string; payload: { idToken: string; platform: string } }) {
+function* googleLoginSaga(action: { type: string; payload: { idToken: string; platform: string } }): Generator {
   const { idToken, platform } = action.payload;
-  const apiClient: ApiClient = yield select((state: RootState) => state.auth.apiClient);
+  const apiClient: ApiClient = (yield select((state: RootState) => state.auth.apiClient)) as ApiClient;
 
   // Clear any previous errors and set loading
   yield put(setError(null));
@@ -357,7 +357,7 @@ function* googleLoginSaga(action: { type: string; payload: { idToken: string; pl
   }
 
   try {
-    const response = yield call(apiClient.googleAuth.bind(apiClient), idToken, platform as 'ios' | 'android');
+    const response = (yield call(apiClient.googleAuth.bind(apiClient), idToken, platform as 'ios' | 'android')) as { accessToken: string } | null;
 
     // Validate token before saving
     if (!response?.accessToken) {
@@ -369,7 +369,7 @@ function* googleLoginSaga(action: { type: string; payload: { idToken: string; pl
     }
 
     // Save token
-    const saved = yield call(saveAuthTokens, response.accessToken);
+    const saved = (yield call(saveAuthTokens, response.accessToken)) as boolean;
     if (!saved) {
       const errorMessage = 'Failed to save authentication token';
       yield put(setError(errorMessage));
@@ -378,7 +378,7 @@ function* googleLoginSaga(action: { type: string; payload: { idToken: string; pl
     }
 
     // Verify token was saved
-    const savedTokens = yield call(getAuthTokens);
+    const savedTokens = (yield call(getAuthTokens)) as { accessToken: string } | null;
     if (!savedTokens || !savedTokens.accessToken) {
       const errorMessage = 'Failed to save authentication token';
       yield put(setError(errorMessage));
@@ -390,7 +390,7 @@ function* googleLoginSaga(action: { type: string; payload: { idToken: string; pl
     apiClient.setAuthToken(response.accessToken);
 
     // Always get full user info from /me endpoint to ensure we have complete data including avatar
-    const userData: User = yield call(apiClient.getCurrentUser.bind(apiClient));
+    const userData: User = (yield call(apiClient.getCurrentUser.bind(apiClient))) as User;
 
     console.log('[AuthSaga] User data from /me endpoint:', {
       hasAvatar: !!userData?.avatarUrl,
@@ -402,7 +402,7 @@ function* googleLoginSaga(action: { type: string; payload: { idToken: string; pl
     if (userData) {
       yield call(saveUser, userData);
       yield put(setUser(userData));
-      
+
       // Check if nickname is missing
       if (!userData.nickname || userData.nickname.trim() === '') {
         yield put(setShowNicknameSetup(true));
