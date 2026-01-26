@@ -320,7 +320,34 @@ const handleClose = useCallback((skipDirtyCheck: boolean) => {
 </button>
 ```
 
-### Error Handling
+### Reanimated & Interactions
+324: 
+325: **CRITICAL**: Reanimated Worklets run on the UI thread. In production (Hermes), you cannot pass functions across the UI -> JS bridge.
+326: 
+327: **Worklet Function Passing**:
+328: ```typescript
+329: // CRASHES IN PRODUCTION (Hermes) - items contains functions
+330: runOnJS(showMenu)({ items, layout });
+331: 
+332: // CORRECT - Use a closure on JS thread
+333: const onShowMenu = (layout) => showMenu({ items, layout });
+334: runOnJS(onShowMenu)(layout);
+335: ```
+336: 
+337: **Press Interactions & Unmounting**:
+338: When a `Pressable` action causes the parent to unmount (e.g., closing a context menu), execution can crash if the action modifies state synchronously during the touch event.
+339: 
+340: **Pattern**: Defer "destructive" or "hiding" actions to the next frame.
+341: ```typescript
+342: onPress={() => {
+343:   hideMenu(); // State update
+344:   requestAnimationFrame(() => { // Defer action
+345:     try { item.onPress(); } catch (e) { console.error(e); }
+346:   });
+347: }}
+348: ```
+349: 
+350: ### Error Handling
 
 Global error handler displays errors in a bottom sheet. Set up in `App.tsx`:
 ```typescript

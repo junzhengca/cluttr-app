@@ -111,5 +111,7 @@ clean:
 	rm -rf .expo
 	rm -rf dist
 	rm -rf build
+	rm -f build-*.tar.gz
+	rm -f build-*.ipa
 	@echo "Clean complete!"
 

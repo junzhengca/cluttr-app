@@ -83,8 +83,16 @@ export const ContextMenuOverlay: React.FC = () => {
                             pressed && { backgroundColor: theme.colors.primaryExtraLight }
                         ]}
                         onPress={() => {
-                            item.onPress();
                             hideMenu();
+                            // Execute action in next frame to avoid conflict with unmount/state update
+                            // and ensure the menu is hidden first
+                            requestAnimationFrame(() => {
+                                try {
+                                    item.onPress();
+                                } catch (e) {
+                                    console.error('Context menu action failed:', e);
+                                }
+                            });
                         }}
                     >
                         {item.icon && (

@@ -24,22 +24,26 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({ children, items }) => 
     const animatedRef = useAnimatedRef<View>();
     const isPressed = useSharedValue(false);
 
+    const onShowMenu = (layout: any) => {
+        showMenu({
+            layout: {
+                x: layout.x,
+                y: layout.y,
+                width: layout.width,
+                height: layout.height,
+                pageX: layout.pageX,
+                pageY: layout.pageY,
+            },
+            items,
+        });
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    };
+
     const handleLongPress = () => {
         'worklet';
         const layout = measure(animatedRef);
         if (layout) {
-            runOnJS(Haptics.impactAsync)(Haptics.ImpactFeedbackStyle.Medium);
-            runOnJS(showMenu)({
-                layout: {
-                    x: layout.x,
-                    y: layout.y,
-                    width: layout.width,
-                    height: layout.height,
-                    pageX: layout.pageX,
-                    pageY: layout.pageY,
-                },
-                items,
-            });
+            runOnJS(onShowMenu)(layout);
         }
     };
 
