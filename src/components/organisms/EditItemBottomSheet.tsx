@@ -121,6 +121,7 @@ export const EditItemBottomSheet = forwardRef<
       onSubmit={handleSubmit}
       onSuccess={handleSuccess}
       onSheetClose={handleSheetClose}
+      shouldAutoFocus={false}
     />
   );
 });

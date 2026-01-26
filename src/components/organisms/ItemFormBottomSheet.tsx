@@ -36,9 +36,9 @@ const FooterContainer = styled.View<{
   padding-horizontal: ${({ theme }: StyledProps) => theme.spacing.lg}px;
   padding-top: ${({ theme }: StyledProps) => theme.spacing.md}px;
   padding-bottom: ${({ bottomInset, showSafeArea, theme }: StyledProps & {
-    bottomInset: number;
-    showSafeArea: boolean;
-  }) => (showSafeArea ? bottomInset + theme.spacing.md : theme.spacing.md)}px;
+  bottomInset: number;
+  showSafeArea: boolean;
+}) => (showSafeArea ? bottomInset + theme.spacing.md : theme.spacing.md)}px;
   shadow-color: #000;
   shadow-offset: 0px -2px;
   shadow-opacity: 0.03;
@@ -69,6 +69,7 @@ export interface ItemFormBottomSheetProps {
   onSheetClose?: () => void;
   onSuccess?: () => void;
   getErrorMessage?: (key: string) => string;
+  shouldAutoFocus?: boolean;
 }
 
 export interface ItemFormBottomSheetRef {
@@ -92,6 +93,7 @@ export const ItemFormBottomSheet = forwardRef<
   onSheetClose,
   onSuccess,
   getErrorMessage,
+  shouldAutoFocus = true,
 }, ref) => {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
@@ -228,12 +230,12 @@ export const ItemFormBottomSheet = forwardRef<
       if (index === 0) {
         // Sheet opening
         onSheetOpen?.();
-        if (refs.nameInput.current) {
+        if (shouldAutoFocus && refs.nameInput.current) {
           refs.nameInput.current.focus();
         }
       }
     },
-    [refs.nameInput, onSheetOpen, onSheetClose, resetForm, bottomSheetRef, t]
+    [refs.nameInput, onSheetOpen, onSheetClose, resetForm, bottomSheetRef, t, shouldAutoFocus]
   );
 
   // Handle close
@@ -297,7 +299,7 @@ export const ItemFormBottomSheet = forwardRef<
       Alert.alert(
         t(`${mode}Item.errors.title`),
         getErrorMessage?.('selectLocation') ??
-          t(`${mode}Item.errors.selectLocation`)
+        t(`${mode}Item.errors.selectLocation`)
       );
       return;
     }
@@ -335,11 +337,10 @@ export const ItemFormBottomSheet = forwardRef<
       Alert.alert(
         t(`${mode}Item.errors.title`),
         getErrorMessage?.('failed') ??
-          t(
-            `${
-              mode === 'create' ? 'createItem' : 'editItem'
-            }.errors.${mode === 'create' ? 'createFailed' : 'updateFailed'}`
-          )
+        t(
+          `${mode === 'create' ? 'createItem' : 'editItem'
+          }.errors.${mode === 'create' ? 'createFailed' : 'updateFailed'}`
+        )
       );
     } finally {
       setIsLoading(false);
