@@ -14,6 +14,8 @@ import {
   Text,
   Alert,
   Platform,
+  TouchableWithoutFeedback,
+  Keyboard,
 } from 'react-native';
 import styled from 'styled-components/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -383,166 +385,169 @@ export const HomeScreen: React.FC = () => {
     : t('inventory.itemsCount', { count: filteredItems.length });
 
   return (
-    <Container>
-      <PageHeader
-        icon="home"
-        title={t('inventory.title')}
-        subtitle={headerSubtitle}
-        showRightButtons={true}
-        avatarUrl={user?.avatarUrl}
-        onAvatarPress={handleAvatarPress}
-      />
-      {isLoading ? (
-        <LoadingContainer>
-          <ActivityIndicator size="large" />
-        </LoadingContainer>
-      ) : (
-        <Content>
-          <SearchInput value={searchQuery} onChangeText={setSearchQuery} />
-          <FilterRow>
-            <FilterToggleBtn
-              onPress={() => {
-                setFilterMode((prev) =>
-                  prev === 'location' ? 'status' : 'location'
-                );
-                setSelectedLocationId(null);
-                setSelectedStatusId(null);
-              }}
-              activeOpacity={0.7}
-            >
-              <Ionicons
-                name={
-                  filterMode === 'location'
-                    ? 'location-outline'
-                    : 'pricetag-outline'
-                }
-                size={18}
-                color={theme.colors.primary}
-              />
-              <FilterToggleText>
-                {t(`inventory.filterType.${filterMode}`)}
-              </FilterToggleText>
-            </FilterToggleBtn>
-            <VerticalDivider />
-            {filterMode === 'location' ? (
-              <LocationFilter
-                selectedLocationId={selectedLocationId}
-                onSelect={setSelectedLocationId}
-                counts={locationCounts}
-              />
-            ) : (
-              <StatusFilter
-                selectedStatusId={selectedStatusId}
-                onSelect={setSelectedStatusId}
-                counts={statusCounts}
-              />
-            )}
-          </FilterRow>
-          <ListContainer>
-            {filteredItems.length === 0 ? (
-              <EmptyState
-                icon="list-outline"
-                title={t('inventory.empty.title')}
-                description={
-                  searchQuery.trim() ||
-                    selectedLocationId !== null ||
-                    selectedStatusId !== null
-                    ? t('inventory.empty.filtered')
-                    : t('inventory.empty.description')
-                }
-              />
-            ) : (
-              <FlatList
-                data={filteredItems}
-                keyExtractor={(item) => item.id}
-                renderItem={({ item }) => {
-                  const menuItems = [
-                    {
-                      id: 'plus',
-                      label: t('inventory.actions.plusOne'),
-                      icon: 'plus',
-                      onPress: () => {
-                        updateInventoryItem(item.id, { amount: (item.amount || 0) + 1 });
-                      },
-                    },
-                    {
-                      id: 'minus',
-                      label: t('inventory.actions.minusOne'),
-                      icon: 'minus',
-                      onPress: () => {
-                        updateInventoryItem(item.id, { amount: Math.max(0, (item.amount || 0) - 1) });
-                      },
-                    },
-                    {
-                      id: 'edit',
-                      label: t('itemDetails.actions.modify'),
-                      icon: 'pencil-outline',
-                      onPress: () => {
-                        editBottomSheetRef.current?.present(item.id);
-                      },
-                    },
-                    {
-                      id: 'delete',
-                      label: t('itemDetails.actions.delete'),
-                      icon: 'trash-can-outline',
-                      onPress: () => {
-                        confirmDelete(item.id);
-                      },
-                      isDestructive: true,
-                    },
-                  ];
-
-                  return (
-                    <View style={{ width: cardWidth }}>
-                      <ContextMenu items={menuItems}>
-                        <ItemCard item={item} onPress={handleItemPress} />
-                      </ContextMenu>
-                    </View>
+    <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+      <Container>
+        <PageHeader
+          icon="home"
+          title={t('inventory.title')}
+          subtitle={headerSubtitle}
+          showRightButtons={true}
+          avatarUrl={user?.avatarUrl}
+          onAvatarPress={handleAvatarPress}
+        />
+        {isLoading ? (
+          <LoadingContainer>
+            <ActivityIndicator size="large" />
+          </LoadingContainer>
+        ) : (
+          <Content>
+            <SearchInput value={searchQuery} onChangeText={setSearchQuery} />
+            <FilterRow>
+              <FilterToggleBtn
+                onPress={() => {
+                  setFilterMode((prev) =>
+                    prev === 'location' ? 'status' : 'location'
                   );
+                  setSelectedLocationId(null);
+                  setSelectedStatusId(null);
                 }}
-                numColumns={2}
-                columnWrapperStyle={{
-                  gap: 12,
-                  marginBottom: 12,
-                }}
-                showsVerticalScrollIndicator={false}
-                contentContainerStyle={{
-                  paddingBottom: bottomPadding,
-                }}
-              />
-            )}
-          </ListContainer>
-        </Content>
-      )}
-      <LoginBottomSheet
-        bottomSheetRef={loginBottomSheetRef}
-        onSignupPress={handleSignupPress}
-        onLoginSuccess={handleLoginSuccess}
-      />
-      <SignupBottomSheet
-        bottomSheetRef={signupBottomSheetRef}
-        onLoginPress={handleLoginPress}
-        onSignupSuccess={handleSignupSuccess}
-      />
-      <EnableSyncBottomSheet
-        bottomSheetRef={enableSyncBottomSheetRef}
-        onSkip={handleSyncPromptSkip}
-        onEnableSync={handleSyncPromptEnable}
-      />
-      <CreateItemBottomSheet
-        bottomSheetRef={createItemBottomSheetRef}
-        initialData={recognizedItemData}
-        onItemCreated={handleItemCreated}
-      />
-      <EditItemBottomSheet
-        ref={editBottomSheetRef}
-        bottomSheetRef={editBottomSheetModalRef}
-      />
-      <FloatingActionButton
-        onManualAdd={handleManualAdd}
-        onAIAutomatic={handleAIAutomatic}
-        isAIRecognizing={isAIRecognizing}
-      />
-    </Container>
+                activeOpacity={0.7}
+              >
+                <Ionicons
+                  name={
+                    filterMode === 'location'
+                      ? 'location-outline'
+                      : 'pricetag-outline'
+                  }
+                  size={18}
+                  color={theme.colors.primary}
+                />
+                <FilterToggleText>
+                  {t(`inventory.filterType.${filterMode}`)}
+                </FilterToggleText>
+              </FilterToggleBtn>
+              <VerticalDivider />
+              {filterMode === 'location' ? (
+                <LocationFilter
+                  selectedLocationId={selectedLocationId}
+                  onSelect={setSelectedLocationId}
+                  counts={locationCounts}
+                />
+              ) : (
+                <StatusFilter
+                  selectedStatusId={selectedStatusId}
+                  onSelect={setSelectedStatusId}
+                  counts={statusCounts}
+                />
+              )}
+            </FilterRow>
+            <ListContainer>
+              {filteredItems.length === 0 ? (
+                <EmptyState
+                  icon="list-outline"
+                  title={t('inventory.empty.title')}
+                  description={
+                    searchQuery.trim() ||
+                      selectedLocationId !== null ||
+                      selectedStatusId !== null
+                      ? t('inventory.empty.filtered')
+                      : t('inventory.empty.description')
+                  }
+                />
+              ) : (
+                <FlatList
+                  data={filteredItems}
+                  keyExtractor={(item) => item.id}
+                  renderItem={({ item }) => {
+                    const menuItems = [
+                      {
+                        id: 'plus',
+                        label: t('inventory.actions.plusOne'),
+                        icon: 'plus',
+                        onPress: () => {
+                          updateInventoryItem(item.id, { amount: (item.amount || 0) + 1 });
+                        },
+                      },
+                      {
+                        id: 'minus',
+                        label: t('inventory.actions.minusOne'),
+                        icon: 'minus',
+                        onPress: () => {
+                          updateInventoryItem(item.id, { amount: Math.max(0, (item.amount || 0) - 1) });
+                        },
+                      },
+                      {
+                        id: 'edit',
+                        label: t('itemDetails.actions.modify'),
+                        icon: 'pencil-outline',
+                        onPress: () => {
+                          editBottomSheetRef.current?.present(item.id);
+                        },
+                      },
+                      {
+                        id: 'delete',
+                        label: t('itemDetails.actions.delete'),
+                        icon: 'trash-can-outline',
+                        onPress: () => {
+                          confirmDelete(item.id);
+                        },
+                        isDestructive: true,
+                      },
+                    ];
+
+                    return (
+                      <View style={{ width: cardWidth }}>
+                        <ContextMenu items={menuItems}>
+                          <ItemCard item={item} onPress={handleItemPress} />
+                        </ContextMenu>
+                      </View>
+                    );
+                  }}
+                  numColumns={2}
+                  columnWrapperStyle={{
+                    gap: 12,
+                    marginBottom: 12,
+                  }}
+                  keyboardDismissMode="on-drag"
+                  showsVerticalScrollIndicator={false}
+                  contentContainerStyle={{
+                    paddingBottom: bottomPadding,
+                  }}
+                />
+              )}
+            </ListContainer>
+          </Content>
+        )}
+        <LoginBottomSheet
+          bottomSheetRef={loginBottomSheetRef}
+          onSignupPress={handleSignupPress}
+          onLoginSuccess={handleLoginSuccess}
+        />
+        <SignupBottomSheet
+          bottomSheetRef={signupBottomSheetRef}
+          onLoginPress={handleLoginPress}
+          onSignupSuccess={handleSignupSuccess}
+        />
+        <EnableSyncBottomSheet
+          bottomSheetRef={enableSyncBottomSheetRef}
+          onSkip={handleSyncPromptSkip}
+          onEnableSync={handleSyncPromptEnable}
+        />
+        <CreateItemBottomSheet
+          bottomSheetRef={createItemBottomSheetRef}
+          initialData={recognizedItemData}
+          onItemCreated={handleItemCreated}
+        />
+        <EditItemBottomSheet
+          ref={editBottomSheetRef}
+          bottomSheetRef={editBottomSheetModalRef}
+        />
+        <FloatingActionButton
+          onManualAdd={handleManualAdd}
+          onAIAutomatic={handleAIAutomatic}
+          isAIRecognizing={isAIRecognizing}
+        />
+      </Container>
+    </TouchableWithoutFeedback>
   );
 };
