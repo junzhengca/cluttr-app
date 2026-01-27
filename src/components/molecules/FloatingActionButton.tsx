@@ -60,8 +60,8 @@ const ActionButtonContainer = styled(Animated.View)`
   padding-left: ${({ theme }: StyledProps) => theme.spacing.md}px;
   padding-right: ${({ theme }: StyledProps) => theme.spacing.xs}px;
   padding-vertical: ${({ theme }: StyledProps) => theme.spacing.xs}px;
-  height: 48px;
-  min-width: 48px;
+  height: 56px;
+  min-width: 56px;
   shadow-color: #000;
   shadow-offset: 0px 2px;
   shadow-opacity: 0.25;
@@ -70,17 +70,17 @@ const ActionButtonContainer = styled(Animated.View)`
 `;
 
 const ActionLabelText = styled(Text)`
-  font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.sm}px;
+  font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.md}px;
   font-weight: ${({ theme }: StyledProps) => theme.typography.fontWeight.medium};
   color: ${({ theme }: StyledProps) => theme.colors.text};
-  line-height: ${({ theme }: StyledProps) => theme.typography.fontSize.sm * 1.4}px;
+  line-height: ${({ theme }: StyledProps) => theme.typography.fontSize.md * 1.4}px;
   margin-right: ${({ theme }: StyledProps) => theme.spacing.sm}px;
 `;
 
 const ActionIconContainer = styled(View)`
-  width: 40px;
-  height: 40px;
-  border-radius: 20px;
+  width: 48px;
+  height: 48px;
+  border-radius: 24px;
   background-color: ${({ theme }: StyledProps) => theme.colors.primaryLightest};
   align-items: center;
   justify-content: center;
@@ -214,12 +214,12 @@ export const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({
   });
 
   // Second action button (AI Automatic) animated style
-  // Positioned above first button (64px + 48px button + 8px gap = 120px)
+  // Positioned above first button (64px + 56px button + 8px gap = 128px)
   const secondActionStyle = useAnimatedStyle(() => {
     const bottom = interpolate(
       expandAnimation.value,
       [0, 1],
-      [0, 120],
+      [0, 128],
       Extrapolation.CLAMP
     );
     const opacity = expandAnimation.value;
