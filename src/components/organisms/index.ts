@@ -52,6 +52,8 @@ export type { EnableSyncBottomSheetProps } from './EnableSyncBottomSheet';
 export { ErrorBottomSheet } from './ErrorBottomSheet';
 export type { ErrorBottomSheetProps } from './ErrorBottomSheet';
 
+export { InvitationBottomSheet } from './InvitationBottomSheet';
+
 // Member management organisms
 export { MemberList } from './MemberList';
 export type { MemberListProps } from './MemberList';

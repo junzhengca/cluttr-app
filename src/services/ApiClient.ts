@@ -18,6 +18,7 @@ import {
   RecognizeItemResponse,
   ErrorDetails,
   RetryAttempt,
+  ValidateInvitationResponse,
 } from '../types/api';
 import { apiLogger, syncLogger } from '../utils/Logger';
 
@@ -132,7 +133,7 @@ export class ApiClient {
     const isSyncRequest = endpoint.startsWith('/api/sync/');
     const requestStartTime = Date.now();
     const retryAttempts: RetryAttempt[] = [];
-    
+
     // Store request details for error reporting
     const requestHeaders: Record<string, string> = {
       'Content-Type': 'application/json',
@@ -199,7 +200,7 @@ export class ApiClient {
       try {
         const response = await fetch(url, fetchOptions);
         const requestDuration = Date.now() - requestStartTime;
-        
+
         // Verbose logging for sync responses
         if (isSyncRequest) {
           syncLogger.separator('=');
@@ -221,11 +222,11 @@ export class ApiClient {
           if (this.onAuthError) {
             this.onAuthError();
           }
-          
+
           // Don't retry on 401
           let errorMessage = `Request failed with status ${response.status}`;
           let responseBody: unknown = null;
-          
+
           const clonedResponse = response.clone();
           try {
             const errorData = await clonedResponse.json();
@@ -242,7 +243,7 @@ export class ApiClient {
               // Use default error message
             }
           }
-          
+
           const error = new Error(errorMessage);
           (error as Error & { responseBody?: unknown }).responseBody = responseBody;
           (error as Error & { status?: number }).status = response.status;
@@ -252,7 +253,7 @@ export class ApiClient {
         if (!response.ok) {
           let errorMessage = `Request failed with status ${response.status}`;
           let responseBody: unknown = null;
-          
+
           // Clone response to read body without consuming the original
           const clonedResponse = response.clone();
           try {
@@ -271,11 +272,11 @@ export class ApiClient {
               // If response is not text, use default error message
             }
           }
-          
+
           lastStatus = response.status;
           lastStatusText = response.statusText;
           lastResponseBody = responseBody;
-          
+
           // Verbose logging for sync error responses
           if (isSyncRequest) {
             syncLogger.separator('=');
@@ -286,7 +287,7 @@ export class ApiClient {
           } else {
             apiLogger.error(`Request failed: ${response.status}`, { endpoint, url, errorMessage, responseBody });
           }
-          
+
           // Check if error is retryable
           if (this.isRetryableError(null, response.status) && attempt < this.maxRetries) {
             const delay = this.calculateDelay(attempt);
@@ -306,7 +307,7 @@ export class ApiClient {
             await this.sleep(delay);
             continue; // Retry the request
           }
-          
+
           // Not retryable or max retries reached
           const error = new Error(errorMessage);
           (error as Error & { responseBody?: unknown }).responseBody = responseBody;
@@ -326,7 +327,7 @@ export class ApiClient {
         }
 
         const responseData = await response.json();
-        
+
         // Verbose logging for successful sync responses
         if (isSyncRequest) {
           const responseStr = JSON.stringify(responseData);
@@ -341,7 +342,7 @@ export class ApiClient {
         return responseData;
       } catch (error) {
         lastError = error instanceof Error ? error : new Error(String(error));
-        
+
         // Extract status from error if available
         const errorWithStatus = error as Error & { status?: number; responseBody?: unknown };
         if (errorWithStatus.status !== undefined) {
@@ -350,7 +351,7 @@ export class ApiClient {
             lastResponseBody = errorWithStatus.responseBody;
           }
         }
-        
+
         // Verbose logging for sync request errors (network errors, etc.)
         if (isSyncRequest) {
           const requestDuration = Date.now() - requestStartTime;
@@ -365,7 +366,7 @@ export class ApiClient {
 
         // Check if error is retryable (network error or retryable status code)
         const isRetryable = this.isRetryableError(error, lastStatus);
-        
+
         if (isRetryable && attempt < this.maxRetries) {
           const delay = this.calculateDelay(attempt);
           retryAttempts.push({
@@ -384,11 +385,11 @@ export class ApiClient {
           await this.sleep(delay);
           continue; // Retry the request
         }
-        
+
         // All retries exhausted or non-retryable error
         const totalDuration = Date.now() - requestStartTime;
         const errorType: 'network' | 'server' = lastStatus ? 'server' : 'network';
-        
+
         // Build error details
         const errorDetails: ErrorDetails = {
           endpoint,
@@ -404,17 +405,17 @@ export class ApiClient {
           totalDuration,
           timestamp: new Date().toISOString(),
         };
-        
+
         // Call error callback if set
         if (this.onError) {
           this.onError(errorDetails);
         }
-        
+
         // Throw the error
         throw lastError;
       }
     }
-    
+
     // This should never be reached, but TypeScript needs it
     throw lastError || new Error('An unexpected error occurred');
   }
@@ -579,6 +580,26 @@ export class ApiClient {
    */
   async regenerateInvitationCode(): Promise<RegenerateInvitationResponse> {
     return this.request<RegenerateInvitationResponse>('/api/invitations/regenerate', {
+      method: 'POST',
+      requiresAuth: true,
+    });
+  }
+
+  /**
+   * Validate an invitation code
+   */
+  async validateInvitation(code: string): Promise<ValidateInvitationResponse> {
+    return this.request<ValidateInvitationResponse>(`/api/invitations/${code}`, {
+      method: 'GET',
+      requiresAuth: false,
+    });
+  }
+
+  /**
+   * Accept an invitation code
+   */
+  async acceptInvitation(code: string): Promise<{ success: boolean; message: string }> {
+    return this.request<{ success: boolean; message: string }>(`/api/invitations/${code}/accept`, {
       method: 'POST',
       requiresAuth: true,
     });

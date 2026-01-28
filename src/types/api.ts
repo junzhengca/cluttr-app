@@ -96,6 +96,18 @@ export interface RegenerateInvitationResponse {
   invitationCode: string;
 }
 
+export interface ValidateInvitationResponse {
+  valid: boolean;
+  accountEmail?: string;
+  nickname?: string;
+  avatarUrl?: string;
+  permissions?: {
+    canShareInventory: boolean;
+    canShareTodos: boolean;
+  };
+  message?: string;
+}
+
 export interface ApiError {
   message: string;
   code?: string;

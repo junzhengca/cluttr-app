@@ -581,6 +581,11 @@
         "copy": "Copy Link",
         "copied": "Copied!",
         "copyError": "Failed to copy"
+      },
+      "receivedTitle": "{{name}} invites you to join their home",
+      "receivedSubtitle": "Received Invitation",
+      "errors": {
+        "ownHome": "You cannot join your own home"
       }
     }
   },

@@ -11,7 +11,7 @@ import { I18nextProvider } from 'react-i18next';
 import { Provider } from 'react-redux';
 import { ThemeProvider } from '../src/theme/ThemeProvider';
 import { initializeDataFiles } from '../src/services/DataInitializationService';
-import { ErrorBottomSheet, SetupNicknameBottomSheet, ToastProvider } from '../src/components';
+import { ErrorBottomSheet, SetupNicknameBottomSheet, ToastProvider, InvitationBottomSheet } from '../src/components';
 import { ContextMenuProvider } from '../src/components/organisms/ContextMenu/ContextMenuProvider';
 import { ErrorDetails } from '../src/types/api';
 import i18n from '../src/i18n/i18n';
@@ -31,6 +31,8 @@ function AppInner() {
     const dispatch = useAppDispatch();
     const errorBottomSheetRef = useRef<BottomSheetModal | null>(null);
     const setupNicknameBottomSheetRef = useRef<BottomSheetModal | null>(null);
+    const invitationBottomSheetRef = useRef<BottomSheetModal | null>(null);
+    const [inviteCode, setInviteCode] = useState<string | null>(null);
     const [errorDetails, setErrorDetails] = useState<ErrorDetails | null>(null);
     const showNicknameSetup = useAppSelector((state) => state.auth.showNicknameSetup);
     const isAuthenticated = useAppSelector((state) => state.auth.isAuthenticated);
@@ -45,11 +47,12 @@ function AppInner() {
 
                 if (parsedUrl.queryParams?.inviteCode) {
                     const code = parsedUrl.queryParams.inviteCode as string;
-                    Alert.alert(
-                        'Invitation Received',
-                        `Code: ${code}`,
-                        [{ text: 'OK' }]
-                    );
+
+                    setInviteCode(code);
+                    // Small delay to ensure state updates
+                    setTimeout(() => {
+                        invitationBottomSheetRef.current?.present();
+                    }, 100);
                 }
             } catch (error) {
                 console.error('Error handling deep link:', error);
@@ -146,6 +149,11 @@ function AppInner() {
             <SetupNicknameBottomSheet
                 bottomSheetRef={setupNicknameBottomSheetRef}
                 onNicknameSet={handleNicknameSet}
+            />
+            <InvitationBottomSheet
+                bottomSheetRef={invitationBottomSheetRef}
+                inviteCode={inviteCode}
+                onDismiss={() => setInviteCode(null)}
             />
         </>
     );
