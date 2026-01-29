@@ -4,7 +4,7 @@
 
 Home Inventory Sync Server API
 
-**Generated:** 2026-01-28T19:32:08.194Z
+**Generated:** 2026-01-29T22:30:00.782Z
 
 ## Table of Contents
 
@@ -124,13 +124,24 @@ Accessible accounts retrieved successfully
     {
       "userId": "507f1f77bcf86cd799439011",
       "email": "me@example.com",
+      "nickname": "My Account",
+      "avatarUrl": "https://example.com/avatar1.jpg",
       "isOwner": true,
-      "joinedAt": "2024-01-01T00:00:00.000Z"
+      "permissions": {
+        "canShareInventory": true,
+        "canShareTodos": true
+      }
     },
     {
       "userId": "507f1f77bcf86cd799439012",
       "email": "spouse@example.com",
+      "nickname": "Spouse Account",
+      "avatarUrl": "https://example.com/avatar2.jpg",
       "isOwner": false,
+      "permissions": {
+        "canShareInventory": true,
+        "canShareTodos": false
+      },
       "joinedAt": "2024-01-15T10:30:00.000Z"
     }
   ]
@@ -176,11 +187,17 @@ Internal server error
 
 **List all members of the account**
 
-Retrieves a list of all members in the authenticated user account. The response includes the account owner and all household members who have joined.
+Retrieves a list of all members in an account. Both account owners and household members can list members for any account they have access to. Without the optional `userId` query parameter, returns members of the authenticated user's own account. With `userId` (the account owner's user ID), returns members of that account if the requester is the owner or a member of that account.
 
 **Authentication:** Required (jwt) - Requires valid JWT token
 
 **Tags:** `Accounts`
+
+#### Query Parameters
+
+| Name | Type | Required | Default | Description |
+|------|------|----------|---------|-------------|
+| `userId` | string | No | - | Account owner user ID\. When provided, list members of this account \(requester must be owner or member\)\. When omitted, list members of the authenticated user's own account\. |
 
 #### Response (200)
 
@@ -222,6 +239,20 @@ Unauthorized \- invalid or expired token
 ```json
 {
   "message": "Unauthorized - invalid or expired token"
+}
+```
+
+##### 403 - `FORBIDDEN`
+
+You don't have access to this account
+
+Returned when userId is provided and the requester is neither the account owner nor a member of that account\.
+
+**Example:**
+
+```json
+{
+  "message": "You don't have access to this account"
 }
 ```
 
@@ -1371,7 +1402,7 @@ Internal server error
 - [`invitations.get_invitation_code`](#invitations-get-invitation-code)
 - [`invitations.validate_invitation`](#invitations-validate-invitation)
 
-### GET /invitations/:code/validate
+### GET /invitations/:code
 
 <a id="invitations-validate-invitation"></a>
 
@@ -1461,6 +1492,14 @@ Deletes all sync data for a given file type from the server. This operation cann
 
 **Supported file types:** `categories`, `locations`, `inventoryItems`, `todoItems`, `settings`
 
+**Cross-account access:** Pass `userId` query parameter to delete from another account. Requires membership in the target account and proper permissions.
+
+**Permission requirements:**
+- `inventoryItems`: Requires `canShareInventory: true` on target account
+- `todoItems`: Requires `canShareTodos: true` on target account
+- Other types: Always allowed for members
+- Account owners: Always have full access regardless of permissions
+
 **Authentication:** Required (jwt) - Requires valid JWT token from login/signup/google_login
 
 **Tags:** `Synchronization`
@@ -1471,6 +1510,12 @@ Deletes all sync data for a given file type from the server. This operation cann
 |------|------|----------|-------------|
 | `fileType` | enum (categories, locations, inventoryItems, todoItems, settings) | Yes | Type of file to delete |
 
+#### Query Parameters
+
+| Name | Type | Required | Default | Description |
+|------|------|----------|---------|-------------|
+| `userId` | string | No | - | Target account ID \(for cross\-account access\) |
+
 #### Response (200)
 
 Sync data deleted successfully
@@ -1480,7 +1525,7 @@ Sync data deleted successfully
 ```json
 {
   "success": true,
-  "message": "Sync data deleted successfully"
+  "message": "All categories data has been deleted"
 }
 ```
 
@@ -1518,6 +1563,44 @@ Unauthorized \- invalid or expired token
     "message": "Unauthorized - invalid or expired token",
     "code": "UNAUTHORIZED",
     "statusCode": 401
+  }
+}
+```
+
+##### 403 - `FORBIDDEN`
+
+Access denied \- insufficient permissions
+
+Thrown when trying to delete from another account without proper membership or when the target account has sharing disabled for the specific file type
+
+**Example:**
+
+```json
+{
+  "success": false,
+  "error": {
+    "message": "You don't have permission to delete inventory items",
+    "code": "FORBIDDEN",
+    "statusCode": 403
+  }
+}
+```
+
+##### 404 - `ACCOUNT_NOT_FOUND`
+
+Account not found
+
+The target account does not exist
+
+**Example:**
+
+```json
+{
+  "success": false,
+  "error": {
+    "message": "Account not found",
+    "code": "ACCOUNT_NOT_FOUND",
+    "statusCode": 404
   }
 }
 ```
@@ -1654,6 +1737,12 @@ Retrieves the latest sync data for a given file type. Supports pulling from othe
 
 **Cross-account access:** Pass `userId` query parameter to pull from another account. Requires membership in the target account and proper permissions.
 
+**Permission requirements:**
+- `inventoryItems`: Requires `canShareInventory: true` on target account
+- `todoItems`: Requires `canShareTodos: true` on target account
+- Other types: Always allowed for members
+- Account owners: Always have full access regardless of permissions
+
 **Authentication:** Required (jwt) - Requires valid JWT token from login/signup/google_login
 
 **Tags:** `Synchronization`
@@ -1755,7 +1844,7 @@ Unauthorized \- invalid or expired token
 
 Access denied \- insufficient permissions
 
-Thrown when trying to access another account without proper membership or permission
+Thrown when trying to access another account without proper membership or when the target account has sharing disabled for the specific file type
 
 **Example:**
 
@@ -1820,11 +1909,17 @@ Internal server error
 
 **Push sync data for a specific file type**
 
-Uploads sync data for a given file type to the server. Data is always stored in the authenticated user account (no cross-account pushing).
+Uploads sync data for a given file type to the server. Supports pushing to shared accounts (household sharing) when proper permissions are granted.
 
 **Supported file types:** `categories`, `locations`, `inventoryItems`, `todoItems`, `settings`
 
-The request should contain version information, device ID, and the actual data to sync.
+**Cross-account access:** Pass `userId` in request body to push to another account. Requires membership in the target account and proper permissions.
+
+**Permission requirements:**
+- `inventoryItems`: Requires `canShareInventory: true` on target account
+- `todoItems`: Requires `canShareTodos: true` on target account
+- Other types: Always allowed for members
+- Account owners: Always have full access regardless of permissions
 
 **Authentication:** Required (jwt) - Requires valid JWT token from login/signup/google_login
 
@@ -1861,7 +1956,8 @@ Sync data to upload
       "name": "Category 2"
     }
   ],
-  "deviceName": "iPhone 15 Pro"
+  "deviceName": "iPhone 15 Pro",
+  "userId": "507f1f77bcf86cd799439011"
 }
 ```
 
@@ -1877,11 +1973,30 @@ Sync data uploaded successfully
   "serverTimestamp": "2024-01-15T10:30:05.000Z",
   "lastSyncTime": "2024-01-15T10:30:05.000Z",
   "entriesCount": 2,
-  "message": "Sync data updated successfully"
+  "message": "categories synced successfully"
 }
 ```
 
 #### Error Responses
+
+##### 400 - `INVALID_USER_ID`
+
+User ID is required
+
+When using cross\-account access, userId must be provided
+
+**Example:**
+
+```json
+{
+  "success": false,
+  "error": {
+    "message": "User ID is required",
+    "code": "INVALID_USER_ID",
+    "statusCode": 400
+  }
+}
+```
 
 ##### 400 - `INVALID_FILE_TYPE`
 
@@ -1902,6 +2017,25 @@ The fileType must be one of the supported types
 }
 ```
 
+##### 400 - `INVALID_DATA`
+
+Missing required fields \(version, deviceId, syncTimestamp, data\)
+
+Required sync fields are missing from request body
+
+**Example:**
+
+```json
+{
+  "success": false,
+  "error": {
+    "message": "Missing required fields (version, deviceId, syncTimestamp, data)",
+    "code": "INVALID_DATA",
+    "statusCode": 400
+  }
+}
+```
+
 ##### 401 - `UNAUTHORIZED`
 
 Unauthorized \- invalid or expired token
@@ -1915,6 +2049,44 @@ Unauthorized \- invalid or expired token
     "message": "Unauthorized - invalid or expired token",
     "code": "UNAUTHORIZED",
     "statusCode": 401
+  }
+}
+```
+
+##### 403 - `FORBIDDEN`
+
+Access denied \- insufficient permissions
+
+Thrown when trying to push to another account without proper membership or when the target account has sharing disabled for the specific file type
+
+**Example:**
+
+```json
+{
+  "success": false,
+  "error": {
+    "message": "You don't have permission to sync inventory items",
+    "code": "FORBIDDEN",
+    "statusCode": 403
+  }
+}
+```
+
+##### 404 - `ACCOUNT_NOT_FOUND`
+
+Account not found
+
+The target account does not exist
+
+**Example:**
+
+```json
+{
+  "success": false,
+  "error": {
+    "message": "Account not found",
+    "code": "ACCOUNT_NOT_FOUND",
+    "statusCode": 404
   }
 }
 ```
@@ -1940,6 +2112,7 @@ Internal server error
 
 - [`sync.pull_file`](#sync-pull-file)
 - [`sync.get_sync_status`](#sync-get-sync-status)
+- [`sync.delete_file_data`](#sync-delete-file-data)
 
 
 ---

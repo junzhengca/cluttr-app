@@ -75,13 +75,13 @@ const SwitchHomeHeader = styled(View)`
 const SwitchTitle = styled(Text)`
   font-size: 24px;
   font-weight: bold;
-  color: #000000;
+  color: ${({ theme }: StyledProps) => theme.colors.text};
   margin-bottom: 4px;
 `;
 
 const SwitchSubtitle = styled(Text)`
   font-size: 14px;
-  color: #757575;
+  color: ${({ theme }: StyledProps) => theme.colors.textSecondary};
 `;
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
@@ -111,7 +111,7 @@ export const ShareScreen: React.FC = () => {
 
   const currentHome = accounts.find(a =>
     activeHomeId ? a.userId === activeHomeId : a.isOwner
-  ) || (user ? { userId: user.id, nickname: user.nickname || user.email, email: user.email, isOwner: true } : null);
+  ) || (user ? { userId: user.id, nickname: user.nickname || user.email, email: user.email, avatarUrl: user.avatarUrl, isOwner: true, createdAt: user.createdAt } : null);
 
   const loadSettings = useCallback(async () => {
     setIsLoading(true);
@@ -148,7 +148,7 @@ export const ShareScreen: React.FC = () => {
         return;
       }
 
-      const response = await apiClient.listMembers();
+      const response = await apiClient.listMembers(activeHomeId || undefined);
       setMembers(response.members);
     } catch (error) {
       console.error('Error loading members:', error);
@@ -170,7 +170,7 @@ export const ShareScreen: React.FC = () => {
           throw new Error('Failed to get API client');
         }
 
-        await apiClient.removeMember(memberId);
+        await apiClient.removeMember(memberId, activeHomeId || undefined);
         showToast(t('share.members.removeSuccess'), 'success');
         // Reload members after removal
         await loadMembers();
@@ -360,7 +360,6 @@ export const ShareScreen: React.FC = () => {
     );
   }
 
-  const accountColors = ['#E1F5FE', '#FCE4EC', '#E8F5E9', '#FFF3E0', '#F3E5F5'];
 
   return (
     <Container>
@@ -390,27 +389,37 @@ export const ShareScreen: React.FC = () => {
               <>
                 <HomeCard
                   name={currentHome?.nickname || currentHome?.email || t('share.home.currentHome')}
-                  memberCount={members.length}
                   isActive={true}
                   showSwitchButton={true}
                   onSwitchPress={handleSwitchHomePress}
+                  canShareInventory={canShareInventory}
+                  canShareTodos={canShareTodos}
                 />
 
                 <MemberList
-                  owner={user}
+                  owner={currentHome ? {
+                    id: currentHome.userId,
+                    email: currentHome.email,
+                    nickname: currentHome.nickname,
+                    avatarUrl: currentHome.avatarUrl,
+                    createdAt: (currentHome as AccessibleAccount).joinedAt || (currentHome as any).createdAt,
+                  } : null}
                   members={members}
                   isLoading={membersLoading}
                   error={membersError}
-                  onRemoveMember={handleRemoveMember}
+                  onRemoveMember={currentHome?.isOwner ? handleRemoveMember : undefined}
                   onInvitePress={handleInvitePress}
+                  showInviteButton={currentHome?.isOwner}
                 />
-                <PermissionConfigPanel
-                  canShareInventory={canShareInventory}
-                  canShareTodos={canShareTodos}
-                  onToggleInventory={handleToggleInventory}
-                  onToggleTodos={handleToggleTodos}
-                  isLoading={isUpdating}
-                />
+                {currentHome?.isOwner && (
+                  <PermissionConfigPanel
+                    canShareInventory={canShareInventory}
+                    canShareTodos={canShareTodos}
+                    onToggleInventory={handleToggleInventory}
+                    onToggleTodos={handleToggleTodos}
+                    isLoading={isUpdating}
+                  />
+                )}
               </>
             )}
           </Content>
@@ -426,10 +435,10 @@ export const ShareScreen: React.FC = () => {
               <HomeCard
                 key={account.userId}
                 name={account.nickname || account.email}
-                memberCount={0} // We don't have member count for other homes in the accounts list
                 isActive={activeHomeId ? account.userId === activeHomeId : account.isOwner}
-                backgroundColor={accountColors[index % accountColors.length]}
                 onPress={() => handleAccountSelect(account.userId)}
+                canShareInventory={account.permissions?.canShareInventory}
+                canShareTodos={account.permissions?.canShareTodos}
               />
             ))}
 

@@ -556,8 +556,9 @@ export class ApiClient {
   /**
    * List members of the current user's account
    */
-  async listMembers(): Promise<ListMembersResponse> {
-    return this.request<ListMembersResponse>('/api/accounts/members', {
+  async listMembers(userId?: string): Promise<ListMembersResponse> {
+    const endpoint = `/api/accounts/members${userId ? `?userId=${userId}` : ''}`;
+    return this.request<ListMembersResponse>(endpoint, {
       method: 'GET',
       requiresAuth: true,
     });
@@ -576,9 +577,10 @@ export class ApiClient {
   /**
    * Remove a member from the current user's account
    */
-  async removeMember(memberId: string): Promise<{ success: boolean; message: string }> {
+  async removeMember(memberId: string, userId?: string): Promise<{ success: boolean; message: string }> {
+    const endpoint = `/api/accounts/members/${memberId}${userId ? `?userId=${userId}` : ''}`;
     return this.request<{ success: boolean; message: string }>(
-      `/api/accounts/members/${memberId}`,
+      endpoint,
       {
         method: 'DELETE',
         requiresAuth: true,

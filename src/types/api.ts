@@ -99,6 +99,10 @@ export interface AccessibleAccount {
   avatarUrl?: string;
   isOwner: boolean;
   joinedAt: string;
+  permissions?: {
+    canShareInventory: boolean;
+    canShareTodos: boolean;
+  };
 }
 
 export interface ListAccessibleAccountsResponse {

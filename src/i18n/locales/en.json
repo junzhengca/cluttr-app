@@ -596,6 +596,9 @@
     },
     "inventory": {
       "label": "Shared Inventory"
+    },
+    "shoppingList": {
+      "label": "Shared Shopping List"
     }
   },
   "toast": {

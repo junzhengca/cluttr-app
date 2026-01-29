@@ -8,7 +8,15 @@ import type { StyledProps } from '../../utils/styledComponents';
 import { useTheme } from '../../theme/ThemeProvider';
 import { MemberCard } from '../molecules';
 import { BaseCard, EmptyState } from '../atoms';
-import { Member, User } from '../../types/api';
+import { Member } from '../../types/api';
+
+interface OwnerInfo {
+  id: string;
+  email: string;
+  nickname?: string;
+  avatarUrl?: string;
+  createdAt?: string;
+}
 
 const Container = styled(View)`
   flex: 1;
@@ -74,12 +82,13 @@ const InviteText = styled(Text)`
 `;
 
 export interface MemberListProps {
-  owner: User | null;
+  owner: OwnerInfo | null;
   members: Member[];
   isLoading?: boolean;
   error?: string | null;
-  onRemoveMember: (memberId: string) => void;
+  onRemoveMember?: (memberId: string) => void;
   onInvitePress: () => void;
+  showInviteButton?: boolean;
 }
 
 export const MemberList: React.FC<MemberListProps> = ({
@@ -89,6 +98,7 @@ export const MemberList: React.FC<MemberListProps> = ({
   error = null,
   onRemoveMember,
   onInvitePress,
+  showInviteButton = true,
 }) => {
   const { t } = useTranslation();
   const theme = useTheme();
@@ -111,7 +121,7 @@ export const MemberList: React.FC<MemberListProps> = ({
             text: t('share.members.removeConfirm.confirm'),
             style: 'destructive',
             onPress: () => {
-              onRemoveMember(memberId);
+              onRemoveMember?.(memberId);
             },
           },
         ]
@@ -189,14 +199,16 @@ export const MemberList: React.FC<MemberListProps> = ({
           ))}
 
           {/* Invite Card */}
-          <InviteCard onPress={onInvitePress} activeOpacity={0.8}>
-            <InviteCardContent>
-              <InviteIconContainer>
-                <InviteIcon name="person-add-outline" size={24} />
-              </InviteIconContainer>
-              <InviteText>{t('share.members.invite')}</InviteText>
-            </InviteCardContent>
-          </InviteCard>
+          {showInviteButton && (
+            <InviteCard onPress={onInvitePress} activeOpacity={0.8}>
+              <InviteCardContent>
+                <InviteIconContainer>
+                  <InviteIcon name="person-add-outline" size={24} />
+                </InviteIconContainer>
+                <InviteText>{t('share.members.invite')}</InviteText>
+              </InviteCardContent>
+            </InviteCard>
+          )}
         </>
       )}
     </Container>

@@ -596,6 +596,9 @@
     },
     "inventory": {
       "label": "共享库存"
+    },
+    "shoppingList": {
+      "label": "共享购物清单"
     }
   },
   "toast": {
