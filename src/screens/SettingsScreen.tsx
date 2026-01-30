@@ -17,7 +17,7 @@ import {
   ClearDataButton,
   SettingsToggleItem,
 } from '../components';
-import { useSettings, useAuth } from '../store/hooks';
+import { useSettings, useAuth, useAppSelector } from '../store/hooks';
 import { calculateBottomPadding } from '../utils/layout';
 import { RootStackParamList } from '../navigation/types';
 
@@ -65,6 +65,10 @@ export const SettingsScreen: React.FC = () => {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<NavigationProp>();
   const { user } = useAuth();
+  const activeHomeId = useAppSelector((state) => state.auth.activeHomeId);
+  const accounts = useAppSelector((state) => state.auth.accessibleAccounts);
+
+  const currentHomeOwner = accounts.find((a) => a.userId === activeHomeId);
 
   const handleAvatarPress = () => {
     const rootNavigation = navigation.getParent();
@@ -117,6 +121,7 @@ export const SettingsScreen: React.FC = () => {
           showBackButton={false}
           showRightButtons={true}
           avatarUrl={user?.avatarUrl}
+          ownerAvatarUrl={currentHomeOwner?.avatarUrl}
           onAvatarPress={handleAvatarPress}
         />
         <LoadingContainer>
@@ -135,6 +140,7 @@ export const SettingsScreen: React.FC = () => {
         showBackButton={false}
         showRightButtons={true}
         avatarUrl={user?.avatarUrl}
+        ownerAvatarUrl={currentHomeOwner?.avatarUrl}
         onAvatarPress={handleAvatarPress}
       />
       <Content

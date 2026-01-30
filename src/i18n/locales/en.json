@@ -366,7 +366,8 @@
           "toggleFailed": "Failed to toggle sync",
           "syncFailed": "Failed to trigger manual sync"
         }
-      }
+      },
+      "forcedWarning": "Sync is required when you have home members or are a member of another home."
     },
     "avatar": {
       "uploadSuccess": {
@@ -584,6 +585,10 @@
       },
       "receivedTitle": "{{name}} invites you to join their home",
       "receivedSubtitle": "Received Invitation",
+      "syncRequired": {
+        "title": "Sync Required",
+        "message": "You must turn on sync to invite family members. Would you like to turn it on now?"
+      },
       "errors": {
         "ownHome": "You cannot join your own home"
       }

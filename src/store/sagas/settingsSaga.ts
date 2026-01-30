@@ -1,8 +1,10 @@
-import { call, put, takeLatest } from 'redux-saga/effects';
+
+import { call, put, takeLatest, select } from 'redux-saga/effects';
 import { setSettings, setLoading, setUpdateResult } from '../slices/settingsSlice';
 import { getSettings, updateSettings as updateSettingsService } from '../../services/SettingsService';
 import { Settings } from '../../types/settings';
 import i18n from '../../i18n/i18n';
+import type { RootState } from '../types';
 
 // Action types
 const LOAD_SETTINGS = 'settings/LOAD_SETTINGS';
@@ -15,9 +17,16 @@ export const updateSettings = (updates: Partial<Settings>) => ({
   payload: updates,
 });
 
+function* getFileUserId() {
+  const state: RootState = yield select();
+  const { activeHomeId, user } = state.auth;
+  return activeHomeId && user && activeHomeId !== user.id ? activeHomeId : undefined;
+}
+
 function* loadSettingsSaga() {
   try {
-    const loadedSettings: Settings = yield call(getSettings);
+    const userId: string | undefined = yield call(getFileUserId);
+    const loadedSettings: Settings = yield call(getSettings, userId);
     yield put(setSettings(loadedSettings));
     // Update i18n language when settings are loaded
     i18n.changeLanguage(loadedSettings.language);
@@ -30,7 +39,8 @@ function* loadSettingsSaga() {
 
 function* updateSettingsSaga(action: { type: string; payload: Partial<Settings> }) {
   try {
-    const updated: Settings | null = yield call(updateSettingsService, action.payload);
+    const userId: string | undefined = yield call(getFileUserId);
+    const updated: Settings | null = yield call(updateSettingsService, action.payload, userId);
     if (updated) {
       yield put(setSettings(updated));
       yield put(setUpdateResult(true));

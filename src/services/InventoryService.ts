@@ -13,8 +13,8 @@ interface ItemsData {
 /**
  * Get all inventory items (excluding deleted items)
  */
-export const getAllItems = async (): Promise<InventoryItem[]> => {
-  const data = await readFile<ItemsData>(ITEMS_FILE);
+export const getAllItems = async (userId?: string): Promise<InventoryItem[]> => {
+  const data = await readFile<ItemsData>(ITEMS_FILE, userId);
   const items = data?.items || [];
   return items.filter((item) => !item.deletedAt);
 };
@@ -22,25 +22,25 @@ export const getAllItems = async (): Promise<InventoryItem[]> => {
 /**
  * Get all inventory items for sync (including deleted items)
  */
-export const getAllItemsForSync = async (): Promise<InventoryItem[]> => {
-  const data = await readFile<ItemsData>(ITEMS_FILE);
+export const getAllItemsForSync = async (userId?: string): Promise<InventoryItem[]> => {
+  const data = await readFile<ItemsData>(ITEMS_FILE, userId);
   return data?.items || [];
 };
 
 /**
  * Get a single item by ID (excluding deleted items)
  */
-export const getItemById = async (id: string): Promise<InventoryItem | null> => {
-  const items = await getAllItems();
+export const getItemById = async (id: string, userId?: string): Promise<InventoryItem | null> => {
+  const items = await getAllItems(userId);
   return items.find((item) => item.id === id && !item.deletedAt) || null;
 };
 
 /**
  * Create a new item
  */
-export const createItem = async (item: Omit<InventoryItem, 'id'>): Promise<InventoryItem | null> => {
+export const createItem = async (item: Omit<InventoryItem, 'id'>, userId?: string): Promise<InventoryItem | null> => {
   try {
-    const items = await getAllItems();
+    const items = await getAllItems(userId);
     const now = new Date().toISOString();
     const newItem: InventoryItem = {
       ...item,
@@ -51,11 +51,11 @@ export const createItem = async (item: Omit<InventoryItem, 'id'>): Promise<Inven
     };
 
     items.push(newItem);
-    const success = await writeFile<ItemsData>(ITEMS_FILE, { items });
+    const success = await writeFile<ItemsData>(ITEMS_FILE, { items }, userId);
 
     if (success) {
       console.log('[InventoryService] Triggering sync after createItem');
-      syncCallbackRegistry.trigger('inventoryItems');
+      syncCallbackRegistry.trigger('inventoryItems', userId);
     }
 
     return success ? newItem : null;
@@ -70,11 +70,12 @@ export const createItem = async (item: Omit<InventoryItem, 'id'>): Promise<Inven
  */
 export const updateItem = async (
   id: string,
-  updates: Partial<Omit<InventoryItem, 'id'>>
+  updates: Partial<Omit<InventoryItem, 'id'>>,
+  userId?: string
 ): Promise<InventoryItem | null> => {
   try {
     console.log('[InventoryService] updateItem called with id:', id, 'updates:', updates);
-    const items = await getAllItems();
+    const items = await getAllItems(userId);
     const index = items.findIndex((item) => item.id === id);
 
     if (index === -1) {
@@ -83,11 +84,11 @@ export const updateItem = async (
 
     items[index] = { ...items[index], ...updates, updatedAt: new Date().toISOString() };
     console.log('[InventoryService] Updated item to be written:', items[index]);
-    const success = await writeFile<ItemsData>(ITEMS_FILE, { items });
+    const success = await writeFile<ItemsData>(ITEMS_FILE, { items }, userId);
 
     if (success) {
       console.log('[InventoryService] Triggering sync after updateItem');
-      syncCallbackRegistry.trigger('inventoryItems');
+      syncCallbackRegistry.trigger('inventoryItems', userId);
     }
 
     return success ? items[index] : null;
@@ -100,21 +101,21 @@ export const updateItem = async (
 /**
  * Delete an item (soft delete - sets deletedAt timestamp)
  */
-export const deleteItem = async (id: string): Promise<boolean> => {
+export const deleteItem = async (id: string, userId?: string): Promise<boolean> => {
   try {
-    const data = await readFile<ItemsData>(ITEMS_FILE);
+    const data = await readFile<ItemsData>(ITEMS_FILE, userId);
     const items = data?.items || [];
     const index = items.findIndex((item) => item.id === id);
-    
+
     if (index === -1) {
       return false; // Item not found
     }
-    
+
     // If already deleted, return true (idempotent)
     if (items[index].deletedAt) {
       return true;
     }
-    
+
     // Soft delete: set deletedAt and update updatedAt
     const now = new Date().toISOString();
     items[index] = {
@@ -122,12 +123,12 @@ export const deleteItem = async (id: string): Promise<boolean> => {
       deletedAt: now,
       updatedAt: now,
     };
-    
-    const success = await writeFile<ItemsData>(ITEMS_FILE, { items });
+
+    const success = await writeFile<ItemsData>(ITEMS_FILE, { items }, userId);
 
     if (success) {
       console.log('[InventoryService] Triggering sync after deleteItem');
-      syncCallbackRegistry.trigger('inventoryItems');
+      syncCallbackRegistry.trigger('inventoryItems', userId);
     }
 
     return success;
@@ -147,12 +148,12 @@ export const searchItems = async (
   }
 ): Promise<InventoryItem[]> => {
   let items = await getAllItems(); // Already filters out deleted items
-  
+
   // Filter by expiring soon
   if (filters?.expiringSoon) {
     items = items.filter((item) => isExpiringSoon(item.expiryDate));
   }
-  
+
   // Search by query
   if (query && query.trim()) {
     const lowerQuery = query.toLowerCase();
@@ -163,7 +164,7 @@ export const searchItems = async (
         item.detailedLocation.toLowerCase().includes(lowerQuery)
     );
   }
-  
+
   return items;
 };
 

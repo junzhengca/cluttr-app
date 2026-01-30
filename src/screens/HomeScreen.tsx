@@ -49,7 +49,7 @@ import {
 import { useItemActions } from '../hooks/useItemActions';
 import { InventoryItem } from '../types/inventory';
 import { RootStackParamList } from '../navigation/types';
-import { useInventory, useSync, useAuth } from '../store/hooks';
+import { useInventory, useSync, useAuth, useAppSelector } from '../store/hooks';
 import { calculateBottomPadding } from '../utils/layout';
 import * as SecureStore from 'expo-secure-store';
 
@@ -127,6 +127,8 @@ export const HomeScreen: React.FC = () => {
   const { items, loading: isLoading, loadItems, updateItem: updateInventoryItem } = useInventory();
   const { enabled: isSyncEnabled } = useSync();
   const { user, getApiClient } = useAuth();
+  const activeHomeId = useAppSelector((state) => state.auth.activeHomeId);
+  const accounts = useAppSelector((state) => state.auth.accessibleAccounts);
   const theme = useTheme();
   const loginBottomSheetRef = useRef<BottomSheetModal | null>(null);
   const signupBottomSheetRef = useRef<BottomSheetModal | null>(null);
@@ -228,6 +230,11 @@ export const HomeScreen: React.FC = () => {
 
     return filtered;
   }, [searchQuery, selectedLocationId, selectedStatusId, items]);
+
+  const currentHomeOwner = useMemo(() => {
+    if (!activeHomeId) return null;
+    return accounts.find((a) => a.userId === activeHomeId);
+  }, [activeHomeId, accounts]);
 
   const handleItemPress = (item: InventoryItem) => {
     const rootNavigation = navigation.getParent();
@@ -393,6 +400,7 @@ export const HomeScreen: React.FC = () => {
           subtitle={headerSubtitle}
           showRightButtons={true}
           avatarUrl={user?.avatarUrl}
+          ownerAvatarUrl={currentHomeOwner?.avatarUrl}
           onAvatarPress={handleAvatarPress}
         />
         {isLoading ? (

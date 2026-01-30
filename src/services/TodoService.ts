@@ -12,8 +12,8 @@ interface TodosData {
 /**
  * Get all todos (excluding deleted todos)
  */
-export const getAllTodos = async (): Promise<TodoItem[]> => {
-  const data = await readFile<TodosData>(TODOS_FILE);
+export const getAllTodos = async (userId?: string): Promise<TodoItem[]> => {
+  const data = await readFile<TodosData>(TODOS_FILE, userId);
   const todos = data?.todos || [];
   return todos.filter((todo) => !todo.deletedAt);
 };
@@ -21,25 +21,25 @@ export const getAllTodos = async (): Promise<TodoItem[]> => {
 /**
  * Get all todos for sync (including deleted todos)
  */
-export const getAllTodosForSync = async (): Promise<TodoItem[]> => {
-  const data = await readFile<TodosData>(TODOS_FILE);
+export const getAllTodosForSync = async (userId?: string): Promise<TodoItem[]> => {
+  const data = await readFile<TodosData>(TODOS_FILE, userId);
   return data?.todos || [];
 };
 
 /**
  * Get a single todo by ID (excluding deleted todos)
  */
-export const getTodoById = async (id: string): Promise<TodoItem | null> => {
-  const todos = await getAllTodos();
+export const getTodoById = async (id: string, userId?: string): Promise<TodoItem | null> => {
+  const todos = await getAllTodos(userId);
   return todos.find((todo) => todo.id === id && !todo.deletedAt) || null;
 };
 
 /**
  * Create a new todo
  */
-export const createTodo = async (text: string, note?: string): Promise<TodoItem | null> => {
+export const createTodo = async (text: string, note?: string, userId?: string): Promise<TodoItem | null> => {
   try {
-    const todos = await getAllTodos();
+    const todos = await getAllTodos(userId);
     const now = new Date().toISOString();
     const newTodo: TodoItem = {
       id: generateTodoId(),
@@ -51,11 +51,11 @@ export const createTodo = async (text: string, note?: string): Promise<TodoItem 
     };
 
     todos.push(newTodo);
-    const success = await writeFile<TodosData>(TODOS_FILE, { todos });
+    const success = await writeFile<TodosData>(TODOS_FILE, { todos }, userId);
 
     if (success) {
       console.log('[TodoService] Triggering sync after createTodo');
-      syncCallbackRegistry.trigger('todoItems');
+      syncCallbackRegistry.trigger('todoItems', userId);
     }
 
     return success ? newTodo : null;
@@ -70,10 +70,11 @@ export const createTodo = async (text: string, note?: string): Promise<TodoItem 
  */
 export const updateTodo = async (
   id: string,
-  updates: Partial<Omit<TodoItem, 'id' | 'createdAt'>>
+  updates: Partial<Omit<TodoItem, 'id' | 'createdAt'>>,
+  userId?: string
 ): Promise<TodoItem | null> => {
   try {
-    const todos = await getAllTodos();
+    const todos = await getAllTodos(userId);
     const index = todos.findIndex((todo) => todo.id === id);
 
     if (index === -1) {
@@ -81,11 +82,11 @@ export const updateTodo = async (
     }
 
     todos[index] = { ...todos[index], ...updates, updatedAt: new Date().toISOString() };
-    const success = await writeFile<TodosData>(TODOS_FILE, { todos });
+    const success = await writeFile<TodosData>(TODOS_FILE, { todos }, userId);
 
     if (success) {
       console.log('[TodoService] Triggering sync after updateTodo');
-      syncCallbackRegistry.trigger('todoItems');
+      syncCallbackRegistry.trigger('todoItems', userId);
     }
 
     return success ? todos[index] : null;
@@ -98,21 +99,21 @@ export const updateTodo = async (
 /**
  * Delete a todo (soft delete - sets deletedAt timestamp)
  */
-export const deleteTodo = async (id: string): Promise<boolean> => {
+export const deleteTodo = async (id: string, userId?: string): Promise<boolean> => {
   try {
-    const data = await readFile<TodosData>(TODOS_FILE);
+    const data = await readFile<TodosData>(TODOS_FILE, userId);
     const todos = data?.todos || [];
     const index = todos.findIndex((todo) => todo.id === id);
 
     if (index === -1) {
       return false; // Todo not found
     }
-    
+
     // If already deleted, return true (idempotent)
     if (todos[index].deletedAt) {
       return true;
     }
-    
+
     // Soft delete: set deletedAt and update updatedAt
     const now = new Date().toISOString();
     todos[index] = {
@@ -121,11 +122,11 @@ export const deleteTodo = async (id: string): Promise<boolean> => {
       updatedAt: now,
     };
 
-    const success = await writeFile<TodosData>(TODOS_FILE, { todos });
+    const success = await writeFile<TodosData>(TODOS_FILE, { todos }, userId);
 
     if (success) {
       console.log('[TodoService] Triggering sync after deleteTodo');
-      syncCallbackRegistry.trigger('todoItems');
+      syncCallbackRegistry.trigger('todoItems', userId);
     }
 
     return success;
@@ -138,9 +139,9 @@ export const deleteTodo = async (id: string): Promise<boolean> => {
 /**
  * Toggle todo completion status
  */
-export const toggleTodo = async (id: string): Promise<TodoItem | null> => {
+export const toggleTodo = async (id: string, userId?: string): Promise<TodoItem | null> => {
   try {
-    const todos = await getAllTodos();
+    const todos = await getAllTodos(userId);
     const index = todos.findIndex((todo) => todo.id === id);
 
     if (index === -1) {
@@ -149,11 +150,11 @@ export const toggleTodo = async (id: string): Promise<TodoItem | null> => {
 
     todos[index].completed = !todos[index].completed;
     todos[index].updatedAt = new Date().toISOString();
-    const success = await writeFile<TodosData>(TODOS_FILE, { todos });
+    const success = await writeFile<TodosData>(TODOS_FILE, { todos }, userId);
 
     if (success) {
       console.log('[TodoService] Triggering sync after toggleTodo');
-      syncCallbackRegistry.trigger('todoItems');
+      syncCallbackRegistry.trigger('todoItems', userId);
     }
 
     return success ? todos[index] : null;

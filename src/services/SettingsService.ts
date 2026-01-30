@@ -1,22 +1,23 @@
 import { Settings, defaultSettings } from '../types/settings';
 import { readFile, writeFile } from './FileSystemService';
+import { syncCallbackRegistry } from './SyncCallbackRegistry';
 
 const SETTINGS_FILE = 'settings.json';
 
 /**
  * Get current settings
  */
-export const getSettings = async (): Promise<Settings> => {
-  const settings = await readFile<Settings>(SETTINGS_FILE);
+export const getSettings = async (userId?: string): Promise<Settings> => {
+  const settings = await readFile<Settings>(SETTINGS_FILE, userId);
   return settings || defaultSettings as Settings;
 };
 
 /**
  * Update settings (supports partial updates)
  */
-export const updateSettings = async (updates: Partial<Settings>): Promise<Settings | null> => {
+export const updateSettings = async (updates: Partial<Settings>, userId?: string): Promise<Settings | null> => {
   try {
-    const currentSettings = await getSettings();
+    const currentSettings = await getSettings(userId);
     const now = new Date().toISOString();
     const newSettings: Settings = {
       ...currentSettings,
@@ -25,7 +26,13 @@ export const updateSettings = async (updates: Partial<Settings>): Promise<Settin
       createdAt: currentSettings.createdAt || now,
     };
 
-    const success = await writeFile<Settings>(SETTINGS_FILE, newSettings);
+    const success = await writeFile<Settings>(SETTINGS_FILE, newSettings, userId);
+
+    if (success) {
+      console.log('[SettingsService] Triggering sync after updateSettings');
+      syncCallbackRegistry.trigger('settings', userId);
+    }
+
     return success ? newSettings : null;
   } catch (error) {
     console.error('Error updating settings:', error);
@@ -36,7 +43,7 @@ export const updateSettings = async (updates: Partial<Settings>): Promise<Settin
 /**
  * Reset settings to defaults
  */
-export const resetToDefaults = async (): Promise<Settings | null> => {
+export const resetToDefaults = async (userId?: string): Promise<Settings | null> => {
   try {
     const now = new Date().toISOString();
     const resetSettings: Settings = {
@@ -44,7 +51,13 @@ export const resetToDefaults = async (): Promise<Settings | null> => {
       createdAt: now,
       updatedAt: now,
     };
-    const success = await writeFile<Settings>(SETTINGS_FILE, resetSettings);
+    const success = await writeFile<Settings>(SETTINGS_FILE, resetSettings, userId);
+
+    if (success) {
+      console.log('[SettingsService] Triggering sync after resetToDefaults');
+      syncCallbackRegistry.trigger('settings', userId);
+    }
+
     return success ? resetSettings : null;
   } catch (error) {
     console.error('Error resetting settings:', error);

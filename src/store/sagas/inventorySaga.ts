@@ -36,10 +36,18 @@ export const updateItemAction = (id: string, updates: Partial<Omit<InventoryItem
 });
 export const deleteItemAction = (id: string) => ({ type: DELETE_ITEM, payload: id });
 
+
+function* getFileUserId() {
+  const state: RootState = yield select();
+  const { activeHomeId, user } = state.auth;
+  return activeHomeId && user && activeHomeId !== user.id ? activeHomeId : undefined;
+}
+
 function* loadItemsSaga() {
   try {
     yield put(setLoading(true));
-    const allItems: InventoryItem[] = yield call(getAllItems);
+    const userId: string | undefined = yield call(getFileUserId);
+    const allItems: InventoryItem[] = yield call(getAllItems, userId);
     // Sort by createdAt in descending order (newest first)
     allItems.sort((a, b) => {
       const aTime = a.createdAt ? new Date(a.createdAt).getTime() : 0;
@@ -57,7 +65,8 @@ function* loadItemsSaga() {
 function* silentRefreshItemsSaga() {
   try {
     // Silent refresh - no loading state changes
-    const allItems: InventoryItem[] = yield call(getAllItems);
+    const userId: string | undefined = yield call(getFileUserId);
+    const allItems: InventoryItem[] = yield call(getAllItems, userId);
     // Sort by createdAt in descending order (newest first)
     allItems.sort((a, b) => {
       const aTime = a.createdAt ? new Date(a.createdAt).getTime() : 0;
@@ -76,13 +85,14 @@ function* createItemSaga(action: { type: string; payload: Omit<InventoryItem, 'i
   const item = action.payload;
 
   try {
-    const newItem: InventoryItem | null = yield call(createItem, item);
+    const userId: string | undefined = yield call(getFileUserId);
+    const newItem: InventoryItem | null = yield call(createItem, item, userId);
     if (newItem) {
       // Optimistically add to state
       yield put(addItemSlice(newItem));
 
       // Refresh to ensure sync (but don't set loading)
-      const allItems: InventoryItem[] = yield call(getAllItems);
+      const allItems: InventoryItem[] = yield call(getAllItems, userId);
       allItems.sort((a, b) => {
         const aTime = a.createdAt ? new Date(a.createdAt).getTime() : 0;
         const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0;
@@ -102,6 +112,8 @@ function* updateItemSaga(action: { type: string; payload: { id: string; updates:
   console.log('[InventorySaga] updateItemSaga called with id:', id, 'updates:', updates);
 
   try {
+    const userId: string | undefined = yield call(getFileUserId);
+
     // Optimistically update to state
     const currentItems: InventoryItem[] = yield select((state: RootState) => state.inventory.items);
     const itemToUpdate = currentItems.find((item) => item.id === id);
@@ -111,10 +123,10 @@ function* updateItemSaga(action: { type: string; payload: { id: string; updates:
     }
 
     // Then update in storage
-    yield call(updateItemService, id, updates);
+    yield call(updateItemService, id, updates, userId);
 
     // Refresh to ensure sync (but don't set loading)
-    const allItems: InventoryItem[] = yield call(getAllItems);
+    const allItems: InventoryItem[] = yield call(getAllItems, userId);
     const updatedItemFromStorage = allItems.find((item) => item.id === id);
     console.log('[InventorySaga] Item from storage after update:', updatedItemFromStorage);
     allItems.sort((a, b) => {
@@ -134,14 +146,16 @@ function* deleteItemSaga(action: { type: string; payload: string }) {
   const id = action.payload;
 
   try {
+    const userId: string | undefined = yield call(getFileUserId);
+
     // Optimistically remove from state
     yield put(removeItemSlice(id));
 
     // Then delete from storage
-    yield call(deleteItem, id);
+    yield call(deleteItem, id, userId);
 
     // Refresh to ensure sync (but don't set loading)
-    const allItems: InventoryItem[] = yield call(getAllItems);
+    const allItems: InventoryItem[] = yield call(getAllItems, userId);
     allItems.sort((a, b) => {
       const aTime = a.createdAt ? new Date(a.createdAt).getTime() : 0;
       const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0;

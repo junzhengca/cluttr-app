@@ -68,6 +68,7 @@ class SyncService {
   };
   private deviceId: string | null = null;
   private userId: string | undefined = undefined;
+  private ownerId: string | undefined = undefined;
   private syncQueue: SyncTask[] = [];
   private isProcessing: boolean = false;
   private syncMetadata: SyncMetadata | null = null;
@@ -91,13 +92,21 @@ class SyncService {
   /**
    * Initialize sync service
    */
-  async initialize(deviceName?: string, userId?: string): Promise<void> {
+  async initialize(deviceName?: string, userId?: string, ownerId?: string): Promise<void> {
     syncLogger.header('INITIALIZING SYNC SERVICE');
 
     // Set user ID
     if (userId) {
       this.userId = userId;
       syncLogger.info(`Initialized with user ID: ${userId}`);
+    }
+
+    if (ownerId) {
+      this.ownerId = ownerId;
+      syncLogger.info(`Initialized with owner ID: ${ownerId}`);
+    } else if (userId && !this.ownerId) {
+      this.ownerId = userId;
+      syncLogger.info(`Initialized owner ID from user ID: ${userId}`);
     }
 
     // Get or create device ID
@@ -328,7 +337,13 @@ class SyncService {
    * Check if sync is enabled
    * Always reads from persisted storage as the single source of truth
    */
-  async isEnabled(): Promise<boolean> {
+  async isEnabled(targetUserId?: string): Promise<boolean> {
+    // If syncing a foreign user (not self), sync is MANDATORY
+    if (targetUserId && this.userId && targetUserId !== this.userId) {
+      syncLogger.debug(`Mandatory sync for foreign user ${targetUserId}`);
+      return true;
+    }
+
     // Always check persisted state as the single source of truth
     const syncEnabledStr = await SecureStore.getItemAsync('sync_enabled');
     const persistedEnabled = syncEnabledStr === 'true';
@@ -337,6 +352,9 @@ class SyncService {
 
     return persistedEnabled;
   }
+
+  // ... (rest of file)
+
 
   /**
    * Perform initial full sync for all file types
@@ -703,12 +721,12 @@ class SyncService {
       if (response.success && response.data !== undefined) {
         // Merge server data with local data
         if (fileType === 'settings') {
-          await this.mergeSettings(response.data as Settings);
+          await this.mergeSettings(response.data as Settings, targetUserId);
         } else {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const changes = await this.mergeEntries(fileType, response.data as unknown[]) as any;
+          const changes = await this.mergeEntries(fileType, response.data as unknown[], targetUserId) as any;
           // Cleanup old deleted items after merging (only for non-settings file types)
-          await this.cleanupDeletedItems(fileType);
+          await this.cleanupDeletedItems(fileType, targetUserId);
 
           this.notifyListeners({
             type: 'pull',
@@ -804,6 +822,9 @@ class SyncService {
   private async pushFile(fileType: SyncFileType, userId?: string): Promise<void> {
     const pushStartTime = Date.now();
     const targetUserId = userId || this.userId;
+    // If target is self (owner), use undefined to access default (unscoped) files
+    const fileUserId = targetUserId === this.ownerId ? undefined : targetUserId;
+
     syncLogger.header(`PUSH FILE START - ${fileType} (user: ${targetUserId || 'default'})`);
     syncLogger.verbose(`Timestamp: ${new Date().toISOString()}`);
 
@@ -816,19 +837,19 @@ class SyncService {
 
       if (fileType === 'categories') {
         const { getAllCategoriesForSync } = await import('./CategoryService');
-        data = await getAllCategoriesForSync();
+        data = await getAllCategoriesForSync(fileUserId);
       } else if (fileType === 'locations') {
         const { getAllLocationsForSync } = await import('./LocationService');
-        data = await getAllLocationsForSync();
+        data = await getAllLocationsForSync(fileUserId);
       } else if (fileType === 'inventoryItems') {
         const { getAllItemsForSync } = await import('./InventoryService');
-        data = await getAllItemsForSync();
+        data = await getAllItemsForSync(fileUserId);
       } else if (fileType === 'todoItems') {
         const { getAllTodosForSync } = await import('./TodoService');
-        data = await getAllTodosForSync();
+        data = await getAllTodosForSync(fileUserId);
       } else if (fileType === 'settings') {
         const { getSettings } = await import('./SettingsService');
-        data = await getSettings();
+        data = await getSettings(fileUserId);
       }
 
       const dataStr = JSON.stringify(data);
@@ -990,8 +1011,11 @@ class SyncService {
   /**
    * Merge entries from server with local data
    */
-  private async mergeEntries(fileType: SyncFileType, serverData: unknown[]): Promise<void> {
+  private async mergeEntries(fileType: SyncFileType, serverData: unknown[], userId?: string): Promise<void> {
     syncLogger.verbose(`Merging entries for ${fileType}`, serverData);
+
+    // If user is self (owner), use undefined for file operations (unscoped)
+    const fileUserId = userId === this.ownerId ? undefined : userId;
 
     // Suppress sync callbacks during merge to prevent triggering additional syncs
     this.isMergingData = true;
@@ -1004,27 +1028,27 @@ class SyncService {
       if (fileType === 'categories') {
         const { getAllCategoriesForSync } = await import('./CategoryService');
         const { readFile: _readFile, writeFile: writeCatFile } = await import('./FileSystemService');
-        const localCategories = await getAllCategoriesForSync();
+        const localCategories = await getAllCategoriesForSync(fileUserId);
         localData = localCategories;
-        writeFile = async (data: unknown) => writeCatFile('categories.json', { categories: data as Category[] });
+        writeFile = async (data: unknown) => writeCatFile('categories.json', { categories: data as Category[] }, fileUserId);
       } else if (fileType === 'locations') {
         const { getAllLocationsForSync } = await import('./LocationService');
         const { readFile: _readFile2, writeFile: writeLocFile } = await import('./FileSystemService');
-        const localLocations = await getAllLocationsForSync();
+        const localLocations = await getAllLocationsForSync(fileUserId);
         localData = localLocations;
-        writeFile = async (data: unknown) => writeLocFile('locations.json', { locations: data as Location[] });
+        writeFile = async (data: unknown) => writeLocFile('locations.json', { locations: data as Location[] }, fileUserId);
       } else if (fileType === 'inventoryItems') {
         const { getAllItemsForSync } = await import('./InventoryService');
         const { readFile: _readFile3, writeFile: writeItemFile } = await import('./FileSystemService');
-        const localItems = await getAllItemsForSync();
+        const localItems = await getAllItemsForSync(fileUserId);
         localData = localItems;
-        writeFile = async (data: unknown) => writeItemFile('items.json', { items: data as InventoryItem[] });
+        writeFile = async (data: unknown) => writeItemFile('items.json', { items: data as InventoryItem[] }, fileUserId);
       } else if (fileType === 'todoItems') {
         const { getAllTodosForSync } = await import('./TodoService');
         const { readFile: _readFile4, writeFile: writeTodoFile } = await import('./FileSystemService');
-        const localTodos = await getAllTodosForSync();
+        const localTodos = await getAllTodosForSync(fileUserId);
         localData = localTodos;
-        writeFile = async (data: unknown) => writeTodoFile('todos.json', { todos: data as TodoItem[] });
+        writeFile = async (data: unknown) => writeTodoFile('todos.json', { todos: data as TodoItem[] }, fileUserId);
       } else {
         return;
       }
@@ -1054,8 +1078,11 @@ class SyncService {
   /**
    * Merge settings from server with local settings
    */
-  private async mergeSettings(serverSettings: Settings): Promise<void> {
+  private async mergeSettings(serverSettings: Settings, userId?: string): Promise<void> {
     syncLogger.verbose('Merging settings', serverSettings);
+
+    // If user is self (owner), use undefined for file operations (unscoped)
+    const fileUserId = userId === this.ownerId ? undefined : userId;
 
     // Suppress sync callbacks during merge to prevent triggering additional syncs
     this.isMergingData = true;
@@ -1065,7 +1092,7 @@ class SyncService {
       const { getSettings } = await import('./SettingsService');
       const { writeFile } = await import('./FileSystemService');
 
-      const localSettings = await getSettings();
+      const localSettings = await getSettings(fileUserId);
 
       // Use settings with later updatedAt timestamp
       const localTime = new Date(localSettings.updatedAt || localSettings.createdAt || 0);
@@ -1076,7 +1103,7 @@ class SyncService {
       syncLogger.verbose('Merged settings', merged);
 
       // Save merged settings (callbacks will be suppressed)
-      await writeFile('settings.json', merged);
+      await writeFile('settings.json', merged, fileUserId);
     } finally {
       // Re-enable sync callbacks after merge completes
       this.isMergingData = false;
@@ -1220,7 +1247,7 @@ class SyncService {
   /**
    * Cleanup deleted items older than retention period
    */
-  private async cleanupDeletedItems(fileType: SyncFileType): Promise<void> {
+  private async cleanupDeletedItems(fileType: SyncFileType, userId?: string): Promise<void> {
     // Check if cleanup should run (at most once per day per file type)
     const lastCleanup = this.lastCleanupTime.get(fileType) || 0;
     const now = Date.now();
@@ -1230,6 +1257,9 @@ class SyncService {
     }
 
     syncLogger.info(`Starting cleanup for ${fileType}...`);
+
+    // If user is self (owner), use undefined for file operations (unscoped)
+    const fileUserId = userId === this.ownerId ? undefined : userId;
 
     // Suppress sync callbacks during cleanup
     this.isMergingData = true;
@@ -1243,23 +1273,23 @@ class SyncService {
       if (fileType === 'categories') {
         const { getAllCategoriesForSync } = await import('./CategoryService');
         const { writeFile: writeCatFile } = await import('./FileSystemService');
-        allItems = await getAllCategoriesForSync();
-        writeFile = async (data: unknown) => writeCatFile('categories.json', { categories: data as Category[] });
+        allItems = await getAllCategoriesForSync(fileUserId);
+        writeFile = async (data: unknown) => writeCatFile('categories.json', { categories: data as Category[] }, fileUserId);
       } else if (fileType === 'locations') {
         const { getAllLocationsForSync } = await import('./LocationService');
         const { writeFile: writeLocFile } = await import('./FileSystemService');
-        allItems = await getAllLocationsForSync();
-        writeFile = async (data: unknown) => writeLocFile('locations.json', { locations: data as Location[] });
+        allItems = await getAllLocationsForSync(fileUserId);
+        writeFile = async (data: unknown) => writeLocFile('locations.json', { locations: data as Location[] }, fileUserId);
       } else if (fileType === 'inventoryItems') {
         const { getAllItemsForSync } = await import('./InventoryService');
         const { writeFile: writeItemFile } = await import('./FileSystemService');
-        allItems = await getAllItemsForSync();
-        writeFile = async (data: unknown) => writeItemFile('items.json', { items: data as InventoryItem[] });
+        allItems = await getAllItemsForSync(fileUserId);
+        writeFile = async (data: unknown) => writeItemFile('items.json', { items: data as InventoryItem[] }, fileUserId);
       } else if (fileType === 'todoItems') {
         const { getAllTodosForSync } = await import('./TodoService');
         const { writeFile: writeTodoFile } = await import('./FileSystemService');
-        allItems = await getAllTodosForSync();
-        writeFile = async (data: unknown) => writeTodoFile('todos.json', { todos: data as TodoItem[] });
+        allItems = await getAllTodosForSync(fileUserId);
+        writeFile = async (data: unknown) => writeTodoFile('todos.json', { todos: data as TodoItem[] }, fileUserId);
       } else {
         return; // Settings don't need cleanup
       }

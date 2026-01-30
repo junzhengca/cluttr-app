@@ -13,6 +13,9 @@ import {
   setSyncEnabled,
 } from '../slices/syncSlice';
 import { initializeSync } from './syncSaga';
+import { loadItems } from './inventorySaga';
+import { loadTodos } from './todoSaga';
+import { loadSettings } from './settingsSaga';
 import {
   ApiClient,
 } from '../../services/ApiClient';
@@ -22,6 +25,9 @@ import {
   clearAllAuthData,
   getUser,
   saveUser,
+  saveActiveHomeId,
+  getActiveHomeId,
+  removeActiveHomeId,
 } from '../../services/AuthService';
 import { User, ErrorDetails, ListAccessibleAccountsResponse } from '../../types/api';
 import * as SecureStore from 'expo-secure-store';
@@ -112,6 +118,8 @@ function* handleAuthError() {
   yield put(setUser(null));
   yield put(setAuthenticated(false));
   yield put(setSyncEnabled(false));
+  yield put(setActiveHomeId(null));
+  yield put(setAccessibleAccounts([]));
 }
 
 function* checkAuthSaga(): Generator {
@@ -155,11 +163,23 @@ function* checkAuthSaga(): Generator {
           yield put(setShowNicknameSetup(false));
         }
 
+        // Restore active home ID
+        const activeHomeId: string | null = (yield call(getActiveHomeId)) as string | null;
+        if (activeHomeId) {
+          console.log('[AuthSaga] Restoring active home ID:', activeHomeId);
+          yield put(setActiveHomeId(activeHomeId));
+        }
+
         // Initialize sync service after successful authentication
         yield put(initializeSync());
 
         // Load accessible accounts
         yield put(loadAccessibleAccounts());
+
+        // Reload data with correct context
+        yield put(loadItems());
+        yield put(loadTodos());
+        yield put(loadSettings());
       } else if (savedUser) {
         yield put(setUser(savedUser));
         yield put(setAuthenticated(true));
@@ -171,8 +191,20 @@ function* checkAuthSaga(): Generator {
           yield put(setShowNicknameSetup(false));
         }
 
+        // Restore active home ID
+        const activeHomeId: string | null = (yield call(getActiveHomeId)) as string | null;
+        if (activeHomeId) {
+          console.log('[AuthSaga] Restoring active home ID:', activeHomeId);
+          yield put(setActiveHomeId(activeHomeId));
+        }
+
         // Initialize sync service after successful authentication
         yield put(initializeSync());
+
+        // Reload data with correct context
+        yield put(loadItems());
+        yield put(loadTodos());
+        yield put(loadSettings());
       } else {
         throw new Error('No user data available from API or storage');
       }
@@ -264,11 +296,23 @@ function* loginSaga(action: { type: string; payload: { email: string; password: 
     yield put(setError(null)); // Clear error on success
     yield put(setLoading(false));
 
+    // Restore active home ID
+    const activeHomeId: string | null = (yield call(getActiveHomeId)) as string | null;
+    if (activeHomeId) {
+      console.log('[AuthSaga] Restoring active home ID on login:', activeHomeId);
+      yield put(setActiveHomeId(activeHomeId));
+    }
+
     // Initialize sync service after successful login
     yield put(initializeSync());
 
     // Load accessible accounts
     yield put(loadAccessibleAccounts());
+
+    // Reload data with correct context
+    yield put(loadItems());
+    yield put(loadTodos());
+    yield put(loadSettings());
 
     // Show success toast
     const toast = getGlobalToast();
@@ -434,11 +478,23 @@ function* googleLoginSaga(action: { type: string; payload: { idToken: string; pl
     yield put(setError(null)); // Clear error on success
     yield put(setLoading(false));
 
+    // Restore active home ID
+    const activeHomeId: string | null = (yield call(getActiveHomeId)) as string | null;
+    if (activeHomeId) {
+      console.log('[AuthSaga] Restoring active home ID on Google login:', activeHomeId);
+      yield put(setActiveHomeId(activeHomeId));
+    }
+
     // Initialize sync service after successful Google login
     yield put(initializeSync());
 
     // Load accessible accounts
     yield put(loadAccessibleAccounts());
+
+    // Reload data with correct context
+    yield put(loadItems());
+    yield put(loadTodos());
+    yield put(loadSettings());
 
     // Show success toast
     const toast = getGlobalToast();
@@ -513,6 +569,17 @@ function* loadAccessibleAccountsSaga(): Generator {
     const response = (yield call(apiClient.listAccessibleAccounts.bind(apiClient))) as ListAccessibleAccountsResponse;
     yield put(setAccessibleAccounts(response.accounts));
     console.log('[AuthSaga] Loaded accessible accounts:', response.accounts.length);
+
+    // Validate active home ID
+    const activeHomeId: string | null = (yield select((state: RootState) => state.auth.activeHomeId)) as string | null;
+    if (activeHomeId) {
+      const isAccessible = response.accounts.some((account) => account.userId === activeHomeId);
+      if (!isAccessible) {
+        console.warn('[AuthSaga] Active home ID is no longer accessible, resetting to default:', activeHomeId);
+        yield put(setActiveHomeId(null));
+        yield call(removeActiveHomeId);
+      }
+    }
   } catch (error) {
     console.error('[AuthSaga] Error loading accessible accounts:', error);
   }
@@ -523,7 +590,13 @@ function* handleActiveHomeIdChange(action: { type: string; payload: string | nul
   const apiClient: ApiClient = (yield select((state: RootState) => state.auth.apiClient)) as ApiClient;
   if (apiClient) {
     apiClient.setActiveUserId(action.payload);
-    console.log('[AuthSaga] Updated ApiClient activeUserId:', action.payload);
+    console.log('[AuthSaga] Updated ApiClient activeUserId and persisting:', action.payload);
+
+    if (action.payload) {
+      yield call(saveActiveHomeId, action.payload);
+    } else {
+      yield call(removeActiveHomeId);
+    }
   }
 }
 

@@ -12,8 +12,8 @@ interface CategoriesData {
 /**
  * Get all categories (excluding deleted categories)
  */
-export const getAllCategories = async (): Promise<Category[]> => {
-  const data = await readFile<CategoriesData>(CATEGORIES_FILE);
+export const getAllCategories = async (userId?: string): Promise<Category[]> => {
+  const data = await readFile<CategoriesData>(CATEGORIES_FILE, userId);
   const categories = data?.categories || [];
   return categories.filter((category) => !category.deletedAt);
 };
@@ -21,16 +21,16 @@ export const getAllCategories = async (): Promise<Category[]> => {
 /**
  * Get all categories for sync (including deleted categories)
  */
-export const getAllCategoriesForSync = async (): Promise<Category[]> => {
-  const data = await readFile<CategoriesData>(CATEGORIES_FILE);
+export const getAllCategoriesForSync = async (userId?: string): Promise<Category[]> => {
+  const data = await readFile<CategoriesData>(CATEGORIES_FILE, userId);
   return data?.categories || [];
 };
 
 /**
  * Get a single category by ID (excluding deleted categories)
  */
-export const getCategoryById = async (id: string): Promise<Category | null> => {
-  const categories = await getAllCategories();
+export const getCategoryById = async (id: string, userId?: string): Promise<Category | null> => {
+  const categories = await getAllCategories(userId);
   return categories.find((category) => category.id === id && !category.deletedAt) || null;
 };
 
@@ -38,7 +38,7 @@ export const getCategoryById = async (id: string): Promise<Category | null> => {
  * Check if a category is in use by any items
  * Note: Items no longer have categories, so this always returns false
  */
-export const isCategoryInUse = async (_categoryId: string): Promise<boolean> => {
+export const isCategoryInUse = async (_categoryId: string, _userId?: string): Promise<boolean> => {
   // Items no longer have categories, so categories are never in use by items
   return false;
 };
@@ -47,10 +47,11 @@ export const isCategoryInUse = async (_categoryId: string): Promise<boolean> => 
  * Create a new custom category
  */
 export const createCategory = async (
-  category: Omit<Category, 'id' | 'isCustom' | 'createdAt' | 'updatedAt'>
+  category: Omit<Category, 'id' | 'isCustom' | 'createdAt' | 'updatedAt'>,
+  userId?: string
 ): Promise<Category | null> => {
   try {
-    const categories = await getAllCategories();
+    const categories = await getAllCategories(userId);
 
     // Check if category name already exists
     const existingCategory = categories.find(
@@ -71,11 +72,11 @@ export const createCategory = async (
     };
 
     categories.push(newCategory);
-    const success = await writeFile<CategoriesData>(CATEGORIES_FILE, { categories });
+    const success = await writeFile<CategoriesData>(CATEGORIES_FILE, { categories }, userId);
 
     if (success) {
       console.log('[CategoryService] Triggering sync after createCategory');
-      syncCallbackRegistry.trigger('categories');
+      syncCallbackRegistry.trigger('categories', userId);
     }
 
     return success ? newCategory : null;
@@ -90,10 +91,11 @@ export const createCategory = async (
  */
 export const updateCategory = async (
   id: string,
-  updates: Partial<Omit<Category, 'id' | 'isCustom' | 'createdAt' | 'updatedAt'>>
+  updates: Partial<Omit<Category, 'id' | 'isCustom' | 'createdAt' | 'updatedAt'>>,
+  userId?: string
 ): Promise<Category | null> => {
   try {
-    const categories = await getAllCategories();
+    const categories = await getAllCategories(userId);
     const index = categories.findIndex((category) => category.id === id);
 
     if (index === -1) {
@@ -120,11 +122,11 @@ export const updateCategory = async (
     }
 
     categories[index] = { ...categories[index], ...updates, updatedAt: new Date().toISOString() };
-    const success = await writeFile<CategoriesData>(CATEGORIES_FILE, { categories });
+    const success = await writeFile<CategoriesData>(CATEGORIES_FILE, { categories }, userId);
 
     if (success) {
       console.log('[CategoryService] Triggering sync after updateCategory');
-      syncCallbackRegistry.trigger('categories');
+      syncCallbackRegistry.trigger('categories', userId);
     }
 
     return success ? categories[index] : null;
@@ -137,9 +139,9 @@ export const updateCategory = async (
 /**
  * Delete a category (soft delete - sets deletedAt timestamp)
  */
-export const deleteCategory = async (id: string): Promise<boolean> => {
+export const deleteCategory = async (id: string, userId?: string): Promise<boolean> => {
   try {
-    const data = await readFile<CategoriesData>(CATEGORIES_FILE);
+    const data = await readFile<CategoriesData>(CATEGORIES_FILE, userId);
     const categories = data?.categories || [];
     const category = categories.find((cat) => cat.id === id);
 
@@ -153,7 +155,7 @@ export const deleteCategory = async (id: string): Promise<boolean> => {
     }
 
     // Check if category is in use (only check non-deleted items)
-    const inUse = await isCategoryInUse(id);
+    const inUse = await isCategoryInUse(id, userId);
     if (inUse) {
       throw new Error('Cannot delete category that is in use by items');
     }
@@ -172,11 +174,11 @@ export const deleteCategory = async (id: string): Promise<boolean> => {
       updatedAt: now,
     };
 
-    const success = await writeFile<CategoriesData>(CATEGORIES_FILE, { categories });
+    const success = await writeFile<CategoriesData>(CATEGORIES_FILE, { categories }, userId);
 
     if (success) {
       console.log('[CategoryService] Triggering sync after deleteCategory');
-      syncCallbackRegistry.trigger('categories');
+      syncCallbackRegistry.trigger('categories', userId);
     }
 
     return success;

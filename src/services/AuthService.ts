@@ -98,6 +98,46 @@ export const clearUser = async (): Promise<boolean> => {
  * Clear all authentication data (tokens and user)
  */
 export const clearAllAuthData = async (): Promise<void> => {
-  await Promise.all([clearAuthTokens(), clearUser()]);
+  await Promise.all([clearAuthTokens(), clearUser(), removeActiveHomeId()]);
+};
+
+const ACTIVE_HOME_ID_KEY = 'active_home_id';
+
+/**
+ * Get stored active home ID
+ */
+export const getActiveHomeId = async (): Promise<string | null> => {
+  try {
+    return await SecureStore.getItemAsync(ACTIVE_HOME_ID_KEY);
+  } catch (error) {
+    console.error('Error getting active home ID:', error);
+    return null;
+  }
+};
+
+/**
+ * Save active home ID
+ */
+export const saveActiveHomeId = async (homeId: string): Promise<boolean> => {
+  try {
+    await SecureStore.setItemAsync(ACTIVE_HOME_ID_KEY, homeId);
+    return true;
+  } catch (error) {
+    console.error('Error saving active home ID:', error);
+    return false;
+  }
+};
+
+/**
+ * Remove active home ID
+ */
+export const removeActiveHomeId = async (): Promise<boolean> => {
+  try {
+    await SecureStore.deleteItemAsync(ACTIVE_HOME_ID_KEY);
+    return true;
+  } catch (error) {
+    console.error('Error removing active home ID:', error);
+    return false;
+  }
 };
 

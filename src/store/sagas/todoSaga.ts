@@ -36,10 +36,18 @@ export const updateTodoText = (id: string, text: string, note?: string) => ({
   payload: { id, text, note },
 });
 
+
+function* getFileUserId() {
+  const state: RootState = yield select();
+  const { activeHomeId, user } = state.auth;
+  return activeHomeId && user && activeHomeId !== user.id ? activeHomeId : undefined;
+}
+
 function* loadTodosSaga() {
   try {
     yield put(setLoading(true));
-    const allTodos: TodoItem[] = yield call(getAllTodos);
+    const userId: string | undefined = yield call(getFileUserId);
+    const allTodos: TodoItem[] = yield call(getAllTodos, userId);
     // Sort by createdAt in descending order (newest first)
     allTodos.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
     yield put(setTodos(allTodos));
@@ -53,7 +61,8 @@ function* loadTodosSaga() {
 function* silentRefreshTodosSaga() {
   try {
     // Silent refresh - no loading state changes
-    const allTodos: TodoItem[] = yield call(getAllTodos);
+    const userId: string | undefined = yield call(getFileUserId);
+    const allTodos: TodoItem[] = yield call(getAllTodos, userId);
     // Sort by createdAt in descending order (newest first)
     allTodos.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
     // Use silentSetTodos to update without touching loading state
@@ -69,13 +78,14 @@ function* addTodoSaga(action: { type: string; payload: { text: string; note?: st
   if (!text.trim()) return;
 
   try {
-    const newTodo: TodoItem = yield call(createTodo, text, note);
+    const userId: string | undefined = yield call(getFileUserId);
+    const newTodo: TodoItem = yield call(createTodo, text, note, userId);
     if (newTodo) {
       // Optimistically add to state
       yield put(addTodoSlice(newTodo));
 
       // Refresh to ensure sync (but don't set loading)
-      const allTodos: TodoItem[] = yield call(getAllTodos);
+      const allTodos: TodoItem[] = yield call(getAllTodos, userId);
       allTodos.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
       yield put(setTodos(allTodos));
     }
@@ -90,6 +100,8 @@ function* toggleTodoSaga(action: { type: string; payload: string }) {
   const id = action.payload;
 
   try {
+    const userId: string | undefined = yield call(getFileUserId);
+
     // Optimistically update to state
     const currentTodos: TodoItem[] = yield select((state: RootState) => state.todo.todos);
     const todoToUpdate = currentTodos.find((todo) => todo.id === id);
@@ -99,10 +111,10 @@ function* toggleTodoSaga(action: { type: string; payload: string }) {
     }
 
     // Then update in storage
-    yield call(toggleTodoService, id);
+    yield call(toggleTodoService, id, userId);
 
     // Refresh to ensure sync (but don't set loading)
-    const allTodos: TodoItem[] = yield call(getAllTodos);
+    const allTodos: TodoItem[] = yield call(getAllTodos, userId);
     allTodos.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
     yield put(setTodos(allTodos));
   } catch (error) {
@@ -116,14 +128,16 @@ function* deleteTodoSaga(action: { type: string; payload: string }) {
   const id = action.payload;
 
   try {
+    const userId: string | undefined = yield call(getFileUserId);
+
     // Optimistically remove from state
     yield put(removeTodoSlice(id));
 
     // Then delete from storage
-    yield call(deleteTodo, id);
+    yield call(deleteTodo, id, userId);
 
     // Refresh to ensure sync (but don't set loading)
-    const allTodos: TodoItem[] = yield call(getAllTodos);
+    const allTodos: TodoItem[] = yield call(getAllTodos, userId);
     allTodos.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
     yield put(setTodos(allTodos));
   } catch (error) {
@@ -137,6 +151,8 @@ function* updateTodoSaga(action: { type: string; payload: { id: string; text: st
   const { id, text, note } = action.payload;
 
   try {
+    const userId: string | undefined = yield call(getFileUserId);
+
     // Optimistically update to state
     const currentTodos: TodoItem[] = yield select((state: RootState) => state.todo.todos);
     const todoToUpdate = currentTodos.find((todo) => todo.id === id);
@@ -146,10 +162,10 @@ function* updateTodoSaga(action: { type: string; payload: { id: string; text: st
     }
 
     // Then update in storage
-    yield call(updateTodo, id, { text, note });
+    yield call(updateTodo, id, { text, note }, userId);
 
     // Refresh to ensure sync (but don't set loading)
-    const allTodos: TodoItem[] = yield call(getAllTodos);
+    const allTodos: TodoItem[] = yield call(getAllTodos, userId);
     allTodos.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
     yield put(setTodos(allTodos));
   } catch (error) {

@@ -12,8 +12,8 @@ interface LocationsData {
 /**
  * Get all locations (excluding deleted locations)
  */
-export const getAllLocations = async (): Promise<Location[]> => {
-  const data = await readFile<LocationsData>(LOCATIONS_FILE);
+export const getAllLocations = async (userId?: string): Promise<Location[]> => {
+  const data = await readFile<LocationsData>(LOCATIONS_FILE, userId);
   const locations = data?.locations || [];
   return locations.filter((location) => !location.deletedAt);
 };
@@ -21,16 +21,16 @@ export const getAllLocations = async (): Promise<Location[]> => {
 /**
  * Get all locations for sync (including deleted locations)
  */
-export const getAllLocationsForSync = async (): Promise<Location[]> => {
-  const data = await readFile<LocationsData>(LOCATIONS_FILE);
+export const getAllLocationsForSync = async (userId?: string): Promise<Location[]> => {
+  const data = await readFile<LocationsData>(LOCATIONS_FILE, userId);
   return data?.locations || [];
 };
 
 /**
  * Get a single location by ID (excluding deleted locations)
  */
-export const getLocationById = async (id: string): Promise<Location | null> => {
-  const locations = await getAllLocations();
+export const getLocationById = async (id: string, userId?: string): Promise<Location | null> => {
+  const locations = await getAllLocations(userId);
   return locations.find((location) => location.id === id && !location.deletedAt) || null;
 };
 
@@ -38,10 +38,11 @@ export const getLocationById = async (id: string): Promise<Location | null> => {
  * Create a new location
  */
 export const createLocation = async (
-  location: Omit<Location, 'id' | 'createdAt' | 'updatedAt'>
+  location: Omit<Location, 'id' | 'createdAt' | 'updatedAt'>,
+  userId?: string
 ): Promise<Location | null> => {
   try {
-    const locations = await getAllLocations();
+    const locations = await getAllLocations(userId);
 
     // Check if location name already exists
     const existingLocation = locations.find(
@@ -61,7 +62,12 @@ export const createLocation = async (
     };
 
     locations.push(newLocation);
-    const success = await writeFile<LocationsData>(LOCATIONS_FILE, { locations });
+    const success = await writeFile<LocationsData>(LOCATIONS_FILE, { locations }, userId);
+
+    if (success) {
+      console.log('[LocationService] Triggering sync after createLocation');
+      syncCallbackRegistry.trigger('locations', userId);
+    }
 
     return success ? newLocation : null;
   } catch (error) {
@@ -75,10 +81,11 @@ export const createLocation = async (
  */
 export const updateLocation = async (
   id: string,
-  updates: Partial<Omit<Location, 'id' | 'createdAt' | 'updatedAt'>>
+  updates: Partial<Omit<Location, 'id' | 'createdAt' | 'updatedAt'>>,
+  userId?: string
 ): Promise<Location | null> => {
   try {
-    const locations = await getAllLocations();
+    const locations = await getAllLocations(userId);
     const index = locations.findIndex((location) => location.id === id);
 
     if (index === -1) {
@@ -99,7 +106,12 @@ export const updateLocation = async (
     }
 
     locations[index] = { ...locations[index], ...updates, updatedAt: new Date().toISOString() };
-    const success = await writeFile<LocationsData>(LOCATIONS_FILE, { locations });
+    const success = await writeFile<LocationsData>(LOCATIONS_FILE, { locations }, userId);
+
+    if (success) {
+      console.log('[LocationService] Triggering sync after updateLocation');
+      syncCallbackRegistry.trigger('locations', userId);
+    }
 
     return success ? locations[index] : null;
   } catch (error) {
@@ -111,9 +123,9 @@ export const updateLocation = async (
 /**
  * Delete a location (soft delete - sets deletedAt timestamp)
  */
-export const deleteLocation = async (id: string): Promise<boolean> => {
+export const deleteLocation = async (id: string, userId?: string): Promise<boolean> => {
   try {
-    const data = await readFile<LocationsData>(LOCATIONS_FILE);
+    const data = await readFile<LocationsData>(LOCATIONS_FILE, userId);
     const locations = data?.locations || [];
     const location = locations.find((loc) => loc.id === id);
 
@@ -123,7 +135,7 @@ export const deleteLocation = async (id: string): Promise<boolean> => {
 
     // Check if location is in use by items (only check non-deleted items)
     const { getAllItems } = await import('./InventoryService');
-    const items = await getAllItems();
+    const items = await getAllItems(userId);
     const inUse = items.some((item) => item.location === id);
 
     if (inUse) {
@@ -144,11 +156,11 @@ export const deleteLocation = async (id: string): Promise<boolean> => {
       updatedAt: now,
     };
 
-    const success = await writeFile<LocationsData>(LOCATIONS_FILE, { locations });
+    const success = await writeFile<LocationsData>(LOCATIONS_FILE, { locations }, userId);
 
     if (success) {
       console.log('[LocationService] Triggering sync after deleteLocation');
-      syncCallbackRegistry.trigger('locations');
+      syncCallbackRegistry.trigger('locations', userId);
     }
 
     return success;

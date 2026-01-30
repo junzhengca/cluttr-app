@@ -22,7 +22,7 @@ import { RootStackParamList } from '../navigation/types';
 import { useAuth } from '../store/hooks';
 import { useToast } from '../hooks/useToast';
 import { Member, AccessibleAccount } from '../types/api';
-import { useAppDispatch, useAppSelector } from '../store/hooks';
+import { useAppDispatch, useAppSelector, useSync } from '../store/hooks';
 import { setActiveHomeId } from '../store/slices/authSlice';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -105,6 +105,8 @@ export const ShareScreen: React.FC = () => {
   const [membersLoading, setMembersLoading] = useState(false);
   const [membersError, setMembersError] = useState<string | null>(null);
 
+
+  const { enabled: syncEnabled, enableSync } = useSync();
   const accounts = useAppSelector((state) => state.auth.accessibleAccounts);
   const [isSwitchingHome, setIsSwitchingHome] = useState(false);
   const panAnim = useRef(new Animated.Value(0)).current;
@@ -187,8 +189,33 @@ export const ShareScreen: React.FC = () => {
       showToast(t('share.invite.loadingError'), 'error');
       return;
     }
+
+    if (!syncEnabled) {
+      Alert.alert(
+        t('share.invite.syncRequired.title'),
+        t('share.invite.syncRequired.message'),
+        [
+          {
+            text: t('common.cancel'),
+            style: 'cancel',
+          },
+          {
+            text: t('common.confirmation'),
+            onPress: () => {
+              enableSync();
+              // We can present the sheet immediately, or wait for sync to start?
+              // The requirement says: "if they confirm, sync would be turned on and we continue."
+              // So we proceed.
+              inviteMenuBottomSheetRef.current?.present();
+            },
+          },
+        ]
+      );
+      return;
+    }
+
     inviteMenuBottomSheetRef.current?.present();
-  }, [invitationCode, showToast, t]);
+  }, [invitationCode, showToast, t, syncEnabled, enableSync]);
 
   const getInvitationLink = useCallback(() => {
     const scheme = 'com.cluttrapp.cluttr'; // Matches app.json scheme
@@ -371,6 +398,7 @@ export const ShareScreen: React.FC = () => {
         onBackPress={isSwitchingHome ? handleBackToSharePress : undefined}
         showRightButtons={!isSwitchingHome}
         avatarUrl={user?.avatarUrl}
+        ownerAvatarUrl={!isSwitchingHome && activeHomeId ? accounts.find(a => a.userId === activeHomeId)?.avatarUrl : undefined}
         onAvatarPress={handleAvatarPress}
       />
 

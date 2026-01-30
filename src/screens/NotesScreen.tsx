@@ -30,7 +30,7 @@ import {
   SignupBottomSheet,
   EnableSyncBottomSheet,
 } from '../components';
-import { useTodos, useAuth } from '../store/hooks';
+import { useTodos, useAuth, useAppSelector } from '../store/hooks';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/types';
 import { useTheme } from '../theme/ThemeProvider';
@@ -186,6 +186,10 @@ export const NotesScreen: React.FC = () => {
   const theme = useTheme();
   const { t } = useTranslation();
   const { user } = useAuth();
+  const activeHomeId = useAppSelector((state) => state.auth.activeHomeId);
+  const accounts = useAppSelector((state) => state.auth.accessibleAccounts);
+
+  const currentHomeOwner = accounts.find((a) => a.userId === activeHomeId);
 
   const [newTodoText, setNewTodoText] = useState('');
   const [newTodoNote, setNewTodoNote] = useState('');
@@ -361,6 +365,7 @@ export const NotesScreen: React.FC = () => {
           subtitle={t('notes.subtitle')}
           showRightButtons={true}
           avatarUrl={user?.avatarUrl}
+          ownerAvatarUrl={currentHomeOwner?.avatarUrl}
           onAvatarPress={handleAvatarPress}
         />
         <LoginBottomSheet
@@ -390,6 +395,7 @@ export const NotesScreen: React.FC = () => {
           subtitle={t('notes.subtitle')}
           showRightButtons={true}
           avatarUrl={user?.avatarUrl}
+          ownerAvatarUrl={currentHomeOwner?.avatarUrl}
           onAvatarPress={handleAvatarPress}
         />
         <KeyboardAvoidingView

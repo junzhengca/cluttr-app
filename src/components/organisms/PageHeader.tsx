@@ -12,6 +12,7 @@ export interface PageHeaderProps {
   title: string;
   subtitle: string;
   avatarUrl?: string;
+  ownerAvatarUrl?: string;
   onSharePress?: () => void;
   onSettingsPress?: () => void;
   onAvatarPress?: () => void;
@@ -20,7 +21,7 @@ export interface PageHeaderProps {
   showRightButtons?: boolean;
 }
 
-const HeaderContainer = styled(View)<{ topInset: number }>`
+const HeaderContainer = styled(View) <{ topInset: number }>`
   background-color: ${({ theme }: StyledProps) => theme.colors.primaryLightest};
   padding-top: ${({ topInset }: { topInset: number }) => topInset + 10}px;
   padding-horizontal: ${({ theme }: StyledProps) => theme.spacing.lg}px;
@@ -117,11 +118,50 @@ const AvatarPlaceholder = styled(View)`
   justify-content: center;
 `;
 
+const StackedContainer = styled(View)`
+  width: 44px;
+  height: 44px;
+`;
+
+const MainAvatarWrapper = styled(View)`
+  width: 34px;
+  height: 34px;
+  border-radius: ${({ theme }: StyledProps) => theme.borderRadius.full}px;
+  border-width: 2px;
+  border-color: ${({ theme }: StyledProps) => theme.colors.primaryLightest};
+  background-color: ${({ theme }: StyledProps) => theme.colors.primaryLight};
+  overflow: hidden;
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 2;
+`;
+
+const OwnerAvatarWrapper = styled(View)`
+  width: 34px;
+  height: 34px;
+  border-radius: ${({ theme }: StyledProps) => theme.borderRadius.full}px;
+  border-width: 2px;
+  border-color: ${({ theme }: StyledProps) => theme.colors.primaryLightest};
+  background-color: ${({ theme }: StyledProps) => theme.colors.primaryExtraLight};
+  overflow: hidden;
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  z-index: 1;
+`;
+
+const StackedAvatarImage = styled(Image)`
+  width: 100%;
+  height: 100%;
+`;
+
 export const PageHeader: React.FC<PageHeaderProps> = ({
   icon,
   title,
   subtitle,
   avatarUrl,
+  ownerAvatarUrl,
   onSharePress,
   onSettingsPress,
   onAvatarPress,
@@ -179,19 +219,44 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
       </LeftSection>
       {showRightButtons && (
         <RightSection>
-          <AvatarButton onPress={handleAvatarPress}>
-            {avatarUrl ? (
-              <AvatarImage
-                source={{ uri: avatarUrl }}
-                contentFit="cover"
-                cachePolicy="memory-disk"
-              />
+          <TouchableOpacity onPress={handleAvatarPress} activeOpacity={0.8}>
+            {ownerAvatarUrl ? (
+              <StackedContainer>
+                <MainAvatarWrapper>
+                  {avatarUrl ? (
+                    <StackedAvatarImage
+                      source={{ uri: avatarUrl }}
+                      contentFit="cover"
+                      cachePolicy="memory-disk"
+                    />
+                  ) : (
+                    <Ionicons name="person" size={18} color="white" style={{ alignSelf: 'center', marginTop: 6 }} />
+                  )}
+                </MainAvatarWrapper>
+                <OwnerAvatarWrapper>
+                  <StackedAvatarImage
+                    source={{ uri: ownerAvatarUrl }}
+                    contentFit="cover"
+                    cachePolicy="memory-disk"
+                  />
+                </OwnerAvatarWrapper>
+              </StackedContainer>
             ) : (
-              <AvatarPlaceholder>
-                <Ionicons name="person" size={20} color="white" />
-              </AvatarPlaceholder>
+              <AvatarButton disabled={true} style={{ pointerEvents: 'none' }}>
+                {avatarUrl ? (
+                  <AvatarImage
+                    source={{ uri: avatarUrl }}
+                    contentFit="cover"
+                    cachePolicy="memory-disk"
+                  />
+                ) : (
+                  <AvatarPlaceholder>
+                    <Ionicons name="person" size={20} color="white" />
+                  </AvatarPlaceholder>
+                )}
+              </AvatarButton>
             )}
-          </AvatarButton>
+          </TouchableOpacity>
         </RightSection>
       )}
     </HeaderContainer>

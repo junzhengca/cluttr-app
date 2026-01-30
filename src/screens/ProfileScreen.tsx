@@ -22,7 +22,8 @@ import {
   type EditNicknameBottomSheetRef,
   Button,
 } from '../components';
-import { useAuth, useSync } from '../store/hooks';
+import { useAuth, useSync, useAppSelector } from '../store/hooks';
+import { Member } from '../types/api';
 import { useTheme } from '../theme/ThemeProvider';
 import { calculateBottomPadding } from '../utils/layout';
 import { formatDate } from '../utils/formatters';
@@ -148,8 +149,8 @@ const LoadingContainer = styled(View)`
   align-items: center;
 `;
 
-const SyncButton = styled(TouchableOpacity)<{ disabled?: boolean }>`
-  background-color: ${({ theme, disabled }: StyledPropsWith<{ disabled?: boolean }>) => 
+const SyncButton = styled(TouchableOpacity) <{ disabled?: boolean }>`
+  background-color: ${({ theme, disabled }: StyledPropsWith<{ disabled?: boolean }>) =>
     disabled ? theme.colors.border : theme.colors.primary};
   border-radius: ${({ theme }: StyledProps) => theme.borderRadius.md}px;
   padding: ${({ theme }: StyledProps) => theme.spacing.sm}px ${({ theme }: StyledProps) => theme.spacing.md}px;
@@ -203,16 +204,56 @@ const AuthSubtitle = styled(Text)`
 export const ProfileScreen: React.FC = () => {
   const { user, isAuthenticated, isLoading, error, logout, updateUser, googleLogin, getApiClient } = useAuth();
   const { enabled: syncEnabled, loading: syncLoading, lastSyncTime, error: syncError, enableSync, disableSync, syncAll } = useSync();
+  const activeHomeId = useAppSelector((state) => state.auth.activeHomeId);
+  const accounts = useAppSelector((state) => state.auth.accessibleAccounts);
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
   const { t } = useTranslation();
   const theme = useTheme();
   const [isUploading, setIsUploading] = useState(false);
   const [localSyncEnabled, setLocalSyncEnabled] = useState(false);
+  const [members, setMembers] = useState<Member[]>([]);
   const loginBottomSheetRef = useRef<BottomSheetModal | null>(null);
   const signupBottomSheetRef = useRef<BottomSheetModal | null>(null);
   const editNicknameBottomSheetModalRef = useRef<BottomSheetModal | null>(null);
   const editNicknameBottomSheetRef = useRef<EditNicknameBottomSheetRef | null>(null);
+
+  // Check if sync should be forced
+  // 1. User is member of another home (not owner)
+  const isMemberOfOtherHome = accounts.some(a => !a.isOwner);
+  // 2. User's home has other members (excluding self)
+  // We need to fetch members to know this. Ideally backend sends member count in user profile or account list.
+  // For now, we fetch members.
+  const hasOtherMembers = members.length > 1; // Assuming self is always in the list
+
+  const isForcedSync = isMemberOfOtherHome || hasOtherMembers;
+
+  const loadMembers = useCallback(async () => {
+    try {
+      const apiClient = getApiClient();
+      if (!apiClient) return;
+
+      // List members for the current active home (or default context if activeHomeId is null)
+      const response = await apiClient.listMembers(activeHomeId || undefined);
+      setMembers(response.members);
+    } catch (error) {
+      console.error('Error loading members in Profile:', error);
+    }
+  }, [getApiClient, activeHomeId]);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      loadMembers();
+    }
+  }, [isAuthenticated, loadMembers]);
+
+  // Force enable sync if required
+  useEffect(() => {
+    if (isAuthenticated && isForcedSync && !syncEnabled && !syncLoading) {
+      console.log('Forcing sync enabled due to membership status');
+      enableSync();
+    }
+  }, [isAuthenticated, isForcedSync, syncEnabled, syncLoading, enableSync]);
 
   const getLocale = useCallback(() => {
     return i18n.language === 'zh' || i18n.language === 'zh-CN' ? 'zh-CN' : 'en-US';
@@ -319,6 +360,15 @@ export const ProfileScreen: React.FC = () => {
   };
 
   const handleSyncToggle = useCallback(async () => {
+    if (isForcedSync && syncEnabled) {
+      // Should be disabled in UI, but double check here
+      Alert.alert(
+        t('profile.sync.title'),
+        t('profile.sync.forcedWarning')
+      );
+      return;
+    }
+
     try {
       if (syncEnabled) {
         await disableSync();
@@ -342,7 +392,7 @@ export const ProfileScreen: React.FC = () => {
         error instanceof Error ? error.message : t('profile.sync.alerts.error.toggleFailed')
       );
     }
-  }, [syncEnabled, enableSync, disableSync, t]);
+  }, [syncEnabled, enableSync, disableSync, t, isForcedSync]);
 
   const handleManualSync = useCallback(async () => {
     try {
@@ -388,10 +438,10 @@ export const ProfileScreen: React.FC = () => {
       if (idToken) {
         // Get platform (ios or android)
         const platform = Platform.OS === 'ios' ? 'ios' : 'android';
-        
+
         // Call googleLogin hook which will dispatch the action
         googleLogin(idToken, platform);
-        
+
         // Close bottom sheets if open
         loginBottomSheetRef.current?.dismiss();
         signupBottomSheetRef.current?.dismiss();
@@ -411,14 +461,14 @@ export const ProfileScreen: React.FC = () => {
       // Check if error is related to Google login (409 conflict or other auth errors)
       let errorMessage = error;
       let errorTitle = t('login.errors.googleLoginFailed.title') || 'Google Login Failed';
-      
+
       if (error.includes('Email already registered with email/password')) {
         errorMessage = t('login.errors.emailAlreadyRegistered.message') || 'Email already registered with email/password. Please login with email and password.';
         errorTitle = t('login.errors.emailAlreadyRegistered.title') || 'Account Already Exists';
       } else if (error.includes('Invalid Google account')) {
         errorMessage = t('login.errors.invalidGoogleAccount.message') || 'Invalid Google account. Please try again.';
       }
-      
+
       Alert.alert(errorTitle, errorMessage);
     }
   }, [error, isLoading, t]);
@@ -567,7 +617,7 @@ export const ProfileScreen: React.FC = () => {
         <InfoSection>
           <SectionTitle>{t('profile.sync.title')}</SectionTitle>
           <InfoRow>
-            <View>
+            <View style={{ flex: 1, paddingRight: 16 }}>
               <InfoLabel>{t('profile.sync.enableSync')}</InfoLabel>
               <SyncStatusText>
                 {localSyncEnabled ? t('profile.sync.status.enabled') : t('profile.sync.status.disabled')}
@@ -577,6 +627,11 @@ export const ProfileScreen: React.FC = () => {
                   {t('profile.sync.lastSync')} {new Date(lastSyncTime).toLocaleString()}
                 </SyncStatusText>
               )}
+              {isForcedSync && (
+                <SyncStatusText style={{ color: theme.colors.primary, marginTop: 4 }}>
+                  {t('profile.sync.forcedWarning')}
+                </SyncStatusText>
+              )}
               {syncError && (
                 <ErrorText>{t('profile.sync.error')} {syncError}</ErrorText>
               )}
@@ -584,7 +639,7 @@ export const ProfileScreen: React.FC = () => {
             <Toggle
               value={localSyncEnabled}
               onValueChange={handleSyncToggle}
-              disabled={syncLoading}
+              disabled={syncLoading || isForcedSync}
             />
           </InfoRow>
           {localSyncEnabled && (
