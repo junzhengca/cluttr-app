@@ -25,6 +25,10 @@ export default function TabLayout() {
                 <Label>{t('navigation.home')}</Label>
                 <Icon src={<VectorIcon family={Ionicons} name="home" />} />
             </NativeTabs.Trigger>
+            <NativeTabs.Trigger name="search" role="search">
+                <Label>{t('navigation.search')}</Label>
+                <Icon src={<VectorIcon family={Ionicons} name="search" />} />
+            </NativeTabs.Trigger>
             <NativeTabs.Trigger name="notes">
                 <Label>{t('navigation.notes')}</Label>
                 <Icon src={<VectorIcon family={MaterialCommunityIcons} name="notebook-edit" />} />

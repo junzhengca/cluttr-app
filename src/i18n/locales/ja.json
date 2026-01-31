@@ -5,13 +5,15 @@
         "keepEditing": "編集を続ける",
         "discard": "破棄",
         "cancel": "キャンセル",
-        "close": "閉じる"
+        "close": "閉じる",
+        "search": "検索"
     },
     "navigation": {
         "home": "ホーム",
         "notes": "メモ",
         "share": "共有",
-        "settings": "設定"
+        "settings": "設定",
+        "search": "検索"
     },
     "offline": {
         "title": "オフラインです",

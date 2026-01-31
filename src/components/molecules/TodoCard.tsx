@@ -20,27 +20,27 @@ const TextContainer = styled(View)`
   overflow: hidden;
 `;
 
-const Checkbox = styled(TouchableOpacity)<{ checked: boolean }>`
+const Checkbox = styled(TouchableOpacity) <{ checked: boolean }>`
   width: 20px;
   height: 20px;
   border-radius: 10px;
   border-width: 2px;
-  border-color: ${({ theme, checked }: StyledPropsWith<{ checked: boolean }>) => 
+  border-color: ${({ theme, checked }: StyledPropsWith<{ checked: boolean }>) =>
     checked ? theme.colors.primary : theme.colors.border};
-  background-color: ${({ theme, checked }: StyledPropsWith<{ checked: boolean }>) => 
+  background-color: ${({ theme, checked }: StyledPropsWith<{ checked: boolean }>) =>
     checked ? theme.colors.primary : 'transparent'};
   align-items: center;
   justify-content: center;
   margin-right: ${({ theme }: StyledProps) => theme.spacing.sm}px;
 `;
 
-const TodoText = styled(Text)<{ completed: boolean }>`
+const TodoText = styled(Text) <{ completed: boolean }>`
   font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.md}px;
-  font-weight: ${({ theme, completed }: StyledPropsWith<{ completed: boolean }>) => 
+  font-weight: ${({ theme, completed }: StyledPropsWith<{ completed: boolean }>) =>
     (completed ? theme.typography.fontWeight.regular : theme.typography.fontWeight.bold)};
-  color: ${({ theme, completed }: StyledPropsWith<{ completed: boolean }>) => 
+  color: ${({ theme, completed }: StyledPropsWith<{ completed: boolean }>) =>
     (completed ? theme.colors.textSecondary : theme.colors.text)};
-  text-decoration-line: ${({ completed }: { completed: boolean }) => 
+  text-decoration-line: ${({ completed }: { completed: boolean }) =>
     (completed ? 'line-through' : 'none')};
   line-height: ${({ theme }: StyledProps) => theme.typography.fontSize.md * 1.2}px;
   padding: 0px;
@@ -48,10 +48,10 @@ const TodoText = styled(Text)<{ completed: boolean }>`
   margin: 0px;
 `;
 
-const TodoNote = styled(Text)<{ completed: boolean }>`
+const TodoNote = styled(Text) <{ completed: boolean }>`
   font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.sm}px;
   font-weight: ${({ theme }: StyledProps) => theme.typography.fontWeight.regular};
-  color: ${({ theme, completed }: StyledPropsWith<{ completed: boolean }>) => 
+  color: ${({ theme, completed }: StyledPropsWith<{ completed: boolean }>) =>
     (completed ? theme.colors.textSecondary : theme.colors.textSecondary)};
   line-height: ${({ theme }: StyledProps) => theme.typography.fontSize.sm * 1.4}px;
   padding: 0px;
@@ -59,13 +59,13 @@ const TodoNote = styled(Text)<{ completed: boolean }>`
   margin: 0px;
 `;
 
-const EditableTextInput = styled(TextInput)<{ completed: boolean; isEditing: boolean }>`
+const EditableTextInput = styled(TextInput) <{ completed: boolean; isEditing: boolean }>`
   font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.md}px;
-  font-weight: ${({ theme, completed }: StyledPropsWith<{ completed: boolean }>) => 
+  font-weight: ${({ theme, completed }: StyledPropsWith<{ completed: boolean }>) =>
     (completed ? theme.typography.fontWeight.regular : theme.typography.fontWeight.bold)};
-  color: ${({ theme, completed }: StyledPropsWith<{ completed: boolean }>) => 
+  color: ${({ theme, completed }: StyledPropsWith<{ completed: boolean }>) =>
     (completed ? theme.colors.textSecondary : theme.colors.text)};
-  text-decoration-line: ${({ completed }: { completed: boolean }) => 
+  text-decoration-line: ${({ completed }: { completed: boolean }) =>
     (completed ? 'line-through' : 'none')};
   line-height: ${({ theme }: StyledProps) => theme.typography.fontSize.md * 1.2}px;
   background-color: transparent;
@@ -89,10 +89,10 @@ const NotesInputContainer = styled(View)`
   width: 100%;
 `;
 
-const EditableNoteInput = styled(TextInput)<{ completed: boolean; isEditing: boolean }>`
+const EditableNoteInput = styled(TextInput) <{ completed: boolean; isEditing: boolean }>`
   font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.sm}px;
   font-weight: ${({ theme }: StyledProps) => theme.typography.fontWeight.regular};
-  color: ${({ theme, completed }: StyledPropsWith<{ completed: boolean }>) => 
+  color: ${({ theme, completed }: StyledPropsWith<{ completed: boolean }>) =>
     (completed ? theme.colors.textSecondary : theme.colors.textSecondary)};
   line-height: ${({ theme }: StyledProps) => theme.typography.fontSize.sm * 1.4}px;
   background-color: transparent;
@@ -112,6 +112,7 @@ export interface TodoCardProps {
   onToggle?: (id: string) => void;
   onUpdate?: (id: string, text: string, note?: string) => void;
   style?: ViewStyle;
+  editable?: boolean;
 }
 
 /**
@@ -124,6 +125,7 @@ export const TodoCard: React.FC<TodoCardProps> = ({
   onToggle,
   onUpdate,
   style,
+  editable = true,
 }) => {
   const theme = useTheme();
   const { t } = useTranslation();
@@ -148,7 +150,7 @@ export const TodoCard: React.FC<TodoCardProps> = ({
   const previousNoteRef = useRef(todo.note);
   const editingFieldRef = useRef(editingField);
   const [showNotesWrapper, setShowNotesWrapper] = useState(!!todo.note || editingField === 'text' || editingField === 'note');
-  
+
   // Keep refs in sync with state
   useEffect(() => {
     editingFieldRef.current = editingField;
@@ -177,7 +179,7 @@ export const TodoCard: React.FC<TodoCardProps> = ({
   // Animate notes field show/hide based on todo.note and editingField
   useEffect(() => {
     const shouldBeVisible = !!todo.note || editingField !== null;
-    
+
     if (shouldBeVisible && !showNotesWrapper) {
       // Need to show the wrapper
       setShowNotesWrapper(true);
@@ -219,7 +221,7 @@ export const TodoCard: React.FC<TodoCardProps> = ({
   }, [todo.note, editingField, notesHeight, notesOpacity, showNotesWrapper]);
 
   const handleTextPress = useCallback(() => {
-    if (todo.completed) return; // Prevent editing completed todos
+    if (todo.completed || !editable) return; // Prevent editing completed or read-only todos
     setTitleContent(todo.text);
     setEditingField('text');
     // Focus the input after state update
@@ -229,7 +231,7 @@ export const TodoCard: React.FC<TodoCardProps> = ({
   }, [todo.text, todo.completed]);
 
   const handleNotePress = useCallback(() => {
-    if (todo.completed) return; // Prevent editing completed todos
+    if (todo.completed || !editable) return; // Prevent editing completed or read-only todos
     setNoteContent(todo.note || '');
     setEditingField('note');
     // Focus the input after state update
@@ -340,8 +342,9 @@ export const TodoCard: React.FC<TodoCardProps> = ({
       <ContentContainer>
         <Checkbox
           checked={todo.completed}
-          onPress={() => onToggle?.(todo.id)}
-          activeOpacity={0.7}
+          onPress={() => editable && onToggle?.(todo.id)}
+          activeOpacity={editable ? 0.7 : 1}
+          disabled={!editable}
         >
           {todo.completed && <Ionicons name="checkmark" size={14} color="white" />}
         </Checkbox>
@@ -369,7 +372,7 @@ export const TodoCard: React.FC<TodoCardProps> = ({
                 onBlur={handleTextBlur}
                 completed={todo.completed}
                 isEditing={true}
-                editable={!todo.completed}
+                editable={!todo.completed && editable}
                 multiline
                 scrollEnabled={false}
                 blurOnSubmit={true} // Maintain enter-to-submit behavior for title
@@ -380,8 +383,8 @@ export const TodoCard: React.FC<TodoCardProps> = ({
                 underlineColorAndroid="transparent"
                 includeFontPadding={false}
                 textAlignVertical="top"
-                style={{ 
-                  borderWidth: 0, 
+                style={{
+                  borderWidth: 0,
                   outline: 'none',
                   minHeight: 24,
                   width: '100%',
@@ -389,10 +392,10 @@ export const TodoCard: React.FC<TodoCardProps> = ({
               />
             </View>
           ) : (
-            <TouchableOpacity 
-              onPress={handleTextPress} 
-              activeOpacity={todo.completed ? 1 : 0.7}
-              disabled={todo.completed}
+            <TouchableOpacity
+              onPress={handleTextPress}
+              activeOpacity={todo.completed || !editable ? 1 : 0.7}
+              disabled={todo.completed || !editable}
             >
               <TodoText completed={todo.completed}>{todo.text}</TodoText>
             </TouchableOpacity>
@@ -447,10 +450,10 @@ export const TodoCard: React.FC<TodoCardProps> = ({
 
               {/* Visible Note Area */}
               <TouchableOpacity
-                activeOpacity={todo.completed ? 1 : 1}
-                disabled={todo.completed}
+                activeOpacity={todo.completed || !editable ? 1 : 0.7}
+                disabled={todo.completed || !editable}
                 onPress={() => {
-                  if (todo.completed) return; // Prevent editing completed todos
+                  if (todo.completed || !editable) return; // Prevent editing completed or read-only todos
                   if (editingField === null) {
                     handleNotePress();
                   } else if (editingField === 'text') {
@@ -482,7 +485,7 @@ export const TodoCard: React.FC<TodoCardProps> = ({
                       onBlur={handleNoteBlur}
                       completed={todo.completed}
                       isEditing={true}
-                      editable={!todo.completed}
+                      editable={!todo.completed && editable}
                       multiline
                       scrollEnabled={false}
                       placeholder={t('notes.addNote')}

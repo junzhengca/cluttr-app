@@ -5,13 +5,15 @@
     "keepEditing": "Keep Editing",
     "discard": "Discard",
     "cancel": "Cancel",
-    "close": "Close"
+    "close": "Close",
+    "search": "Search"
   },
   "navigation": {
     "home": "Home",
     "notes": "Notes",
     "share": "Share",
-    "settings": "Settings"
+    "settings": "Settings",
+    "search": "Search"
   },
   "offline": {
     "title": "You are Offline",
