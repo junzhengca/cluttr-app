@@ -1,6 +1,6 @@
 import { Category, InventoryItem, TodoItem } from '../types/inventory';
 import { Settings, defaultSettings } from '../types/settings';
-import { fileExists, writeFile, readFile, deleteFile } from './FileSystemService';
+import { fileExists, writeFile, readFile, deleteFile, listJsonFiles } from './FileSystemService';
 import { itemCategories as defaultItemCategories } from '../data/defaultCategories';
 import { getLocationIdsSet } from '../utils/locationUtils';
 
@@ -112,16 +112,19 @@ export const isDataInitialized = async (): Promise<boolean> => {
 /**
  * Clear all data files and re-initialize them with default data
  */
+/**
+ * Clear all data files and re-initialize them with default data
+ */
 export const clearAllDataFiles = async (): Promise<boolean> => {
   try {
-    // Delete all JSON files
-    const filesToDelete = [ITEMS_FILE, CATEGORIES_FILE, SETTINGS_FILE, TODOS_FILE, HOMES_FILE];
+    // Delete all JSON files in the data directory
+    const files = await listJsonFiles();
 
-    for (const file of filesToDelete) {
+    for (const file of files) {
       const deleted = await deleteFile(file);
       if (!deleted) {
         console.error(`Failed to delete file: ${file}`);
-        return false;
+        // Continue deleting other files even if one fails
       }
     }
 
@@ -137,4 +140,5 @@ export const clearAllDataFiles = async (): Promise<boolean> => {
     return false;
   }
 };
+
 

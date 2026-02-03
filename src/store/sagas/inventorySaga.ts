@@ -39,8 +39,10 @@ export const deleteItemAction = (id: string) => ({ type: DELETE_ITEM, payload: i
 
 function* getFileUserId() {
   const state: RootState = yield select();
-  const { activeHomeId, user } = state.auth;
-  return activeHomeId && user && activeHomeId !== user.id ? activeHomeId : undefined;
+  const { activeHomeId } = state.auth;
+  // If we have an active home ID, use it as the "userId" for file scoping
+  // This effectively scopes items to the home
+  return activeHomeId || undefined;
 }
 
 function* loadItemsSaga() {
