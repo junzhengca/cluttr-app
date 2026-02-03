@@ -183,7 +183,7 @@ export const EnableSyncBottomSheet: React.FC<EnableSyncBottomSheetProps> = ({
   // Check for local data and pull cloud data when modal is presented
   const checkData = useCallback(async () => {
     setIsCheckingData(true);
-    
+
     try {
       // Check local data
       const localItems = await getAllItems();
@@ -195,32 +195,23 @@ export const EnableSyncBottomSheet: React.FC<EnableSyncBottomSheetProps> = ({
       const apiClient = getApiClient();
       if (apiClient) {
         try {
-          // Pull items from cloud
-          const itemsResponse = await apiClient.request<{
-            success: boolean;
-            data?: unknown[];
-            serverTimestamp: string;
-            lastSyncTime: string;
-          }>('/api/sync/inventoryItems/pull', {
-            method: 'GET',
-            requiresAuth: true,
+          // Pull items from cloud to check for existence
+          const itemsResponse = await apiClient.pullEntities({
+            entityType: 'inventoryItems',
+            includeDeleted: true,
           });
 
-          // Pull todos from cloud
-          const todosResponse = await apiClient.request<{
-            success: boolean;
-            data?: unknown[];
-            serverTimestamp: string;
-            lastSyncTime: string;
-          }>('/api/sync/todoItems/pull', {
-            method: 'GET',
-            requiresAuth: true,
+          // Pull todos from cloud to check for existence
+          const todosResponse = await apiClient.pullEntities({
+            entityType: 'todoItems',
+            includeDeleted: true,
           });
 
-          const cloudItems = Array.isArray(itemsResponse.data) ? itemsResponse.data : [];
-          const cloudTodos = Array.isArray(todosResponse.data) ? todosResponse.data : [];
-          const hasCloud = cloudItems.length > 0 || cloudTodos.length > 0;
-          
+          // Check if there are any non-deleted items
+          const hasCloudItems = itemsResponse.changes.some(change => change.changeType !== 'deleted');
+          const hasCloudTodos = todosResponse.changes.some(change => change.changeType !== 'deleted');
+          const hasCloud = hasCloudItems || hasCloudTodos;
+
           setHasCloudData(hasCloud);
         } catch (error) {
           console.error('Error pulling cloud data:', error);

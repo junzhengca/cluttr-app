@@ -161,3 +161,120 @@ export interface ErrorDetails {
   timestamp: string;
 }
 
+// Sync Entities Types
+export type EntityType = 'categories' | 'locations' | 'inventoryItems' | 'todoItems' | 'settings';
+
+export interface SyncCheckpoint {
+  lastPulledVersion: number;
+}
+
+export interface SyncEntityData {
+  id: string;
+  [key: string]: unknown;
+}
+
+export interface PullEntitiesRequest {
+  entityType: EntityType;
+  since?: string;
+  includeDeleted?: boolean;
+  checkpoint?: SyncCheckpoint;
+  userId?: string;
+}
+
+export interface EntityChange {
+  entityId: string;
+  changeType: 'created' | 'updated' | 'deleted';
+  data?: unknown; // The full entity data for created/updated
+  deletedAt?: string;
+  version: number;
+  clientUpdatedAt: string;
+}
+
+export interface PullEntitiesResponse {
+  success: boolean;
+  changes: EntityChange[];
+  serverTimestamp: string;
+  latestVersion: number;
+  hasMore: boolean;
+}
+
+export interface PushEntity {
+  entityId: string;
+  entityType: EntityType;
+  homeId?: string;
+  data: SyncEntityData;
+  version?: number;
+  clientUpdatedAt: string;
+  deletedAt?: string;
+}
+
+export interface PushEntitiesRequest {
+  entityType: EntityType;
+  entities: PushEntity[];
+  lastPulledAt?: string;
+  checkpoint?: SyncCheckpoint;
+  userId?: string;
+}
+
+export interface PushConflict {
+  entityId: string;
+  serverVersion: number;
+  clientVersion: number;
+  type: 'version_mismatch' | 'concurrent_modification';
+}
+
+export interface PushResult {
+  entityId: string;
+  status: 'success' | 'conflict' | 'error';
+  serverVersion?: number;
+  error?: string;
+  conflict?: PushConflict;
+}
+
+export interface PushEntitiesResponse {
+  success: boolean;
+  results: PushResult[];
+  serverTimestamp: string;
+}
+
+export interface BatchPullRequest extends Omit<PullEntitiesRequest, 'userId'> {
+  // userId is common for the batch or handled per request if API allows,
+  // but usually batch is for a specific context.
+  // Looking at API.md: "Combined pull and push in a single request"
+  // API.md shows `pullRequests` array.
+}
+
+export interface BatchPushRequest extends Omit<PushEntitiesRequest, 'userId'> {
+}
+
+export interface BatchSyncRequest {
+  homeId?: string; // Corresponds to userId context usually
+  deviceId: string;
+  pullRequests: BatchPullRequest[];
+  pushRequests: BatchPushRequest[];
+}
+
+export interface BatchSyncResponse {
+  success: boolean;
+  pullResults: {
+    entityType: EntityType;
+    entities: EntityChange[]; // API.md example uses 'entities' field which looks like changes/items
+    serverTimestamp: string;
+    latestVersion: number;
+  }[];
+  pushResults: {
+    entityType: EntityType;
+    results: PushResult[];
+    serverTimestamp: string;
+  }[];
+  serverTimestamp: string;
+}
+
+export interface EntitySyncStatus {
+  [entityType: string]: {
+    lastSyncTime: string;
+    lastSyncedByDeviceId: string;
+    lastSyncedAt: string;
+    totalSyncs: number;
+  };
+}

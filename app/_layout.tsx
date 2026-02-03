@@ -24,7 +24,7 @@ import { useAppDispatch, useAppSelector } from '../src/store/hooks';
 import { setShowNicknameSetup } from '../src/store/slices/authSlice';
 
 // TODO: Configure your API base URL here or use environment variables
-const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL || 'https://homeinventoryserver-production.up.railway.app';
+const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL || 'https://cluttr-server-v2-production.up.railway.app';
 
 // Inner component to handle initialization
 function AppInner() {

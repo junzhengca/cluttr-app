@@ -8,7 +8,7 @@ import Animated, {
     interpolate,
     Extrapolate,
 } from 'react-native-reanimated';
-import { useContextMenu } from './ContextMenuProvider';
+import { useContextMenu } from './ContextMenuContext';
 import { useTheme } from '../../../theme/ThemeProvider';
 import { ContextMenuItemData } from './types';
 import { MaterialCommunityIcons } from '@expo/vector-icons';

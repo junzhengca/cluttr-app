@@ -1,17 +1,7 @@
-import React, { createContext, useContext, useState, useCallback, ReactNode } from 'react';
+import React, { useState, useCallback, ReactNode } from 'react';
 import { ContextMenuState, ContextMenuLayout, ContextMenuItemData } from './types';
 import { ContextMenuOverlay } from './ContextMenuOverlay';
-
-interface ContextMenuContextType {
-    showMenu: (params: {
-        layout: ContextMenuLayout;
-        items: ContextMenuItemData[];
-    }) => void;
-    hideMenu: () => void;
-    state: ContextMenuState;
-}
-
-const ContextMenuContext = createContext<ContextMenuContextType | undefined>(undefined);
+import { ContextMenuContext } from './ContextMenuContext';
 
 export const ContextMenuProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     const [state, setState] = useState<ContextMenuState>({
@@ -43,10 +33,3 @@ export const ContextMenuProvider: React.FC<{ children: ReactNode }> = ({ childre
     );
 };
 
-export const useContextMenu = () => {
-    const context = useContext(ContextMenuContext);
-    if (!context) {
-        throw new Error('useContextMenu must be used within a ContextMenuProvider');
-    }
-    return context;
-};

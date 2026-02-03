@@ -4,7 +4,7 @@
 
 Home Inventory Sync Server API
 
-**Generated:** 2026-01-30T11:56:24.470Z
+**Generated:** 2026-02-02T01:14:26.685Z
 
 ## Table of Contents
 
@@ -22,6 +22,7 @@ Home Inventory Sync Server API
   - [POST Authenticate with email and password](#auth-login)
   - [POST Create a new user account](#auth-signup)
   - [PATCH Update current user profile](#auth-update-user)
+- [Homes](#homes)
 - [Images](#images)
   - [POST Upload an image to B2 storage](#images-upload-image)
 - [Invitations](#invitations)
@@ -34,6 +35,12 @@ Home Inventory Sync Server API
   - [GET Get sync status for all file types](#sync-get-sync-status)
   - [GET Pull sync data for a specific file type](#sync-pull-file)
   - [POST Push sync data for a specific file type](#sync-push-file)
+- [Sync Entities](#sync-entities)
+  - [POST Combined pull and push in a single request](#sync-entities-batch-sync)
+  - [GET Get sync status for entity types in a home](#sync-entities-get-sync-status)
+  - [GET Pull entities for a home and entity type](#sync-entities-pull-entities)
+  - [POST Push entity changes to the server with automatic conflict resolution](#sync-entities-push-entities)
+  - [DELETE Clear sync checkpoints forcing full re-sync](#sync-entities-reset-sync)
 
 
 ---
@@ -1119,6 +1126,11 @@ An unexpected error occurred on the server
 
 ---
 
+## Homes
+
+
+---
+
 ## Images
 
 ### POST /images/upload
@@ -2153,6 +2165,1072 @@ Internal server error
 
 ---
 
+## Sync Entities
+
+### POST /sync/entities/batch
+
+<a id="sync-entities-batch-sync"></a>
+
+**ID:** `sync_entities.batch_sync`
+
+**Combined pull and push in a single request**
+
+Performs multiple pull and push operations in a single request for efficient synchronization. Useful for syncing multiple entity types at once.
+
+**Pull Requests:** Retrieves entities updated since a given timestamp for each entity type.
+
+**Push Requests:** Pushes entity changes with automatic conflict resolution.
+
+**Advantages:**
+- Single round-trip for multiple entity types
+- Atomic operation per entity type
+- Efficient bandwidth usage
+
+**Note:** Push requests in batch mode do not return full conflict resolution details. Use individual push endpoint for detailed results.
+
+**Authentication:** Required (jwt) - Requires valid JWT token from login/signup/google_login
+
+**Tags:** `Synchronization`
+
+#### Request Body
+
+**Content-Type:** `application/json`
+
+Batch sync request with pull and push operations
+
+**Required:** Yes
+
+**Example:**
+
+```json
+{
+  "homeId": "my-family-home",
+  "deviceId": "iphone-15-pro",
+  "pullRequests": [
+    {
+      "entityType": "inventoryItems",
+      "since": "2024-01-15T09:00:00.000Z",
+      "includeDeleted": true,
+      "checkpoint": {
+        "lastPulledVersion": 95
+      }
+    },
+    {
+      "entityType": "todoItems",
+      "since": "2024-01-15T09:00:00.000Z",
+      "includeDeleted": true,
+      "checkpoint": {
+        "lastPulledVersion": 50
+      }
+    }
+  ],
+  "pushRequests": [
+    {
+      "entityType": "inventoryItems",
+      "entities": [
+        {
+          "entityId": "inv_12345",
+          "entityType": "inventoryItems",
+          "homeId": "my-family-home",
+          "data": {
+            "id": "inv_12345",
+            "name": "Milk",
+            "status": "using",
+            "price": 3.99
+          },
+          "version": 5,
+          "clientUpdatedAt": "2024-01-15T10:25:00.000Z"
+        }
+      ],
+      "lastPulledAt": "2024-01-15T09:00:00.000Z",
+      "checkpoint": {
+        "lastPulledVersion": 95
+      }
+    }
+  ]
+}
+```
+
+#### Response (200)
+
+Batch sync completed successfully
+
+**Example:**
+
+```json
+{
+  "success": true,
+  "pullResults": [
+    {
+      "entityType": "inventoryItems",
+      "entities": [
+        {
+          "entityId": "inv_12345",
+          "entityType": "inventoryItems",
+          "homeId": "my-family-home",
+          "data": {
+            "id": "inv_12345",
+            "name": "Milk",
+            "status": "using"
+          },
+          "version": 5,
+          "updatedAt": "2024-01-15T10:30:00.000Z",
+          "updatedBy": {
+            "userId": "507f1f77bcf86cd799439011",
+            "email": "user@example.com",
+            "nickname": "John"
+          }
+        }
+      ],
+      "deletedEntityIds": [],
+      "checkpoint": {
+        "homeId": "my-family-home",
+        "entityType": "inventoryItems",
+        "lastSyncedAt": "2024-01-15T10:35:00.000Z",
+        "lastPulledVersion": 100
+      }
+    },
+    {
+      "entityType": "todoItems",
+      "entities": [],
+      "deletedEntityIds": [],
+      "checkpoint": {
+        "homeId": "my-family-home",
+        "entityType": "todoItems",
+        "lastSyncedAt": "2024-01-15T10:35:00.000Z",
+        "lastPulledVersion": 50
+      }
+    }
+  ],
+  "pushResults": [
+    {
+      "entityType": "inventoryItems",
+      "results": [
+        {
+          "entityId": "inv_12345",
+          "status": "updated",
+          "winner": "client",
+          "serverVersion": 6,
+          "serverUpdatedAt": "2024-01-15T10:35:00.000Z"
+        }
+      ],
+      "newEntitiesFromServer": [],
+      "deletedEntityIds": [],
+      "errors": [],
+      "checkpoint": {
+        "homeId": "my-family-home",
+        "entityType": "inventoryItems",
+        "lastSyncedAt": "2024-01-15T10:35:00.000Z",
+        "lastPushedVersion": 100
+      }
+    }
+  ],
+  "serverTimestamp": "2024-01-15T10:35:00.000Z"
+}
+```
+
+#### Error Responses
+
+##### 400 - `INVALID_HOME_ID`
+
+homeId is required
+
+**Example:**
+
+```json
+{
+  "success": false,
+  "error": {
+    "message": "homeId is required",
+    "code": "INVALID_HOME_ID"
+  }
+}
+```
+
+##### 400 - `INVALID_DEVICE_ID`
+
+deviceId is required
+
+**Example:**
+
+```json
+{
+  "success": false,
+  "error": {
+    "message": "deviceId is required",
+    "code": "INVALID_DEVICE_ID"
+  }
+}
+```
+
+##### 400 - `INVALID_DATA`
+
+At least one of pullRequests or pushRequests is required
+
+**Example:**
+
+```json
+{
+  "success": false,
+  "error": {
+    "message": "At least one of pullRequests or pushRequests is required",
+    "code": "INVALID_DATA"
+  }
+}
+```
+
+##### 401 - `UNAUTHORIZED`
+
+Unauthorized \- invalid or expired token
+
+**Example:**
+
+```json
+{
+  "success": false,
+  "error": {
+    "message": "Unauthorized - invalid or expired token",
+    "code": "UNAUTHORIZED"
+  }
+}
+```
+
+##### 500 - `SERVER_ERROR`
+
+Internal server error
+
+**Example:**
+
+```json
+{
+  "success": false,
+  "error": {
+    "message": "Internal server error",
+    "code": "SERVER_ERROR"
+  }
+}
+```
+
+**Related Endpoints:**
+
+- [`sync_entities.pull_entities`](#sync-entities-pull-entities)
+- [`sync_entities.push_entities`](#sync-entities-push-entities)
+- [`sync_entities.get_sync_status`](#sync-entities-get-sync-status)
+
+### GET /sync/entities/status
+
+<a id="sync-entities-get-sync-status"></a>
+
+**ID:** `sync_entities.get_sync_status`
+
+**Get sync status for entity types in a home**
+
+Returns the sync status for entity types including last sync time, versions, and whether pull or push is needed.
+
+**Status Information:**
+- `lastSyncedAt` - Timestamp of last successful sync
+- `lastPulledVersion` - Version number from last pull
+- `lastPushedVersion` - Version number from last push
+- `serverVersion` - Current version on server
+- `needsPull` - Whether server has newer data
+- `needsPush` - Whether client has unpushed changes
+
+**Use Cases:**
+- Display sync status in UI
+- Determine if sync is needed
+- Show sync progress indicators
+
+**Authentication:** Required (jwt) - Requires valid JWT token from login/signup/google_login
+
+**Tags:** `Synchronization`
+
+#### Query Parameters
+
+| Name | Type | Required | Default | Description |
+|------|------|----------|---------|-------------|
+| `homeId` | string | Yes | - | Home ID to check sync status for |
+| `entityType` | enum (inventoryItems, todoItems, categories, locations, settings) | No | - | Specific entity type to check, or all if omitted |
+| `deviceId` | string | Yes | - | Client device identifier |
+
+#### Response (200)
+
+Sync status retrieved successfully
+
+**Example:**
+
+```json
+{
+  "success": true,
+  "status": {
+    "inventoryItems": {
+      "homeId": "my-family-home",
+      "entityType": "inventoryItems",
+      "lastSyncedAt": "2024-01-15T10:30:00.000Z",
+      "lastPulledVersion": 100,
+      "lastPushedVersion": 98,
+      "pendingLocalChanges": 5,
+      "serverVersion": 102,
+      "needsPull": true,
+      "needsPush": true
+    },
+    "todoItems": {
+      "homeId": "my-family-home",
+      "entityType": "todoItems",
+      "lastSyncedAt": "2024-01-15T09:00:00.000Z",
+      "lastPulledVersion": 50,
+      "lastPushedVersion": 50,
+      "pendingLocalChanges": 0,
+      "serverVersion": 50,
+      "needsPull": false,
+      "needsPush": false
+    },
+    "categories": {
+      "homeId": "my-family-home",
+      "entityType": "categories",
+      "lastSyncedAt": null,
+      "lastPulledVersion": 0,
+      "lastPushedVersion": 0,
+      "pendingLocalChanges": 0,
+      "serverVersion": 0,
+      "needsPull": false,
+      "needsPush": false
+    }
+  }
+}
+```
+
+#### Error Responses
+
+##### 400 - `INVALID_HOME_ID`
+
+homeId is required
+
+**Example:**
+
+```json
+{
+  "success": false,
+  "error": {
+    "message": "homeId is required",
+    "code": "INVALID_HOME_ID"
+  }
+}
+```
+
+##### 400 - `INVALID_DEVICE_ID`
+
+deviceId is required
+
+**Example:**
+
+```json
+{
+  "success": false,
+  "error": {
+    "message": "deviceId is required",
+    "code": "INVALID_DEVICE_ID"
+  }
+}
+```
+
+##### 401 - `UNAUTHORIZED`
+
+Unauthorized \- invalid or expired token
+
+**Example:**
+
+```json
+{
+  "success": false,
+  "error": {
+    "message": "Unauthorized - invalid or expired token",
+    "code": "UNAUTHORIZED"
+  }
+}
+```
+
+##### 403 - `FORBIDDEN`
+
+You are not a member of this home
+
+**Example:**
+
+```json
+{
+  "success": false,
+  "error": {
+    "message": "You are not a member of this home",
+    "code": "FORBIDDEN"
+  }
+}
+```
+
+##### 500 - `SERVER_ERROR`
+
+Internal server error
+
+**Example:**
+
+```json
+{
+  "success": false,
+  "error": {
+    "message": "Internal server error",
+    "code": "SERVER_ERROR"
+  }
+}
+```
+
+**Related Endpoints:**
+
+- [`sync_entities.pull_entities`](#sync-entities-pull-entities)
+- [`sync_entities.push_entities`](#sync-entities-push-entities)
+- [`sync_entities.batch_sync`](#sync-entities-batch-sync)
+- [`sync_entities.reset_sync`](#sync-entities-reset-sync)
+
+### GET /sync/entities/pull
+
+<a id="sync-entities-pull-entities"></a>
+
+**ID:** `sync_entities.pull_entities`
+
+**Pull entities for a home and entity type**
+
+Retrieves entities that have been created, updated, or deleted since a given timestamp. Supports incremental sync for efficient data transfer.
+
+**Supported entity types:** `inventoryItems`, `todoItems`, `categories`, `locations`, `settings`
+
+**Permission requirements:**
+- `inventoryItems`: Members require `canShareInventory: true` on the home
+- `todoItems`: Members require `canShareTodos: true` on the home
+- Other types: Always allowed for members
+- Home owners: Always have full access regardless of permissions
+
+**Conflict Resolution:** Automatic last-write-wins based on timestamps. Never prompts users.
+
+**Soft Deletes:** Deleted entities are tracked for 90 days before permanent deletion.
+
+**Authentication:** Required (jwt) - Requires valid JWT token from login/signup/google_login
+
+**Tags:** `Synchronization`
+
+#### Query Parameters
+
+| Name | Type | Required | Default | Description |
+|------|------|----------|---------|-------------|
+| `homeId` | string | Yes | - | Home ID to pull entities from |
+| `entityType` | enum (inventoryItems, todoItems, categories, locations, settings) | Yes | - | Type of entities to pull |
+| `deviceId` | string | Yes | - | Client device identifier for checkpoint tracking |
+| `since` | string | No | - | ISO 8601 timestamp for incremental sync \(only return entities modified after this time\) |
+| `includeDeleted` | boolean | No | - | Include soft\-deleted entities in response |
+
+#### Response (200)
+
+Entities retrieved successfully
+
+**Example:**
+
+```json
+{
+  "success": true,
+  "entities": [
+    {
+      "entityId": "inv_12345",
+      "entityType": "inventoryItems",
+      "homeId": "my-family-home",
+      "data": {
+        "id": "inv_12345",
+        "name": "Milk",
+        "status": "using",
+        "price": 3.99,
+        "amount": 1,
+        "category": "dairy",
+        "location": "refrigerator"
+      },
+      "version": 5,
+      "updatedAt": "2024-01-15T10:30:00.000Z",
+      "updatedBy": {
+        "userId": "507f1f77bcf86cd799439011",
+        "email": "user@example.com",
+        "nickname": "John"
+      },
+      "updatedByDeviceId": "iphone-15-pro"
+    }
+  ],
+  "deletedEntityIds": [
+    "inv_67890"
+  ],
+  "serverTimestamp": "2024-01-15T10:35:00.000Z",
+  "checkpoint": {
+    "homeId": "my-family-home",
+    "entityType": "inventoryItems",
+    "lastSyncedAt": "2024-01-15T10:35:00.000Z",
+    "lastPulledVersion": 100
+  }
+}
+```
+
+#### Error Responses
+
+##### 400 - `INVALID_HOME_ID`
+
+homeId is required
+
+**Example:**
+
+```json
+{
+  "success": false,
+  "error": {
+    "message": "homeId is required",
+    "code": "INVALID_HOME_ID"
+  }
+}
+```
+
+##### 400 - `INVALID_ENTITY_TYPE`
+
+entityType is required
+
+**Example:**
+
+```json
+{
+  "success": false,
+  "error": {
+    "message": "entityType is required",
+    "code": "INVALID_ENTITY_TYPE"
+  }
+}
+```
+
+##### 400 - `INVALID_DEVICE_ID`
+
+deviceId is required
+
+**Example:**
+
+```json
+{
+  "success": false,
+  "error": {
+    "message": "deviceId is required",
+    "code": "INVALID_DEVICE_ID"
+  }
+}
+```
+
+##### 400 - `INVALID_TIMESTAMP`
+
+since must be a valid ISO date
+
+**Example:**
+
+```json
+{
+  "success": false,
+  "error": {
+    "message": "since must be a valid ISO date",
+    "code": "INVALID_TIMESTAMP"
+  }
+}
+```
+
+##### 401 - `UNAUTHORIZED`
+
+Unauthorized \- invalid or expired token
+
+**Example:**
+
+```json
+{
+  "success": false,
+  "error": {
+    "message": "Unauthorized - invalid or expired token",
+    "code": "UNAUTHORIZED"
+  }
+}
+```
+
+##### 403 - `FORBIDDEN`
+
+You do not have permission to pull this entity type
+
+Thrown when a member tries to pull inventoryItems or todoItems without the required permission
+
+**Example:**
+
+```json
+{
+  "success": false,
+  "error": {
+    "message": "You do not have permission to pull this entity type",
+    "code": "FORBIDDEN"
+  }
+}
+```
+
+##### 500 - `SERVER_ERROR`
+
+Internal server error
+
+**Example:**
+
+```json
+{
+  "success": false,
+  "error": {
+    "message": "Internal server error",
+    "code": "SERVER_ERROR"
+  }
+}
+```
+
+**Related Endpoints:**
+
+- [`sync_entities.push_entities`](#sync-entities-push-entities)
+- [`sync_entities.batch_sync`](#sync-entities-batch-sync)
+- [`sync_entities.get_sync_status`](#sync-entities-get-sync-status)
+- [`sync_entities.reset_sync`](#sync-entities-reset-sync)
+
+### POST /sync/entities/push
+
+<a id="sync-entities-push-entities"></a>
+
+**ID:** `sync_entities.push_entities`
+
+**Push entity changes to the server with automatic conflict resolution**
+
+Pushes entity changes to the server with automatic last-write-wins conflict resolution. Each entity is synced independently based on timestamps.
+
+**Conflict Resolution:**
+- Compares `clientUpdatedAt` with `serverUpdatedAt`
+- Client wins if newer: Server updates with client data
+- Server wins if newer or equal: Returns server version to client
+- Stale versions are rejected: Client must pull first
+- **NEVER prompts users** - All conflict resolution is automatic
+
+**Pending Operations:**
+- `pendingCreate: true` - Entity was created offline
+- `pendingDelete: true` - Entity was deleted offline
+
+**Soft Delete Handling:**
+- If client deletes while server has newer update: Server wins, entity is restored
+- If client updates while server has deleted: Server delete wins if newer
+
+**Entity ID Collision:**
+- Returns error if entity ID already exists
+- Suggests alternative entity ID for retry
+
+**Authentication:** Required (jwt) - Requires valid JWT token from login/signup/google_login
+
+**Tags:** `Synchronization`
+
+#### Query Parameters
+
+| Name | Type | Required | Default | Description |
+|------|------|----------|---------|-------------|
+| `homeId` | string | Yes | - | Home ID to push entities to |
+| `entityType` | enum (inventoryItems, todoItems, categories, locations, settings) | Yes | - | Type of entities being pushed |
+| `deviceId` | string | Yes | - | Client device identifier for tracking changes |
+
+#### Request Body
+
+**Content-Type:** `application/json`
+
+Array of entities to sync with optional checkpoint info
+
+**Required:** Yes
+
+**Example:**
+
+```json
+{
+  "entities": [
+    {
+      "entityId": "inv_12345",
+      "entityType": "inventoryItems",
+      "homeId": "my-family-home",
+      "data": {
+        "id": "inv_12345",
+        "name": "Milk",
+        "status": "using",
+        "price": 3.99,
+        "amount": 1,
+        "category": "dairy",
+        "location": "refrigerator"
+      },
+      "version": 5,
+      "clientUpdatedAt": "2024-01-15T10:25:00.000Z",
+      "pendingCreate": false,
+      "pendingDelete": false
+    }
+  ],
+  "lastPulledAt": "2024-01-15T09:00:00.000Z",
+  "checkpoint": {
+    "lastPulledVersion": 95
+  }
+}
+```
+
+#### Response (200)
+
+Entities processed successfully
+
+**Example:**
+
+```json
+{
+  "success": true,
+  "results": [
+    {
+      "entityId": "inv_12345",
+      "status": "updated",
+      "winner": "client",
+      "serverVersion": 6,
+      "serverUpdatedAt": "2024-01-15T10:30:00.000Z"
+    },
+    {
+      "entityId": "inv_67890",
+      "status": "server_version",
+      "winner": "server",
+      "serverVersionData": {
+        "data": {
+          "id": "inv_67890",
+          "name": "Bread",
+          "status": "new"
+        },
+        "version": 10,
+        "updatedAt": "2024-01-15T10:35:00.000Z",
+        "updatedBy": {
+          "userId": "507f1f77bcf86cd799439011",
+          "email": "other@example.com",
+          "nickname": "Jane"
+        }
+      }
+    },
+    {
+      "entityId": "inv_new",
+      "status": "created",
+      "serverVersion": 1,
+      "serverUpdatedAt": "2024-01-15T10:30:00.000Z"
+    }
+  ],
+  "newEntitiesFromServer": [],
+  "deletedEntityIds": [],
+  "errors": [],
+  "checkpoint": {
+    "homeId": "my-family-home",
+    "entityType": "inventoryItems",
+    "lastSyncedAt": "2024-01-15T10:30:00.000Z",
+    "lastPushedVersion": 100
+  },
+  "serverTimestamp": "2024-01-15T10:30:00.000Z"
+}
+```
+
+#### Error Responses
+
+##### 400 - `INVALID_HOME_ID`
+
+homeId is required
+
+**Example:**
+
+```json
+{
+  "success": false,
+  "error": {
+    "message": "homeId is required",
+    "code": "INVALID_HOME_ID"
+  }
+}
+```
+
+##### 400 - `INVALID_ENTITY_TYPE`
+
+entityType is required
+
+**Example:**
+
+```json
+{
+  "success": false,
+  "error": {
+    "message": "entityType is required",
+    "code": "INVALID_ENTITY_TYPE"
+  }
+}
+```
+
+##### 400 - `INVALID_DEVICE_ID`
+
+deviceId is required
+
+**Example:**
+
+```json
+{
+  "success": false,
+  "error": {
+    "message": "deviceId is required",
+    "code": "INVALID_DEVICE_ID"
+  }
+}
+```
+
+##### 400 - `INVALID_DATA`
+
+entities array is required and must not be empty
+
+**Example:**
+
+```json
+{
+  "success": false,
+  "error": {
+    "message": "entities array is required and must not be empty",
+    "code": "INVALID_DATA"
+  }
+}
+```
+
+##### 401 - `UNAUTHORIZED`
+
+Unauthorized \- invalid or expired token
+
+**Example:**
+
+```json
+{
+  "success": false,
+  "error": {
+    "message": "Unauthorized - invalid or expired token",
+    "code": "UNAUTHORIZED"
+  }
+}
+```
+
+##### 403 - `FORBIDDEN`
+
+You do not have permission to push this entity type
+
+**Example:**
+
+```json
+{
+  "success": false,
+  "error": {
+    "message": "You do not have permission to push this entity type",
+    "code": "FORBIDDEN"
+  }
+}
+```
+
+##### 404 - `HOME_NOT_FOUND`
+
+Home not found
+
+**Example:**
+
+```json
+{
+  "success": false,
+  "error": {
+    "message": "Home not found",
+    "code": "HOME_NOT_FOUND"
+  }
+}
+```
+
+##### 404 - `USER_NOT_FOUND`
+
+User not found
+
+**Example:**
+
+```json
+{
+  "success": false,
+  "error": {
+    "message": "User not found",
+    "code": "USER_NOT_FOUND"
+  }
+}
+```
+
+##### 500 - `SERVER_ERROR`
+
+Internal server error
+
+**Example:**
+
+```json
+{
+  "success": false,
+  "error": {
+    "message": "Internal server error",
+    "code": "SERVER_ERROR"
+  }
+}
+```
+
+**Related Endpoints:**
+
+- [`sync_entities.pull_entities`](#sync-entities-pull-entities)
+- [`sync_entities.batch_sync`](#sync-entities-batch-sync)
+- [`sync_entities.get_sync_status`](#sync-entities-get-sync-status)
+
+### DELETE /sync/entities/reset
+
+<a id="sync-entities-reset-sync"></a>
+
+**ID:** `sync_entities.reset_sync`
+
+**Clear sync checkpoints forcing full re\-sync**
+
+Clears sync checkpoints for a user/device/home/entityType combination, forcing a full re-sync on the next sync operation.
+
+**Use Cases:**
+- Client data corruption requiring full refresh
+- Sync state is out of sync
+- Troubleshooting sync issues
+- User wants to start fresh
+
+**Effect:**
+- Deletes sync checkpoints for specified criteria
+- Next pull/push will be treated as initial sync
+- No data is deleted from the server
+
+**Parameters:**
+- `homeId` (required): Home to reset
+- `entityType` (optional): Specific entity type, or all if omitted
+- `deviceId` (required): Device to reset for
+
+**Authentication:** Required (jwt) - Requires valid JWT token from login/signup/google_login
+
+**Tags:** `Synchronization`
+
+#### Query Parameters
+
+| Name | Type | Required | Default | Description |
+|------|------|----------|---------|-------------|
+| `homeId` | string | Yes | - | Home ID to reset sync checkpoints for |
+| `entityType` | enum (inventoryItems, todoItems, categories, locations, settings) | No | - | Specific entity type to reset, or all if omitted |
+| `deviceId` | string | Yes | - | Client device identifier to reset checkpoints for |
+
+#### Response (200)
+
+Sync checkpoints cleared successfully
+
+**Example:**
+
+```json
+{
+  "success": true,
+  "message": "Sync checkpoints cleared",
+  "resetEntityTypes": [
+    "inventoryItems",
+    "todoItems",
+    "categories",
+    "locations",
+    "settings"
+  ],
+  "deletedCount": 5
+}
+```
+
+#### Error Responses
+
+##### 400 - `INVALID_HOME_ID`
+
+homeId is required
+
+**Example:**
+
+```json
+{
+  "success": false,
+  "error": {
+    "message": "homeId is required",
+    "code": "INVALID_HOME_ID"
+  }
+}
+```
+
+##### 400 - `INVALID_DEVICE_ID`
+
+deviceId is required
+
+**Example:**
+
+```json
+{
+  "success": false,
+  "error": {
+    "message": "deviceId is required",
+    "code": "INVALID_DEVICE_ID"
+  }
+}
+```
+
+##### 401 - `UNAUTHORIZED`
+
+Unauthorized \- invalid or expired token
+
+**Example:**
+
+```json
+{
+  "success": false,
+  "error": {
+    "message": "Unauthorized - invalid or expired token",
+    "code": "UNAUTHORIZED"
+  }
+}
+```
+
+##### 403 - `FORBIDDEN`
+
+You are not a member of this home
+
+**Example:**
+
+```json
+{
+  "success": false,
+  "error": {
+    "message": "You are not a member of this home",
+    "code": "FORBIDDEN"
+  }
+}
+```
+
+##### 500 - `SERVER_ERROR`
+
+Internal server error
+
+**Example:**
+
+```json
+{
+  "success": false,
+  "error": {
+    "message": "Internal server error",
+    "code": "SERVER_ERROR"
+  }
+}
+```
+
+**Related Endpoints:**
+
+- [`sync_entities.pull_entities`](#sync-entities-pull-entities)
+- [`sync_entities.push_entities`](#sync-entities-push-entities)
+- [`sync_entities.get_sync_status`](#sync-entities-get-sync-status)
+
+
 ---
 
-*Documentation generated from 20 endpoints*
+---
+
+*Documentation generated from 25 endpoints*

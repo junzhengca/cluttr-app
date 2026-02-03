@@ -26,7 +26,7 @@ import SyncService, { SyncFileType, SyncEvent } from '../../services/SyncService
 import { InventoryItem, TodoItem } from '../../types/inventory';
 import { ApiClient } from '../../services/ApiClient';
 import { AccessibleAccount, ListAccessibleAccountsResponse } from '../../types/api';
-import { store } from '../index';
+
 import type { RootState } from '../types';
 
 // Action types
@@ -328,8 +328,9 @@ function* disableSyncSaga(): Generator {
     yield put(setSyncLoading(true));
     yield put(setSyncError(null));
     console.log('[SyncSaga] Disabling sync...');
-    yield call(syncService.disable.bind(syncService));
     yield put(setSyncEnabled(false));
+    // Re-run registration to ensure callbacks are unregistered (cancels previous watcher)
+    yield put(registerSyncCallbacks());
     console.log('[SyncSaga] Sync disabled');
   } catch (err) {
     console.error('[SyncSaga] Error disabling sync:', err);
@@ -552,39 +553,51 @@ function* registerSyncCallbacksSaga(): Generator {
   const syncService: SyncService | null = (yield select((state: RootState) => state.sync.syncService)) as SyncService | null;
 
   if (!enabled || !syncService) {
-    // Unregister callbacks when sync is disabled
-    ['categories', 'locations', 'inventoryItems', 'todoItems', 'settings'].forEach((key) => {
-      syncCallbackRegistry.setCallback(key as SyncFileType, null);
-    });
+    // If not enabled, we don't register anything.
+    // If this saga was triggered by registerSyncCallbacks(), takeLatest will have already cancelled
+    // the previous running instance (which unregisters its callbacks in its finally block).
+    // So we just return here.
     return;
   }
 
-  // Register callbacks when sync is enabled
-  const syncOnDataChange = (fileType: SyncFileType, userId?: string) => {
-    console.log(
-      `[SyncSaga] Data changed for ${fileType} (user ${userId || 'default'
-      }), dispatching SYNC_ON_CHANGE...`
-    );
-    store.dispatch(syncOnChange(fileType, userId));
-  };
+  // Create an event channel to bridge callbacks to saga events
+  const channel = eventChannel<{ fileType: SyncFileType; userId?: string }>((emitter) => {
+    const handleCallback = (fileType: SyncFileType, userId?: string) => {
+      console.log(
+        `[SyncSaga] Data changed for ${fileType} (user ${userId || 'default'}), dispatching SYNC_ON_CHANGE...`
+      );
+      emitter({ fileType, userId });
+    };
 
-  syncCallbackRegistry.setCallback('categories', (userId) => {
-    syncOnDataChange('categories', userId);
-  });
-  syncCallbackRegistry.setCallback('locations', (userId) => {
-    syncOnDataChange('locations', userId);
-  });
-  syncCallbackRegistry.setCallback('inventoryItems', (userId) => {
-    syncOnDataChange('inventoryItems', userId);
-  });
-  syncCallbackRegistry.setCallback('todoItems', (userId) => {
-    syncOnDataChange('todoItems', userId);
-  });
-  syncCallbackRegistry.setCallback('settings', (userId) => {
-    syncOnDataChange('settings', userId);
+    // Register callbacks
+    syncCallbackRegistry.setCallback('categories', (userId) => handleCallback('categories', userId));
+    syncCallbackRegistry.setCallback('locations', (userId) => handleCallback('locations', userId));
+    syncCallbackRegistry.setCallback('inventoryItems', (userId) => handleCallback('inventoryItems', userId));
+    syncCallbackRegistry.setCallback('todoItems', (userId) => handleCallback('todoItems', userId));
+    syncCallbackRegistry.setCallback('settings', (userId) => handleCallback('settings', userId));
+
+    console.log('[SyncSaga] Sync callbacks registered (via eventChannel)');
+
+    // Unsubscribe function - called when channel is closed or saga cancelled
+    return () => {
+      ['categories', 'locations', 'inventoryItems', 'todoItems', 'settings'].forEach((key) => {
+        syncCallbackRegistry.setCallback(key as SyncFileType, null);
+      });
+      console.log('[SyncSaga] Sync callbacks unregistered');
+    };
   });
 
-  console.log('[SyncSaga] Sync callbacks registered (multi-home enabled)');
+  try {
+    // Listen for events from the channel
+    while (true) {
+      const { fileType, userId } = (yield take(channel)) as { fileType: SyncFileType; userId?: string };
+      yield put(syncOnChange(fileType, userId));
+    }
+  } finally {
+    if (yield cancelled()) {
+      channel.close();
+    }
+  }
 }
 
 function* switchHomeSaga(action: ReturnType<typeof setActiveHomeId>): Generator {

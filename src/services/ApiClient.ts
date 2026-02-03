@@ -20,6 +20,14 @@ import {
   RetryAttempt,
   ValidateInvitationResponse,
   ListAccessibleAccountsResponse,
+  PullEntitiesRequest,
+  PullEntitiesResponse,
+  PushEntitiesRequest,
+  PushEntitiesResponse,
+  BatchSyncRequest,
+  BatchSyncResponse,
+  EntitySyncStatus,
+  EntityType,
 } from '../types/api';
 import { apiLogger, syncLogger } from '../utils/Logger';
 
@@ -646,6 +654,58 @@ export class ApiClient {
   async acceptInvitation(code: string): Promise<{ success: boolean; message: string }> {
     return this.request<{ success: boolean; message: string }>(`/api/invitations/${code}/accept`, {
       method: 'POST',
+      requiresAuth: true,
+    });
+  }
+  /**
+   * Get sync status for all entity types
+   */
+  async getSyncEntityStatus(): Promise<EntitySyncStatus> {
+    return this.request<EntitySyncStatus>('/api/sync/entities/status', {
+      method: 'GET',
+      requiresAuth: true,
+    });
+  }
+
+  /**
+   * Pull entities for a specific type
+   */
+  async pullEntities(
+    request: PullEntitiesRequest
+  ): Promise<PullEntitiesResponse> {
+    const { userId, ...body } = request;
+    const endpoint = `/api/sync/entities/pull${userId ? `?userId=${userId}` : ''}`;
+    return this.request<PullEntitiesResponse>(endpoint, {
+      method: 'POST',
+      body,
+      requiresAuth: true,
+    });
+  }
+
+  /**
+   * Push entities for a specific type
+   */
+  async pushEntities(
+    request: PushEntitiesRequest
+  ): Promise<PushEntitiesResponse> {
+    const { userId, ...body } = request;
+    const endpoint = `/api/sync/entities/push${userId ? `?userId=${userId}` : ''}`;
+    return this.request<PushEntitiesResponse>(endpoint, {
+      method: 'POST',
+      body,
+      requiresAuth: true,
+    });
+  }
+
+  /**
+   * Batch sync (pull and push)
+   */
+  async batchSync(
+    request: BatchSyncRequest
+  ): Promise<BatchSyncResponse> {
+    return this.request<BatchSyncResponse>('/api/sync/entities/batch', {
+      method: 'POST',
+      body: request,
       requiresAuth: true,
     });
   }

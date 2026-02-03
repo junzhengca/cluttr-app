@@ -10,7 +10,7 @@ import Animated, {
     withSpring,
     withTiming
 } from 'react-native-reanimated';
-import { useContextMenu } from './ContextMenuProvider';
+import { useContextMenu } from './ContextMenuContext';
 import { ContextMenuItemData, ContextMenuLayout } from './types';
 import * as Haptics from 'expo-haptics';
 

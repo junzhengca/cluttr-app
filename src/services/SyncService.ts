@@ -1,15 +1,25 @@
 import * as SecureStore from 'expo-secure-store';
 import { Category, Location, InventoryItem, TodoItem } from '../types/inventory';
 import { Settings } from '../types/settings';
-import { AccessibleAccount } from '../types/api';
+import {
+  AccessibleAccount,
+  EntityChange,
+  EntitySyncStatus,
+  EntityType,
+  PullEntitiesRequest,
+  PushEntitiesRequest,
+  PushEntity,
+} from '../types/api';
+import { ApiClient } from './ApiClient';
 import { syncCallbackRegistry } from './SyncCallbackRegistry';
 import { syncLogger, storageLogger } from '../utils/Logger';
 
-// File types that can be synced
-export type SyncFileType = 'categories' | 'locations' | 'inventoryItems' | 'todoItems' | 'settings';
+// File types that can be synced (now aliases EntityType)
+export type SyncFileType = EntityType;
 
 // Sync request/response types
 export interface SyncFileData<T> {
+  // Legacy type kept for compatibility if needed, but likely unused in new flow
   version: string;
   deviceId: string;
   syncTimestamp: string;
@@ -64,9 +74,7 @@ export interface SyncEvent {
 }
 
 class SyncService {
-  private apiClient: {
-    request: <T>(endpoint: string, options: { method: string; body?: unknown; requiresAuth?: boolean }) => Promise<T>;
-  };
+  private apiClient: ApiClient;
   private deviceId: string | null = null;
   private userId: string | undefined = undefined;
   private ownerId: string | undefined = undefined;
@@ -85,9 +93,7 @@ class SyncService {
   private readonly CLEANUP_RETENTION_DAYS = 7; // Days to keep deleted items before permanent removal
   private readonly CLEANUP_INTERVAL_MS = 24 * 60 * 60 * 1000; // Run cleanup at most once per day
 
-  constructor(apiClient: {
-    request: <T>(endpoint: string, options: { method: string; body?: unknown; requiresAuth?: boolean }) => Promise<T>;
-  }) {
+  constructor(apiClient: ApiClient) {
     this.apiClient = apiClient;
   }
 
@@ -754,83 +760,37 @@ class SyncService {
     const pullStartTime = Date.now();
     const targetUserId = userId || this.userId;
     syncLogger.header(`PULL FILE START - ${fileType} (user: ${targetUserId || 'default'})`);
-    syncLogger.verbose(`Timestamp: ${new Date().toISOString()}`);
-
-    const endpoint = `/api/sync/${fileType}/pull${targetUserId ? `?userId=${targetUserId}` : ''}`;
-    const requestDetails = {
-      method: 'GET',
-      endpoint,
-      fileType,
-      userId: targetUserId,
-      deviceId: this.deviceId,
-      deviceName: this.syncMetadata?.deviceName,
-    };
-
-    // Log request details
-    syncLogger.debug('Pull request details', requestDetails);
-    if (this.syncMetadata) {
-      syncLogger.verbose('Sync metadata', {
-        lastSyncTime: this.syncMetadata[fileType].lastSyncTime,
-        lastServerTimestamp: this.syncMetadata[fileType].lastServerTimestamp,
-        syncCount: this.syncMetadata[fileType].syncCount,
-        lastSyncStatus: this.syncMetadata[fileType].lastSyncStatus,
-      });
-    }
 
     try {
-      const response = await this.apiClient.request<{
-        success: boolean;
-        data?: unknown;
-        serverTimestamp: string;
-        lastSyncTime: string;
-      }>(endpoint, {
-        method: 'GET',
-        requiresAuth: true,
-      });
+      // Prepare request
+      const lastServerTimestamp = this.syncMetadata?.[fileType]?.lastServerTimestamp;
+      const request: PullEntitiesRequest = {
+        entityType: fileType,
+        since: lastServerTimestamp, // undefined is fine for initial sync
+        includeDeleted: true,
+        userId: targetUserId,
+      };
+
+      const response = await this.apiClient.pullEntities(request);
 
       const pullDuration = Date.now() - pullStartTime;
       syncLogger.header(`PULL RESPONSE RECEIVED - ${fileType}`);
       syncLogger.info(`Duration: ${pullDuration}ms`);
-      syncLogger.info(`Response Success: ${response.success}`);
-      syncLogger.info(`Server Timestamp: ${response.serverTimestamp}`);
-      syncLogger.info(`Last Sync Time: ${response.lastSyncTime}`);
+      syncLogger.info(`Success: ${response.success}`);
+      syncLogger.info(`Changes: ${response.changes.length}`);
 
-      if (response.data !== undefined) {
-        const dataStr = JSON.stringify(response.data);
-        const dataSize = new Blob([dataStr]).size;
-        const dataLength = Array.isArray(response.data) ? response.data.length : 1;
-        syncLogger.verbose(`Response Data Size: ${dataSize} bytes`);
-        syncLogger.verbose(`Response Data Length: ${dataLength} items`);
-        syncLogger.verbose('Response Data', response.data);
-      } else {
-        syncLogger.verbose('Response Data: (undefined)');
-      }
+      if (response.success) {
+        // Apply changes to local data
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const appliedChanges = await this.applyServerChanges(fileType, response.changes, targetUserId);
 
-      if (response.success && response.data !== undefined) {
-        // Merge server data with local data
-        if (fileType === 'settings') {
-          await this.mergeSettings(response.data as Settings, targetUserId);
-        } else {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const changes = await this.mergeEntries(fileType, response.data as unknown[], targetUserId) as any;
-          // Cleanup old deleted items after merging (only for non-settings file types)
-          await this.cleanupDeletedItems(fileType, targetUserId);
-
-          this.notifyListeners({
-            type: 'pull',
-            fileType,
-            timestamp: response.serverTimestamp,
-            changes: changes as SyncChanges<unknown>,
-          });
-        }
-
-        // Update sync metadata (create new object to avoid read-only property issues)
+        // Update sync metadata
         if (this.syncMetadata) {
           this.syncMetadata = {
             ...this.syncMetadata,
             [fileType]: {
               ...this.syncMetadata[fileType],
-              lastSyncTime: response.lastSyncTime,
+              lastSyncTime: new Date().toISOString(),
               lastServerTimestamp: response.serverTimestamp,
               lastSyncStatus: 'success' as const,
               syncCount: this.syncMetadata[fileType].syncCount + 1,
@@ -839,51 +799,25 @@ class SyncService {
           await this.saveSyncMetadata();
         }
 
-        if (fileType === 'settings') {
-          this.notifyListeners({
-            type: 'pull',
-            fileType,
-            timestamp: response.serverTimestamp,
-          });
-        }
+        this.notifyListeners({
+          type: 'pull',
+          fileType,
+          timestamp: response.serverTimestamp,
+          changes: appliedChanges,
+        });
 
         syncLogger.end(`Pull completed successfully for ${fileType}`);
       } else {
-        syncLogger.warn(`Pull response indicates failure or no data for ${fileType}`);
-        syncLogger.end('PULL FILE COMPLETE (NO DATA)');
+        syncLogger.warn(`Pull response indicates failure for ${fileType}`);
+        syncLogger.end('PULL FILE COMPLETE (FAILED)');
+        throw new Error(`Pull failed for ${fileType}`);
       }
     } catch (error) {
-      // Verbose error logging
-      const errorDetails: {
-        request: typeof requestDetails;
-        error: string;
-        errorMessage?: string;
-        status?: number;
-        responseBody?: unknown;
-      } = {
-        request: requestDetails,
-        error: error instanceof Error ? error.message : 'Unknown error',
-      };
-
-      // Extract response body and status from error if available
-      if (error instanceof Error) {
-        errorDetails.errorMessage = error.message;
-        const errorWithResponse = error as Error & { responseBody?: unknown; status?: number };
-        if (errorWithResponse.responseBody !== undefined) {
-          errorDetails.responseBody = errorWithResponse.responseBody;
-        }
-        if (errorWithResponse.status !== undefined) {
-          errorDetails.status = errorWithResponse.status;
-        }
-      }
-
       const pullDuration = Date.now() - pullStartTime;
-      syncLogger.fail(`PULL FILE FAILED - ${fileType}`, errorDetails);
+      syncLogger.fail(`PULL FILE FAILED - ${fileType}`, error);
       syncLogger.verbose(`Duration: ${pullDuration}ms`);
-      syncLogger.verbose('Full error object', error);
 
       if (this.syncMetadata) {
-        // Update sync metadata (create new object to avoid read-only property issues)
         this.syncMetadata = {
           ...this.syncMetadata,
           [fileType]: {
@@ -905,7 +839,7 @@ class SyncService {
   }
 
   /**
-   * Push merged data to server for a specific file type
+   * Push entries to server for a specific file type
    */
   private async pushFile(fileType: SyncFileType, userId?: string): Promise<void> {
     const pushStartTime = Date.now();
@@ -913,15 +847,12 @@ class SyncService {
     // If target is self (owner), use undefined to access default (unscoped) files
     const fileUserId = targetUserId === this.ownerId ? undefined : targetUserId;
 
-    syncLogger.header(`PUSH FILE START - ${fileType} (user: ${targetUserId || 'default'})`);
-    syncLogger.verbose(`Timestamp: ${new Date().toISOString()}`);
-
-    let requestBody: SyncFileData<unknown> | null = null;
-    const endpoint = `/api/sync/${fileType}/push`;
+    syncLogger.header(`PUSH ENTITIES START - ${fileType} (user: ${targetUserId || 'default'})`);
 
     try {
       // Get local data
       let data: unknown;
+      let entities: PushEntity[] = [];
 
       if (fileType === 'categories') {
         const { getAllCategoriesForSync } = await import('./CategoryService');
@@ -940,80 +871,51 @@ class SyncService {
         data = await getSettings(fileUserId);
       }
 
-      const dataStr = JSON.stringify(data);
-      const dataSize = new Blob([dataStr]).size;
-      const dataLength = Array.isArray(data) ? data.length : 1;
-      syncLogger.verbose(`Local data size: ${dataSize} bytes`);
-      syncLogger.verbose(`Local data length: ${dataLength} items`);
-      syncLogger.verbose(`Local data for ${fileType}`, data);
-
-      if (this.syncMetadata) {
-        syncLogger.verbose('Sync metadata', {
-          lastSyncTime: this.syncMetadata[fileType].lastSyncTime,
-          lastServerTimestamp: this.syncMetadata[fileType].lastServerTimestamp,
-          syncCount: this.syncMetadata[fileType].syncCount,
-          lastSyncStatus: this.syncMetadata[fileType].lastSyncStatus,
+      // Map local data to PushEntity format
+      if (Array.isArray(data)) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        entities = (data as any[]).map(item => ({
+          entityId: item.id,
+          entityType: fileType,
+          data: item,
+          clientUpdatedAt: item.updatedAt || item.createdAt || new Date().toISOString(),
+          deletedAt: item.deletedAt
+        }));
+      } else if (data && typeof data === 'object') {
+        // Handle singleton (settings)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const item = data as any;
+        entities.push({
+          entityId: 'settings', // Fixed ID for singleton
+          entityType: fileType,
+          data: item,
+          clientUpdatedAt: item.updatedAt || item.createdAt || new Date().toISOString(),
         });
       }
 
-      // Prepare push request
-      requestBody = {
-        version: '1.0.0',
-        deviceId: this.deviceId!,
-        syncTimestamp: new Date().toISOString(),
-        deviceName: this.syncMetadata?.deviceName,
-        userId: targetUserId || undefined,
-        data: data,
+      const request: PushEntitiesRequest = {
+        entityType: fileType,
+        entities,
+        userId: targetUserId,
       };
 
-      const requestDetails = {
-        method: 'POST',
-        endpoint,
-        fileType,
-        deviceId: this.deviceId,
-        deviceName: this.syncMetadata?.deviceName,
-        syncTimestamp: requestBody.syncTimestamp,
-        version: requestBody.version,
-        dataSize: new Blob([JSON.stringify(requestBody.data)]).size,
-        dataLength: Array.isArray(requestBody.data) ? requestBody.data.length : 1,
-      };
-
-      // Log request details
-      syncLogger.debug('Push request details', requestDetails);
-      syncLogger.verbose('Full request body', requestBody);
-
-      const response = await this.apiClient.request<{
-        success: boolean;
-        serverTimestamp: string;
-        lastSyncTime: string;
-        entriesCount: number;
-        message?: string;
-      }>(endpoint, {
-        method: 'POST',
-        body: requestBody,
-        requiresAuth: true,
-      });
+      const response = await this.apiClient.pushEntities(request);
 
       const pushDuration = Date.now() - pushStartTime;
       syncLogger.header(`PUSH RESPONSE RECEIVED - ${fileType}`);
       syncLogger.info(`Duration: ${pushDuration}ms`);
-      syncLogger.info(`Response Success: ${response.success}`);
-      syncLogger.info(`Server Timestamp: ${response.serverTimestamp}`);
-      syncLogger.info(`Last Sync Time: ${response.lastSyncTime}`);
-      syncLogger.info(`Entries Count: ${response.entriesCount}`);
-      if (response.message) {
-        syncLogger.info(`Response Message: ${response.message}`);
-      }
-      syncLogger.verbose('Full Response', response);
+      syncLogger.info(`Success: ${response.success}`);
+      syncLogger.info(`Results: ${response.results.length}`);
 
       if (response.success) {
-        // Update sync metadata (create new object to avoid read-only property issues)
+        // Update sync metadata
         if (this.syncMetadata) {
           this.syncMetadata = {
             ...this.syncMetadata,
             [fileType]: {
               ...this.syncMetadata[fileType],
-              lastSyncTime: response.lastSyncTime,
+              lastSyncTime: new Date().toISOString(),
+              // lastServerTimestamp: response.serverTimestamp, // Push response might give timestamp
               lastServerTimestamp: response.serverTimestamp,
               lastSyncStatus: 'success' as const,
               syncCount: this.syncMetadata[fileType].syncCount + 1,
@@ -1022,60 +924,18 @@ class SyncService {
           await this.saveSyncMetadata();
         }
 
-        this.notifyListeners({
-          type: 'push',
-          fileType,
-          timestamp: response.serverTimestamp,
-          entriesCount: response.entriesCount,
-        });
-
         syncLogger.end(`Push completed successfully for ${fileType}`);
       } else {
         syncLogger.warn(`Push response indicates failure for ${fileType}`);
-        syncLogger.end('PUSH FILE COMPLETE (FAILED)');
+        syncLogger.end('PUSH ENTITIES COMPLETE (FAILED)');
+        throw new Error(`Push failed for ${fileType}`);
       }
     } catch (error) {
-      // Verbose error logging
-      const errorDetails: {
-        request: {
-          method: string;
-          endpoint: string;
-          fileType: SyncFileType;
-          requestBody: SyncFileData<unknown> | null;
-        };
-        error: string;
-        errorMessage?: string;
-        status?: number;
-        responseBody?: unknown;
-      } = {
-        request: {
-          method: 'POST',
-          endpoint,
-          fileType,
-          requestBody: requestBody,
-        },
-        error: error instanceof Error ? error.message : 'Unknown error',
-      };
-
-      // Extract response body and status from error if available
-      if (error instanceof Error) {
-        errorDetails.errorMessage = error.message;
-        const errorWithResponse = error as Error & { responseBody?: unknown; status?: number };
-        if (errorWithResponse.responseBody !== undefined) {
-          errorDetails.responseBody = errorWithResponse.responseBody;
-        }
-        if (errorWithResponse.status !== undefined) {
-          errorDetails.status = errorWithResponse.status;
-        }
-      }
-
       const pushDuration = Date.now() - pushStartTime;
-      syncLogger.fail(`PUSH FILE FAILED - ${fileType}`, errorDetails);
+      syncLogger.fail(`PUSH ENTITIES FAILED - ${fileType}`, error);
       syncLogger.verbose(`Duration: ${pushDuration}ms`);
-      syncLogger.verbose('Full error object', error);
 
       if (this.syncMetadata) {
-        // Update sync metadata (create new object to avoid read-only property issues)
         this.syncMetadata = {
           ...this.syncMetadata,
           [fileType]: {
@@ -1097,201 +957,118 @@ class SyncService {
   }
 
   /**
-   * Merge entries from server with local data
+   * Apply changes from server to local data
    */
-  private async mergeEntries(fileType: SyncFileType, serverData: unknown[], userId?: string): Promise<void> {
-    syncLogger.verbose(`Merging entries for ${fileType}`, serverData);
-
-    // If user is self (owner), use undefined for file operations (unscoped)
+  private async applyServerChanges(entityType: EntityType, changes: EntityChange[], userId?: string): Promise<SyncChanges<unknown>> {
     const fileUserId = userId === this.ownerId ? undefined : userId;
 
-    // Suppress sync callbacks during merge to prevent triggering additional syncs
+    syncLogger.verbose(`Applying ${changes.length} changes for ${entityType}`);
+
+    // Suppress callbacks
     this.isMergingData = true;
     syncCallbackRegistry.setSuppressCallbacks(true);
 
     try {
-      let localData: unknown[];
+      let localData: unknown[] = [];
       let writeFile: (data: unknown) => Promise<boolean>;
 
-      if (fileType === 'categories') {
+      // Load local data
+      if (entityType === 'categories') {
         const { getAllCategoriesForSync } = await import('./CategoryService');
-        const { readFile: _readFile, writeFile: writeCatFile } = await import('./FileSystemService');
-        const localCategories = await getAllCategoriesForSync(fileUserId);
-        localData = localCategories;
-        writeFile = async (data: unknown) => writeCatFile('categories.json', { categories: data as Category[] }, fileUserId);
-      } else if (fileType === 'locations') {
+        const { writeFile: writeCatFile } = await import('./FileSystemService');
+        localData = await getAllCategoriesForSync(fileUserId);
+        writeFile = async (data: unknown) => writeCatFile('categories.json', { categories: data }, fileUserId);
+      } else if (entityType === 'locations') {
         const { getAllLocationsForSync } = await import('./LocationService');
-        const { readFile: _readFile2, writeFile: writeLocFile } = await import('./FileSystemService');
-        const localLocations = await getAllLocationsForSync(fileUserId);
-        localData = localLocations;
-        writeFile = async (data: unknown) => writeLocFile('locations.json', { locations: data as Location[] }, fileUserId);
-      } else if (fileType === 'inventoryItems') {
+        const { writeFile: writeLocFile } = await import('./FileSystemService');
+        localData = await getAllLocationsForSync(fileUserId);
+        writeFile = async (data: unknown) => writeLocFile('locations.json', { locations: data }, fileUserId);
+      } else if (entityType === 'inventoryItems') {
         const { getAllItemsForSync } = await import('./InventoryService');
-        const { readFile: _readFile3, writeFile: writeItemFile } = await import('./FileSystemService');
-        const localItems = await getAllItemsForSync(fileUserId);
-        localData = localItems;
-        writeFile = async (data: unknown) => writeItemFile('items.json', { items: data as InventoryItem[] }, fileUserId);
-      } else if (fileType === 'todoItems') {
+        const { writeFile: writeItemFile } = await import('./FileSystemService');
+        localData = await getAllItemsForSync(fileUserId);
+        writeFile = async (data: unknown) => writeItemFile('items.json', { items: data }, fileUserId);
+      } else if (entityType === 'todoItems') {
         const { getAllTodosForSync } = await import('./TodoService');
-        const { readFile: _readFile4, writeFile: writeTodoFile } = await import('./FileSystemService');
-        const localTodos = await getAllTodosForSync(fileUserId);
-        localData = localTodos;
-        writeFile = async (data: unknown) => writeTodoFile('todos.json', { todos: data as TodoItem[] }, fileUserId);
+        const { writeFile: writeTodoFile } = await import('./FileSystemService');
+        localData = await getAllTodosForSync(fileUserId);
+        writeFile = async (data: unknown) => writeTodoFile('todos.json', { todos: data }, fileUserId);
+      } else if (entityType === 'settings') {
+        // Settings is special singleton
+        const { getSettings } = await import('./SettingsService');
+        const { writeFile: writeSettingsFile } = await import('./FileSystemService');
+        const currentSettings = await getSettings(fileUserId);
+
+        // Find if there is a change for settings
+        // Assuming settings changes might come as 'updated' for 'settings' entityId or similar
+        // For simplicity, if we have any change for settings type, we take the data from the first change
+        if (changes.length > 0) {
+          const change = changes[0];
+          if (change.data) {
+            await writeSettingsFile('settings.json', change.data, fileUserId);
+            return { added: [], updated: [change.data], removed: [] } as SyncChanges<unknown>;
+          }
+        }
+        return { added: [], updated: [], removed: [] };
       } else {
-        return;
+        return { added: [], updated: [], removed: [] };
       }
 
-      // Perform merge
+      // Convert local array to Map for easy access
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { merged, changes } = this.mergeByTimestamp(localData as any[], serverData as any[]);
-      syncLogger.verbose(`Merged data for ${fileType}`, merged);
-      syncLogger.verbose(`Changes for ${fileType}`, changes);
+      const dataMap = new Map<string, any>();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (localData as any[]).forEach(item => dataMap.set(item.id, item));
 
-      // Same merged data (callbacks will be suppressed)
-      // Only write if there are changes or if server sent data (to ensure consistency)
-      // Though mergeByTimestamp will always return merged array
-      await writeFile(merged);
+      const resultChanges: SyncChanges<unknown> = {
+        added: [],
+        updated: [],
+        removed: []
+      };
 
-      return changes as unknown as void; // Cast to void but actually we want to return changes to the caller, but caller is pullFile which doesn't use it directly yet except for passing to notifyListeners.
-      // Wait, pullFile calls this. mergeEntries signature says Promise<void>. 
-      // I should refactor mergeEntries to return Promise<SyncChanges<unknown> | void> or store it in a way that pullFile can access.
-      // Actually, mergeEntries is private and called by pullFile. I can change the signature.
-    } finally {
-      // Re-enable sync callbacks after merge completes
-      this.isMergingData = false;
-      syncCallbackRegistry.setSuppressCallbacks(false);
-    }
-  }
-
-  /**
-   * Merge settings from server with local settings
-   */
-  private async mergeSettings(serverSettings: Settings, userId?: string): Promise<void> {
-    syncLogger.verbose('Merging settings', serverSettings);
-
-    // If user is self (owner), use undefined for file operations (unscoped)
-    const fileUserId = userId === this.ownerId ? undefined : userId;
-
-    // Suppress sync callbacks during merge to prevent triggering additional syncs
-    this.isMergingData = true;
-    syncCallbackRegistry.setSuppressCallbacks(true);
-
-    try {
-      const { getSettings } = await import('./SettingsService');
-      const { writeFile } = await import('./FileSystemService');
-
-      const localSettings = await getSettings(fileUserId);
-
-      // Use settings with later updatedAt timestamp
-      const localTime = new Date(localSettings.updatedAt || localSettings.createdAt || 0);
-      const serverTime = new Date(serverSettings.updatedAt || serverSettings.createdAt || 0);
-
-      const merged = serverTime > localTime ? serverSettings : localSettings;
-
-      syncLogger.verbose('Merged settings', merged);
-
-      // Save merged settings (callbacks will be suppressed)
-      await writeFile('settings.json', merged, fileUserId);
-    } finally {
-      // Re-enable sync callbacks after merge completes
-      this.isMergingData = false;
-      syncCallbackRegistry.setSuppressCallbacks(false);
-    }
-  }
-
-  /**
-   * Merge two arrays of entries by timestamp, handling deletions
-   */
-  private mergeByTimestamp<T extends { id: string; createdAt?: string; updatedAt?: string; deletedAt?: string }>(
-    local: T[],
-    server: T[]
-  ): { merged: T[]; changes: SyncChanges<T> } {
-    syncLogger.verbose(`Merging by timestamp, local count: ${local.length}, server count: ${server.length}`);
-
-    const mergedMap = new Map<string, T>();
-    const changes: SyncChanges<T> = {
-      added: [],
-      updated: [],
-      removed: [],
-    };
-
-    // Add all local entries
-    local.forEach(entry => {
-      mergedMap.set(entry.id, entry);
-    });
-
-    // Merge with server entries based on timestamps and deletion state
-    server.forEach(serverEntry => {
-      const localEntry = mergedMap.get(serverEntry.id);
-
-      if (!localEntry) {
-        // Entry only exists on server - add it (including if deleted)
-        // Only consider it "added" if it's not deleted
-        mergedMap.set(serverEntry.id, serverEntry);
-
-        if (!serverEntry.deletedAt) {
-          syncLogger.verbose(`Adding new server entry: ${serverEntry.id}`);
-          changes.added.push(serverEntry);
+      // Apply changes
+      for (const change of changes) {
+        if (change.changeType === 'deleted') {
+          if (dataMap.has(change.entityId)) {
+            // Soft delete logic: if API sends 'deleted', we should probably delete it or mark it deleted.
+            // Existing logic uses deletedAt.
+            // If change has deletedAt, use it.
+            const existing = dataMap.get(change.entityId);
+            const newData = { ...existing, deletedAt: change.deletedAt || new Date().toISOString() };
+            dataMap.set(change.entityId, newData);
+            resultChanges.removed.push(change.entityId);
+          }
         } else {
-          syncLogger.verbose(`Server entry is new but deleted, ignoring for UI update: ${serverEntry.id}`);
-        }
-      } else {
-        // Entry exists on both - need to handle deletion state
-        const localDeletedAt = localEntry.deletedAt ? new Date(localEntry.deletedAt).getTime() : 0;
-        const serverDeletedAt = serverEntry.deletedAt ? new Date(serverEntry.deletedAt).getTime() : 0;
-        const localUpdatedAt = new Date(localEntry.updatedAt || localEntry.createdAt || 0).getTime();
-        const serverUpdatedAt = new Date(serverEntry.updatedAt || serverEntry.createdAt || 0).getTime();
+          // Created or Updated
+          if (change.data) {
+            // If updated, check timestamps? API is authority.
+            // We just upsert.
+            const isUpdate = dataMap.has(change.entityId);
+            dataMap.set(change.entityId, change.data);
 
-        // Both deleted - use later deletion timestamp
-        if (localDeletedAt > 0 && serverDeletedAt > 0) {
-          if (serverDeletedAt > localDeletedAt) {
-            syncLogger.verbose(`Both deleted, using server deletion (later): ${serverEntry.id}`);
-            mergedMap.set(serverEntry.id, serverEntry);
-            // No UI change needed
-          } else {
-            syncLogger.verbose(`Both deleted, keeping local deletion (later): ${serverEntry.id}`);
-          }
-        }
-        // Server deleted, local not deleted
-        else if (serverDeletedAt > 0 && localDeletedAt === 0) {
-          // If deletion is more recent than local update, apply deletion
-          if (serverDeletedAt > localUpdatedAt) {
-            syncLogger.verbose(`Server deleted (more recent than local update), applying deletion: ${serverEntry.id}`);
-            mergedMap.set(serverEntry.id, serverEntry);
-            changes.removed.push(serverEntry.id);
-          } else {
-            syncLogger.verbose(`Server deleted but local update is more recent, keeping local: ${serverEntry.id}`);
-          }
-        }
-        // Local deleted, server not deleted
-        else if (localDeletedAt > 0 && serverDeletedAt === 0) {
-          // If deletion is more recent than server update, keep deletion
-          if (localDeletedAt > serverUpdatedAt) {
-            syncLogger.verbose(`Local deleted (more recent than server update), keeping deletion: ${serverEntry.id}`);
-          } else {
-            // Server update is more recent than deletion - restore from server
-            syncLogger.verbose(`Local deleted but server update is more recent, restoring from server: ${serverEntry.id}`);
-            mergedMap.set(serverEntry.id, serverEntry);
-            changes.added.push(serverEntry); // Treated as add since it was deleted locally
-          }
-        }
-        // Neither deleted - use normal timestamp-based merge
-        else {
-          if (serverUpdatedAt > localUpdatedAt) {
-            syncLogger.verbose(`Using server version for entry: ${serverEntry.id}, server time: ${new Date(serverUpdatedAt).toISOString()}, local time: ${new Date(localUpdatedAt).toISOString()}`);
-            mergedMap.set(serverEntry.id, serverEntry);
-            changes.updated.push(serverEntry);
-          } else {
-            syncLogger.verbose(`Keeping local version for entry: ${serverEntry.id}, local time: ${new Date(localUpdatedAt).toISOString()}, server time: ${new Date(serverUpdatedAt).toISOString()}`);
+            if (isUpdate) {
+              resultChanges.updated.push(change.data);
+            } else {
+              resultChanges.added.push(change.data);
+            }
           }
         }
       }
-    });
 
-    const result = Array.from(mergedMap.values());
-    syncLogger.verbose(`Merge completed, result count: ${result.length}`);
-    return { merged: result, changes };
+      // Prepare final array
+      const finalData = Array.from(dataMap.values());
+
+      // Write back
+      await writeFile(finalData);
+
+      return resultChanges;
+
+    } finally {
+      this.isMergingData = false;
+      syncCallbackRegistry.setSuppressCallbacks(false);
+    }
   }
+
 
   /**
    * Get sync status for all file types
@@ -1391,17 +1168,17 @@ class SyncService {
         const deletedDate = new Date(item.deletedAt);
         const shouldKeep = deletedDate > cutoffDate;
         if (!shouldKeep) {
-          syncLogger.verbose(`Removing item ${(item as { id: string }).id} deleted on ${item.deletedAt}`);
+          syncLogger.verbose(`Removing item ${(item as { id: string }).id} deleted on ${item.deletedAt} `);
         }
         return shouldKeep;
       });
 
       const removedCount = allItems.length - cleaned.length;
       if (removedCount > 0) {
-        syncLogger.info(`Cleanup removed ${removedCount} old deleted items from ${fileType}`);
+        syncLogger.info(`Cleanup removed ${removedCount} old deleted items from ${fileType} `);
         await writeFile(cleaned);
       } else {
-        syncLogger.debug(`No old deleted items to remove from ${fileType}`);
+        syncLogger.debug(`No old deleted items to remove from ${fileType} `);
       }
 
       // Update last cleanup time
@@ -1443,7 +1220,7 @@ class SyncService {
     // Wait for any in-flight syncs to complete (with timeout)
     const promises = Array.from(this.inFlightSyncs.values());
     if (promises.length > 0) {
-      syncLogger.info(`Waiting for ${promises.length} in-flight sync(s) to complete...`);
+      syncLogger.info(`Waiting for ${promises.length} in -flight sync(s) to complete...`);
       try {
         await Promise.race([
           Promise.all(promises),
