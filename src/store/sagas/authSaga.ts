@@ -7,7 +7,6 @@ import {
   setError,
   setApiClient,
   setShowNicknameSetup,
-  setAccessibleAccounts,
   setActiveHomeId,
 } from '../slices/authSlice';
 import { loadItems } from './inventorySaga';
@@ -25,11 +24,9 @@ import {
   saveActiveHomeId,
   getActiveHomeId,
   removeActiveHomeId,
-  getAccessibleAccounts,
-  saveAccessibleAccounts,
-  clearAccessibleAccounts,
 } from '../../services/AuthService';
-import { User, ErrorDetails, ListAccessibleAccountsResponse, AccessibleAccount } from '../../types/api';
+import { homeService } from '../../services/HomeService';
+import { User, ErrorDetails } from '../../types/api';
 import type { RootState } from '../types';
 import { getGlobalToast } from '../../components/organisms/ToastProvider';
 import i18n from '../../i18n/i18n';
@@ -49,7 +46,6 @@ const SIGNUP = 'auth/SIGNUP';
 const GOOGLE_LOGIN = 'auth/GOOGLE_LOGIN';
 const LOGOUT = 'auth/LOGOUT';
 const UPDATE_USER = 'auth/UPDATE_USER';
-const LOAD_ACCESSIBLE_ACCOUNTS = 'auth/LOAD_ACCESSIBLE_ACCOUNTS';
 const INITIALIZE_API_CLIENT = 'auth/INITIALIZE_API_CLIENT';
 const AUTH_ERROR = 'auth/AUTH_ERROR';
 const ACCESS_DENIED = 'auth/ACCESS_DENIED';
@@ -70,7 +66,6 @@ export const googleLogin = (idToken: string, platform: string) => ({
 });
 export const logout = () => ({ type: LOGOUT });
 export const updateUser = (userData: User) => ({ type: UPDATE_USER, payload: userData });
-export const loadAccessibleAccounts = () => ({ type: LOAD_ACCESSIBLE_ACCOUNTS });
 export const initializeApiClient = (apiBaseUrl: string) => ({
   type: INITIALIZE_API_CLIENT,
   payload: apiBaseUrl,
@@ -123,20 +118,8 @@ function* initializeApiClientSaga(action: { type: string; payload: string }) {
 
     // Set initial active home ID from state
     const activeHomeId: string | null = (yield select((state: RootState) => state.auth.activeHomeId)) as string | null;
-    if (activeHomeId) {
-      apiClient.setActiveUserId(activeHomeId);
-    }
-
-    // Load cached accessible accounts
-    try {
-      const cachedAccounts: AccessibleAccount[] | null = (yield call(getAccessibleAccounts)) as AccessibleAccount[] | null;
-      if (cachedAccounts) {
-        console.log('[AuthSaga] Loaded cached accessible accounts:', cachedAccounts.length);
-        yield put(setAccessibleAccounts(cachedAccounts));
-      }
-    } catch (error) {
-      console.error('[AuthSaga] Error loading cached accessible accounts:', error);
-    }
+    // We don't set activeUserId on apiClient because activeHomeId is a context, not a user impersonation.
+    // Inventory and Todo sagas handle scoping explicitly.
 
     yield put(setApiClient(apiClient));
 
@@ -154,8 +137,6 @@ function* handleAuthError() {
   yield put(setUser(null));
   yield put(setAuthenticated(false));
   yield put(setActiveHomeId(null));
-  yield put(setAccessibleAccounts([]));
-  yield call(clearAccessibleAccounts);
 }
 
 function* handleAccessDenied(action: { type: string; payload?: string }) {
@@ -164,14 +145,7 @@ function* handleAccessDenied(action: { type: string; payload?: string }) {
 
   if (!deniedUserId) return;
 
-  // 1. Remove from accessible accounts
-  const currentAccounts: AccessibleAccount[] = (yield select((state: RootState) => state.auth.accessibleAccounts)) as AccessibleAccount[];
-  const updatedAccounts = currentAccounts.filter(acc => acc.userId !== deniedUserId);
-
-  yield put(setAccessibleAccounts(updatedAccounts));
-  yield call(saveAccessibleAccounts, updatedAccounts);
-
-  // 2. If current active home is the denied one, switch to personal or null
+  // If current active home is the denied one, switch to personal or null
   const activeHomeId: string | null = (yield select((state: RootState) => state.auth.activeHomeId)) as string | null;
   if (activeHomeId === deniedUserId) {
     console.warn('[AuthSaga] Active home access denied, switching to default');
@@ -233,13 +207,13 @@ function* checkAuthSaga(): Generator {
           yield put(setActiveHomeId(activeHomeId));
         }
 
-        // Load accessible accounts
-        yield put(loadAccessibleAccounts());
-
         // Reload data with correct context
         yield put(loadItems());
         yield put(loadTodos());
         yield put(loadSettings());
+
+        // Sync homes
+        yield call([homeService, homeService.syncHomes], apiClient);
       } else if (savedUser) {
         yield put(setUser(savedUser));
         yield put(setAuthenticated(true));
@@ -262,6 +236,9 @@ function* checkAuthSaga(): Generator {
         yield put(loadItems());
         yield put(loadTodos());
         yield put(loadSettings());
+
+        // Sync homes
+        yield call([homeService, homeService.syncHomes], apiClient);
       } else {
         throw new Error('No user data available from API or storage');
       }
@@ -360,13 +337,13 @@ function* loginSaga(action: { type: string; payload: { email: string; password: 
       yield put(setActiveHomeId(activeHomeId));
     }
 
-    // Load accessible accounts
-    yield put(loadAccessibleAccounts());
-
     // Reload data with correct context
     yield put(loadItems());
     yield put(loadTodos());
     yield put(loadSettings());
+
+    // Sync homes
+    yield call([homeService, homeService.syncHomes], apiClient);
 
     // Show success toast
     const toast = getGlobalToast();
@@ -439,8 +416,13 @@ function* signupSaga(action: { type: string; payload: { email: string; password:
 
     yield put(setAuthenticated(true));
 
-    // Load accessible accounts
-    yield put(loadAccessibleAccounts());
+    // Reload data with correct context
+    yield put(loadItems());
+    yield put(loadTodos());
+    yield put(loadSettings());
+
+    // Sync homes
+    yield call([homeService, homeService.syncHomes], apiClient);
 
     // Show success toast
     const toast = getGlobalToast();
@@ -536,13 +518,13 @@ function* googleLoginSaga(action: { type: string; payload: { idToken: string; pl
       yield put(setActiveHomeId(activeHomeId));
     }
 
-    // Load accessible accounts
-    yield put(loadAccessibleAccounts());
-
     // Reload data with correct context
     yield put(loadItems());
     yield put(loadTodos());
     yield put(loadSettings());
+
+    // Sync homes
+    yield call([homeService, homeService.syncHomes], apiClient);
 
     // Show success toast
     const toast = getGlobalToast();
@@ -575,7 +557,6 @@ function* logoutSaga() {
   console.log('[AuthSaga] logout() called - clearing auth');
 
   try {
-    yield put(setAccessibleAccounts([])); // Clear accounts on logout
     yield call(handleAuthError);
 
     // Show success toast
@@ -601,43 +582,29 @@ function* updateUserSaga(action: { type: string; payload: User }) {
   }
 }
 
-function* loadAccessibleAccountsSaga(): Generator {
-  const apiClient: ApiClient = (yield select((state: RootState) => state.auth.apiClient)) as ApiClient;
-  if (!apiClient) return;
-
-  try {
-    const response = (yield call(apiClient.listAccessibleAccounts.bind(apiClient))) as ListAccessibleAccountsResponse;
-    yield put(setAccessibleAccounts(response.accounts));
-    yield call(saveAccessibleAccounts, response.accounts);
-    console.log('[AuthSaga] Loaded accessible accounts:', response.accounts.length);
-
-    // Validate active home ID
-    const activeHomeId: string | null = (yield select((state: RootState) => state.auth.activeHomeId)) as string | null;
-    if (activeHomeId) {
-      const isAccessible = response.accounts.some((account) => account.userId === activeHomeId);
-      if (!isAccessible) {
-        console.warn('[AuthSaga] Active home ID is no longer accessible, resetting to default:', activeHomeId);
-        yield put(setActiveHomeId(null));
-        yield call(removeActiveHomeId);
-      }
-    }
-  } catch (error) {
-    console.error('[AuthSaga] Error loading accessible accounts:', error);
-  }
-}
-
 // Handle active home ID change
 function* handleActiveHomeIdChange(action: { type: string; payload: string | null }) {
   const apiClient: ApiClient = (yield select((state: RootState) => state.auth.apiClient)) as ApiClient;
-  if (apiClient) {
-    apiClient.setActiveUserId(action.payload);
-    console.log('[AuthSaga] Updated ApiClient activeUserId and persisting:', action.payload);
 
-    if (action.payload) {
-      yield call(saveActiveHomeId, action.payload);
-    } else {
-      yield call(removeActiveHomeId);
-    }
+  console.log('[AuthSaga] Active home ID changed, persisting:', action.payload);
+
+  if (action.payload) {
+    yield call(saveActiveHomeId, action.payload);
+
+    // Sync HomeService state
+    // We call this to ensure HomeService's internal state matches Redux
+    // But we don't want it to trigger another dispatch loop, so useHome must be fixed next
+    homeService.switchHome(action.payload);
+
+    // Reload data for the new home
+    console.log('[AuthSaga] Reloading data for new home:', action.payload);
+    yield put(loadItems());
+    yield put(loadTodos());
+    yield put(loadSettings());
+  } else {
+    yield call(removeActiveHomeId);
+    // If no home is active, we might want to clear data or ensure HomeService knows
+    // homeService.switchHome(null); // HomeService might not support null completely yet
   }
 }
 
@@ -652,7 +619,5 @@ export function* authSaga() {
   yield takeLatest(GOOGLE_LOGIN, googleLoginSaga);
   yield takeLatest(LOGOUT, logoutSaga);
   yield takeLatest(UPDATE_USER, updateUserSaga);
-  yield takeLatest(LOAD_ACCESSIBLE_ACCOUNTS, loadAccessibleAccountsSaga);
   yield takeLatest(setActiveHomeId.type, handleActiveHomeIdChange);
 }
-

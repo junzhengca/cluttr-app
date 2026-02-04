@@ -29,7 +29,8 @@ import {
   LoginBottomSheet,
   SignupBottomSheet,
 } from '../components';
-import { useTodos, useAuth, useAppSelector } from '../store/hooks';
+import { useTodos, useAuth } from '../store/hooks';
+import { useHome } from '../hooks/useHome';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/types';
 import { useTheme } from '../theme/ThemeProvider';
@@ -185,10 +186,12 @@ export const NotesScreen: React.FC = () => {
   const theme = useTheme();
   const { t } = useTranslation();
   const { user } = useAuth();
-  const activeHomeId = useAppSelector((state) => state.auth.activeHomeId);
-  const accounts = useAppSelector((state) => state.auth.accessibleAccounts);
-
-  const currentHomeOwner = accounts.find((a) => a.userId === activeHomeId);
+  const { currentHome } = useHome();
+  const canAccessNotes = React.useMemo(() => {
+    if (!currentHome) return true;
+    if (currentHome.role === 'owner') return true;
+    return currentHome.settings?.canShareTodos ?? true;
+  }, [currentHome]);
 
   const [newTodoText, setNewTodoText] = useState('');
   const [newTodoNote, setNewTodoNote] = useState('');
@@ -354,7 +357,7 @@ export const NotesScreen: React.FC = () => {
           subtitle={t('notes.subtitle')}
           showRightButtons={true}
           avatarUrl={user?.avatarUrl}
-          ownerAvatarUrl={currentHomeOwner?.avatarUrl}
+          ownerAvatarUrl={currentHome?.owner?.avatarUrl}
           onAvatarPress={handleAvatarPress}
         />
         <LoginBottomSheet
@@ -379,11 +382,11 @@ export const NotesScreen: React.FC = () => {
           subtitle={t('notes.subtitle')}
           showRightButtons={true}
           avatarUrl={user?.avatarUrl}
-          ownerAvatarUrl={currentHomeOwner?.avatarUrl}
+          ownerAvatarUrl={currentHome?.owner?.avatarUrl}
           onAvatarPress={handleAvatarPress}
         />
         {/* Check if user has access to notes */}
-        {currentHomeOwner && !currentHomeOwner.isOwner && !currentHomeOwner.permissions?.canShareTodos ? (
+        {!canAccessNotes ? (
           <EmptyState
             icon="lock-closed"
             title={t('accessControl.notes.title')}

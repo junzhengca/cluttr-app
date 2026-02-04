@@ -122,7 +122,7 @@ export const MemberCard: React.FC<MemberCardProps> = ({
       <SwipeActionsContainer>
         <DeleteAction
           onPress={() => {
-            onRemove(member.id);
+            onRemove(member.userId);
             swipeableRef?.current?.close();
           }}
           activeOpacity={0.8}

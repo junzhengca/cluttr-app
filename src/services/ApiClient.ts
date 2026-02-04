@@ -35,6 +35,9 @@ import {
   PushEntitiesRequest,
   PushEntitiesResponse,
   ResetSyncResponse,
+  SyncHomesResponse,
+  PushHomesRequest,
+  PushHomesResponse,
 } from '../types/api';
 import { apiLogger } from '../utils/Logger';
 
@@ -524,93 +527,71 @@ export class ApiClient {
   }
 
   // =============================================================================
-  // Accounts Endpoints
+  // Home Settings & Members
   // =============================================================================
 
   /**
-   * GET /api/accounts/permissions
-   * Get account sharing permissions
+   * PATCH /api/homes/:homeId/settings
+   * Update home sharing settings
    */
-  async getAccountPermissions(): Promise<GetAccountPermissionsResponse> {
-    return this.request<GetAccountPermissionsResponse>('/api/accounts/permissions', {
-      method: 'GET',
-      requiresAuth: true,
-    });
-  }
-
-  /**
-   * GET /api/accounts
-   * List all accessible accounts
-   */
-  async listAccessibleAccounts(): Promise<ListAccessibleAccountsResponse> {
-    return this.request<ListAccessibleAccountsResponse>('/api/accounts', {
-      method: 'GET',
-      requiresAuth: true,
-    });
-  }
-
-  /**
-   * GET /api/accounts/members
-   * List all members of the account
-   * @param userId Optional account owner user ID to list members for
-   */
-  async listMembers(userId?: string): Promise<ListMembersResponse> {
-    const endpoint = userId ? `/api/accounts/members?userId=${userId}` : '/api/accounts/members';
-    return this.request<ListMembersResponse>(endpoint, {
-      method: 'GET',
-      requiresAuth: true,
-    });
-  }
-
-  /**
-   * DELETE /api/accounts/members/:memberId
-   * Remove a member from the account
-   * @param memberId ID of the member to remove, or your own ID to leave an account
-   * @param userId Required when removing yourself; ID of the account to leave
-   */
-  async removeMember(memberId: string, userId?: string): Promise<RemoveMemberResponse> {
-    const endpoint = userId ? `/api/accounts/members/${memberId}?userId=${userId}` : `/api/accounts/members/${memberId}`;
-    return this.request<RemoveMemberResponse>(endpoint, {
-      method: 'DELETE',
-      requiresAuth: true,
-    });
-  }
-
-  /**
-   * PATCH /api/accounts/settings
-   * Update account sharing permissions
-   */
-  async updateAccountSettings(
+  async updateHomeSettings(
+    homeId: string,
     settings: UpdateAccountSettingsRequest
   ): Promise<UpdateAccountSettingsResponse> {
-    return this.request<UpdateAccountSettingsResponse>('/api/accounts/settings', {
+    return this.request<UpdateAccountSettingsResponse>(`/api/homes/${homeId}/settings`, {
       method: 'PATCH',
       body: settings,
       requiresAuth: true,
     });
   }
 
-  // =============================================================================
-  // Invitations Endpoints
-  // =============================================================================
+
 
   /**
-   * GET /api/invitations/code
-   * Get the invitation code for the account
+   * GET /api/homes/:homeId/members
+   * List all members of the home
    */
-  async getInvitationCode(): Promise<GetInvitationCodeResponse> {
-    return this.request<GetInvitationCodeResponse>('/api/invitations/code', {
+  async listMembers(homeId: string): Promise<ListMembersResponse> {
+    return this.request<ListMembersResponse>(`/api/homes/${homeId}/members`, {
       method: 'GET',
       requiresAuth: true,
     });
   }
 
   /**
-   * POST /api/invitations/code/regenerate
-   * Regenerate the invitation code
+   * DELETE /api/homes/:homeId/members/:userId
+   * Remove a member from the home
    */
-  async regenerateInvitationCode(): Promise<RegenerateInvitationCodeResponse> {
-    return this.request<RegenerateInvitationCodeResponse>('/api/invitations/code/regenerate', {
+  async removeMember(homeId: string, userId: string): Promise<RemoveMemberResponse> {
+    return this.request<RemoveMemberResponse>(`/api/homes/${homeId}/members/${userId}`, {
+      method: 'DELETE',
+      requiresAuth: true,
+    });
+  }
+
+
+
+  // =============================================================================
+  // Invitations Endpoints
+  // =============================================================================
+
+  /**
+   * GET /api/homes/:homeId/invitation
+   * Get the invitation info for the home
+   */
+  async getInvitation(homeId: string): Promise<GetInvitationCodeResponse> {
+    return this.request<GetInvitationCodeResponse>(`/api/homes/${homeId}/invitation`, {
+      method: 'GET',
+      requiresAuth: true,
+    });
+  }
+
+  /**
+   * POST /api/homes/:homeId/invitation/regenerate
+   * Regenerate the invitation code for the home
+   */
+  async regenerateInvitationCode(homeId: string): Promise<{ invitationCode: string }> {
+    return this.request<{ invitationCode: string }>(`/api/homes/${homeId}/invitation/regenerate`, {
       method: 'POST',
       requiresAuth: true,
     });
@@ -641,6 +622,38 @@ export class ApiClient {
   // =============================================================================
   // Sync Endpoints
   // =============================================================================
+
+  /**
+   * GET /api/homes/sync
+   * Sync homes list with server
+   * @param since Optional ISO 8601 timestamp for incremental sync
+   * @param includeDeleted Optional whether to include deleted home IDs
+   */
+  async syncHomes(since?: string, includeDeleted?: boolean): Promise<SyncHomesResponse> {
+    const queryParams = new URLSearchParams();
+    if (since) {
+      queryParams.append('since', since);
+    }
+    if (includeDeleted !== undefined) {
+      queryParams.append('includeDeleted', String(includeDeleted));
+    }
+    return this.request<SyncHomesResponse>(`/api/homes/sync?${queryParams.toString()}`, {
+      method: 'GET',
+      requiresAuth: true,
+    });
+  }
+
+  /**
+   * POST /api/homes/sync
+   * Push local home changes to server
+   */
+  async pushHomes(request: PushHomesRequest): Promise<PushHomesResponse> {
+    return this.request<PushHomesResponse>('/api/homes/sync', {
+      method: 'POST',
+      body: request,
+      requiresAuth: true,
+    });
+  }
 
   /**
    * GET /api/sync/status

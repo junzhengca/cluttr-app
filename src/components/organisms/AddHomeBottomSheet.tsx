@@ -6,6 +6,7 @@ import styled from 'styled-components/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../theme/ThemeProvider';
 import { useHome } from '../../hooks/useHome';
+import { useAuth } from '../../store/hooks';
 import { BottomSheetHeader, Button, FormSection, UncontrolledInput } from '../atoms';
 import { StyledProps } from '../../utils/styledComponents';
 import { useKeyboardVisibility } from '../../hooks/useKeyboardVisibility';
@@ -51,7 +52,8 @@ export const AddHomeBottomSheet: React.FC<AddHomeBottomSheetProps> = ({
     const { t } = useTranslation();
     const theme = useTheme();
     const insets = useSafeAreaInsets();
-    const { createHome } = useHome();
+    const { createHome, syncHomes } = useHome();
+    const { getApiClient, isAuthenticated } = useAuth();
     const { isKeyboardVisible } = useKeyboardVisibility();
     const [name, setName] = useState('');
     const [address, setAddress] = useState('');
@@ -71,6 +73,14 @@ export const AddHomeBottomSheet: React.FC<AddHomeBottomSheetProps> = ({
         setIsLoading(true);
         try {
             await createHome(name, address);
+
+            // Trigger sync to push home to server
+            if (isAuthenticated) {
+                const apiClient = getApiClient();
+                if (apiClient) {
+                    syncHomes(apiClient).catch((err: any) => console.error('Background sync failed:', err));
+                }
+            }
 
             // Clear inputs and state
             setName('');

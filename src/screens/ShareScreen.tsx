@@ -22,32 +22,11 @@ import { calculateBottomPadding } from '../utils/layout';
 import { RootStackParamList } from '../navigation/types';
 import { useAuth, useAppDispatch, useAppSelector } from '../store/hooks';
 import { useToast } from '../hooks/useToast';
-import { Member, AccessibleAccount } from '../types/api';
-import { setActiveHomeId } from '../store/slices/authSlice';
 
-// Mock data for development
-const MOCK_MEMBERS: Member[] = [
-  {
-    id: 'member1',
-    email: 'alice@example.com',
-    nickname: 'Alice',
-    avatarUrl: undefined,
-    joinedAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
-    isOwner: false,
-  },
-  {
-    id: 'member2',
-    email: 'bob@example.com',
-    nickname: 'Bob',
-    avatarUrl: undefined,
-    joinedAt: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString(),
-    isOwner: false,
-  },
-];
+import { Member } from '../types/api';
+import { useHome } from '../hooks/useHome';
 
-const MOCK_INVITATION_CODE = 'ABC123XYZ789';
-const MOCK_CAN_SHARE_INVENTORY = true;
-const MOCK_CAN_SHARE_TODOS = true;
+
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -108,51 +87,136 @@ export const ShareScreen: React.FC = () => {
   const insets = useSafeAreaInsets();
   const dispatch = useAppDispatch();
   const navigation = useNavigation<NavigationProp>();
-  const { user, isAuthenticated } = useAuth();
-  const activeHomeId = useAppSelector((state) => state.auth.activeHomeId);
+  const { user, isAuthenticated, getApiClient } = useAuth();
+
+  const { homes, currentHome, switchHome } = useHome();
   const { showToast } = useToast();
   const inviteMenuBottomSheetRef = useRef<BottomSheetModal | null>(null);
 
-  // Using mock data instead of API calls
-  const [canShareInventory, setCanShareInventory] = useState(MOCK_CAN_SHARE_INVENTORY);
-  const [canShareTodos, setCanShareTodos] = useState(MOCK_CAN_SHARE_TODOS);
-  const members = MOCK_MEMBERS;
-  const invitationCode = MOCK_INVITATION_CODE;
-  const accounts = useAppSelector((state) => state.auth.accessibleAccounts);
+  const [members, setMembers] = useState<Member[]>([]);
+  const [isLoadingMembers, setIsLoadingMembers] = useState(false);
+  const [membersError, setMembersError] = useState<string | null>(null);
+
+  const invitationCode = currentHome?.invitationCode;
+  const canShareInventory = currentHome?.settings?.canShareInventory ?? true;
+  const canShareTodos = currentHome?.settings?.canShareTodos ?? true;
+
   const [isSwitchingHome, setIsSwitchingHome] = useState(false);
   const panAnim = useRef(new Animated.Value(0)).current;
 
-  const currentHome = accounts.find(a =>
-    activeHomeId ? a.userId === activeHomeId : a.isOwner
-  ) || (user ? { userId: user.id, nickname: user.nickname || user.email, email: user.email, avatarUrl: user.avatarUrl, isOwner: true, createdAt: user.createdAt } : null);
+  const loadMembers = useCallback(async () => {
+    if (!currentHome?.id) return;
+
+    // If home is pending creation, don't fetch from server yet
+    if (currentHome.pendingCreate) {
+      setMembers([]);
+      return;
+    }
+
+    setIsLoadingMembers(true);
+    setMembersError(null);
+    try {
+      const apiClient = getApiClient();
+      if (!apiClient) return;
+
+      const response = await apiClient.listMembers(currentHome.id);
+      setMembers(response.members);
+    } catch (error) {
+      console.error('Error loading members:', error);
+      setMembersError('Failed to load members');
+    } finally {
+      setIsLoadingMembers(false);
+    }
+  }, [currentHome?.id, currentHome?.pendingCreate, getApiClient]);
+
+  React.useEffect(() => {
+    if (isAuthenticated) {
+      loadMembers();
+    }
+  }, [isAuthenticated, loadMembers]);
 
   const handleRemoveMember = useCallback(
-    (_memberId: string) => {
-      showToast('Remove member: Mock mode - not implemented', 'info');
+    async (memberUserId: string) => {
+      if (!currentHome?.id) return;
+
+      if (currentHome.pendingCreate) {
+        showToast(t('common.syncing', 'Syncing in progress...'), 'info');
+        return;
+      }
+
+      try {
+        const apiClient = getApiClient();
+        if (!apiClient) return;
+
+        await apiClient.removeMember(currentHome.id, memberUserId);
+        showToast(t('share.members.removeSuccess', 'Member removed successfully'), 'success');
+        loadMembers();
+      } catch (error) {
+        console.error('Error removing member:', error);
+        showToast(t('share.members.removeError', 'Failed to remove member'), 'error');
+      }
     },
-    [showToast]
+    [currentHome?.id, currentHome?.pendingCreate, getApiClient, loadMembers, showToast, t]
   );
 
   const handleInvitePress = useCallback(() => {
+    if (currentHome?.pendingCreate) {
+      showToast(t('common.syncing', 'Syncing in progress...'), 'info');
+      return;
+    }
     inviteMenuBottomSheetRef.current?.present();
-  }, []);
+  }, [currentHome?.pendingCreate, showToast, t]);
 
   const getInvitationLink = useCallback(() => {
     const scheme = 'com.cluttrapp.cluttr'; // Matches app.json scheme
     return `${scheme}://?inviteCode=${invitationCode}`;
   }, [invitationCode]);
 
-  const handleToggleInventory = useCallback(() => {
-    const newValue = !canShareInventory;
-    setCanShareInventory(newValue);
-    showToast(`Inventory sharing ${newValue ? 'enabled' : 'disabled'} (mock mode)`, 'success');
-  }, [canShareInventory, showToast]);
+  const handleToggleInventory = useCallback(async () => {
+    if (!currentHome?.id) return;
 
-  const handleToggleTodos = useCallback(() => {
+    if (currentHome.pendingCreate) {
+      showToast(t('common.syncing', 'Syncing in progress...'), 'info');
+      return;
+    }
+
+    const newValue = !canShareInventory;
+
+    try {
+      const apiClient = getApiClient();
+      if (!apiClient) return;
+
+      await apiClient.updateHomeSettings(currentHome.id, { canShareInventory: newValue });
+      showToast(t('share.settings.updateSuccess', 'Settings updated'), 'success');
+      // HomeService will sync and update settings automatically? 
+      // For now we might need to manually trigger a sync or wait for background sync
+    } catch (error) {
+      console.error('Error updating inventory settings:', error);
+      showToast(t('share.settings.updateError', 'Failed to update settings'), 'error');
+    }
+  }, [canShareInventory, currentHome?.id, currentHome?.pendingCreate, getApiClient, showToast, t]);
+
+  const handleToggleTodos = useCallback(async () => {
+    if (!currentHome?.id) return;
+
+    if (currentHome.pendingCreate) {
+      showToast(t('common.syncing', 'Syncing in progress...'), 'info');
+      return;
+    }
+
     const newValue = !canShareTodos;
-    setCanShareTodos(newValue);
-    showToast(`Todos sharing ${newValue ? 'enabled' : 'disabled'} (mock mode)`, 'success');
-  }, [canShareTodos, showToast]);
+
+    try {
+      const apiClient = getApiClient();
+      if (!apiClient) return;
+
+      await apiClient.updateHomeSettings(currentHome.id, { canShareTodos: newValue });
+      showToast(t('share.settings.updateSuccess', 'Settings updated'), 'success');
+    } catch (error) {
+      console.error('Error updating todos settings:', error);
+      showToast(t('share.settings.updateError', 'Failed to update settings'), 'error');
+    }
+  }, [canShareTodos, currentHome?.id, currentHome?.pendingCreate, getApiClient, showToast, t]);
 
   const handleLeaveHome = useCallback(() => {
     Alert.alert(
@@ -207,10 +271,8 @@ export const ShareScreen: React.FC = () => {
     });
   };
 
-  const handleAccountSelect = (accountId: string) => {
-    // If selecting own account, set to null (default)
-    const newActiveId = accountId === user?.id ? null : accountId;
-    dispatch(setActiveHomeId(newActiveId));
+  const handleAccountSelect = (homeId: string) => {
+    switchHome(homeId);
     handleBackToSharePress();
   };
 
@@ -255,7 +317,7 @@ export const ShareScreen: React.FC = () => {
         onBackPress={isSwitchingHome ? handleBackToSharePress : undefined}
         showRightButtons={!isSwitchingHome}
         avatarUrl={user?.avatarUrl}
-        ownerAvatarUrl={!isSwitchingHome && activeHomeId ? accounts.find(a => a.userId === activeHomeId)?.avatarUrl : undefined}
+        ownerAvatarUrl={!isSwitchingHome && currentHome?.role === 'owner' ? currentHome.owner?.avatarUrl : undefined}
         onAvatarPress={handleAvatarPress}
       />
 
@@ -267,7 +329,7 @@ export const ShareScreen: React.FC = () => {
             contentContainerStyle={{ paddingBottom: calculateBottomPadding(insets.bottom) }}
           >
             <HomeCard
-              name={currentHome?.nickname || currentHome?.email || t('share.home.currentHome')}
+              name={currentHome?.name || t('share.home.currentHome')}
               isActive={true}
               showSwitchButton={true}
               onSwitchPress={handleSwitchHomePress}
@@ -276,22 +338,21 @@ export const ShareScreen: React.FC = () => {
             />
 
             <MemberList
-              owner={currentHome ? {
-                id: currentHome.userId,
-                email: currentHome.email,
-                nickname: currentHome.nickname,
-                avatarUrl: currentHome.avatarUrl,
-                createdAt: (currentHome as AccessibleAccount).joinedAt || (currentHome as { createdAt?: string }).createdAt,
+              owner={currentHome?.owner ? {
+                userId: currentHome.owner.userId,
+                email: currentHome.owner.email,
+                nickname: currentHome.owner.nickname,
+                avatarUrl: currentHome.owner.avatarUrl,
               } : null}
               members={members}
-              isLoading={false}
-              error={null}
-              onRemoveMember={currentHome?.isOwner ? handleRemoveMember : undefined}
+              isLoading={isLoadingMembers}
+              error={membersError}
+              onRemoveMember={currentHome?.role === 'owner' ? handleRemoveMember : undefined}
               onInvitePress={handleInvitePress}
-              showInviteButton={currentHome?.isOwner}
+              showInviteButton={currentHome?.role === 'owner'}
             />
 
-            {!currentHome?.isOwner && (
+            {currentHome?.role === 'member' && (
               <LeaveHomeButton
                 onPress={handleLeaveHome}
                 activeOpacity={0.8}
@@ -300,7 +361,7 @@ export const ShareScreen: React.FC = () => {
                 <LeaveHomeText>{t('share.members.leaveHome', 'Leave Home')}</LeaveHomeText>
               </LeaveHomeButton>
             )}
-            {currentHome?.isOwner && (
+            {currentHome?.role === 'owner' && (
               <PermissionConfigPanel
                 canShareInventory={canShareInventory}
                 canShareTodos={canShareTodos}
@@ -318,18 +379,18 @@ export const ShareScreen: React.FC = () => {
             showsVerticalScrollIndicator={false}
             contentContainerStyle={{ paddingBottom: calculateBottomPadding(insets.bottom) }}
           >
-            {accounts.map((account, _index) => (
+            {homes.map((home) => (
               <HomeCard
-                key={account.userId}
-                name={account.nickname || account.email}
-                isActive={activeHomeId ? account.userId === activeHomeId : account.isOwner}
-                onPress={() => handleAccountSelect(account.userId)}
-                canShareInventory={account.permissions?.canShareInventory}
-                canShareTodos={account.permissions?.canShareTodos}
+                key={home.id}
+                name={home.name}
+                isActive={currentHome?.id === home.id}
+                onPress={() => handleAccountSelect(home.id)}
+                canShareInventory={home.settings?.canShareInventory}
+                canShareTodos={home.settings?.canShareTodos}
               />
             ))}
 
-            {accounts.length === 0 && (
+            {homes.length === 0 && (
               <EmptyState
                 icon="home-outline"
                 title={t('share.members.empty.title')}

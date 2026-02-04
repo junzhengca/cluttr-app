@@ -163,7 +163,7 @@ export interface UpdateAccountSettingsResponse {
 }
 
 export interface Member {
-  id: string;
+  userId: string;
   email: string;
   nickname?: string;
   avatarUrl?: string;
@@ -427,4 +427,77 @@ export interface ErrorDetails {
   retryAttempts: RetryAttempt[];
   totalDuration: number;
   timestamp: string;
+}
+
+// =============================================================================
+// =============================================================================
+// Home Sync Response Types
+// =============================================================================
+
+export interface HomeSyncData {
+  homeId: string;
+  name: string;
+  address?: string;
+  invitationCode?: string;
+  settings?: {
+    canShareInventory: boolean;
+    canShareTodos: boolean;
+  };
+  memberCount?: number;
+  owner?: {
+    userId: string;
+    email: string;
+    nickname: string;
+    avatarUrl?: string;
+  };
+  role?: 'owner' | 'member';
+  createdAt?: string;
+  updatedAt?: string;
+  serverUpdatedAt?: string;
+}
+
+export interface SyncHomesResponse {
+  homes: HomeSyncData[];
+  deletedHomeIds: string[];
+  timestamp: string;
+  serverTimestamp: string;
+}
+
+export interface PushHomesRequest {
+  homes: {
+    homeId: string;
+    name: string;
+    address?: string;
+    clientUpdatedAt: string;
+    pendingCreate?: boolean;
+    pendingUpdate?: boolean;
+    pendingLeave?: boolean;
+    pendingJoin?: boolean;
+  }[];
+  lastSyncedAt?: string;
+}
+
+export interface HomeSyncResult {
+  homeId: string;
+  status: 'created' | 'updated' | 'server_version' | 'error' | 'deleted';
+  winner?: 'client' | 'server';
+  serverUpdatedAt?: string;
+  serverVersion?: {
+    name: string;
+    address?: string;
+    serverUpdatedAt: string;
+  };
+}
+
+export interface PushHomesResponse {
+  results: HomeSyncResult[];
+  newHomesFromServer: HomeSyncData[];
+  errors: {
+    homeId: string;
+    code: string;
+    message: string;
+    suggestedHomeId?: string;
+  }[];
+  deletedHomeIds: string[];
+  serverTimestamp: string;
 }

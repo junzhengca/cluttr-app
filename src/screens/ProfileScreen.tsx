@@ -173,7 +173,7 @@ const AuthSubtitle = styled(Text)`
 export const ProfileScreen: React.FC = () => {
   const { user, isAuthenticated, isLoading, error, logout, updateUser, googleLogin, getApiClient } = useAuth();
   const activeHomeId = useAppSelector((state) => state.auth.activeHomeId);
-  const accounts = useAppSelector((state) => state.auth.accessibleAccounts);
+
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
   const { t } = useTranslation();
@@ -190,9 +190,13 @@ export const ProfileScreen: React.FC = () => {
       const apiClient = getApiClient();
       if (!apiClient) return;
 
-      // List members for the current active home (or default context if activeHomeId is null)
-      const response = await apiClient.listMembers(activeHomeId || undefined);
-      setMembers(response.members);
+      // List members for the current active home
+      if (activeHomeId) {
+        const response = await apiClient.listMembers(activeHomeId);
+        setMembers(response.members);
+      } else {
+        setMembers([]);
+      }
     } catch (error) {
       console.error('Error loading members in Profile:', error);
     }

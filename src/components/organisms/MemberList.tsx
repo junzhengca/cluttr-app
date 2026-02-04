@@ -11,7 +11,7 @@ import { BaseCard, EmptyState } from '../atoms';
 import { Member } from '../../types/api';
 
 interface OwnerInfo {
-  id: string;
+  userId: string;
   email: string;
   nickname?: string;
   avatarUrl?: string;
@@ -106,7 +106,7 @@ export const MemberList: React.FC<MemberListProps> = ({
 
   const handleRemoveMember = useCallback(
     (memberId: string) => {
-      const member = members.find((m) => m.id === memberId);
+      const member = members.find((m) => m.userId === memberId);
       const memberName = member?.nickname || member?.email || t('share.members.unknownMember');
 
       Alert.alert(
@@ -176,7 +176,7 @@ export const MemberList: React.FC<MemberListProps> = ({
           {owner && (
             <MemberCard
               member={{
-                id: owner.id,
+                userId: owner.userId,
                 email: owner.email,
                 nickname: owner.nickname,
                 avatarUrl: owner.avatarUrl,
@@ -190,11 +190,11 @@ export const MemberList: React.FC<MemberListProps> = ({
           {/* Members List */}
           {members.map((member) => (
             <MemberCard
-              key={member.id}
+              key={member.userId}
               member={member}
               isOwner={false}
               onRemove={onRemoveMember ? handleRemoveMember : undefined}
-              swipeableRef={getSwipeableRef(member.id)}
+              swipeableRef={getSwipeableRef(member.userId)}
             />
           ))}
 

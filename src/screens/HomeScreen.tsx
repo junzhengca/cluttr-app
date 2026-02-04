@@ -48,7 +48,8 @@ import {
 import { useItemActions } from '../hooks/useItemActions';
 import { InventoryItem } from '../types/inventory';
 import { RootStackParamList } from '../navigation/types';
-import { useInventory, useAuth, useAppSelector, useTodos } from '../store/hooks';
+import { useInventory, useAuth, useTodos } from '../store/hooks';
+import { useHome } from '../hooks/useHome';
 import { calculateBottomPadding } from '../utils/layout';
 import { useToast } from '../hooks/useToast';
 
@@ -124,8 +125,7 @@ export const HomeScreen: React.FC = () => {
   const navigation = useNavigation<NavigationProp>();
   const { items, loading: isLoading, loadItems, updateItem: updateInventoryItem } = useInventory();
   const { user, getApiClient } = useAuth();
-  const activeHomeId = useAppSelector((state) => state.auth.activeHomeId);
-  const accounts = useAppSelector((state) => state.auth.accessibleAccounts);
+  const { currentHome } = useHome();
   const theme = useTheme();
   const loginBottomSheetRef = useRef<BottomSheetModal | null>(null);
   const signupBottomSheetRef = useRef<BottomSheetModal | null>(null);
@@ -185,10 +185,11 @@ export const HomeScreen: React.FC = () => {
     return filtered;
   }, [selectedLocationId, selectedStatusId, items]);
 
-  const currentHomeOwner = useMemo(() => {
-    if (!activeHomeId) return null;
-    return accounts.find((a) => a.userId === activeHomeId);
-  }, [activeHomeId, accounts]);
+  const canAccessInventory = useMemo(() => {
+    if (!currentHome) return true; // Default to true if no home context (local only)
+    if (currentHome.role === 'owner') return true;
+    return currentHome.settings?.canShareInventory ?? true;
+  }, [currentHome]);
 
   const handleItemPress = (item: InventoryItem) => {
     const rootNavigation = navigation.getParent();
@@ -365,11 +366,11 @@ export const HomeScreen: React.FC = () => {
           subtitle={headerSubtitle}
           showRightButtons={true}
           avatarUrl={user?.avatarUrl}
-          ownerAvatarUrl={currentHomeOwner?.avatarUrl}
+          ownerAvatarUrl={currentHome?.owner?.avatarUrl}
           onAvatarPress={handleAvatarPress}
         />
         {/* Check if user has access to item library */}
-        {currentHomeOwner && !currentHomeOwner.isOwner && !currentHomeOwner.permissions?.canShareInventory ? (
+        {!canAccessInventory ? (
           <EmptyState
             icon="lock-closed"
             title={t('accessControl.itemLibrary.title')}
@@ -525,7 +526,7 @@ export const HomeScreen: React.FC = () => {
           ref={editBottomSheetRef}
           bottomSheetRef={editBottomSheetModalRef}
         />
-        {(!currentHomeOwner || (currentHomeOwner.isOwner || currentHomeOwner.permissions?.canShareInventory)) && (
+        {canAccessInventory && (
           <FloatingActionButton
             onManualAdd={handleManualAdd}
             onAIAutomatic={handleAIAutomatic}
