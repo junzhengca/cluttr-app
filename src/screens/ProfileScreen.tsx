@@ -15,14 +15,13 @@ import type { StyledProps, StyledPropsWith } from '../utils/styledComponents';
 import {
   PageHeader,
   LogoutButton,
-  Toggle,
   LoginBottomSheet,
   SignupBottomSheet,
   EditNicknameBottomSheet,
   type EditNicknameBottomSheetRef,
   Button,
 } from '../components';
-import { useAuth, useSync, useAppSelector } from '../store/hooks';
+import { useAuth, useAppSelector } from '../store/hooks';
 import { Member } from '../types/api';
 import { useTheme } from '../theme/ThemeProvider';
 import { calculateBottomPadding } from '../utils/layout';
@@ -131,40 +130,10 @@ const InfoValue = styled(Text)`
   color: ${({ theme }: StyledProps) => theme.colors.text};
 `;
 
-const SyncStatusText = styled(Text)`
-  font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.sm}px;
-  color: ${({ theme }: StyledProps) => theme.colors.textSecondary};
-  margin-top: ${({ theme }: StyledProps) => theme.spacing.xs}px;
-`;
-
-const ErrorText = styled(Text)`
-  font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.sm}px;
-  color: ${({ theme }: StyledProps) => theme.colors.error};
-  margin-top: ${({ theme }: StyledProps) => theme.spacing.xs}px;
-`;
-
 const LoadingContainer = styled(View)`
   flex: 1;
   justify-content: center;
   align-items: center;
-`;
-
-const SyncButton = styled(TouchableOpacity) <{ disabled?: boolean }>`
-  background-color: ${({ theme, disabled }: StyledPropsWith<{ disabled?: boolean }>) =>
-    disabled ? theme.colors.border : theme.colors.primary};
-  border-radius: ${({ theme }: StyledProps) => theme.borderRadius.md}px;
-  padding: ${({ theme }: StyledProps) => theme.spacing.sm}px ${({ theme }: StyledProps) => theme.spacing.md}px;
-  flex-direction: row;
-  align-items: center;
-  justify-content: center;
-  opacity: ${({ disabled }: StyledPropsWith<{ disabled?: boolean }>) => (disabled ? 0.6 : 1)};
-  margin-top: ${({ theme }: StyledProps) => theme.spacing.sm}px;
-`;
-
-const SyncButtonText = styled(Text)`
-  font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.md}px;
-  font-weight: ${({ theme }: StyledProps) => theme.typography.fontWeight.medium};
-  color: ${({ theme }: StyledProps) => theme.colors.surface};
 `;
 
 const AuthButtonContainer = styled(View)`
@@ -203,7 +172,6 @@ const AuthSubtitle = styled(Text)`
 
 export const ProfileScreen: React.FC = () => {
   const { user, isAuthenticated, isLoading, error, logout, updateUser, googleLogin, getApiClient } = useAuth();
-  const { enabled: syncEnabled, loading: syncLoading, lastSyncTime, error: syncError, enableSync, disableSync, syncAll } = useSync();
   const activeHomeId = useAppSelector((state) => state.auth.activeHomeId);
   const accounts = useAppSelector((state) => state.auth.accessibleAccounts);
   const insets = useSafeAreaInsets();
@@ -211,22 +179,11 @@ export const ProfileScreen: React.FC = () => {
   const { t } = useTranslation();
   const theme = useTheme();
   const [isUploading, setIsUploading] = useState(false);
-  const [localSyncEnabled, setLocalSyncEnabled] = useState(false);
   const [members, setMembers] = useState<Member[]>([]);
   const loginBottomSheetRef = useRef<BottomSheetModal | null>(null);
   const signupBottomSheetRef = useRef<BottomSheetModal | null>(null);
   const editNicknameBottomSheetModalRef = useRef<BottomSheetModal | null>(null);
   const editNicknameBottomSheetRef = useRef<EditNicknameBottomSheetRef | null>(null);
-
-  // Check if sync should be forced
-  // 1. User is member of another home (not owner)
-  const isMemberOfOtherHome = accounts.some(a => !a.isOwner);
-  // 2. User's home has other members (excluding self)
-  // We need to fetch members to know this. Ideally backend sends member count in user profile or account list.
-  // For now, we fetch members.
-  const hasOtherMembers = members.length > 0; // members list from API excludes owner
-
-  const isForcedSync = isMemberOfOtherHome || hasOtherMembers;
 
   const loadMembers = useCallback(async () => {
     try {
@@ -246,14 +203,6 @@ export const ProfileScreen: React.FC = () => {
       loadMembers();
     }
   }, [isAuthenticated, loadMembers]);
-
-  // Force enable sync if required
-  useEffect(() => {
-    if (isAuthenticated && isForcedSync && !syncEnabled && !syncLoading) {
-      console.log('Forcing sync enabled due to membership status');
-      enableSync();
-    }
-  }, [isAuthenticated, isForcedSync, syncEnabled, syncLoading, enableSync]);
 
   const getLocale = useCallback(() => {
     return i18n.language === 'zh' || i18n.language === 'zh-CN' ? 'zh-CN' : 'en-US';
@@ -358,61 +307,6 @@ export const ProfileScreen: React.FC = () => {
       ]
     );
   };
-
-  const handleSyncToggle = useCallback(async () => {
-    if (isForcedSync && syncEnabled) {
-      // Should be disabled in UI, but double check here
-      Alert.alert(
-        t('profile.sync.title'),
-        t('profile.sync.forcedWarning')
-      );
-      return;
-    }
-
-    try {
-      if (syncEnabled) {
-        await disableSync();
-        setLocalSyncEnabled(false);
-        Alert.alert(
-          t('profile.sync.alerts.disabled.title'),
-          t('profile.sync.alerts.disabled.message')
-        );
-      } else {
-        await enableSync();
-        setLocalSyncEnabled(true);
-        Alert.alert(
-          t('profile.sync.alerts.enabled.title'),
-          t('profile.sync.alerts.enabled.message')
-        );
-      }
-    } catch (error) {
-      console.error('Error toggling sync:', error);
-      Alert.alert(
-        t('profile.sync.alerts.error.title'),
-        error instanceof Error ? error.message : t('profile.sync.alerts.error.toggleFailed')
-      );
-    }
-  }, [syncEnabled, enableSync, disableSync, t, isForcedSync]);
-
-  const handleManualSync = useCallback(async () => {
-    try {
-      await syncAll();
-      Alert.alert(
-        t('profile.sync.alerts.started.title'),
-        t('profile.sync.alerts.started.message')
-      );
-    } catch (error) {
-      console.error('Error triggering manual sync:', error);
-      Alert.alert(
-        t('profile.sync.alerts.error.title'),
-        error instanceof Error ? error.message : t('profile.sync.alerts.error.syncFailed')
-      );
-    }
-  }, [syncAll, t]);
-
-  useEffect(() => {
-    setLocalSyncEnabled(syncEnabled);
-  }, [syncEnabled]);
 
   const handleLoginPress = useCallback(() => {
     signupBottomSheetRef.current?.dismiss();
@@ -611,50 +505,6 @@ export const ProfileScreen: React.FC = () => {
               <InfoLabel>{t('profile.lastUpdated')}</InfoLabel>
               <InfoValue>{formatDate(user.updatedAt, getLocale(), t)}</InfoValue>
             </InfoRow>
-          )}
-        </InfoSection>
-
-        <InfoSection>
-          <SectionTitle>{t('profile.sync.title')}</SectionTitle>
-          <InfoRow>
-            <View style={{ flex: 1, paddingRight: 16 }}>
-              <InfoLabel>{t('profile.sync.enableSync')}</InfoLabel>
-              <SyncStatusText>
-                {localSyncEnabled ? t('profile.sync.status.enabled') : t('profile.sync.status.disabled')}
-              </SyncStatusText>
-              {lastSyncTime && localSyncEnabled && (
-                <SyncStatusText>
-                  {t('profile.sync.lastSync')} {new Date(lastSyncTime).toLocaleString()}
-                </SyncStatusText>
-              )}
-              {isForcedSync && (
-                <SyncStatusText style={{ color: theme.colors.primary, marginTop: 4 }}>
-                  {t('profile.sync.forcedWarning')}
-                </SyncStatusText>
-              )}
-              {syncError && (
-                <ErrorText>{t('profile.sync.error')} {syncError}</ErrorText>
-              )}
-            </View>
-            <Toggle
-              value={localSyncEnabled}
-              onValueChange={handleSyncToggle}
-              disabled={syncLoading || isForcedSync}
-            />
-          </InfoRow>
-          {localSyncEnabled && (
-            <View style={{ marginTop: 8 }}>
-              <SyncButton
-                onPress={handleManualSync}
-                disabled={syncLoading}
-              >
-                {syncLoading ? (
-                  <ActivityIndicator size="small" color={theme.colors.surface} />
-                ) : (
-                  <SyncButtonText>{t('profile.sync.syncNow')}</SyncButtonText>
-                )}
-              </SyncButton>
-            </View>
           )}
         </InfoSection>
 

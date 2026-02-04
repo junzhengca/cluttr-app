@@ -5,7 +5,6 @@ import { useTranslation } from 'react-i18next';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNetwork } from '../../hooks/useNetwork';
-import { useSync } from '../../store/hooks';
 
 const BadgeContainer = styled(TouchableOpacity) <{ safeTop: number }>`
   position: absolute;
@@ -35,7 +34,6 @@ interface OfflineBadgeProps {
 
 export const OfflineBadge: React.FC<OfflineBadgeProps> = ({ onPress }) => {
     const { isConnected, isInternetReachable } = useNetwork();
-    const { enabled: isSyncEnabled } = useSync();
     const { t } = useTranslation();
     const insets = useSafeAreaInsets();
 
@@ -45,7 +43,7 @@ export const OfflineBadge: React.FC<OfflineBadgeProps> = ({ onPress }) => {
         return isConnected === false || isInternetReachable === false;
     }, [isConnected, isInternetReachable]);
 
-    if (!isOffline || !isSyncEnabled) {
+    if (!isOffline) {
         return null;
     }
 

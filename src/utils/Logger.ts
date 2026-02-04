@@ -29,7 +29,6 @@ export type LogLevel = 'silent' | 'error' | 'warn' | 'info' | 'debug' | 'verbose
 
 export type LogCategory =
   | 'api'       // API client requests/responses
-  | 'sync'      // Sync service operations
   | 'auth'      // Authentication operations
   | 'storage'   // Local storage/file operations
   | 'navigation' // Navigation events
@@ -59,7 +58,6 @@ const LOG_LEVELS: Record<LogLevel, LogLevelConfig> = {
 
 const CATEGORY_EMOJIS: Record<LogCategory, string> = {
   api:        '🌐',
-  sync:       '🔄',
   auth:       '🔐',
   storage:    '💾',
   navigation: '🧭',
@@ -563,7 +561,6 @@ export { logger, Logger, ScopedLogger };
 
 // Convenience: export scoped loggers for common categories
 export const apiLogger = logger.scoped('api');
-export const syncLogger = logger.scoped('sync');
 export const authLogger = logger.scoped('auth');
 export const storageLogger = logger.scoped('storage');
 export const uiLogger = logger.scoped('ui');

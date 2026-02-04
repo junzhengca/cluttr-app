@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { View, Alert, ActivityIndicator, ScrollView, Animated, Dimensions, Text, TouchableOpacity } from 'react-native';
+import React, { useState, useCallback, useRef } from 'react';
+import { View, Alert, ScrollView, Animated, Dimensions, Text, TouchableOpacity } from 'react-native';
 import { BottomSheetModal } from '@gorhom/bottom-sheet';
 import styled from 'styled-components/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -20,11 +20,34 @@ import {
 } from '../components';
 import { calculateBottomPadding } from '../utils/layout';
 import { RootStackParamList } from '../navigation/types';
-import { useAuth } from '../store/hooks';
+import { useAuth, useAppDispatch, useAppSelector } from '../store/hooks';
 import { useToast } from '../hooks/useToast';
 import { Member, AccessibleAccount } from '../types/api';
-import { useAppDispatch, useAppSelector, useSync } from '../store/hooks';
 import { setActiveHomeId } from '../store/slices/authSlice';
+
+// Mock data for development
+const MOCK_MEMBERS: Member[] = [
+  {
+    id: 'member1',
+    email: 'alice@example.com',
+    nickname: 'Alice',
+    avatarUrl: undefined,
+    joinedAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
+    isOwner: false,
+  },
+  {
+    id: 'member2',
+    email: 'bob@example.com',
+    nickname: 'Bob',
+    avatarUrl: undefined,
+    joinedAt: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString(),
+    isOwner: false,
+  },
+];
+
+const MOCK_INVITATION_CODE = 'ABC123XYZ789';
+const MOCK_CAN_SHARE_INVENTORY = true;
+const MOCK_CAN_SHARE_TODOS = true;
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -49,12 +72,6 @@ const Content = styled(ScrollView)`
   padding: ${({ theme }: StyledProps) => theme.spacing.lg}px;
 `;
 
-const LoadingContainer = styled(View)`
-  flex: 1;
-  align-items: center;
-  justify-content: center;
-`;
-
 const LoginPromptContainer = styled(View)`
   flex: 1;
   align-items: center;
@@ -66,23 +83,6 @@ const ButtonContainer = styled(View)`
   width: 100%;
   max-width: 300px;
   margin-top: ${({ theme }: StyledProps) => theme.spacing.lg}px;
-`;
-
-const SwitchHomeHeader = styled(View)`
-  padding-horizontal: ${({ theme }: StyledProps) => theme.spacing.lg}px;
-  padding-bottom: ${({ theme }: StyledProps) => theme.spacing.md}px;
-`;
-
-const SwitchTitle = styled(Text)`
-  font-size: 24px;
-  font-weight: bold;
-  color: ${({ theme }: StyledProps) => theme.colors.text};
-  margin-bottom: 4px;
-`;
-
-const SwitchSubtitle = styled(Text)`
-  font-size: 14px;
-  color: ${({ theme }: StyledProps) => theme.colors.textSecondary};
 `;
 
 const LeaveHomeButton = styled(TouchableOpacity)`
@@ -108,22 +108,16 @@ export const ShareScreen: React.FC = () => {
   const insets = useSafeAreaInsets();
   const dispatch = useAppDispatch();
   const navigation = useNavigation<NavigationProp>();
-  const { user, isAuthenticated, getApiClient } = useAuth();
+  const { user, isAuthenticated } = useAuth();
   const activeHomeId = useAppSelector((state) => state.auth.activeHomeId);
   const { showToast } = useToast();
   const inviteMenuBottomSheetRef = useRef<BottomSheetModal | null>(null);
 
-  const [canShareInventory, setCanShareInventory] = useState(false);
-  const [canShareTodos, setCanShareTodos] = useState(false);
-  const [members, setMembers] = useState<Member[]>([]);
-  const [invitationCode, setInvitationCode] = useState<string>('');
-  const [isLoading, setIsLoading] = useState(true);
-  const [isUpdating, setIsUpdating] = useState(false);
-  const [membersLoading, setMembersLoading] = useState(false);
-  const [membersError, setMembersError] = useState<string | null>(null);
-
-
-  const { enabled: syncEnabled, enableSync } = useSync();
+  // Using mock data instead of API calls
+  const [canShareInventory, setCanShareInventory] = useState(MOCK_CAN_SHARE_INVENTORY);
+  const [canShareTodos, setCanShareTodos] = useState(MOCK_CAN_SHARE_TODOS);
+  const members = MOCK_MEMBERS;
+  const invitationCode = MOCK_INVITATION_CODE;
   const accounts = useAppSelector((state) => state.auth.accessibleAccounts);
   const [isSwitchingHome, setIsSwitchingHome] = useState(false);
   const panAnim = useRef(new Animated.Value(0)).current;
@@ -132,206 +126,33 @@ export const ShareScreen: React.FC = () => {
     activeHomeId ? a.userId === activeHomeId : a.isOwner
   ) || (user ? { userId: user.id, nickname: user.nickname || user.email, email: user.email, avatarUrl: user.avatarUrl, isOwner: true, createdAt: user.createdAt } : null);
 
-  const loadSettings = useCallback(async () => {
-    setIsLoading(true);
-    try {
-      const apiClient = getApiClient();
-      if (!apiClient) {
-        console.error('Failed to get API client');
-        setIsLoading(false);
-        return;
-      }
-
-      // Note: Backend should support userId query param for these settings
-      const response = await apiClient.getInvitationCode();
-      setCanShareInventory(response.settings.canShareInventory);
-      setCanShareTodos(response.settings.canShareTodos);
-      setInvitationCode(response.invitationCode);
-    } catch (error) {
-      console.error('Error loading settings:', error);
-      showToast(t('share.permissions.toast.updateError'), 'error');
-    } finally {
-      setIsLoading(false);
-    }
-  }, [getApiClient, showToast, t, activeHomeId]);
-
-  const loadMembers = useCallback(async () => {
-    setMembersLoading(true);
-    setMembersError(null);
-    try {
-      const apiClient = getApiClient();
-      if (!apiClient) {
-        console.error('Failed to get API client');
-        setMembersError(t('share.members.loadError'));
-        setMembersLoading(false);
-        return;
-      }
-
-      const response = await apiClient.listMembers(activeHomeId || undefined);
-      setMembers(response.members);
-    } catch (error) {
-      console.error('Error loading members:', error);
-      setMembersError(t('share.members.loadError'));
-    } finally {
-      setMembersLoading(false);
-    }
-  }, [getApiClient, t, activeHomeId]);
-
-  const loadAccounts = useCallback(() => {
-    dispatch({ type: 'auth/LOAD_ACCESSIBLE_ACCOUNTS' });
-  }, [dispatch]);
-
   const handleRemoveMember = useCallback(
-    async (memberId: string) => {
-      try {
-        const apiClient = getApiClient();
-        if (!apiClient) {
-          throw new Error('Failed to get API client');
-        }
-
-        await apiClient.removeMember(memberId, activeHomeId || undefined);
-        showToast(t('share.members.removeSuccess'), 'success');
-        // Reload members after removal
-        await loadMembers();
-      } catch (error) {
-        console.error('Error removing member:', error);
-        showToast(t('share.members.removeError'), 'error');
-      }
+    (_memberId: string) => {
+      showToast('Remove member: Mock mode - not implemented', 'info');
     },
-    [getApiClient, loadMembers, showToast, t]
+    [showToast]
   );
 
   const handleInvitePress = useCallback(() => {
-    if (!invitationCode) {
-      showToast(t('share.invite.loadingError'), 'error');
-      return;
-    }
-
-    if (!syncEnabled) {
-      Alert.alert(
-        t('share.invite.syncRequired.title'),
-        t('share.invite.syncRequired.message'),
-        [
-          {
-            text: t('common.cancel'),
-            style: 'cancel',
-          },
-          {
-            text: t('common.confirmation'),
-            onPress: () => {
-              enableSync();
-              // We can present the sheet immediately, or wait for sync to start?
-              // The requirement says: "if they confirm, sync would be turned on and we continue."
-              // So we proceed.
-              inviteMenuBottomSheetRef.current?.present();
-            },
-          },
-        ]
-      );
-      return;
-    }
-
     inviteMenuBottomSheetRef.current?.present();
-  }, [invitationCode, showToast, t, syncEnabled, enableSync]);
+  }, []);
 
   const getInvitationLink = useCallback(() => {
     const scheme = 'com.cluttrapp.cluttr'; // Matches app.json scheme
     return `${scheme}://?inviteCode=${invitationCode}`;
   }, [invitationCode]);
 
-  useEffect(() => {
-    if (isAuthenticated) {
-      loadSettings();
-      loadMembers();
-      loadAccounts();
-    } else {
-      setIsLoading(false);
-    }
-  }, [loadSettings, loadMembers, loadAccounts, isAuthenticated, activeHomeId]);
-
   const handleToggleInventory = useCallback(() => {
     const newValue = !canShareInventory;
-    const itemLabel = t('share.permissions.itemLibrary.label');
-    const title = newValue
-      ? t('share.permissions.confirm.enableTitle')
-      : t('share.permissions.confirm.disableTitle');
-    const message = newValue
-      ? t('share.permissions.confirm.enableMessage', { item: itemLabel })
-      : t('share.permissions.confirm.disableMessage', { item: itemLabel });
-
-    Alert.alert(title, message, [
-      {
-        text: t('share.permissions.confirm.cancel'),
-        style: 'cancel',
-      },
-      {
-        text: t('share.permissions.confirm.confirm'),
-        onPress: async () => {
-          setIsUpdating(true);
-          try {
-            const apiClient = getApiClient();
-            if (!apiClient) {
-              throw new Error('Failed to get API client');
-            }
-
-            await apiClient.updateAccountSettings({
-              canShareInventory: newValue,
-            });
-
-            setCanShareInventory(newValue);
-            showToast(t('share.permissions.toast.updateSuccess'), 'success');
-          } catch (error) {
-            console.error('Error updating inventory sharing:', error);
-            showToast(t('share.permissions.toast.updateError'), 'error');
-          } finally {
-            setIsUpdating(false);
-          }
-        },
-      },
-    ]);
-  }, [canShareInventory, getApiClient, showToast, t]);
+    setCanShareInventory(newValue);
+    showToast(`Inventory sharing ${newValue ? 'enabled' : 'disabled'} (mock mode)`, 'success');
+  }, [canShareInventory, showToast]);
 
   const handleToggleTodos = useCallback(() => {
     const newValue = !canShareTodos;
-    const itemLabel = t('share.permissions.shoppingList.label');
-    const title = newValue
-      ? t('share.permissions.confirm.enableTitle')
-      : t('share.permissions.confirm.disableTitle');
-    const message = newValue
-      ? t('share.permissions.confirm.enableMessage', { item: itemLabel })
-      : t('share.permissions.confirm.disableMessage', { item: itemLabel });
-
-    Alert.alert(title, message, [
-      {
-        text: t('share.permissions.confirm.cancel'),
-        style: 'cancel',
-      },
-      {
-        text: t('share.permissions.confirm.confirm'),
-        onPress: async () => {
-          setIsUpdating(true);
-          try {
-            const apiClient = getApiClient();
-            if (!apiClient) {
-              throw new Error('Failed to get API client');
-            }
-
-            await apiClient.updateAccountSettings({
-              canShareTodos: newValue,
-            });
-
-            setCanShareTodos(newValue);
-            showToast(t('share.permissions.toast.updateSuccess'), 'success');
-          } catch (error) {
-            console.error('Error updating todos sharing:', error);
-            showToast(t('share.permissions.toast.updateError'), 'error');
-          } finally {
-            setIsUpdating(false);
-          }
-        },
-      },
-    ]);
-  }, [canShareTodos, getApiClient, showToast, t]);
+    setCanShareTodos(newValue);
+    showToast(`Todos sharing ${newValue ? 'enabled' : 'disabled'} (mock mode)`, 'success');
+  }, [canShareTodos, showToast]);
 
   const handleLeaveHome = useCallback(() => {
     Alert.alert(
@@ -345,33 +166,13 @@ export const ShareScreen: React.FC = () => {
         {
           text: t('share.members.leaveConfirm.confirm', 'Leave'),
           style: 'destructive',
-          onPress: async () => {
-            setIsUpdating(true);
-            try {
-              const apiClient = getApiClient();
-              if (!apiClient || !activeHomeId || !user) {
-                throw new Error('Missing client or user info');
-              }
-
-              // To leave, we remove ourselves (memberId = user.id) from the account (userId = activeHomeId)
-              await apiClient.removeMember(user.id, activeHomeId);
-
-              showToast(t('share.members.leaveSuccess', 'Left home successfully'), 'success');
-
-              // Switch back to own home
-              dispatch(setActiveHomeId(null));
-
-            } catch (error) {
-              console.error('Error leaving home:', error);
-              showToast(t('share.members.leaveError', 'Failed to leave home'), 'error');
-            } finally {
-              setIsUpdating(false);
-            }
+          onPress: () => {
+            showToast('Leave home: Mock mode - not implemented', 'info');
           },
         },
       ]
     );
-  }, [getApiClient, activeHomeId, user, showToast, t, dispatch]);
+  }, [showToast, t]);
 
   const handleAvatarPress = () => {
     const rootNavigation = navigation.getParent();
@@ -444,7 +245,6 @@ export const ShareScreen: React.FC = () => {
     );
   }
 
-
   return (
     <Container>
       <PageHeader
@@ -466,63 +266,48 @@ export const ShareScreen: React.FC = () => {
             showsVerticalScrollIndicator={false}
             contentContainerStyle={{ paddingBottom: calculateBottomPadding(insets.bottom) }}
           >
-            {isLoading ? (
-              <LoadingContainer>
-                <ActivityIndicator size="large" />
-              </LoadingContainer>
-            ) : (
-              <>
-                <HomeCard
-                  name={currentHome?.nickname || currentHome?.email || t('share.home.currentHome')}
-                  isActive={true}
-                  showSwitchButton={true}
-                  onSwitchPress={handleSwitchHomePress}
-                  canShareInventory={canShareInventory}
-                  canShareTodos={canShareTodos}
-                />
+            <HomeCard
+              name={currentHome?.nickname || currentHome?.email || t('share.home.currentHome')}
+              isActive={true}
+              showSwitchButton={true}
+              onSwitchPress={handleSwitchHomePress}
+              canShareInventory={canShareInventory}
+              canShareTodos={canShareTodos}
+            />
 
-                <MemberList
-                  owner={currentHome ? {
-                    id: currentHome.userId,
-                    email: currentHome.email,
-                    nickname: currentHome.nickname,
-                    avatarUrl: currentHome.avatarUrl,
-                    createdAt: (currentHome as AccessibleAccount).joinedAt || (currentHome as any).createdAt,
-                  } : null}
-                  members={members}
-                  isLoading={membersLoading}
-                  error={membersError}
-                  onRemoveMember={currentHome?.isOwner ? handleRemoveMember : undefined}
-                  onInvitePress={handleInvitePress}
-                  showInviteButton={currentHome?.isOwner}
-                />
+            <MemberList
+              owner={currentHome ? {
+                id: currentHome.userId,
+                email: currentHome.email,
+                nickname: currentHome.nickname,
+                avatarUrl: currentHome.avatarUrl,
+                createdAt: (currentHome as AccessibleAccount).joinedAt || (currentHome as { createdAt?: string }).createdAt,
+              } : null}
+              members={members}
+              isLoading={false}
+              error={null}
+              onRemoveMember={currentHome?.isOwner ? handleRemoveMember : undefined}
+              onInvitePress={handleInvitePress}
+              showInviteButton={currentHome?.isOwner}
+            />
 
-                {!currentHome?.isOwner && (
-                  <LeaveHomeButton
-                    onPress={handleLeaveHome}
-                    activeOpacity={0.8}
-                    disabled={isUpdating}
-                  >
-                    {isUpdating ? (
-                      <ActivityIndicator color={theme.colors.error || '#ff4444'} />
-                    ) : (
-                      <>
-                        <Ionicons name="log-out-outline" size={20} color={theme.colors.error || '#ff4444'} />
-                        <LeaveHomeText>{t('share.members.leaveHome', 'Leave Home')}</LeaveHomeText>
-                      </>
-                    )}
-                  </LeaveHomeButton>
-                )}
-                {currentHome?.isOwner && (
-                  <PermissionConfigPanel
-                    canShareInventory={canShareInventory}
-                    canShareTodos={canShareTodos}
-                    onToggleInventory={handleToggleInventory}
-                    onToggleTodos={handleToggleTodos}
-                    isLoading={isUpdating}
-                  />
-                )}
-              </>
+            {!currentHome?.isOwner && (
+              <LeaveHomeButton
+                onPress={handleLeaveHome}
+                activeOpacity={0.8}
+              >
+                <Ionicons name="log-out-outline" size={20} color={theme.colors.error || '#ff4444'} />
+                <LeaveHomeText>{t('share.members.leaveHome', 'Leave Home')}</LeaveHomeText>
+              </LeaveHomeButton>
+            )}
+            {currentHome?.isOwner && (
+              <PermissionConfigPanel
+                canShareInventory={canShareInventory}
+                canShareTodos={canShareTodos}
+                onToggleInventory={handleToggleInventory}
+                onToggleTodos={handleToggleTodos}
+                isLoading={false}
+              />
             )}
           </Content>
         </PageView>
@@ -533,7 +318,7 @@ export const ShareScreen: React.FC = () => {
             showsVerticalScrollIndicator={false}
             contentContainerStyle={{ paddingBottom: calculateBottomPadding(insets.bottom) }}
           >
-            {accounts.map((account, index) => (
+            {accounts.map((account, _index) => (
               <HomeCard
                 key={account.userId}
                 name={account.nickname || account.email}

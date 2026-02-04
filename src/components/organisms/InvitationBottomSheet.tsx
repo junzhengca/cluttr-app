@@ -7,7 +7,7 @@ import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../theme/ThemeProvider';
 import { ValidateInvitationResponse } from '../../types/api';
 import { Button, BottomSheetHeader, HEADER_HEIGHT } from '../atoms';
-import { useAppSelector, useAppDispatch, useSync } from '../../store/hooks';
+import { useAppSelector, useAppDispatch } from '../../store/hooks';
 import { useToast } from '../../hooks/useToast';
 import type { StyledProps } from '../../utils/styledComponents';
 import Ionicons from '@expo/vector-icons/Ionicons';
@@ -176,31 +176,8 @@ export const InvitationBottomSheet: React.FC<InvitationBottomSheetProps> = ({
         }
     };
 
-    const { enabled: syncEnabled, enableSync } = useSync();
-
     const handleAccept = async () => {
         if (!apiClient || !inviteCode) return;
-
-        if (!syncEnabled) {
-            Alert.alert(
-                t('share.invite.syncRequired.title'),
-                t('share.invite.syncRequired.acceptMessage'),
-                [
-                    {
-                        text: t('common.cancel'),
-                        style: 'cancel',
-                    },
-                    {
-                        text: t('common.confirmation'),
-                        onPress: async () => {
-                            enableSync();
-                            await processAccept();
-                        },
-                    },
-                ]
-            );
-            return;
-        }
 
         await processAccept();
     };

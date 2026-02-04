@@ -1,7 +1,6 @@
 import { TodoItem } from '../types/inventory';
 import { readFile, writeFile } from './FileSystemService';
 import { generateTodoId } from '../utils/idGenerator';
-import { syncCallbackRegistry } from './SyncCallbackRegistry';
 
 const TODOS_FILE = 'todos.json';
 
@@ -53,11 +52,6 @@ export const createTodo = async (text: string, note?: string, userId?: string): 
     todos.push(newTodo);
     const success = await writeFile<TodosData>(TODOS_FILE, { todos }, userId);
 
-    if (success) {
-      console.log('[TodoService] Triggering sync after createTodo');
-      syncCallbackRegistry.trigger('todoItems', userId);
-    }
-
     return success ? newTodo : null;
   } catch (error) {
     console.error('Error creating todo:', error);
@@ -83,11 +77,6 @@ export const updateTodo = async (
 
     todos[index] = { ...todos[index], ...updates, updatedAt: new Date().toISOString() };
     const success = await writeFile<TodosData>(TODOS_FILE, { todos }, userId);
-
-    if (success) {
-      console.log('[TodoService] Triggering sync after updateTodo');
-      syncCallbackRegistry.trigger('todoItems', userId);
-    }
 
     return success ? todos[index] : null;
   } catch (error) {
@@ -124,11 +113,6 @@ export const deleteTodo = async (id: string, userId?: string): Promise<boolean> 
 
     const success = await writeFile<TodosData>(TODOS_FILE, { todos }, userId);
 
-    if (success) {
-      console.log('[TodoService] Triggering sync after deleteTodo');
-      syncCallbackRegistry.trigger('todoItems', userId);
-    }
-
     return success;
   } catch (error) {
     console.error('Error deleting todo:', error);
@@ -151,11 +135,6 @@ export const toggleTodo = async (id: string, userId?: string): Promise<TodoItem 
     todos[index].completed = !todos[index].completed;
     todos[index].updatedAt = new Date().toISOString();
     const success = await writeFile<TodosData>(TODOS_FILE, { todos }, userId);
-
-    if (success) {
-      console.log('[TodoService] Triggering sync after toggleTodo');
-      syncCallbackRegistry.trigger('todoItems', userId);
-    }
 
     return success ? todos[index] : null;
   } catch (error) {

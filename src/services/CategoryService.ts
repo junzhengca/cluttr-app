@@ -1,7 +1,6 @@
 import { Category } from '../types/inventory';
 import { readFile, writeFile } from './FileSystemService';
 import { generateCategoryId } from '../utils/idGenerator';
-import { syncCallbackRegistry } from './SyncCallbackRegistry';
 
 const CATEGORIES_FILE = 'categories.json';
 
@@ -74,11 +73,6 @@ export const createCategory = async (
     categories.push(newCategory);
     const success = await writeFile<CategoriesData>(CATEGORIES_FILE, { categories }, userId);
 
-    if (success) {
-      console.log('[CategoryService] Triggering sync after createCategory');
-      syncCallbackRegistry.trigger('categories', userId);
-    }
-
     return success ? newCategory : null;
   } catch (error) {
     console.error('Error creating category:', error);
@@ -123,11 +117,6 @@ export const updateCategory = async (
 
     categories[index] = { ...categories[index], ...updates, updatedAt: new Date().toISOString() };
     const success = await writeFile<CategoriesData>(CATEGORIES_FILE, { categories }, userId);
-
-    if (success) {
-      console.log('[CategoryService] Triggering sync after updateCategory');
-      syncCallbackRegistry.trigger('categories', userId);
-    }
 
     return success ? categories[index] : null;
   } catch (error) {
@@ -175,11 +164,6 @@ export const deleteCategory = async (id: string, userId?: string): Promise<boole
     };
 
     const success = await writeFile<CategoriesData>(CATEGORIES_FILE, { categories }, userId);
-
-    if (success) {
-      console.log('[CategoryService] Triggering sync after deleteCategory');
-      syncCallbackRegistry.trigger('categories', userId);
-    }
 
     return success;
   } catch (error) {

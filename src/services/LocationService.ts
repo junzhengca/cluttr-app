@@ -1,7 +1,6 @@
 import { Location } from '../types/inventory';
 import { readFile, writeFile } from './FileSystemService';
 import { generateLocationId } from '../utils/idGenerator';
-import { syncCallbackRegistry } from './SyncCallbackRegistry';
 
 const LOCATIONS_FILE = 'locations.json';
 
@@ -64,11 +63,6 @@ export const createLocation = async (
     locations.push(newLocation);
     const success = await writeFile<LocationsData>(LOCATIONS_FILE, { locations }, userId);
 
-    if (success) {
-      console.log('[LocationService] Triggering sync after createLocation');
-      syncCallbackRegistry.trigger('locations', userId);
-    }
-
     return success ? newLocation : null;
   } catch (error) {
     console.error('Error creating location:', error);
@@ -107,11 +101,6 @@ export const updateLocation = async (
 
     locations[index] = { ...locations[index], ...updates, updatedAt: new Date().toISOString() };
     const success = await writeFile<LocationsData>(LOCATIONS_FILE, { locations }, userId);
-
-    if (success) {
-      console.log('[LocationService] Triggering sync after updateLocation');
-      syncCallbackRegistry.trigger('locations', userId);
-    }
 
     return success ? locations[index] : null;
   } catch (error) {
@@ -157,11 +146,6 @@ export const deleteLocation = async (id: string, userId?: string): Promise<boole
     };
 
     const success = await writeFile<LocationsData>(LOCATIONS_FILE, { locations }, userId);
-
-    if (success) {
-      console.log('[LocationService] Triggering sync after deleteLocation');
-      syncCallbackRegistry.trigger('locations', userId);
-    }
 
     return success;
   } catch (error) {

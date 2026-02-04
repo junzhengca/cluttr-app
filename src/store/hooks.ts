@@ -198,49 +198,6 @@ export const useSelectedCategory = () => {
   };
 };
 
-// Sync hook - replaces SyncContext
-export const useSync = () => {
-  const dispatch = useAppDispatch();
-  const syncService = useAppSelector((state) => state.sync.syncService);
-  const enabled = useAppSelector((state) => state.sync.enabled);
-  const loading = useAppSelector((state) => state.sync.loading);
-  const syncStatus = useAppSelector((state) => state.sync.syncStatus);
-  const lastSyncTime = useAppSelector((state) => state.sync.lastSyncTime);
-  const error = useAppSelector((state) => state.sync.error);
-
-  const enableSync = useCallback(() => {
-    dispatch({ type: 'sync/ENABLE_SYNC' });
-  }, [dispatch]);
-
-  const disableSync = useCallback(() => {
-    dispatch({ type: 'sync/DISABLE_SYNC' });
-  }, [dispatch]);
-
-  const syncAll = useCallback(() => {
-    dispatch({ type: 'sync/SYNC_ALL' });
-  }, [dispatch]);
-
-  const syncFile = useCallback(
-    (fileType: 'categories' | 'locations' | 'inventoryItems' | 'todoItems' | 'settings') => {
-      dispatch({ type: 'sync/SYNC_FILE', payload: fileType });
-    },
-    [dispatch]
-  );
-
-  return {
-    syncService,
-    enabled,
-    loading,
-    syncStatus,
-    lastSyncTime,
-    error,
-    enableSync,
-    disableSync,
-    syncAll,
-    syncFile,
-  };
-};
-
 // Category hook - replaces CategoryContext
 export const useCategory = () => {
   const dispatch = useAppDispatch();

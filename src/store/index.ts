@@ -20,7 +20,6 @@ export const store = configureStore({
         // Ignore these action types
         ignoredActions: [
           'auth/setApiClient',
-          'sync/setSyncService',
           'refresh/registerCategoryCallback',
           'refresh/unregisterCategoryCallback',
         ],
@@ -29,7 +28,6 @@ export const store = configureStore({
         // Ignore these paths in the state (non-serializable values like class instances and Sets)
         ignoredPaths: [
           'auth.apiClient',
-          'sync.syncService',
           'refresh.categoryCallbacks',
         ],
       },

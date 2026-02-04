@@ -1,6 +1,5 @@
 import { Settings, defaultSettings } from '../types/settings';
 import { readFile, writeFile } from './FileSystemService';
-import { syncCallbackRegistry } from './SyncCallbackRegistry';
 
 const SETTINGS_FILE = 'settings.json';
 
@@ -28,11 +27,6 @@ export const updateSettings = async (updates: Partial<Settings>, userId?: string
 
     const success = await writeFile<Settings>(SETTINGS_FILE, newSettings, userId);
 
-    if (success) {
-      console.log('[SettingsService] Triggering sync after updateSettings');
-      syncCallbackRegistry.trigger('settings', userId);
-    }
-
     return success ? newSettings : null;
   } catch (error) {
     console.error('Error updating settings:', error);
@@ -52,11 +46,6 @@ export const resetToDefaults = async (userId?: string): Promise<Settings | null>
       updatedAt: now,
     };
     const success = await writeFile<Settings>(SETTINGS_FILE, resetSettings, userId);
-
-    if (success) {
-      console.log('[SettingsService] Triggering sync after resetToDefaults');
-      syncCallbackRegistry.trigger('settings', userId);
-    }
 
     return success ? resetSettings : null;
   } catch (error) {

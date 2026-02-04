@@ -2,7 +2,6 @@ import { InventoryItem } from '../types/inventory';
 import { readFile, writeFile } from './FileSystemService';
 import { generateItemId } from '../utils/idGenerator';
 import { isExpiringSoon } from '../utils/dateUtils';
-import { syncCallbackRegistry } from './SyncCallbackRegistry';
 
 const ITEMS_FILE = 'items.json';
 
@@ -53,11 +52,6 @@ export const createItem = async (item: Omit<InventoryItem, 'id'>, userId?: strin
     items.push(newItem);
     const success = await writeFile<ItemsData>(ITEMS_FILE, { items }, userId);
 
-    if (success) {
-      console.log('[InventoryService] Triggering sync after createItem');
-      syncCallbackRegistry.trigger('inventoryItems', userId);
-    }
-
     return success ? newItem : null;
   } catch (error) {
     console.error('Error creating item:', error);
@@ -85,11 +79,6 @@ export const updateItem = async (
     items[index] = { ...items[index], ...updates, updatedAt: new Date().toISOString() };
     console.log('[InventoryService] Updated item to be written:', items[index]);
     const success = await writeFile<ItemsData>(ITEMS_FILE, { items }, userId);
-
-    if (success) {
-      console.log('[InventoryService] Triggering sync after updateItem');
-      syncCallbackRegistry.trigger('inventoryItems', userId);
-    }
 
     return success ? items[index] : null;
   } catch (error) {
@@ -125,11 +114,6 @@ export const deleteItem = async (id: string, userId?: string): Promise<boolean> 
     };
 
     const success = await writeFile<ItemsData>(ITEMS_FILE, { items }, userId);
-
-    if (success) {
-      console.log('[InventoryService] Triggering sync after deleteItem');
-      syncCallbackRegistry.trigger('inventoryItems', userId);
-    }
 
     return success;
   } catch (error) {

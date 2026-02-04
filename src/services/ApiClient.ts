@@ -3,33 +3,40 @@ import {
   SignupRequest,
   GoogleAuthRequest,
   UploadImageRequest,
-  UpdatePasswordRequest,
-  UpdateAvatarUrlRequest,
-  UpdateNicknameRequest,
   UpdateAccountSettingsRequest,
   RecognizeItemRequest,
+  UpdateUserRequest,
   AuthResponse,
   User,
   UploadImageResponse,
-  InvitationResponse,
+  GetAccountPermissionsResponse,
   UpdateAccountSettingsResponse,
   ListMembersResponse,
-  RegenerateInvitationResponse,
+  RegenerateInvitationCodeResponse,
   RecognizeItemResponse,
   ErrorDetails,
   RetryAttempt,
   ValidateInvitationResponse,
   ListAccessibleAccountsResponse,
-  PullEntitiesRequest,
+  RemoveMemberResponse,
+  GetInvitationCodeResponse,
+  AcceptInvitationResponse,
+  SyncFileType,
+  PushFileRequest,
+  SyncStatusResponse,
+  PullFileResponse,
+  PushFileResponse,
+  DeleteFileDataResponse,
+  SyncEntityType,
+  BatchSyncRequest,
+  BatchSyncResponse,
+  SyncEntitiesStatusResponse,
   PullEntitiesResponse,
   PushEntitiesRequest,
   PushEntitiesResponse,
-  BatchSyncRequest,
-  BatchSyncResponse,
-  EntitySyncStatus,
-  EntityType,
+  ResetSyncResponse,
 } from '../types/api';
-import { apiLogger, syncLogger } from '../utils/Logger';
+import { apiLogger } from '../utils/Logger';
 
 interface RequestOptions {
   method: string;
@@ -148,7 +155,7 @@ export class ApiClient {
   }
 
   /**
-   * Request helper (public for use by SyncService)
+   * Request helper (public for use by services)
    */
   public async request<T>(
     endpoint: string,
@@ -162,7 +169,6 @@ export class ApiClient {
     }
 
     const url = `${this.baseUrl}${finalEndpoint}`;
-    const isSyncRequest = endpoint.startsWith('/api/sync/');
     const requestStartTime = Date.now();
     const retryAttempts: RetryAttempt[] = [];
 
@@ -195,31 +201,12 @@ export class ApiClient {
       fetchOptions.body = JSON.stringify(options.body);
     }
 
-    // Verbose logging for sync requests
-    if (isSyncRequest) {
-      syncLogger.separator('=');
-      syncLogger.start('SYNC REQUEST');
-      syncLogger.verbose(`Endpoint: ${endpoint}`);
-      syncLogger.verbose(`Full URL: ${url}`);
-      syncLogger.verbose(`Method: ${options.method}`);
-      syncLogger.verbose(`Requires Auth: ${options.requiresAuth}`);
-      if (options.body) {
-        const bodyStr = JSON.stringify(options.body);
-        const bodySize = new Blob([bodyStr]).size;
-        syncLogger.dataSize('Request Body', bodySize);
-        syncLogger.verbose('Request Body:', options.body);
-      } else {
-        syncLogger.verbose('Request Body: (none)');
-      }
-      syncLogger.verbose(`Headers: ${JSON.stringify(logHeaders)}`);
-    } else {
-      // Standard API logging
-      apiLogger.request(options.method, endpoint, { url, requiresAuth: options.requiresAuth });
-      if (options.body) {
-        const bodyStr = JSON.stringify(options.body);
-        const bodySize = new Blob([bodyStr]).size;
-        apiLogger.dataSize('Request Body', bodySize);
-      }
+    // Standard API logging
+    apiLogger.request(options.method, endpoint, { url, requiresAuth: options.requiresAuth });
+    if (options.body) {
+      const bodyStr = JSON.stringify(options.body);
+      const bodySize = new Blob([bodyStr]).size;
+      apiLogger.dataSize('Request Body', bodySize);
     }
 
     let lastError: Error | null = null;
@@ -233,24 +220,12 @@ export class ApiClient {
         const response = await fetch(url, fetchOptions);
         const requestDuration = Date.now() - requestStartTime;
 
-        // Verbose logging for sync responses
-        if (isSyncRequest) {
-          syncLogger.separator('=');
-          syncLogger.debug(`RESPONSE: ${response.status} ${response.statusText}`);
-          syncLogger.verbose(`Duration: ${requestDuration}ms`);
-          syncLogger.verbose('Response Headers:', Object.fromEntries(response.headers.entries()));
-        } else {
-          // Standard API response logging
-          apiLogger.response(response.status, endpoint, requestDuration);
-        }
+        // Standard API response logging
+        apiLogger.response(response.status, endpoint, requestDuration);
 
         // Handle 401 Unauthorized - trigger auth error callback and don't retry
         if (response.status === 401 && options.requiresAuth) {
-          if (isSyncRequest) {
-            syncLogger.warn('Received 401, triggering auth error callback...');
-          } else {
-            apiLogger.warn('401 Unauthorized', { endpoint, url });
-          }
+          apiLogger.warn('401 Unauthorized', { endpoint, url });
           if (this.onAuthError) {
             this.onAuthError();
           }
@@ -318,16 +293,7 @@ export class ApiClient {
           lastStatusText = response.statusText;
           lastResponseBody = responseBody;
 
-          // Verbose logging for sync error responses
-          if (isSyncRequest) {
-            syncLogger.separator('=');
-            syncLogger.error(`REQUEST FAILED: ${response.status} ${response.statusText}`);
-            syncLogger.verbose(`Duration: ${requestDuration}ms`);
-            syncLogger.verbose(`Error: ${errorMessage}`);
-            syncLogger.verbose('Response Body:', responseBody);
-          } else {
-            apiLogger.error(`Request failed: ${response.status}`, { endpoint, url, errorMessage, responseBody });
-          }
+          apiLogger.error(`Request failed: ${response.status}`, { endpoint, url, errorMessage, responseBody });
 
           // Check if error is retryable
           if (this.isRetryableError(null, response.status) && attempt < this.maxRetries) {
@@ -339,11 +305,7 @@ export class ApiClient {
               error: errorMessage,
             });
 
-            if (isSyncRequest) {
-              syncLogger.retry(attempt + 1, this.maxRetries, delay);
-            } else {
-              apiLogger.retry(attempt + 1, this.maxRetries, delay);
-            }
+            apiLogger.retry(attempt + 1, this.maxRetries, delay);
 
             await this.sleep(delay);
             continue; // Retry the request
@@ -358,27 +320,13 @@ export class ApiClient {
 
         // Handle empty responses (e.g., 204 No Content)
         if (response.status === 204 || response.headers.get('content-length') === '0') {
-          if (isSyncRequest) {
-            syncLogger.verbose('Response Body: (empty - 204 No Content)');
-            syncLogger.end('SYNC REQUEST', requestDuration);
-          } else {
-            apiLogger.debug('Empty response (204 No Content)', { endpoint, url });
-          }
+          apiLogger.debug('Empty response (204 No Content)', { endpoint, url });
           return {} as T;
         }
 
         const responseData = await response.json();
 
-        // Verbose logging for successful sync responses
-        if (isSyncRequest) {
-          const responseStr = JSON.stringify(responseData);
-          const responseSize = new Blob([responseStr]).size;
-          syncLogger.dataSize('Response Body', responseSize);
-          syncLogger.verbose('Response Body:', responseData);
-          syncLogger.end('SYNC REQUEST', requestDuration);
-        } else {
-          apiLogger.debug('Request successful', { endpoint, status: response.status, duration: requestDuration });
-        }
+        apiLogger.debug('Request successful', { endpoint, status: response.status, duration: requestDuration });
 
         return responseData;
       } catch (error) {
@@ -393,17 +341,7 @@ export class ApiClient {
           }
         }
 
-        // Verbose logging for sync request errors (network errors, etc.)
-        if (isSyncRequest) {
-          const requestDuration = Date.now() - requestStartTime;
-          syncLogger.separator('=');
-          syncLogger.error(`REQUEST ERROR: ${error instanceof Error ? error.constructor.name : typeof error}`);
-          syncLogger.verbose(`Duration: ${requestDuration}ms`);
-          syncLogger.verbose(`Error: ${error instanceof Error ? error.message : String(error)}`);
-          syncLogger.verbose('Full Error:', error);
-        } else {
-          apiLogger.error(`Network error: ${error instanceof Error ? error.message : String(error)}`, { endpoint, url });
-        }
+        apiLogger.error(`Network error: ${error instanceof Error ? error.message : String(error)}`, { endpoint, url });
 
         // Check if error is retryable (network error or retryable status code)
         const isRetryable = this.isRetryableError(error, lastStatus);
@@ -417,11 +355,7 @@ export class ApiClient {
             error: lastError.message,
           });
 
-          if (isSyncRequest) {
-            syncLogger.retry(attempt + 1, this.maxRetries, delay);
-          } else {
-            apiLogger.retry(attempt + 1, this.maxRetries, delay);
-          }
+          apiLogger.retry(attempt + 1, this.maxRetries, delay);
 
           await this.sleep(delay);
           continue; // Retry the request
@@ -461,8 +395,13 @@ export class ApiClient {
     throw lastError || new Error('An unexpected error occurred');
   }
 
+  // =============================================================================
+  // Auth Endpoints
+  // =============================================================================
+
   /**
-   * Login with email and password
+   * POST /api/auth/login
+   * Authenticate with email and password
    */
   async login(email: string, password: string): Promise<AuthResponse> {
     const request: LoginRequest = { email, password };
@@ -474,7 +413,8 @@ export class ApiClient {
   }
 
   /**
-   * Sign up with email and password
+   * POST /api/auth/signup
+   * Create a new user account
    */
   async signup(email: string, password: string): Promise<AuthResponse> {
     const request: SignupRequest = { email, password };
@@ -486,6 +426,7 @@ export class ApiClient {
   }
 
   /**
+   * POST /api/auth/google
    * Authenticate with Google OAuth
    */
   async googleAuth(idToken: string, platform: 'ios' | 'android'): Promise<AuthResponse> {
@@ -498,7 +439,8 @@ export class ApiClient {
   }
 
   /**
-   * Get current user information
+   * GET /api/auth/me
+   * Get current authenticated user
    */
   async getCurrentUser(): Promise<User> {
     return this.request<User>('/api/auth/me', {
@@ -508,7 +450,52 @@ export class ApiClient {
   }
 
   /**
-   * Upload an image
+   * PATCH /api/auth/me
+   * Update current user profile
+   * Supports updating nickname, avatarUrl, and password
+   */
+  async updateUser(request: UpdateUserRequest): Promise<User> {
+    return this.request<User>('/api/auth/me', {
+      method: 'PATCH',
+      body: request,
+      requiresAuth: true,
+    });
+  }
+
+  /**
+   * Update user password
+   * @deprecated Use updateUser() instead
+   */
+  async updatePassword(
+    currentPassword: string,
+    newPassword: string
+  ): Promise<User> {
+    return this.updateUser({ currentPassword, newPassword });
+  }
+
+  /**
+   * Update user avatar URL
+   * @deprecated Use updateUser() instead
+   */
+  async updateAvatarUrl(avatarUrl: string): Promise<User> {
+    return this.updateUser({ avatarUrl });
+  }
+
+  /**
+   * Update user nickname
+   * @deprecated Use updateUser() instead
+   */
+  async updateNickname(nickname: string): Promise<User> {
+    return this.updateUser({ nickname });
+  }
+
+  // =============================================================================
+  // Images Endpoints
+  // =============================================================================
+
+  /**
+   * POST /api/images/upload
+   * Upload an image to B2 storage
    */
   async uploadImage(image: string): Promise<UploadImageResponse> {
     const request: UploadImageRequest = { image };
@@ -519,8 +506,13 @@ export class ApiClient {
     });
   }
 
+  // =============================================================================
+  // AI Endpoints
+  // =============================================================================
+
   /**
-   * Recognize an inventory item from an image using AI
+   * POST /api/ai/recognize-item
+   * Recognize inventory item from image using AI
    */
   async recognizeItem(image: string): Promise<RecognizeItemResponse> {
     const request: RecognizeItemRequest = { image };
@@ -531,57 +523,62 @@ export class ApiClient {
     });
   }
 
-  /**
-   * Update user password
-   */
-  async updatePassword(
-    currentPassword: string,
-    newPassword: string
-  ): Promise<User> {
-    const request: UpdatePasswordRequest = { currentPassword, newPassword };
-    return this.request<User>('/api/auth/me', {
-      method: 'PATCH',
-      body: request,
-      requiresAuth: true,
-    });
-  }
+  // =============================================================================
+  // Accounts Endpoints
+  // =============================================================================
 
   /**
-   * Update user avatar URL
+   * GET /api/accounts/permissions
+   * Get account sharing permissions
    */
-  async updateAvatarUrl(avatarUrl: string): Promise<User> {
-    const request: UpdateAvatarUrlRequest = { avatarUrl };
-    return this.request<User>('/api/auth/me', {
-      method: 'PATCH',
-      body: request,
-      requiresAuth: true,
-    });
-  }
-
-  /**
-   * Update user nickname
-   */
-  async updateNickname(nickname: string): Promise<User> {
-    const request: UpdateNicknameRequest = { nickname };
-    return this.request<User>('/api/auth/me', {
-      method: 'PATCH',
-      body: request,
-      requiresAuth: true,
-    });
-  }
-
-  /**
-   * Get invitation code and account settings
-   */
-  async getInvitationCode(): Promise<InvitationResponse> {
-    return this.request<InvitationResponse>('/api/invitations', {
+  async getAccountPermissions(): Promise<GetAccountPermissionsResponse> {
+    return this.request<GetAccountPermissionsResponse>('/api/accounts/permissions', {
       method: 'GET',
       requiresAuth: true,
     });
   }
 
   /**
-   * Update account settings (sharing permissions)
+   * GET /api/accounts
+   * List all accessible accounts
+   */
+  async listAccessibleAccounts(): Promise<ListAccessibleAccountsResponse> {
+    return this.request<ListAccessibleAccountsResponse>('/api/accounts', {
+      method: 'GET',
+      requiresAuth: true,
+    });
+  }
+
+  /**
+   * GET /api/accounts/members
+   * List all members of the account
+   * @param userId Optional account owner user ID to list members for
+   */
+  async listMembers(userId?: string): Promise<ListMembersResponse> {
+    const endpoint = userId ? `/api/accounts/members?userId=${userId}` : '/api/accounts/members';
+    return this.request<ListMembersResponse>(endpoint, {
+      method: 'GET',
+      requiresAuth: true,
+    });
+  }
+
+  /**
+   * DELETE /api/accounts/members/:memberId
+   * Remove a member from the account
+   * @param memberId ID of the member to remove, or your own ID to leave an account
+   * @param userId Required when removing yourself; ID of the account to leave
+   */
+  async removeMember(memberId: string, userId?: string): Promise<RemoveMemberResponse> {
+    const endpoint = userId ? `/api/accounts/members/${memberId}?userId=${userId}` : `/api/accounts/members/${memberId}`;
+    return this.request<RemoveMemberResponse>(endpoint, {
+      method: 'DELETE',
+      requiresAuth: true,
+    });
+  }
+
+  /**
+   * PATCH /api/accounts/settings
+   * Update account sharing permissions
    */
   async updateAccountSettings(
     settings: UpdateAccountSettingsRequest
@@ -593,52 +590,34 @@ export class ApiClient {
     });
   }
 
+  // =============================================================================
+  // Invitations Endpoints
+  // =============================================================================
+
   /**
-   * List members of the current user's account
+   * GET /api/invitations/code
+   * Get the invitation code for the account
    */
-  async listMembers(userId?: string): Promise<ListMembersResponse> {
-    const endpoint = `/api/accounts/members${userId ? `?userId=${userId}` : ''}`;
-    return this.request<ListMembersResponse>(endpoint, {
+  async getInvitationCode(): Promise<GetInvitationCodeResponse> {
+    return this.request<GetInvitationCodeResponse>('/api/invitations/code', {
       method: 'GET',
       requiresAuth: true,
     });
   }
 
   /**
-   * List all accounts the authenticated user can access
+   * POST /api/invitations/code/regenerate
+   * Regenerate the invitation code
    */
-  async listAccessibleAccounts(): Promise<ListAccessibleAccountsResponse> {
-    return this.request<ListAccessibleAccountsResponse>('/api/accounts', {
-      method: 'GET',
-      requiresAuth: true,
-    });
-  }
-
-  /**
-   * Remove a member from the current user's account
-   */
-  async removeMember(memberId: string, userId?: string): Promise<{ success: boolean; message: string }> {
-    const endpoint = `/api/accounts/members/${memberId}${userId ? `?userId=${userId}` : ''}`;
-    return this.request<{ success: boolean; message: string }>(
-      endpoint,
-      {
-        method: 'DELETE',
-        requiresAuth: true,
-      }
-    );
-  }
-
-  /**
-   * Regenerate invitation code for the current user's account
-   */
-  async regenerateInvitationCode(): Promise<RegenerateInvitationResponse> {
-    return this.request<RegenerateInvitationResponse>('/api/invitations/regenerate', {
+  async regenerateInvitationCode(): Promise<RegenerateInvitationCodeResponse> {
+    return this.request<RegenerateInvitationCodeResponse>('/api/invitations/code/regenerate', {
       method: 'POST',
       requiresAuth: true,
     });
   }
 
   /**
+   * GET /api/invitations/:code
    * Validate an invitation code
    */
   async validateInvitation(code: string): Promise<ValidateInvitationResponse> {
@@ -649,65 +628,181 @@ export class ApiClient {
   }
 
   /**
-   * Accept an invitation code
+   * POST /api/invitations/:code/accept
+   * Accept an invitation to join an account
    */
-  async acceptInvitation(code: string): Promise<{ success: boolean; message: string }> {
-    return this.request<{ success: boolean; message: string }>(`/api/invitations/${code}/accept`, {
+  async acceptInvitation(code: string): Promise<AcceptInvitationResponse> {
+    return this.request<AcceptInvitationResponse>(`/api/invitations/${code}/accept`, {
       method: 'POST',
       requiresAuth: true,
     });
   }
+
+  // =============================================================================
+  // Sync Endpoints
+  // =============================================================================
+
   /**
-   * Get sync status for all entity types
+   * GET /api/sync/status
+   * Get sync status for all file types
    */
-  async getSyncEntityStatus(): Promise<EntitySyncStatus> {
-    return this.request<EntitySyncStatus>('/api/sync/entities/status', {
+  async getSyncStatus(): Promise<SyncStatusResponse> {
+    return this.request<SyncStatusResponse>('/api/sync/status', {
       method: 'GET',
       requiresAuth: true,
     });
   }
 
   /**
-   * Pull entities for a specific type
+   * GET /api/sync/:fileType/pull
+   * Pull sync data for a specific file type
+   * @param fileType Type of file to sync (categories, locations, inventoryItems, todoItems, settings)
+   * @param userId Optional target account ID for cross-account access
    */
-  async pullEntities(
-    request: PullEntitiesRequest
-  ): Promise<PullEntitiesResponse> {
-    const { userId, ...body } = request;
-    const endpoint = `/api/sync/entities/pull${userId ? `?userId=${userId}` : ''}`;
-    return this.request<PullEntitiesResponse>(endpoint, {
-      method: 'POST',
-      body,
+  async pullFile<T = unknown>(fileType: SyncFileType, userId?: string): Promise<PullFileResponse<T>> {
+    const endpoint = userId ? `/api/sync/${fileType}/pull?userId=${userId}` : `/api/sync/${fileType}/pull`;
+    return this.request<PullFileResponse<T>>(endpoint, {
+      method: 'GET',
       requiresAuth: true,
     });
   }
 
   /**
-   * Push entities for a specific type
+   * POST /api/sync/:fileType/push
+   * Push sync data for a specific file type
+   * @param fileType Type of file to sync (categories, locations, inventoryItems, todoItems, settings)
+   * @param request Sync data to upload
    */
-  async pushEntities(
-    request: PushEntitiesRequest
-  ): Promise<PushEntitiesResponse> {
-    const { userId, ...body } = request;
-    const endpoint = `/api/sync/entities/push${userId ? `?userId=${userId}` : ''}`;
-    return this.request<PushEntitiesResponse>(endpoint, {
+  async pushFile(fileType: SyncFileType, request: PushFileRequest): Promise<PushFileResponse> {
+    return this.request<PushFileResponse>(`/api/sync/${fileType}/push`, {
       method: 'POST',
-      body,
+      body: request,
       requiresAuth: true,
     });
   }
 
   /**
-   * Batch sync (pull and push)
+   * DELETE /api/sync/:fileType/data
+   * Delete sync data for a specific file type
+   * @param fileType Type of file to delete (categories, locations, inventoryItems, todoItems, settings)
+   * @param userId Optional target account ID for cross-account access
    */
-  async batchSync(
-    request: BatchSyncRequest
-  ): Promise<BatchSyncResponse> {
+  async deleteFileData(fileType: SyncFileType, userId?: string): Promise<DeleteFileDataResponse> {
+    const endpoint = userId ? `/api/sync/${fileType}/data?userId=${userId}` : `/api/sync/${fileType}/data`;
+    return this.request<DeleteFileDataResponse>(endpoint, {
+      method: 'DELETE',
+      requiresAuth: true,
+    });
+  }
+
+  // =============================================================================
+  // Sync Entities Endpoints
+  // =============================================================================
+
+  /**
+   * POST /api/sync/entities/batch
+   * Combined pull and push in a single request
+   */
+  async batchSync(request: BatchSyncRequest): Promise<BatchSyncResponse> {
     return this.request<BatchSyncResponse>('/api/sync/entities/batch', {
       method: 'POST',
       body: request,
       requiresAuth: true,
     });
   }
-}
 
+  /**
+   * GET /api/sync/entities/status
+   * Get sync status for entity types in a home
+   * @param homeId Home ID to check sync status for
+   * @param deviceId Client device identifier
+   * @param entityType Optional specific entity type to check, or all if omitted
+   */
+  async getSyncEntitiesStatus(
+    homeId: string,
+    deviceId: string,
+    entityType?: SyncEntityType
+  ): Promise<SyncEntitiesStatusResponse> {
+    const queryParams = new URLSearchParams({ homeId, deviceId });
+    if (entityType) {
+      queryParams.append('entityType', entityType);
+    }
+    return this.request<SyncEntitiesStatusResponse>(`/api/sync/entities/status?${queryParams.toString()}`, {
+      method: 'GET',
+      requiresAuth: true,
+    });
+  }
+
+  /**
+   * GET /api/sync/entities/pull
+   * Pull entities for a home and entity type
+   * @param homeId Home ID to pull entities from
+   * @param entityType Type of entities to pull
+   * @param deviceId Client device identifier for checkpoint tracking
+   * @param since Optional ISO 8601 timestamp for incremental sync
+   * @param includeDeleted Optional whether to include soft-deleted entities
+   */
+  async pullEntities(
+    homeId: string,
+    entityType: SyncEntityType,
+    deviceId: string,
+    since?: string,
+    includeDeleted?: boolean
+  ): Promise<PullEntitiesResponse> {
+    const queryParams = new URLSearchParams({ homeId, entityType, deviceId });
+    if (since) {
+      queryParams.append('since', since);
+    }
+    if (includeDeleted !== undefined) {
+      queryParams.append('includeDeleted', String(includeDeleted));
+    }
+    return this.request<PullEntitiesResponse>(`/api/sync/entities/pull?${queryParams.toString()}`, {
+      method: 'GET',
+      requiresAuth: true,
+    });
+  }
+
+  /**
+   * POST /api/sync/entities/push
+   * Push entity changes to the server with automatic conflict resolution
+   * @param homeId Home ID to push entities to
+   * @param entityType Type of entities being pushed
+   * @param deviceId Client device identifier for tracking changes
+   * @param request Array of entities to sync with optional checkpoint info
+   */
+  async pushEntities(
+    homeId: string,
+    entityType: SyncEntityType,
+    deviceId: string,
+    request: PushEntitiesRequest
+  ): Promise<PushEntitiesResponse> {
+    const queryParams = new URLSearchParams({ homeId, entityType, deviceId });
+    return this.request<PushEntitiesResponse>(`/api/sync/entities/push?${queryParams.toString()}`, {
+      method: 'POST',
+      body: request,
+      requiresAuth: true,
+    });
+  }
+
+  /**
+   * DELETE /api/sync/entities/reset
+   * Clear sync checkpoints forcing full re-sync
+   * @param homeId Home ID to reset sync checkpoints for
+   * @param deviceId Client device identifier to reset checkpoints for
+   * @param entityType Optional specific entity type to reset, or all if omitted
+   */
+  async resetSync(
+    homeId: string,
+    deviceId: string,
+    entityType?: SyncEntityType
+  ): Promise<ResetSyncResponse> {
+    const queryParams = new URLSearchParams({ homeId, deviceId });
+    if (entityType) {
+      queryParams.append('entityType', entityType);
+    }
+    return this.request<ResetSyncResponse>(`/api/sync/entities/reset?${queryParams.toString()}`, {
+      method: 'DELETE',
+      requiresAuth: true,
+    });
+  }
+}

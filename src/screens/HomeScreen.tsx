@@ -16,7 +16,6 @@ import {
   Platform,
   TouchableWithoutFeedback,
   Keyboard,
-  RefreshControl,
 } from 'react-native';
 import styled from 'styled-components/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -39,7 +38,6 @@ import {
   EmptyState,
   LoginBottomSheet,
   SignupBottomSheet,
-  EnableSyncBottomSheet,
   FloatingActionButton,
   CreateItemBottomSheet,
   EditItemBottomSheet,
@@ -50,9 +48,8 @@ import {
 import { useItemActions } from '../hooks/useItemActions';
 import { InventoryItem } from '../types/inventory';
 import { RootStackParamList } from '../navigation/types';
-import { useInventory, useSync, useAuth, useAppSelector, useTodos } from '../store/hooks';
+import { useInventory, useAuth, useAppSelector, useTodos } from '../store/hooks';
 import { calculateBottomPadding } from '../utils/layout';
-import * as SecureStore from 'expo-secure-store';
 import { useToast } from '../hooks/useToast';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
@@ -126,14 +123,12 @@ export const HomeScreen: React.FC = () => {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<NavigationProp>();
   const { items, loading: isLoading, loadItems, updateItem: updateInventoryItem } = useInventory();
-  const { enabled: isSyncEnabled, syncAll, loading: isSyncLoading } = useSync();
   const { user, getApiClient } = useAuth();
   const activeHomeId = useAppSelector((state) => state.auth.activeHomeId);
   const accounts = useAppSelector((state) => state.auth.accessibleAccounts);
   const theme = useTheme();
   const loginBottomSheetRef = useRef<BottomSheetModal | null>(null);
   const signupBottomSheetRef = useRef<BottomSheetModal | null>(null);
-  const enableSyncBottomSheetRef = useRef<BottomSheetModal | null>(null);
   const createItemBottomSheetRef = useRef<BottomSheetModal | null>(null);
   const editBottomSheetRef = useRef<EditItemBottomSheetRef>(null);
   const editBottomSheetModalRef = useRef<BottomSheetModal>(null);
@@ -153,39 +148,6 @@ export const HomeScreen: React.FC = () => {
   useEffect(() => {
     loadItems();
   }, [loadItems]);
-
-  const handleLoginSuccess = async () => {
-    // Always show the enable sync prompt after login
-    enableSyncBottomSheetRef.current?.present();
-  };
-
-  const handleSignupSuccess = async () => {
-    // Check if we should show the enable sync prompt
-    if (isSyncEnabled) {
-      return;
-    }
-
-    // Check if we've already shown the prompt
-    const hasShownPrompt = await SecureStore.getItemAsync(
-      'has_shown_sync_prompt'
-    );
-    if (hasShownPrompt === 'true') {
-      return;
-    }
-
-    // Show the enable sync prompt
-    enableSyncBottomSheetRef.current?.present();
-  };
-
-  const handleSyncPromptSkip = async () => {
-    // Mark that we've shown the prompt
-    await SecureStore.setItemAsync('has_shown_sync_prompt', 'true');
-  };
-
-  const handleSyncPromptEnable = async () => {
-    // Mark that we've shown the prompt
-    await SecureStore.setItemAsync('has_shown_sync_prompt', 'true');
-  };
 
   // Calculate counts for locations and statuses
   const locationCounts = useMemo(() => {
@@ -256,6 +218,14 @@ export const HomeScreen: React.FC = () => {
   const handleItemCreated = () => {
     setRecognizedItemData(null);
   };
+
+  const handleLoginSuccess = useCallback(async () => {
+    // User will be automatically updated via auth state
+  }, []);
+
+  const handleSignupSuccess = useCallback(async () => {
+    // User will be automatically updated via auth state
+  }, []);
 
   const handleAIAutomatic = useCallback(async () => {
     try {
@@ -530,14 +500,6 @@ export const HomeScreen: React.FC = () => {
                   contentContainerStyle={{
                     paddingBottom: bottomPadding,
                   }}
-                  refreshControl={
-                    <RefreshControl
-                      refreshing={isSyncLoading}
-                      onRefresh={syncAll}
-                      colors={[theme.colors.primary]}
-                      tintColor={theme.colors.primary}
-                    />
-                  }
                 />
               )}
             </ListContainer>
@@ -552,11 +514,6 @@ export const HomeScreen: React.FC = () => {
           bottomSheetRef={signupBottomSheetRef}
           onLoginPress={handleLoginPress}
           onSignupSuccess={handleSignupSuccess}
-        />
-        <EnableSyncBottomSheet
-          bottomSheetRef={enableSyncBottomSheetRef}
-          onSkip={handleSyncPromptSkip}
-          onEnableSync={handleSyncPromptEnable}
         />
         <CreateItemBottomSheet
           bottomSheetRef={createItemBottomSheetRef}

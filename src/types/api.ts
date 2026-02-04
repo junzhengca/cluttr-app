@@ -1,6 +1,9 @@
 import { InventoryItem } from './inventory';
 
-// Request types
+// =============================================================================
+// Request Types
+// =============================================================================
+
 export interface LoginRequest {
   email: string;
   password: string;
@@ -42,8 +45,81 @@ export interface RecognizeItemRequest {
   image: string;
 }
 
-// Response types
+// Full user profile update request
+export interface UpdateUserRequest {
+  nickname?: string;
+  avatarUrl?: string;
+  currentPassword?: string;
+  newPassword?: string;
+}
+
+// =============================================================================
+// Sync Request Types
+// =============================================================================
+
+export type SyncFileType = 'categories' | 'locations' | 'inventoryItems' | 'todoItems' | 'settings';
+
+export type SyncEntityType = 'inventoryItems' | 'todoItems' | 'categories' | 'locations' | 'settings';
+
+export interface PushFileRequest {
+  version: string;
+  deviceId: string;
+  syncTimestamp: string; // ISO 8601
+  data: unknown[];
+  deviceName?: string;
+  userId?: string;
+}
+
+export interface BatchSyncPullRequest {
+  entityType: SyncEntityType;
+  since?: string; // ISO 8601
+  includeDeleted?: boolean;
+  checkpoint?: {
+    lastPulledVersion?: number;
+  };
+}
+
+export interface SyncEntity {
+  entityId: string;
+  entityType: SyncEntityType;
+  homeId: string;
+  data: Record<string, unknown>;
+  version: number;
+  clientUpdatedAt: string; // ISO 8601
+  pendingCreate?: boolean;
+  pendingDelete?: boolean;
+}
+
+export interface BatchSyncPushRequest {
+  entityType: SyncEntityType;
+  entities: SyncEntity[];
+  lastPulledAt?: string; // ISO 8601
+  checkpoint?: {
+    lastPulledVersion?: number;
+  };
+}
+
+export interface BatchSyncRequest {
+  homeId: string;
+  deviceId: string;
+  pullRequests?: BatchSyncPullRequest[];
+  pushRequests?: BatchSyncPushRequest[];
+}
+
+export interface PushEntitiesRequest {
+  entities: SyncEntity[];
+  lastPulledAt?: string; // ISO 8601
+  checkpoint?: {
+    lastPulledVersion?: number;
+  };
+}
+
+// =============================================================================
+// Response Types
+// =============================================================================
+
 export type RecognizeItemResponse = InventoryItem;
+
 export interface AuthResponse {
   accessToken: string;
   user?: User;
@@ -56,6 +132,15 @@ export interface User {
   avatarUrl?: string;
   createdAt?: string;
   updatedAt?: string;
+  invitationCode?: string;
+  accountSettings?: {
+    canShareInventory: boolean;
+    canShareTodos: boolean;
+  };
+  memberships?: {
+    accountId: string;
+    joinedAt: string;
+  }[];
 }
 
 export interface UploadImageResponse {
@@ -63,20 +148,18 @@ export interface UploadImageResponse {
   imageId?: string;
 }
 
-export interface InvitationResponse {
-  invitationCode: string;
-  settings: {
-    canShareInventory: boolean;
-    canShareTodos: boolean;
-  };
-  memberCount: number;
+// =============================================================================
+// Accounts Response Types
+// =============================================================================
+
+export interface GetAccountPermissionsResponse {
+  canShareInventory: boolean;
+  canShareTodos: boolean;
 }
 
 export interface UpdateAccountSettingsResponse {
-  settings: {
-    canShareInventory: boolean;
-    canShareTodos: boolean;
-  };
+  canShareInventory: boolean;
+  canShareTodos: boolean;
 }
 
 export interface Member {
@@ -98,19 +181,46 @@ export interface AccessibleAccount {
   nickname?: string;
   avatarUrl?: string;
   isOwner: boolean;
-  joinedAt: string;
   permissions?: {
     canShareInventory: boolean;
     canShareTodos: boolean;
   };
+  joinedAt?: string;
 }
 
 export interface ListAccessibleAccountsResponse {
   accounts: AccessibleAccount[];
 }
 
-export interface RegenerateInvitationResponse {
+export interface RemoveMemberResponse {
+  success: boolean;
+  message: string;
+}
+
+// =============================================================================
+// Invitations Response Types
+// =============================================================================
+
+export interface GetInvitationCodeResponse {
   invitationCode: string;
+  settings: {
+    canShareInventory: boolean;
+    canShareTodos: boolean;
+  };
+  memberCount: number;
+  inviter?: {
+    nickname: string;
+    avatarUrl: string;
+  };
+}
+
+export interface RegenerateInvitationCodeResponse {
+  code: string;
+  accountEmail: string;
+  permissions: {
+    canShareInventory: boolean;
+    canShareTodos: boolean;
+  };
 }
 
 export interface ValidateInvitationResponse {
@@ -125,19 +235,174 @@ export interface ValidateInvitationResponse {
   message?: string;
 }
 
+export interface AcceptInvitationResponse {
+  success: boolean;
+  message: string;
+}
+
+// =============================================================================
+// Sync Response Types
+// =============================================================================
+
+export interface SyncFileStatus {
+  lastSyncTime: string;
+  lastSyncedByDeviceId: string;
+  lastSyncedAt: string;
+  clientVersion: string;
+  deviceName: string;
+  totalSyncs: number;
+}
+
+export interface SyncStatusResponse {
+  categories?: SyncFileStatus;
+  locations?: SyncFileStatus;
+  inventoryItems?: SyncFileStatus;
+  todoItems?: SyncFileStatus;
+  settings?: SyncFileStatus;
+}
+
+export interface PullFileResponse<T = unknown> {
+  success: boolean;
+  data: T[];
+  serverTimestamp: string;
+  lastSyncTime: string;
+}
+
+export interface PushFileResponse {
+  success: boolean;
+  serverTimestamp: string;
+  lastSyncTime: string;
+  entriesCount: number;
+  message: string;
+}
+
+export interface DeleteFileDataResponse {
+  success: boolean;
+  message: string;
+}
+
 export interface ApiError {
   message: string;
   code?: string;
   statusCode?: number;
 }
 
-// Generic response wrapper
+// =============================================================================
+// Sync Entities Response Types
+// =============================================================================
+
+export interface UpdatedByInfo {
+  userId: string;
+  email: string;
+  nickname?: string;
+}
+
+export interface SyncEntityWithMeta extends SyncEntity {
+  updatedAt: string;
+  updatedBy?: UpdatedByInfo;
+  updatedByDeviceId?: string;
+}
+
+export interface Checkpoint {
+  homeId: string;
+  entityType: SyncEntityType;
+  lastSyncedAt?: string;
+  lastPulledVersion?: number;
+  lastPushedVersion?: number;
+}
+
+export interface BatchSyncPullResult {
+  entityType: SyncEntityType;
+  entities: SyncEntityWithMeta[];
+  deletedEntityIds: string[];
+  checkpoint: Checkpoint;
+}
+
+export interface EntitySyncResult {
+  entityId: string;
+  status: 'created' | 'updated' | 'server_version' | 'deleted';
+  winner?: 'client' | 'server';
+  serverVersion?: number;
+  serverUpdatedAt?: string;
+  serverVersionData?: {
+    data: Record<string, unknown>;
+    version: number;
+    updatedAt: string;
+    updatedBy?: UpdatedByInfo;
+  };
+}
+
+export interface BatchSyncPushResult {
+  entityType: SyncEntityType;
+  results: EntitySyncResult[];
+  newEntitiesFromServer: SyncEntityWithMeta[];
+  deletedEntityIds: string[];
+  errors: { entityId: string; error: string }[];
+  checkpoint: Checkpoint;
+}
+
+export interface BatchSyncResponse {
+  success: boolean;
+  pullResults?: BatchSyncPullResult[];
+  pushResults?: BatchSyncPushResult[];
+  serverTimestamp: string;
+}
+
+export interface EntitySyncStatus {
+  homeId: string;
+  entityType: SyncEntityType;
+  lastSyncedAt: string | null;
+  lastPulledVersion: number;
+  lastPushedVersion: number;
+  pendingLocalChanges: number;
+  serverVersion: number;
+  needsPull: boolean;
+  needsPush: boolean;
+}
+
+export interface SyncEntitiesStatusResponse {
+  success: boolean;
+  status: Record<string, EntitySyncStatus>;
+}
+
+export interface PullEntitiesResponse {
+  success: boolean;
+  entities: SyncEntityWithMeta[];
+  deletedEntityIds: string[];
+  serverTimestamp: string;
+  checkpoint: Checkpoint;
+}
+
+export interface PushEntitiesResponse {
+  success: boolean;
+  results: EntitySyncResult[];
+  newEntitiesFromServer: SyncEntityWithMeta[];
+  deletedEntityIds: string[];
+  errors: { entityId: string; error: string }[];
+  checkpoint: Checkpoint;
+  serverTimestamp: string;
+}
+
+export interface ResetSyncResponse {
+  success: boolean;
+  message: string;
+  resetEntityTypes: SyncEntityType[];
+  deletedCount: number;
+}
+
+// =============================================================================
+// Generic Response Wrapper
+// =============================================================================
+
 export interface ApiResponse<T> {
   data?: T;
   error?: ApiError;
 }
 
+// =============================================================================
 // Retry attempt information
+// =============================================================================
+
 export interface RetryAttempt {
   attempt: number;
   delay: number;
@@ -145,7 +410,10 @@ export interface RetryAttempt {
   error?: string;
 }
 
+// =============================================================================
 // Error details for verbose error logging
+// =============================================================================
+
 export interface ErrorDetails {
   endpoint: string;
   method: string;
@@ -159,122 +427,4 @@ export interface ErrorDetails {
   retryAttempts: RetryAttempt[];
   totalDuration: number;
   timestamp: string;
-}
-
-// Sync Entities Types
-export type EntityType = 'categories' | 'locations' | 'inventoryItems' | 'todoItems' | 'settings';
-
-export interface SyncCheckpoint {
-  lastPulledVersion: number;
-}
-
-export interface SyncEntityData {
-  id: string;
-  [key: string]: unknown;
-}
-
-export interface PullEntitiesRequest {
-  entityType: EntityType;
-  since?: string;
-  includeDeleted?: boolean;
-  checkpoint?: SyncCheckpoint;
-  userId?: string;
-}
-
-export interface EntityChange {
-  entityId: string;
-  changeType: 'created' | 'updated' | 'deleted';
-  data?: unknown; // The full entity data for created/updated
-  deletedAt?: string;
-  version: number;
-  clientUpdatedAt: string;
-}
-
-export interface PullEntitiesResponse {
-  success: boolean;
-  changes: EntityChange[];
-  serverTimestamp: string;
-  latestVersion: number;
-  hasMore: boolean;
-}
-
-export interface PushEntity {
-  entityId: string;
-  entityType: EntityType;
-  homeId?: string;
-  data: SyncEntityData;
-  version?: number;
-  clientUpdatedAt: string;
-  deletedAt?: string;
-}
-
-export interface PushEntitiesRequest {
-  entityType: EntityType;
-  entities: PushEntity[];
-  lastPulledAt?: string;
-  checkpoint?: SyncCheckpoint;
-  userId?: string;
-}
-
-export interface PushConflict {
-  entityId: string;
-  serverVersion: number;
-  clientVersion: number;
-  type: 'version_mismatch' | 'concurrent_modification';
-}
-
-export interface PushResult {
-  entityId: string;
-  status: 'success' | 'conflict' | 'error';
-  serverVersion?: number;
-  error?: string;
-  conflict?: PushConflict;
-}
-
-export interface PushEntitiesResponse {
-  success: boolean;
-  results: PushResult[];
-  serverTimestamp: string;
-}
-
-export interface BatchPullRequest extends Omit<PullEntitiesRequest, 'userId'> {
-  // userId is common for the batch or handled per request if API allows,
-  // but usually batch is for a specific context.
-  // Looking at API.md: "Combined pull and push in a single request"
-  // API.md shows `pullRequests` array.
-}
-
-export interface BatchPushRequest extends Omit<PushEntitiesRequest, 'userId'> {
-}
-
-export interface BatchSyncRequest {
-  homeId?: string; // Corresponds to userId context usually
-  deviceId: string;
-  pullRequests: BatchPullRequest[];
-  pushRequests: BatchPushRequest[];
-}
-
-export interface BatchSyncResponse {
-  success: boolean;
-  pullResults: {
-    entityType: EntityType;
-    entities: EntityChange[]; // API.md example uses 'entities' field which looks like changes/items
-    serverTimestamp: string;
-    latestVersion: number;
-  }[];
-  pushResults: {
-    entityType: EntityType;
-    results: PushResult[];
-    serverTimestamp: string;
-  }[];
-  serverTimestamp: string;
-}
-
-export interface EntitySyncStatus {
-  [entityType: string]: {
-    lastSyncTime: string;
-    lastSyncedByDeviceId: string;
-    lastSyncedAt: string;
-    totalSyncs: number;
-  };
 }

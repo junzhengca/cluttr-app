@@ -46,9 +46,6 @@ export type { SetupNicknameBottomSheetProps } from './SetupNicknameBottomSheet';
 export { EditNicknameBottomSheet } from './EditNicknameBottomSheet';
 export type { EditNicknameBottomSheetProps, EditNicknameBottomSheetRef } from './EditNicknameBottomSheet';
 
-export { EnableSyncBottomSheet } from './EnableSyncBottomSheet';
-export type { EnableSyncBottomSheetProps } from './EnableSyncBottomSheet';
-
 export { ErrorBottomSheet } from './ErrorBottomSheet';
 export type { ErrorBottomSheetProps } from './ErrorBottomSheet';
 

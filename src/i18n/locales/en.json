@@ -17,7 +17,7 @@
   },
   "offline": {
     "title": "You are Offline",
-    "description": "Changes you make will be saved locally on your device and automatically synced when you are back online.",
+    "description": "Some features may be unavailable while offline. Please check your internet connection.",
     "badge": "You are offline"
   },
   "accessControl": {
@@ -377,38 +377,7 @@
     "lastUpdated": "Last updated",
     "auth": {
       "title": "Sign In or Sign Up",
-      "subtitle": "Create an account or sign in to sync your data across devices"
-    },
-    "sync": {
-      "title": "Sync Settings",
-      "enableSync": "Enable Sync",
-      "status": {
-        "enabled": "Sync is enabled",
-        "disabled": "Sync is disabled"
-      },
-      "lastSync": "Last sync:",
-      "error": "Error:",
-      "syncNow": "Sync Now",
-      "alerts": {
-        "disabled": {
-          "title": "Sync Disabled",
-          "message": "Your data will no longer be synced across devices."
-        },
-        "enabled": {
-          "title": "Sync Enabled",
-          "message": "Your data will now be synced across devices. Initial sync is starting..."
-        },
-        "started": {
-          "title": "Sync Started",
-          "message": "Manual sync has been triggered. Your data will be synced shortly."
-        },
-        "error": {
-          "title": "Sync Error",
-          "toggleFailed": "Failed to toggle sync",
-          "syncFailed": "Failed to trigger manual sync"
-        }
-      },
-      "forcedWarning": "Sync is required when you have home members or are a member of another home."
+      "subtitle": "Create an account or sign in to access your data"
     },
     "avatar": {
       "uploadSuccess": {
@@ -437,7 +406,6 @@
       "password": "Enter your password"
     },
     "benefits": {
-      "sync": "Sync your data across devices - never lose your inventory",
       "premium": "Unlock premium plans with AI-powered features",
       "share": "Share your inventory with family and friends"
     },
@@ -476,7 +444,6 @@
       "confirmPassword": "Confirm your password"
     },
     "benefits": {
-      "sync": "Sync your data across devices - never lose your inventory",
       "premium": "Unlock premium plans with AI-powered features",
       "share": "Share your inventory with family and friends"
     },
@@ -488,25 +455,6 @@
       "passwordMismatch": "Passwords do not match",
       "passwordTooShort": "Password must be at least 6 characters",
       "failed": "Signup failed. Please try again."
-    }
-  },
-  "enableSync": {
-    "title": "Enable Sync?",
-    "subtitle": "Keep your data synchronized across all your devices",
-    "checkingData": "Checking your data...",
-    "warning": {
-      "title": "Data Merge Warning",
-      "message": "You have local data on this device. If you enable sync, your local data will be merged with your cloud data. This may result in duplicate items or todos."
-    },
-    "benefits": {
-      "sync": "Sync your data across devices - never lose your inventory",
-      "devices": "Access your inventory from any device",
-      "backup": "Automatic backup of your data in the cloud"
-    },
-    "buttons": {
-      "skip": "Skip",
-      "enable": "Enable Sync",
-      "enabling": "Enabling..."
     }
   },
   "errorBottomSheet": {
@@ -635,11 +583,6 @@
       },
       "receivedTitle": "{{name}} invites you to join their home",
       "receivedSubtitle": "Received Invitation",
-      "syncRequired": {
-        "title": "Sync Required",
-        "message": "You must turn on sync to invite family members. Would you like to turn it on now?",
-        "acceptMessage": "You must turn on sync to accept invitations. Would you like to turn it on now?"
-      },
       "acceptSuccess": "Successfully joined the home",
       "acceptError": "Failed to join the home. Please try again.",
       "receivedScope": "Shared Scope",

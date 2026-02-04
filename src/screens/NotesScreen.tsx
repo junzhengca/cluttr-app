@@ -9,7 +9,6 @@ import {
   Animated,
   KeyboardAvoidingView,
   Platform,
-  RefreshControl,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import styled from 'styled-components/native';
@@ -29,9 +28,8 @@ import {
   EmptyState,
   LoginBottomSheet,
   SignupBottomSheet,
-  EnableSyncBottomSheet,
 } from '../components';
-import { useTodos, useAuth, useAppSelector, useSync } from '../store/hooks';
+import { useTodos, useAuth, useAppSelector } from '../store/hooks';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/types';
 import { useTheme } from '../theme/ThemeProvider';
@@ -184,7 +182,6 @@ export const NotesScreen: React.FC = () => {
     removeTodo,
     updateTodo,
   } = useTodos();
-  const { syncAll, loading: isSyncLoading } = useSync();
   const theme = useTheme();
   const { t } = useTranslation();
   const { user } = useAuth();
@@ -200,7 +197,6 @@ export const NotesScreen: React.FC = () => {
 
   const loginBottomSheetRef = useRef<BottomSheetModal | null>(null);
   const signupBottomSheetRef = useRef<BottomSheetModal | null>(null);
-  const enableSyncBottomSheetRef = useRef<BottomSheetModal | null>(null);
   const swipeableRefs = useRef<Map<string, Swipeable>>(new Map());
 
   // Animation values for notes field - height cannot use native driver
@@ -263,16 +259,7 @@ export const NotesScreen: React.FC = () => {
   };
 
   const handleLoginSuccess = async () => {
-    // Always show the enable sync prompt after login
-    enableSyncBottomSheetRef.current?.present();
-  };
-
-  const handleSyncPromptSkip = async () => {
-    // No-op: just close the modal
-  };
-
-  const handleSyncPromptEnable = async () => {
-    // No-op: sync enabling is handled by EnableSyncBottomSheet
+    // User will be automatically updated via auth state
   };
 
   const handleAvatarPress = () => {
@@ -379,11 +366,6 @@ export const NotesScreen: React.FC = () => {
           bottomSheetRef={signupBottomSheetRef}
           onLoginPress={handleLoginPress}
         />
-        <EnableSyncBottomSheet
-          bottomSheetRef={enableSyncBottomSheetRef}
-          onSkip={handleSyncPromptSkip}
-          onEnableSync={handleSyncPromptEnable}
-        />
       </Container>
     );
   }
@@ -417,14 +399,6 @@ export const NotesScreen: React.FC = () => {
               contentContainerStyle={{ paddingBottom: bottomPadding }}
               keyboardDismissMode="interactive"
               keyboardShouldPersistTaps="handled"
-              refreshControl={
-                <RefreshControl
-                  refreshing={isSyncLoading}
-                  onRefresh={syncAll}
-                  colors={[theme.colors.primary]}
-                  tintColor={theme.colors.primary}
-                />
-              }
             >
               <AddTodoContainer isFocused={isFocused}>
                 <TodoInputRow>
@@ -527,11 +501,6 @@ export const NotesScreen: React.FC = () => {
         <SignupBottomSheet
           bottomSheetRef={signupBottomSheetRef}
           onLoginPress={handleLoginPress}
-        />
-        <EnableSyncBottomSheet
-          bottomSheetRef={enableSyncBottomSheetRef}
-          onSkip={handleSyncPromptSkip}
-          onEnableSync={handleSyncPromptEnable}
         />
       </Container>
     </GestureHandlerRootView>

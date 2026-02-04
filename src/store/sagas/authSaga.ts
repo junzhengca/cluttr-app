@@ -10,10 +10,6 @@ import {
   setAccessibleAccounts,
   setActiveHomeId,
 } from '../slices/authSlice';
-import {
-  setSyncEnabled,
-} from '../slices/syncSlice';
-import { initializeSync } from './syncSaga';
 import { loadItems } from './inventorySaga';
 import { loadTodos } from './todoSaga';
 import { loadSettings } from './settingsSaga';
@@ -34,7 +30,6 @@ import {
   clearAccessibleAccounts,
 } from '../../services/AuthService';
 import { User, ErrorDetails, ListAccessibleAccountsResponse, AccessibleAccount } from '../../types/api';
-import * as SecureStore from 'expo-secure-store';
 import type { RootState } from '../types';
 import { getGlobalToast } from '../../components/organisms/ToastProvider';
 import i18n from '../../i18n/i18n';
@@ -158,7 +153,6 @@ function* handleAuthError() {
   yield call(clearAllAuthData);
   yield put(setUser(null));
   yield put(setAuthenticated(false));
-  yield put(setSyncEnabled(false));
   yield put(setActiveHomeId(null));
   yield put(setAccessibleAccounts([]));
   yield call(clearAccessibleAccounts);
@@ -239,9 +233,6 @@ function* checkAuthSaga(): Generator {
           yield put(setActiveHomeId(activeHomeId));
         }
 
-        // Initialize sync service after successful authentication
-        yield put(initializeSync());
-
         // Load accessible accounts
         yield put(loadAccessibleAccounts());
 
@@ -266,9 +257,6 @@ function* checkAuthSaga(): Generator {
           console.log('[AuthSaga] Restoring active home ID:', activeHomeId);
           yield put(setActiveHomeId(activeHomeId));
         }
-
-        // Initialize sync service after successful authentication
-        yield put(initializeSync());
 
         // Reload data with correct context
         yield put(loadItems());
@@ -372,9 +360,6 @@ function* loginSaga(action: { type: string; payload: { email: string; password: 
       yield put(setActiveHomeId(activeHomeId));
     }
 
-    // Initialize sync service after successful login
-    yield put(initializeSync());
-
     // Load accessible accounts
     yield put(loadAccessibleAccounts());
 
@@ -453,9 +438,6 @@ function* signupSaga(action: { type: string; payload: { email: string; password:
     }
 
     yield put(setAuthenticated(true));
-
-    // Initialize sync service after successful signup
-    yield put(initializeSync());
 
     // Load accessible accounts
     yield put(loadAccessibleAccounts());
@@ -554,9 +536,6 @@ function* googleLoginSaga(action: { type: string; payload: { idToken: string; pl
       yield put(setActiveHomeId(activeHomeId));
     }
 
-    // Initialize sync service after successful Google login
-    yield put(initializeSync());
-
     // Load accessible accounts
     yield put(loadAccessibleAccounts());
 
@@ -593,17 +572,9 @@ function* googleLoginSaga(action: { type: string; payload: { idToken: string; pl
 }
 
 function* logoutSaga() {
-  console.log('[AuthSaga] logout() called - attempting to disable sync and clear auth');
+  console.log('[AuthSaga] logout() called - clearing auth');
 
   try {
-    // Disable sync on explicit logout (persist state)
-    try {
-      yield call(SecureStore.setItemAsync, 'sync_enabled', 'false');
-      yield put(setSyncEnabled(false));
-      console.log('[AuthSaga] *** SYNC DISABLED ON LOGOUT *** - Set sync_enabled to "false"');
-    } catch (error) {
-      console.error('[AuthSaga] Error disabling sync on logout:', error);
-    }
     yield put(setAccessibleAccounts([])); // Clear accounts on logout
     yield call(handleAuthError);
 

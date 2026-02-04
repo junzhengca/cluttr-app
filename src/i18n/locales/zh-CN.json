@@ -361,37 +361,7 @@
     "lastUpdated": "最后更新",
     "auth": {
       "title": "登录或注册",
-      "subtitle": "创建账户或登录以跨设备同步您的数据"
-    },
-    "sync": {
-      "title": "同步设置",
-      "enableSync": "启用同步",
-      "status": {
-        "enabled": "同步已启用",
-        "disabled": "同步已禁用"
-      },
-      "lastSync": "上次同步:",
-      "error": "错误:",
-      "syncNow": "立即同步",
-      "alerts": {
-        "disabled": {
-          "title": "同步已禁用",
-          "message": "您的数据将不再跨设备同步。"
-        },
-        "enabled": {
-          "title": "同步已启用",
-          "message": "您的数据现在将跨设备同步。初始同步正在开始..."
-        },
-        "started": {
-          "title": "同步已启动",
-          "message": "手动同步已触发。您的数据将很快同步。"
-        },
-        "error": {
-          "title": "同步错误",
-          "toggleFailed": "切换同步失败",
-          "syncFailed": "触发手动同步失败"
-        }
-      }
+      "subtitle": "创建账户或登录以访问您的数据"
     },
     "avatar": {
       "uploadSuccess": {
@@ -420,7 +390,6 @@
       "password": "请输入您的密码"
     },
     "benefits": {
-      "sync": "跨设备同步数据 - 永不丢失您的库存",
       "premium": "解锁AI驱动的高级功能计划",
       "share": "与家人和朋友分享您的库存"
     },
@@ -459,7 +428,6 @@
       "confirmPassword": "请确认您的密码"
     },
     "benefits": {
-      "sync": "跨设备同步数据 - 永不丢失您的库存",
       "premium": "解锁AI驱动的高级功能计划",
       "share": "与家人和朋友分享您的库存"
     },
@@ -471,25 +439,6 @@
       "passwordMismatch": "密码不匹配",
       "passwordTooShort": "密码至少需要6个字符",
       "failed": "注册失败，请重试。"
-    }
-  },
-  "enableSync": {
-    "title": "启用同步？",
-    "subtitle": "让您的数据在所有设备上保持同步",
-    "checkingData": "正在检查您的数据...",
-    "warning": {
-      "title": "数据合并警告",
-      "message": "此设备上有本地数据。如果启用同步，您的本地数据将与云端数据合并。这可能会导致重复的物品或待办事项。"
-    },
-    "benefits": {
-      "sync": "跨设备同步数据 - 永不丢失您的库存",
-      "devices": "从任何设备访问您的库存",
-      "backup": "在云端自动备份您的数据"
-    },
-    "buttons": {
-      "skip": "跳过",
-      "enable": "启用同步",
-      "enabling": "启用中..."
     }
   },
   "errorBottomSheet": {
@@ -609,11 +558,6 @@
       },
       "receivedTitle": "{{name}} 邀请您加入他们的家",
       "receivedSubtitle": "收到邀请",
-      "syncRequired": {
-        "title": "需要同步",
-        "message": "您必须开启同步才能邀请成员。现在开启吗？",
-        "acceptMessage": "您必须开启同步才能接受邀请。现在开启吗？"
-      },
       "acceptSuccess": "成功加入小家",
       "acceptError": "加入小家失败，请重试。",
       "receivedScope": "分享范围",
