@@ -1,4 +1,4 @@
-import { call, put, select, takeLatest } from 'redux-saga/effects';
+import { call, put, select, takeLatest, delay, spawn } from 'redux-saga/effects';
 import {
   setTodos,
   silentSetTodos,
@@ -13,9 +13,13 @@ import {
   toggleTodo as toggleTodoService,
   deleteTodo,
   updateTodo,
+  syncTodos,
 } from '../../services/TodoService';
 import { TodoItem } from '../../types/inventory';
 import type { RootState } from '../types';
+import { homeService } from '../../services/HomeService';
+import { ApiClient } from '../../services/ApiClient';
+import { getDeviceId } from '../../utils/deviceUtils';
 
 // Action types
 const LOAD_TODOS = 'todo/LOAD_TODOS';
@@ -24,6 +28,7 @@ const ADD_TODO = 'todo/ADD_TODO';
 const TOGGLE_TODO = 'todo/TOGGLE_TODO';
 const DELETE_TODO = 'todo/DELETE_TODO';
 const UPDATE_TODO = 'todo/UPDATE_TODO';
+const SYNC_TODOS = 'todo/SYNC_TODOS'; // New action
 
 // Action creators
 export const loadTodos = () => ({ type: LOAD_TODOS });
@@ -35,7 +40,7 @@ export const updateTodoText = (id: string, text: string, note?: string) => ({
   type: UPDATE_TODO,
   payload: { id, text, note },
 });
-
+export const syncTodosAction = () => ({ type: SYNC_TODOS });
 
 function* getFileUserId() {
   const state: RootState = yield select();
@@ -53,6 +58,10 @@ function* loadTodosSaga() {
     // Sort by createdAt in descending order (newest first)
     allTodos.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
     yield put(setTodos(allTodos));
+
+    // Trigger sync on load? Maybe strictly stick to periodic + triggers
+    // But loading often implies "I just opened this screen", so a pull is good.
+    // However, authSaga already triggers home sync.
   } catch (error) {
     console.error('[TodoSaga] Error loading todos:', error);
   } finally {
@@ -75,13 +84,42 @@ function* silentRefreshTodosSaga() {
   }
 }
 
+function* syncTodosSaga() {
+  try {
+    const state: RootState = yield select();
+    const { activeHomeId, apiClient } = state.auth;
+
+    if (!activeHomeId || !apiClient) return;
+
+    console.log('[TodoSaga] Starting scheduled/triggered sync sequence');
+
+    // 1. Sync Homes first (Important rule)
+    yield call([homeService, homeService.syncHomes], apiClient);
+
+    // 2. Sync Todos
+    const deviceId: string = yield call(getDeviceId);
+    yield call(syncTodos, activeHomeId, apiClient as ApiClient, deviceId);
+
+    // 3. Refresh UI
+    yield call(silentRefreshTodosSaga);
+
+  } catch (error) {
+    console.error('[TodoSaga] Error in sync sequence:', error);
+  }
+}
+
 function* addTodoSaga(action: { type: string; payload: { text: string; note?: string } }) {
   const { text, note } = action.payload;
   if (!text.trim()) return;
 
   try {
     const userId: string | undefined = yield call(getFileUserId);
-    const newTodo: TodoItem = yield call(createTodo, text, note, userId);
+    if (!userId) {
+      console.error('[TodoSaga] Cannot create todo: No active home selected');
+      return;
+    }
+    // userId here IS the homeId because getFileUserId returns activeHomeId
+    const newTodo: TodoItem = yield call(createTodo, text, userId, note);
     if (newTodo) {
       // Optimistically add to state
       yield put(addTodoSlice(newTodo));
@@ -90,6 +128,9 @@ function* addTodoSaga(action: { type: string; payload: { text: string; note?: st
       const allTodos: TodoItem[] = yield call(getAllTodos, userId);
       allTodos.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
       yield put(setTodos(allTodos));
+
+      // Trigger sync
+      yield put(syncTodosAction());
     }
   } catch (error) {
     console.error('[TodoSaga] Error adding todo:', error);
@@ -119,6 +160,9 @@ function* toggleTodoSaga(action: { type: string; payload: string }) {
     const allTodos: TodoItem[] = yield call(getAllTodos, userId);
     allTodos.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
     yield put(setTodos(allTodos));
+
+    // Trigger sync
+    yield put(syncTodosAction());
   } catch (error) {
     console.error('[TodoSaga] Error toggling todo:', error);
     // Revert on error by refreshing
@@ -142,6 +186,9 @@ function* deleteTodoSaga(action: { type: string; payload: string }) {
     const allTodos: TodoItem[] = yield call(getAllTodos, userId);
     allTodos.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
     yield put(setTodos(allTodos));
+
+    // Trigger sync
+    yield put(syncTodosAction());
   } catch (error) {
     console.error('[TodoSaga] Error deleting todo:', error);
     // Revert on error by refreshing
@@ -170,10 +217,22 @@ function* updateTodoSaga(action: { type: string; payload: { id: string; text: st
     const allTodos: TodoItem[] = yield call(getAllTodos, userId);
     allTodos.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
     yield put(setTodos(allTodos));
+
+    // Trigger sync
+    yield put(syncTodosAction());
   } catch (error) {
     console.error('[TodoSaga] Error updating todo:', error);
     // Revert on error by refreshing
     yield loadTodosSaga();
+  }
+}
+
+function* periodicSyncSaga() {
+  while (true) {
+    // Wait 5 minutes
+    yield delay(5 * 60 * 1000);
+    console.log('[TodoSaga] Triggering periodic sync');
+    yield put(syncTodosAction());
   }
 }
 
@@ -185,4 +244,8 @@ export function* todoSaga() {
   yield takeLatest(TOGGLE_TODO, toggleTodoSaga);
   yield takeLatest(DELETE_TODO, deleteTodoSaga);
   yield takeLatest(UPDATE_TODO, updateTodoSaga);
+  yield takeLatest(SYNC_TODOS, syncTodosSaga); // Listen for explicit sync requests
+
+  // Start periodic sync
+  yield spawn(periodicSyncSaga);
 }

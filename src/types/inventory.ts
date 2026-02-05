@@ -40,11 +40,21 @@ export interface InventoryItem {
 
 export interface TodoItem {
   id: string;
+  homeId: string; // Home this todo belongs to
   text: string;
   completed: boolean;
   note?: string; // Optional note field
   createdAt: string; // ISO date string
   updatedAt?: string; // ISO date string
   deletedAt?: string; // ISO date string - marks soft deletion
+
+  // Sync metadata
+  version: number;
+  clientUpdatedAt: string;
+  serverUpdatedAt?: string;
+  lastSyncedAt?: string;
+  pendingCreate?: boolean;
+  pendingUpdate?: boolean;
+  pendingDelete?: boolean;
 }
 
