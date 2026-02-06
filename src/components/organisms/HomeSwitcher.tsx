@@ -34,11 +34,7 @@ const HomeNameString = styled(Text)`
 `;
 
 const IconWrapper = styled(View)`
-  margin-left: 6px;
-  background-color: ${({ theme }: StyledProps) => theme.colors.surface};
-  border-radius: 999px;
-  padding: 2px;
-  border: 1px solid ${({ theme }: StyledProps) => theme.colors.border};
+  margin-left: 4px;
 `;
 
 const HeaderText = styled(Text)`
@@ -188,7 +184,7 @@ export const HomeSwitcher: React.FC = () => {
         <Container onPress={handleOpenStart} activeOpacity={0.7}>
           <HomeNameString>{currentHome?.name || t('home.switcher.defaultName')}</HomeNameString>
           <IconWrapper>
-            <Ionicons name="chevron-down" size={14} color={theme.colors.textSecondary} />
+            <Ionicons name="chevron-down" size={20} color="#000" />
           </IconWrapper>
         </Container>
       </View>
