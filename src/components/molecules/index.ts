@@ -33,8 +33,8 @@ export type { CategoryFilterProps } from './CategoryFilter';
 export { CategoryField } from './CategoryField';
 export type { CategoryFieldProps } from './CategoryField';
 
-export { LocationField } from './LocationField';
-export type { LocationFieldProps } from './LocationField';
+export { LocationSelector } from './LocationSelector';
+export type { LocationSelectorProps } from './LocationSelector';
 
 export { StatusField } from './StatusField';
 export type { StatusFieldProps } from './StatusField';

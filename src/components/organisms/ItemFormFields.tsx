@@ -9,7 +9,7 @@ import {
   UncontrolledInput,
   NumberInput,
 } from '../atoms';
-import { LocationField, StatusField, IconColorPicker, DatePicker } from '../molecules';
+import { LocationSelector, StatusField, IconColorPicker, DatePicker } from '../molecules';
 
 const FormContainer = styled.View`
   flex-direction: column;
@@ -197,9 +197,10 @@ export const ItemFormFields: React.FC<ItemFormFieldsProps> = ({
       </Row>
 
       <FormSection label={translations.fields.location}>
-        <LocationField
-          selectedId={selectedLocation}
-          onSelect={onLocationSelect}
+        <LocationSelector
+          selectedLocationId={selectedLocation}
+          onSelect={(id) => id && onLocationSelect(id)}
+          showAllOption={false}
         />
       </FormSection>
 
