@@ -7,4 +7,5 @@ export const itemStatuses: ItemStatus[] = [
   { id: 'using', name: '使用中' },
   { id: 'new', name: '全新' },
   { id: 'out-of-stock', name: '缺货' },
+  { id: 'en-route', name: '在途' },
 ];

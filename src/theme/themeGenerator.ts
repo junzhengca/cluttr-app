@@ -38,7 +38,7 @@ const baseTheme = {
   },
   borderRadius: {
     sm: 4,
-    md: 8,
+    md: 10,
     lg: 12,
     xl: 16,
     xxl: 24,
@@ -61,6 +61,7 @@ const commonLightColors = {
   successLight: '#E8F5E9',
   warning: '#F57C00',
   notification: '#FFB300',
+  filterInactive: '#E9EDF4',
 };
 
 // Common dark mode colors
@@ -78,6 +79,7 @@ const commonDarkColors = {
   successLight: '#2D4A31',
   warning: '#FFA726',
   notification: '#FFCA28',
+  filterInactive: '#333333',
 };
 
 // Theme color palettes (light mode)

@@ -53,6 +53,7 @@ import { useInventory, useAuth, useTodos } from '../store/hooks';
 import { useHome } from '../hooks/useHome';
 import { calculateBottomPadding } from '../utils/layout';
 import { useToast } from '../hooks/useToast';
+import { isExpiringSoon, countExpiringItems } from '../utils/dateUtils';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -117,9 +118,6 @@ export const HomeScreen: React.FC = () => {
   );
   const [selectedStatusId, setSelectedStatusId] = useState<string | null>(null);
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
-  const [filterMode, setFilterMode] = useState<'location' | 'status'>(
-    'location'
-  );
   const [isAIRecognizing, setIsAIRecognizing] = useState(false);
   const [recognizedItemData, setRecognizedItemData] =
     useState<Partial<InventoryItem> | null>(null);
@@ -165,6 +163,8 @@ export const HomeScreen: React.FC = () => {
     items.forEach((item) => {
       counts[item.status] = (counts[item.status] || 0) + 1;
     });
+    // Add count for expiring soon items
+    counts['expiring'] = countExpiringItems(items);
     return counts;
   }, [items]);
 
@@ -191,7 +191,11 @@ export const HomeScreen: React.FC = () => {
 
     // Filter by status
     if (selectedStatusId !== null) {
-      filtered = filtered.filter((item) => item.status === selectedStatusId);
+      if (selectedStatusId === 'expiring') {
+        filtered = filtered.filter((item) => isExpiringSoon(item.expiryDate));
+      } else {
+        filtered = filtered.filter((item) => item.status === selectedStatusId);
+      }
     }
 
     // Filter by category
@@ -399,6 +403,11 @@ export const HomeScreen: React.FC = () => {
           </LoadingContainer>
         ) : (
           <Content>
+            <StatusFilter
+              selectedStatusId={selectedStatusId}
+              onSelect={setSelectedStatusId}
+              counts={statusCounts}
+            />
             <CategoryFilter
               selectedCategoryId={selectedCategoryId}
               onSelect={setSelectedCategoryId}
@@ -406,42 +415,24 @@ export const HomeScreen: React.FC = () => {
             />
             <FilterRow>
               <FilterToggleBtn
-                onPress={() => {
-                  setFilterMode((prev) =>
-                    prev === 'location' ? 'status' : 'location'
-                  );
-                  setSelectedLocationId(null);
-                  setSelectedStatusId(null);
-                }}
+                onPress={() => setSelectedLocationId(null)}
                 activeOpacity={0.7}
               >
                 <Ionicons
-                  name={
-                    filterMode === 'location'
-                      ? 'location-outline'
-                      : 'pricetag-outline'
-                  }
+                  name="location-outline"
                   size={18}
                   color={theme.colors.primary}
                 />
                 <FilterToggleText>
-                  {t(`inventory.filterType.${filterMode}`)}
+                  {t('inventory.filterType.location')}
                 </FilterToggleText>
               </FilterToggleBtn>
               <VerticalDivider />
-              {filterMode === 'location' ? (
-                <LocationFilter
-                  selectedLocationId={selectedLocationId}
-                  onSelect={setSelectedLocationId}
-                  counts={locationCounts}
-                />
-              ) : (
-                <StatusFilter
-                  selectedStatusId={selectedStatusId}
-                  onSelect={setSelectedStatusId}
-                  counts={statusCounts}
-                />
-              )}
+              <LocationFilter
+                selectedLocationId={selectedLocationId}
+                onSelect={setSelectedLocationId}
+                counts={locationCounts}
+              />
             </FilterRow>
             <ListContainer>
               {filteredItems.length === 0 ? (

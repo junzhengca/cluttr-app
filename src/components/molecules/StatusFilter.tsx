@@ -1,5 +1,5 @@
 import React from 'react';
-import { TouchableOpacity, ScrollView } from 'react-native';
+import { TouchableOpacity, View } from 'react-native';
 import styled from 'styled-components/native';
 import { useTranslation } from 'react-i18next';
 import type {
@@ -8,32 +8,27 @@ import type {
 } from '../../utils/styledComponents';
 import { itemStatuses } from '../../data/itemStatuses';
 
-const StatusScrollView = styled(ScrollView).attrs(() => ({
-  horizontal: true,
-  showsHorizontalScrollIndicator: false,
-}))`
-  flex-grow: 0;
+const StatusContainer = styled(View)`
+  flex-direction: row;
+  justify-content: space-between;
   margin-bottom: ${({ theme }: StyledProps) => theme.spacing.md}px;
+  width: 100%;
 `;
 
 const StatusButton = styled(TouchableOpacity) <{ isSelected: boolean }>`
-  padding-horizontal: ${({ theme }: StyledProps) => theme.spacing.md}px;
+  padding-horizontal: ${({ theme }: StyledProps) => theme.spacing.sm - 2}px;
   padding-vertical: ${({ theme }: StyledProps) => theme.spacing.sm}px;
-  border-radius: ${({ theme }: StyledProps) => theme.borderRadius.full}px;
+  border-radius: ${({ theme }: StyledProps) => theme.borderRadius.md}px;
   flex-direction: row;
   align-items: center;
+  justify-content: center;
   background-color: ${({
   theme,
   isSelected,
 }: StyledPropsWith<{ isSelected: boolean }>) =>
-    isSelected ? theme.colors.primary : theme.colors.surface};
-  border-width: 1px;
-  border-color: ${({
-      theme,
-      isSelected,
-    }: StyledPropsWith<{ isSelected: boolean }>) =>
-    isSelected ? theme.colors.primary : theme.colors.border};
-  margin-right: ${({ theme }: StyledProps) => theme.spacing.sm}px;
+    isSelected ? theme.colors.primary : 'transparent'};
+  flex: 1;
+  margin-horizontal: 2px;
 `;
 
 const StatusText = styled.Text<{ isSelected: boolean }>`
@@ -69,10 +64,15 @@ export const StatusFilter: React.FC<StatusFilterProps> = ({
 
   const totalCount = Object.values(counts).reduce((sum, count) => sum + count, 0);
 
+  // We only show All, Out of Stock, Expiring, and En Route to fit in one row as per request
+  const displayStatuses = [
+    { id: 'out-of-stock', name: t('statuses.out-of-stock') },
+    { id: 'expiring', name: t('statuses.expiring') },
+    { id: 'en-route', name: t('statuses.en-route') },
+  ];
+
   return (
-    <StatusScrollView
-      contentContainerStyle={{ paddingVertical: 0, alignItems: 'center' }}
-    >
+    <StatusContainer>
       <StatusButton
         isSelected={selectedStatusId === null}
         onPress={() => onSelect(null)}
@@ -85,7 +85,7 @@ export const StatusFilter: React.FC<StatusFilterProps> = ({
           {totalCount}
         </CountText>
       </StatusButton>
-      {itemStatuses.map((status) => (
+      {displayStatuses.map((status) => (
         <StatusButton
           key={status.id}
           isSelected={selectedStatusId === status.id}
@@ -93,13 +93,13 @@ export const StatusFilter: React.FC<StatusFilterProps> = ({
           activeOpacity={0.7}
         >
           <StatusText isSelected={selectedStatusId === status.id}>
-            {t(`statuses.${status.id}`)}
+            {status.name}
           </StatusText>
           <CountText isSelected={selectedStatusId === status.id}>
             {counts[status.id] || 0}
           </CountText>
         </StatusButton>
       ))}
-    </StatusScrollView>
+    </StatusContainer>
   );
 };

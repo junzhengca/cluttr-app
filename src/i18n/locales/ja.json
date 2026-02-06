@@ -88,7 +88,9 @@
     "statuses": {
         "using": "使用中",
         "new": "新品",
-        "out-of-stock": "在庫切れ"
+        "out-of-stock": "在庫切れ",
+        "en-route": "配送中",
+        "expiring": "臨期"
     },
     "inventory": {
         "title": "すべてのアイテム",

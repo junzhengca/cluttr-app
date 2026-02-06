@@ -82,7 +82,9 @@
   "statuses": {
     "using": "使用中",
     "new": "全新",
-    "out-of-stock": "缺货"
+    "out-of-stock": "缺货",
+    "en-route": "在途",
+    "expiring": "临期"
   },
   "inventory": {
     "title": "所有物品",

@@ -16,23 +16,17 @@ const LocationScrollView = styled(ScrollView).attrs(() => ({
   margin-bottom: ${({ theme }: StyledProps) => theme.spacing.md}px;
 `;
 
-const LocationButton = styled(TouchableOpacity)<{ isSelected: boolean }>`
+const LocationButton = styled(TouchableOpacity) <{ isSelected: boolean }>`
   padding-horizontal: ${({ theme }: StyledProps) => theme.spacing.md}px;
   padding-vertical: ${({ theme }: StyledProps) => theme.spacing.sm}px;
-  border-radius: ${({ theme }: StyledProps) => theme.borderRadius.full}px;
+  border-radius: ${({ theme }: StyledProps) => theme.borderRadius.md}px;
   flex-direction: row;
   align-items: center;
   background-color: ${({
-    theme,
-    isSelected,
-  }: StyledPropsWith<{ isSelected: boolean }>) =>
+  theme,
+  isSelected,
+}: StyledPropsWith<{ isSelected: boolean }>) =>
     isSelected ? theme.colors.primary : theme.colors.surface};
-  border-width: 1px;
-  border-color: ${({
-    theme,
-    isSelected,
-  }: StyledPropsWith<{ isSelected: boolean }>) =>
-    isSelected ? theme.colors.primary : theme.colors.border};
   margin-right: ${({ theme }: StyledProps) => theme.spacing.sm}px;
 `;
 

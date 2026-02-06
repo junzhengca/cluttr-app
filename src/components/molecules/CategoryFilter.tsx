@@ -24,20 +24,14 @@ const CategoryScrollView = styled(ScrollView).attrs(() => ({
 const CategoryButton = styled(TouchableOpacity) <{ isSelected: boolean }>`
   width: 50px;
   height: 50px;
-  border-radius: 12px;
+  border-radius: ${({ theme }: StyledProps) => theme.borderRadius.md}px;
   justify-content: center;
   align-items: center;
   background-color: ${({
     theme,
     isSelected,
 }: StyledPropsWith<{ isSelected: boolean }>) =>
-        isSelected ? theme.colors.primary : theme.colors.surface};
-  border-width: 1px;
-  border-color: ${({
-            theme,
-            isSelected,
-        }: StyledPropsWith<{ isSelected: boolean }>) =>
-        isSelected ? theme.colors.primary : theme.colors.border};
+        isSelected ? theme.colors.primary : theme.colors.filterInactive};
   margin-right: ${({ theme }: StyledProps) => theme.spacing.sm}px;
 `;
 

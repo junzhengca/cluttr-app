@@ -98,7 +98,9 @@
   "statuses": {
     "using": "Using",
     "new": "New",
-    "out-of-stock": "Out of Stock"
+    "out-of-stock": "Out of Stock",
+    "en-route": "En-route",
+    "expiring": "Expiring"
   },
   "inventory": {
     "title": "All Items",

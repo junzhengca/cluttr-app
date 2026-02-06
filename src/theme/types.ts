@@ -21,6 +21,7 @@ export interface Theme {
     successLight: string;
     warning: string;
     notification: string;
+    filterInactive: string;
   };
   typography: {
     fontFamily: {
