@@ -8,7 +8,7 @@ import { useNavigation } from '@react-navigation/native';
 import type { StyledProps } from '../../utils/styledComponents';
 
 export interface PageHeaderProps {
-  icon: keyof typeof Ionicons.glyphMap;
+  icon?: keyof typeof Ionicons.glyphMap;
   title?: string;
   titleComponent?: React.ReactNode;
   subtitle: string;
@@ -209,11 +209,11 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
           <BackButton onPress={handleBackPress}>
             <BackIcon name="arrow-back" size={24} />
           </BackButton>
-        ) : (
+        ) : icon ? (
           <IconContainer>
             <Icon name={icon} size={22} />
           </IconContainer>
-        )}
+        ) : null}
         <TextContainer>
           {titleComponent ? titleComponent : <Title>{title}</Title>}
           <Subtitle>{subtitle}</Subtitle>

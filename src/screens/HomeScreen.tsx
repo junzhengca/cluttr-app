@@ -10,8 +10,6 @@ import {
   ActivityIndicator,
   View,
   Dimensions,
-  TouchableOpacity,
-  Text,
   Alert,
   Platform,
   TouchableWithoutFeedback,
@@ -23,7 +21,6 @@ import { useNavigation } from '@react-navigation/native';
 import { BottomSheetModal } from '@gorhom/bottom-sheet';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useTranslation } from 'react-i18next';
-import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import * as ImageManipulator from 'expo-image-manipulator';
 import * as FileSystem from 'expo-file-system/legacy';
@@ -71,40 +68,6 @@ const ListContainer = styled(View)`
   flex: 1;
 `;
 
-const FilterRow = styled(View)`
-  flex-direction: row;
-  align-items: center;
-  margin-bottom: ${({ theme }: StyledProps) => theme.spacing.sm}px;
-`;
-
-const FilterToggleBtn = styled(TouchableOpacity)`
-  padding-horizontal: ${({ theme }: StyledProps) => theme.spacing.md}px;
-  padding-vertical: ${({ theme }: StyledProps) => theme.spacing.sm}px;
-  border-radius: ${({ theme }: StyledProps) => theme.borderRadius.full}px;
-  background-color: ${({ theme }: StyledProps) => theme.colors.surface};
-  flex-direction: row;
-  align-items: center;
-  margin-bottom: ${({ theme }: StyledProps) => theme.spacing.md}px;
-  border-width: 1px;
-  border-color: ${({ theme }: StyledProps) => theme.colors.border};
-`;
-
-const FilterToggleText = styled(Text)`
-  font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.md}px;
-  color: ${({ theme }: StyledProps) => theme.colors.text};
-  margin-left: ${({ theme }: StyledProps) => theme.spacing.xs}px;
-  font-weight: ${({ theme }: StyledProps) =>
-    theme.typography.fontWeight.medium};
-`;
-
-const VerticalDivider = styled(View)`
-  width: 1px;
-  height: 34px;
-  background-color: ${({ theme }: StyledProps) => theme.colors.border};
-  margin-horizontal: ${({ theme }: StyledProps) => theme.spacing.sm}px;
-  margin-bottom: ${({ theme }: StyledProps) => theme.spacing.md}px;
-`;
-
 const LoadingContainer = styled(View)`
   flex: 1;
   justify-content: center;
@@ -126,7 +89,6 @@ export const HomeScreen: React.FC = () => {
   const { items, loading: isLoading, loadItems, updateItem: updateInventoryItem } = useInventory();
   const { user, getApiClient } = useAuth();
   const { currentHome } = useHome();
-  const theme = useTheme();
   const loginBottomSheetRef = useRef<BottomSheetModal | null>(null);
   const signupBottomSheetRef = useRef<BottomSheetModal | null>(null);
   const createItemBottomSheetRef = useRef<BottomSheetModal | null>(null);
@@ -382,7 +344,6 @@ export const HomeScreen: React.FC = () => {
     <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
       <Container>
         <PageHeader
-          icon="home"
           titleComponent={<HomeSwitcher />}
           subtitle={headerSubtitle}
           showRightButtons={true}
@@ -408,32 +369,16 @@ export const HomeScreen: React.FC = () => {
               onSelect={setSelectedStatusId}
               counts={statusCounts}
             />
+            <LocationFilter
+              selectedLocationId={selectedLocationId}
+              onSelect={setSelectedLocationId}
+              counts={locationCounts}
+            />
             <CategoryFilter
               selectedCategoryId={selectedCategoryId}
               onSelect={setSelectedCategoryId}
               counts={categoryCounts}
             />
-            <FilterRow>
-              <FilterToggleBtn
-                onPress={() => setSelectedLocationId(null)}
-                activeOpacity={0.7}
-              >
-                <Ionicons
-                  name="location-outline"
-                  size={18}
-                  color={theme.colors.primary}
-                />
-                <FilterToggleText>
-                  {t('inventory.filterType.location')}
-                </FilterToggleText>
-              </FilterToggleBtn>
-              <VerticalDivider />
-              <LocationFilter
-                selectedLocationId={selectedLocationId}
-                onSelect={setSelectedLocationId}
-                counts={locationCounts}
-              />
-            </FilterRow>
             <ListContainer>
               {filteredItems.length === 0 ? (
                 <EmptyState

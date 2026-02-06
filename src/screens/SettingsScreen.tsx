@@ -19,6 +19,7 @@ import {
   SettingsToggleItem,
   SettingsItem,
   EditHomeBottomSheet,
+  HomeSwitcher,
 } from '../components';
 import { useSettings, useAuth, useAppSelector } from '../store/hooks';
 import { useHome } from '../hooks/useHome';
@@ -152,8 +153,7 @@ export const SettingsScreen: React.FC = () => {
     return (
       <Container>
         <PageHeader
-          icon="settings"
-          title={t('settings.title')}
+          titleComponent={<HomeSwitcher />}
           subtitle={t('settings.subtitle')}
           showBackButton={false}
           showRightButtons={true}
@@ -171,8 +171,7 @@ export const SettingsScreen: React.FC = () => {
   return (
     <Container>
       <PageHeader
-        icon="settings"
-        title={t('settings.title')}
+        titleComponent={<HomeSwitcher />}
         subtitle={t('settings.subtitle')}
         showBackButton={false}
         showRightButtons={true}

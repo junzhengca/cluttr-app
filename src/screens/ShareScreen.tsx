@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useRef } from 'react';
-import { View, Alert, ScrollView, Animated, Dimensions, Text, TouchableOpacity } from 'react-native';
+import { View, Alert, ScrollView, Text, TouchableOpacity } from 'react-native';
 import { BottomSheetModal } from '@gorhom/bottom-sheet';
 import styled from 'styled-components/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -17,6 +17,7 @@ import {
   MemberList,
   InviteMenuBottomSheet,
   HomeCard,
+  HomeSwitcher,
 } from '../components';
 import { calculateBottomPadding } from '../utils/layout';
 import { RootStackParamList } from '../navigation/types';
@@ -28,22 +29,9 @@ import { useHome } from '../hooks/useHome';
 
 
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
-
 const Container = styled(View)`
   flex: 1;
   background-color: ${({ theme }: StyledProps) => theme.colors.background};
-`;
-
-const AnimatedContainer = styled(Animated.View)`
-  flex: 1;
-  flex-direction: row;
-  width: ${SCREEN_WIDTH * 2}px;
-`;
-
-const PageView = styled(View)`
-  width: ${SCREEN_WIDTH}px;
-  flex: 1;
 `;
 
 const Content = styled(ScrollView)`
@@ -89,7 +77,7 @@ export const ShareScreen: React.FC = () => {
   const navigation = useNavigation<NavigationProp>();
   const { user, isAuthenticated, getApiClient } = useAuth();
 
-  const { homes, currentHome, switchHome } = useHome();
+  const { currentHome } = useHome();
   const { showToast } = useToast();
   const inviteMenuBottomSheetRef = useRef<BottomSheetModal | null>(null);
 
@@ -100,9 +88,6 @@ export const ShareScreen: React.FC = () => {
   const invitationCode = currentHome?.invitationCode;
   const canShareInventory = currentHome?.settings?.canShareInventory ?? true;
   const canShareTodos = currentHome?.settings?.canShareTodos ?? true;
-
-  const [isSwitchingHome, setIsSwitchingHome] = useState(false);
-  const panAnim = useRef(new Animated.Value(0)).current;
 
   const loadMembers = useCallback(async () => {
     if (!currentHome?.id) return;
@@ -252,30 +237,6 @@ export const ShareScreen: React.FC = () => {
     }
   };
 
-  const handleSwitchHomePress = () => {
-    setIsSwitchingHome(true);
-    Animated.timing(panAnim, {
-      toValue: -SCREEN_WIDTH,
-      duration: 300,
-      useNativeDriver: true,
-    }).start();
-  };
-
-  const handleBackToSharePress = () => {
-    Animated.timing(panAnim, {
-      toValue: 0,
-      duration: 300,
-      useNativeDriver: true,
-    }).start(() => {
-      setIsSwitchingHome(false);
-    });
-  };
-
-  const handleAccountSelect = (homeId: string) => {
-    switchHome(homeId);
-    handleBackToSharePress();
-  };
-
   if (!isAuthenticated) {
     return (
       <Container>
@@ -310,96 +271,60 @@ export const ShareScreen: React.FC = () => {
   return (
     <Container>
       <PageHeader
-        icon={isSwitchingHome ? "chevron-back" : "share-outline"}
-        title={isSwitchingHome ? t('share.home.switchTitle') : t('share.title')}
-        subtitle={isSwitchingHome ? t('share.home.switchSubtitle') : t('share.subtitle')}
-        showBackButton={isSwitchingHome}
-        onBackPress={isSwitchingHome ? handleBackToSharePress : undefined}
-        showRightButtons={!isSwitchingHome}
+        titleComponent={<HomeSwitcher />}
+        subtitle={t('share.subtitle')}
+        showBackButton={false}
+        showRightButtons={true}
         avatarUrl={user?.avatarUrl}
-        ownerAvatarUrl={!isSwitchingHome && currentHome?.role === 'owner' ? currentHome.owner?.avatarUrl : undefined}
+        ownerAvatarUrl={currentHome?.role === 'owner' ? currentHome.owner?.avatarUrl : undefined}
         onAvatarPress={handleAvatarPress}
       />
 
-      <AnimatedContainer style={{ transform: [{ translateX: panAnim }] }}>
-        {/* Main Share View */}
-        <PageView>
-          <Content
-            showsVerticalScrollIndicator={false}
-            contentContainerStyle={{ paddingBottom: calculateBottomPadding(insets.bottom) }}
+      <Content
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: calculateBottomPadding(insets.bottom) }}
+      >
+        <HomeCard
+          name={currentHome?.name || t('share.home.currentHome')}
+          isActive={true}
+          canShareInventory={canShareInventory}
+          canShareTodos={canShareTodos}
+        />
+
+        <MemberList
+          owner={currentHome?.owner ? {
+            userId: currentHome.owner.userId,
+            email: currentHome.owner.email,
+            nickname: currentHome.owner.nickname,
+            avatarUrl: currentHome.owner.avatarUrl,
+          } : null}
+          members={members}
+          isLoading={isLoadingMembers}
+          error={membersError}
+          onRemoveMember={currentHome?.role === 'owner' ? handleRemoveMember : undefined}
+          onInvitePress={handleInvitePress}
+          showInviteButton={currentHome?.role === 'owner'}
+        />
+
+        {currentHome?.role === 'member' && (
+          <LeaveHomeButton
+            onPress={handleLeaveHome}
+            activeOpacity={0.8}
           >
-            <HomeCard
-              name={currentHome?.name || t('share.home.currentHome')}
-              isActive={true}
-              showSwitchButton={true}
-              onSwitchPress={handleSwitchHomePress}
-              canShareInventory={canShareInventory}
-              canShareTodos={canShareTodos}
-            />
-
-            <MemberList
-              owner={currentHome?.owner ? {
-                userId: currentHome.owner.userId,
-                email: currentHome.owner.email,
-                nickname: currentHome.owner.nickname,
-                avatarUrl: currentHome.owner.avatarUrl,
-              } : null}
-              members={members}
-              isLoading={isLoadingMembers}
-              error={membersError}
-              onRemoveMember={currentHome?.role === 'owner' ? handleRemoveMember : undefined}
-              onInvitePress={handleInvitePress}
-              showInviteButton={currentHome?.role === 'owner'}
-            />
-
-            {currentHome?.role === 'member' && (
-              <LeaveHomeButton
-                onPress={handleLeaveHome}
-                activeOpacity={0.8}
-              >
-                <Ionicons name="log-out-outline" size={20} color={theme.colors.error || '#ff4444'} />
-                <LeaveHomeText>{t('share.members.leaveHome', 'Leave Home')}</LeaveHomeText>
-              </LeaveHomeButton>
-            )}
-            {currentHome?.role === 'owner' && (
-              <PermissionConfigPanel
-                canShareInventory={canShareInventory}
-                canShareTodos={canShareTodos}
-                onToggleInventory={handleToggleInventory}
-                onToggleTodos={handleToggleTodos}
-                isLoading={false}
-              />
-            )}
-          </Content>
-        </PageView>
-
-        {/* Switch Home View */}
-        <PageView>
-          <Content
-            showsVerticalScrollIndicator={false}
-            contentContainerStyle={{ paddingBottom: calculateBottomPadding(insets.bottom) }}
-          >
-            {homes.map((home) => (
-              <HomeCard
-                key={home.id}
-                name={home.name}
-                isActive={currentHome?.id === home.id}
-                onPress={() => handleAccountSelect(home.id)}
-                canShareInventory={home.settings?.canShareInventory}
-                canShareTodos={home.settings?.canShareTodos}
-              />
-            ))}
-
-            {homes.length === 0 && (
-              <EmptyState
-                icon="home-outline"
-                title={t('share.members.empty.title')}
-                description={t('share.members.empty.description')}
-              />
-            )}
-          </Content>
-        </PageView>
-      </AnimatedContainer>
+            <Ionicons name="log-out-outline" size={20} color={theme.colors.error || '#ff4444'} />
+            <LeaveHomeText>{t('share.members.leaveHome', 'Leave Home')}</LeaveHomeText>
+          </LeaveHomeButton>
+        )}
+        {currentHome?.role === 'owner' && (
+          <PermissionConfigPanel
+            canShareInventory={canShareInventory}
+            canShareTodos={canShareTodos}
+            onToggleInventory={handleToggleInventory}
+            onToggleTodos={handleToggleTodos}
+            isLoading={false}
+          />
+        )}
+      </Content>
 
       <InviteMenuBottomSheet
         bottomSheetRef={inviteMenuBottomSheetRef}

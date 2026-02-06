@@ -23,6 +23,7 @@ export const theme: Theme = {
     successLight: '#E8F5E9',
     warning: '#F57C00',
     notification: '#FFB300', // Yellow badge
+    filterInactive: '#E9EDF4',
   },
   typography: {
     fontFamily: {

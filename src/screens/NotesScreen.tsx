@@ -28,6 +28,7 @@ import {
   EmptyState,
   LoginBottomSheet,
   SignupBottomSheet,
+  HomeSwitcher,
 } from '../components';
 import { useTodos, useAuth } from '../store/hooks';
 import { useHome } from '../hooks/useHome';
@@ -352,8 +353,7 @@ export const NotesScreen: React.FC = () => {
     return (
       <Container>
         <PageHeader
-          icon="document-text"
-          title={t('notes.title')}
+          titleComponent={<HomeSwitcher />}
           subtitle={t('notes.subtitle')}
           showRightButtons={true}
           avatarUrl={user?.avatarUrl}
@@ -377,8 +377,7 @@ export const NotesScreen: React.FC = () => {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <Container>
         <PageHeader
-          icon="document-text"
-          title={t('notes.title')}
+          titleComponent={<HomeSwitcher />}
           subtitle={t('notes.subtitle')}
           showRightButtons={true}
           avatarUrl={user?.avatarUrl}
