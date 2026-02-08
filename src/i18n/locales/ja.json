@@ -6,7 +6,11 @@
         "discard": "破棄",
         "cancel": "キャンセル",
         "close": "閉じる",
-        "search": "検索"
+        "search": "検索",
+        "filter": "フィルター",
+        "status": "状態",
+        "location": "場所",
+        "category": "カテゴリー"
     },
     "navigation": {
         "home": "ホーム",
@@ -96,6 +100,7 @@
     },
     "inventory": {
         "title": "すべてのアイテム",
+        "allItems": "全アイテム",
         "loading": "読み込み中...",
         "itemsCount": "{{count}} アイテム",
         "filterBy": "フィルター: {{type}}",

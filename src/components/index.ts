@@ -8,3 +8,4 @@ export * from './organisms';
 // Export new components
 export * from './molecules/OfflineBadge';
 export * from './organisms/OfflineExplanationBottomSheet';
+export * from './organisms/CollapsibleFilterPanel';

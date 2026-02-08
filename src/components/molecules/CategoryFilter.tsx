@@ -1,15 +1,16 @@
 import React from 'react';
 import { TouchableOpacity, ScrollView, View, Text } from 'react-native';
-import styled from 'styled-components/native';
+import styled, { useTheme } from 'styled-components/native';
 import { useTranslation } from 'react-i18next';
 import type {
     StyledProps,
     StyledPropsWith,
 } from '../../utils/styledComponents';
 import { useCategories } from '../../hooks/useCategories';
+import type { Theme } from '../../theme/types';
 
 const FilterContainer = styled(View)`
-  margin-bottom: ${({ theme }: StyledProps) => theme.spacing.md}px;
+  margin-bottom: 0px;
 `;
 
 const CategoryScrollView = styled(ScrollView).attrs(() => ({
@@ -68,9 +69,16 @@ export const CategoryFilter: React.FC<CategoryFilterProps> = ({
     counts = {},
 }) => {
     const { t } = useTranslation();
+    const theme = useTheme() as Theme;
     const { categories, loading } = useCategories();
 
     const totalCount = Object.values(counts).reduce((sum, count) => sum + count, 0);
+
+    // Scroll content padding uses theme spacing for consistency
+    const scrollContentStyle = {
+        paddingLeft: theme.spacing.md,
+        paddingRight: theme.spacing.md,
+    };
 
     if (loading && categories.length === 0) {
         return null; // Or skeleton
@@ -79,7 +87,10 @@ export const CategoryFilter: React.FC<CategoryFilterProps> = ({
     return (
         <FilterContainer>
             <CategoryScrollView
-                contentContainerStyle={{ paddingHorizontal: 0 }}
+                contentContainerStyle={{
+                    paddingLeft: theme.spacing.md,
+                    paddingRight: theme.spacing.md,
+                }}
             >
                 {/* All Categories Option */}
                 <CategoryButton

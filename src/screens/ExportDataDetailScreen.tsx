@@ -21,7 +21,7 @@ const Container = styled(View)`
 
 const Content = styled(ScrollView)`
   flex: 1;
-  padding: ${({ theme }: StyledProps) => theme.spacing.lg}px;
+  padding: ${({ theme }: StyledProps) => theme.spacing.md}px;
 `;
 
 const JsonContainer = styled(View)`

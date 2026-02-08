@@ -11,15 +11,16 @@ import { itemStatuses } from '../../data/itemStatuses';
 const StatusContainer = styled(View)`
   flex-direction: row;
   justify-content: space-between;
-  margin-bottom: ${({ theme }: StyledProps) => theme.spacing.md}px;
+  margin-bottom: 0px;
   width: 100%;
-  gap: 4px;
+  gap: ${({ theme }: StyledProps) => theme.spacing.xs}px;
+  padding-horizontal: ${({ theme }: StyledProps) => theme.spacing.md}px;
 `;
 
 const StatusButton = styled(TouchableOpacity) <{ isSelected: boolean }>`
-  padding-horizontal: ${({ theme }: StyledProps) => theme.spacing.sm - 2}px;
-  padding-vertical: ${({ theme }: StyledProps) => theme.spacing.sm}px;
-  border-radius: ${({ theme }: StyledProps) => theme.borderRadius.md}px;
+  padding-horizontal: 8px;
+  padding-vertical: 8px;
+  border-radius: 10px;
   flex-direction: row;
   align-items: center;
   justify-content: center;

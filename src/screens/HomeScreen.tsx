@@ -14,6 +14,7 @@ import {
   Platform,
   TouchableWithoutFeedback,
   Keyboard,
+  Text,
 } from 'react-native';
 import styled from 'styled-components/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -25,7 +26,7 @@ import * as ImagePicker from 'expo-image-picker';
 import * as ImageManipulator from 'expo-image-manipulator';
 import * as FileSystem from 'expo-file-system/legacy';
 import { useTheme } from '../theme/ThemeProvider';
-import type { StyledProps } from '../utils/styledComponents';
+import type { StyledProps, StyledPropsWith } from '../utils/styledComponents';
 import { uiLogger } from '../utils/Logger';
 
 import {
@@ -43,6 +44,7 @@ import {
   type EditItemBottomSheetRef,
   ContextMenu,
   HomeSwitcher,
+  CollapsibleFilterPanel,
 } from '../components';
 import { useItemActions } from '../hooks/useItemActions';
 import { InventoryItem } from '../types/inventory';
@@ -75,6 +77,16 @@ const LoadingContainer = styled(View)`
   align-items: center;
 `;
 
+const FilterTitle = styled(Text) <{ isFirst?: boolean }>`
+  font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.sm}px;
+  font-weight: ${({ theme }: StyledProps) => theme.typography.fontWeight.bold};
+  color: ${({ theme }: StyledProps) => theme.colors.textSecondary};
+  margin-top: ${({ theme, isFirst }: StyledPropsWith<{ isFirst?: boolean }>) => (isFirst ? 0 : theme.spacing.md)}px;
+  margin-bottom: ${({ theme }: StyledProps) => theme.spacing.sm}px;
+  margin-left: ${({ theme }: StyledProps) => theme.spacing.md}px;
+  align-self: flex-start;
+`;
+
 export const HomeScreen: React.FC = () => {
   const { t } = useTranslation();
   const [selectedLocationId, setSelectedLocationId] = useState<string | null>(
@@ -85,6 +97,7 @@ export const HomeScreen: React.FC = () => {
   const [isAIRecognizing, setIsAIRecognizing] = useState(false);
   const [recognizedItemData, setRecognizedItemData] =
     useState<Partial<InventoryItem> | null>(null);
+  const [isFilterVisible, setIsFilterVisible] = useState(true);
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<NavigationProp>();
   const { items, loading: isLoading, loadItems, updateItem: updateInventoryItem } = useInventory();
@@ -347,6 +360,7 @@ export const HomeScreen: React.FC = () => {
         <PageHeader
           titleComponent={<HomeSwitcher />}
           showRightButtons={true}
+          subtitle={undefined} // Subtitle is now shown in the filter panel
           avatarUrl={user?.avatarUrl}
           ownerAvatarUrl={currentHome?.role === 'member' ? currentHome?.owner?.avatarUrl : undefined}
           onAvatarPress={handleAvatarPress}
@@ -364,21 +378,31 @@ export const HomeScreen: React.FC = () => {
           </LoadingContainer>
         ) : (
           <Content>
-            <StatusFilter
-              selectedStatusId={selectedStatusId}
-              onSelect={setSelectedStatusId}
-              counts={statusCounts}
-            />
-            <LocationFilter
-              selectedLocationId={selectedLocationId}
-              onSelect={setSelectedLocationId}
-              counts={locationCounts}
-            />
-            <CategoryFilter
-              selectedCategoryId={selectedCategoryId}
-              onSelect={setSelectedCategoryId}
-              counts={categoryCounts}
-            />
+            <CollapsibleFilterPanel
+              title={t('inventory.allItems')}
+              count={filteredItems.length}
+              isExpanded={isFilterVisible}
+              onToggle={() => setIsFilterVisible(!isFilterVisible)}
+            >
+              <FilterTitle isFirst>{t('common.status')}</FilterTitle>
+              <StatusFilter
+                selectedStatusId={selectedStatusId}
+                onSelect={setSelectedStatusId}
+                counts={statusCounts}
+              />
+              <FilterTitle>{t('common.location')}</FilterTitle>
+              <LocationFilter
+                selectedLocationId={selectedLocationId}
+                onSelect={setSelectedLocationId}
+                counts={locationCounts}
+              />
+              <FilterTitle>{t('common.category')}</FilterTitle>
+              <CategoryFilter
+                selectedCategoryId={selectedCategoryId}
+                onSelect={setSelectedCategoryId}
+                counts={categoryCounts}
+              />
+            </CollapsibleFilterPanel>
             <ListContainer>
               {filteredItems.length === 0 ? (
                 <EmptyState

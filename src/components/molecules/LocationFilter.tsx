@@ -6,7 +6,7 @@ import type { StyledProps } from '../../utils/styledComponents';
 import { LocationSelector } from './LocationSelector';
 
 const FilterContainer = styled(View)`
-  margin-bottom: ${({ theme }: StyledProps) => theme.spacing.md}px;
+  margin-bottom: 0px;
 `;
 
 export interface LocationFilterProps {

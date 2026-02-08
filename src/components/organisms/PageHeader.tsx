@@ -26,7 +26,7 @@ export interface PageHeaderProps {
 const HeaderContainer = styled(View) <{ topInset: number }>`
   background-color: ${({ theme }: StyledProps) => theme.colors.primaryLightest};
   padding-top: ${({ topInset }: { topInset: number }) => topInset + 10}px;
-  padding-horizontal: ${({ theme }: StyledProps) => theme.spacing.lg}px;
+  padding-horizontal: ${({ theme }: StyledProps) => theme.spacing.md}px;
   padding-bottom: ${({ theme }: StyledProps) => theme.spacing.sm}px;
   flex-direction: row;
   align-items: center;

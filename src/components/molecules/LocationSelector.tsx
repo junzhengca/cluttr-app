@@ -1,6 +1,6 @@
 import React from 'react';
 import { TouchableOpacity, ScrollView, View, Text } from 'react-native';
-import styled from 'styled-components/native';
+import styled, { useTheme } from 'styled-components/native';
 import { useTranslation } from 'react-i18next';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -9,6 +9,7 @@ import type {
     StyledPropsWith,
 } from '../../utils/styledComponents';
 import { locations } from '../../data/locations';
+import type { Theme } from '../../theme/types';
 
 const SelectorContainer = styled(View)`
   flex-direction: column;
@@ -49,7 +50,6 @@ const LocationLabel = styled(Text) <{ isSelected: boolean }>`
   margin-top: ${({ theme }: StyledProps) => theme.spacing.xs}px;
   font-weight: ${({ theme }: StyledProps) => theme.typography.fontWeight.medium};
   text-align: center;
-  height: 32px; /* Fixed height for 2 lines */
   line-height: 16px;
 `;
 
@@ -69,21 +69,26 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
     counts = {},
 }) => {
     const { t } = useTranslation();
+    const theme = useTheme() as Theme;
     const totalCount = Object.values(counts).reduce((sum, count) => sum + count, 0);
 
-    // Calculate negative margin to align the first button visually to the left edge
-    // Wrapper width (64) - Button width (50) = 14px total padding.
-    // Left padding is 7px. We want to counteract this for the first item.
-    const firstItemStyle = { marginLeft: -7 };
+    // Scroll content padding uses theme spacing for consistency
+    // Left padding is adjusted by -7px to compensate for LocationWrapper centering
+    // (64px wrapper width - 50px button width = 14px total, 7px per side)
+    const wrapperCenteringOffset = 7;
+    const scrollContentStyle = {
+        paddingLeft: theme.spacing.md - wrapperCenteringOffset,
+        paddingRight: theme.spacing.md,
+    };
 
     return (
         <SelectorContainer>
             <LocationScrollView
-                contentContainerStyle={{ paddingHorizontal: 0 }}
+                contentContainerStyle={scrollContentStyle}
             >
                 {/* All Locations Option - Only if showAllOption is true */}
                 {showAllOption && (
-                    <LocationWrapper style={firstItemStyle}>
+                    <LocationWrapper>
                         <LocationButton
                             isSelected={selectedLocationId === null}
                             onPress={() => onSelect(null)}
@@ -101,11 +106,10 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
                     </LocationWrapper>
                 )}
 
-                {locations.map((location, index) => {
+                {locations.map((location) => {
                     const isSelected = selectedLocationId === location.id;
-                    const isFirst = !showAllOption && index === 0;
                     return (
-                        <LocationWrapper key={location.id} style={isFirst ? firstItemStyle : undefined}>
+                        <LocationWrapper key={location.id}>
                             <LocationButton
                                 isSelected={isSelected}
                                 // If showAllOption is false, this is a required field, so we just select the ID.

@@ -47,7 +47,7 @@ const ScrollContainer = styled(View)`
 `;
 
 const Content = styled(ScrollView)`
-  padding: ${({ theme }: StyledProps) => theme.spacing.lg}px;
+  padding: ${({ theme }: StyledProps) => theme.spacing.md}px;
 `;
 
 const IconContainer = styled(View) <{ backgroundColor: string }>`

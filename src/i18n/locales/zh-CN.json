@@ -6,7 +6,11 @@
     "discard": "放弃修改",
     "cancel": "取消",
     "close": "关闭",
-    "search": "搜索"
+    "search": "搜索",
+    "filter": "筛选",
+    "status": "状态",
+    "location": "位置",
+    "category": "分类"
   },
   "navigation": {
     "home": "首页",
@@ -90,6 +94,7 @@
   },
   "inventory": {
     "title": "所有物品",
+    "allItems": "全部物品",
     "loading": "加载中...",
     "itemsCount": "{{count}}个宝贝",
     "filterBy": "筛选：{{type}}",

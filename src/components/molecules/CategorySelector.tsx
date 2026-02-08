@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { ScrollView, TouchableOpacity, View, Text } from 'react-native';
-import styled from 'styled-components/native';
+import styled, { useTheme } from 'styled-components/native';
 import { useTranslation } from 'react-i18next';
 import { Category } from '../../types/inventory';
 import { getAllCategories } from '../../services/CategoryService';
@@ -9,10 +9,9 @@ import { useHome } from '../../hooks/useHome';
 import { selectCategoryRefreshTimestamp } from '../../store/slices/refreshSlice';
 import type { StyledProps, StyledPropsWith } from '../../utils/styledComponents';
 import { uiLogger } from '../../utils/Logger';
+import type { Theme } from '../../theme/types';
 
-const Container = styled(View)`
-  margin-bottom: ${({ theme }: StyledProps) => theme.spacing.md}px;
-`;
+const Container = styled(View)``;
 
 const ScrollContainer = styled(ScrollView)`
   flex-direction: row;
@@ -68,11 +67,19 @@ export const CategorySelector: React.FC<CategorySelectorProps> = ({
   onCategoryChange,
 }) => {
   const { t } = useTranslation();
+  const theme = useTheme() as Theme;
   const [selectedCategory, setSelectedCategory] = useState<string>(parentSelectedCategory || 'all');
   const [categories, setCategories] = useState<Category[]>([]);
   const { registerRefreshCallback } = useCategory();
   const { currentHomeId } = useHome();
   const refreshTimestamp = useAppSelector(selectCategoryRefreshTimestamp);
+
+  // Scroll content padding uses theme spacing for consistency
+  const scrollContentStyle = {
+    paddingVertical: theme.spacing.sm,
+    paddingLeft: theme.spacing.md,
+    paddingRight: theme.spacing.md,
+  };
 
   const loadCategories = useCallback(async () => {
     if (providedCategories) {
@@ -141,10 +148,7 @@ export const CategorySelector: React.FC<CategorySelectorProps> = ({
       <ScrollContainer
         horizontal
         showsHorizontalScrollIndicator={false}
-        contentContainerStyle={{
-          paddingVertical: 8,
-          paddingRight: 16 // Extra space at the end of scroll
-        }}
+        contentContainerStyle={scrollContentStyle}
       >
         {categories.map((category) => (
           <CategoryButton

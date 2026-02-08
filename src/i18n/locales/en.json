@@ -6,7 +6,11 @@
     "discard": "Discard",
     "cancel": "Cancel",
     "close": "Close",
-    "search": "Search"
+    "search": "Search",
+    "filter": "Filter",
+    "status": "Status",
+    "location": "Location",
+    "category": "Category"
   },
   "navigation": {
     "home": "Home",
@@ -106,6 +110,7 @@
   },
   "inventory": {
     "title": "All Items",
+    "allItems": "All Items",
     "loading": "Loading...",
     "itemsCount": "{{count}} item(s)",
     "filterBy": "Filter: {{type}}",
