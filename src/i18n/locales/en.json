@@ -243,7 +243,8 @@
       "amount": "Quantity",
       "warningThreshold": "Warning Threshold",
       "purchaseDate": "Purchase Date",
-      "expiryDate": "Expiry Date"
+      "expiryDate": "Expiry Date",
+      "category": "Category"
     },
     "placeholders": {
       "name": "e.g., Cute Cup",
@@ -278,7 +279,8 @@
       "amount": "Quantity",
       "warningThreshold": "Warning Threshold",
       "purchaseDate": "Purchase Date",
-      "expiryDate": "Expiry Date"
+      "expiryDate": "Expiry Date",
+      "category": "Category"
     },
     "placeholders": {
       "name": "e.g., Cute Cup",

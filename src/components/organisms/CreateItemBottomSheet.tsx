@@ -65,6 +65,7 @@ export const CreateItemBottomSheet: React.FC<CreateItemBottomSheetProps> = ({
       location: string;
       detailedLocation: string;
       status: string;
+      categoryId: string | null;
       price: number;
       amount?: number;
       warningThreshold: number;

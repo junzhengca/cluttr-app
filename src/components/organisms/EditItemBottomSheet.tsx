@@ -42,6 +42,7 @@ export const EditItemBottomSheet = forwardRef<
       location: string;
       detailedLocation: string;
       status: string;
+      categoryId: string | null;
       price: number;
       amount?: number;
       warningThreshold: number;

@@ -232,7 +232,8 @@
             "amount": "数量",
             "warningThreshold": "在庫警告しきい値",
             "purchaseDate": "購入日",
-            "expiryDate": "有効期限"
+            "expiryDate": "有効期限",
+            "category": "カテゴリー"
         },
         "placeholders": {
             "name": "例: かわいいカップ",
@@ -267,7 +268,8 @@
             "amount": "数量",
             "warningThreshold": "在庫警告しきい値",
             "purchaseDate": "購入日",
-            "expiryDate": "有効期限"
+            "expiryDate": "有効期限",
+            "category": "カテゴリー"
         },
         "placeholders": {
             "name": "例: かわいいカップ",

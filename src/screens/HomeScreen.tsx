@@ -97,7 +97,7 @@ export const HomeScreen: React.FC = () => {
   const [isAIRecognizing, setIsAIRecognizing] = useState(false);
   const [recognizedItemData, setRecognizedItemData] =
     useState<Partial<InventoryItem> | null>(null);
-  const [isFilterVisible, setIsFilterVisible] = useState(true);
+  const [isFilterVisible, setIsFilterVisible] = useState(false);
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<NavigationProp>();
   const { items, loading: isLoading, loadItems, updateItem: updateInventoryItem } = useInventory();

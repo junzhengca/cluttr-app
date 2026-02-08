@@ -9,7 +9,13 @@ import {
   UncontrolledInput,
   NumberInput,
 } from '../atoms';
-import { LocationSelector, StatusField, IconColorPicker, DatePicker } from '../molecules';
+import {
+  LocationFormSelector,
+  CategoryFormSelector,
+  StatusFormSelector,
+  IconColorPicker,
+  DatePicker,
+} from '../molecules';
 
 const FormContainer = styled.View`
   flex-direction: column;
@@ -41,6 +47,7 @@ export interface ItemFormFieldsProps {
   selectedColor: string;
   selectedLocation: string;
   selectedStatus: string;
+  selectedCategoryId: string | null;
   purchaseDate: Date | null;
   expiryDate: Date | null;
   formKey: number;
@@ -61,6 +68,7 @@ export interface ItemFormFieldsProps {
   onColorSelect: (color: string) => void;
   onLocationSelect: (location: string) => void;
   onStatusSelect: (status: string) => void;
+  onCategorySelect: (categoryId: string) => void;
   onPurchaseDateChange: (date: Date | null) => void;
   onExpiryDateChange: (date: Date | null) => void;
   onOpeningNestedModal?: (isOpening: boolean) => void;
@@ -88,6 +96,7 @@ export interface ItemFormFieldsProps {
       detailedLocation: string;
       purchaseDate: string;
       expiryDate: string;
+      category: string;
     };
     placeholders: {
       name: string;
@@ -108,6 +117,7 @@ export const ItemFormFields: React.FC<ItemFormFieldsProps> = ({
   selectedColor,
   selectedLocation,
   selectedStatus,
+  selectedCategoryId,
   purchaseDate,
   expiryDate,
   formKey,
@@ -125,6 +135,7 @@ export const ItemFormFields: React.FC<ItemFormFieldsProps> = ({
   onColorSelect,
   onLocationSelect,
   onStatusSelect,
+  onCategorySelect,
   onPurchaseDateChange,
   onExpiryDateChange,
   onOpeningNestedModal,
@@ -197,16 +208,22 @@ export const ItemFormFields: React.FC<ItemFormFieldsProps> = ({
       </Row>
 
       <FormSection label={translations.fields.location}>
-        <LocationSelector
+        <LocationFormSelector
           selectedLocationId={selectedLocation}
-          onSelect={(id) => id && onLocationSelect(id)}
-          showAllOption={false}
+          onSelect={onLocationSelect}
+        />
+      </FormSection>
+
+      <FormSection label={translations.fields.category}>
+        <CategoryFormSelector
+          selectedCategoryId={selectedCategoryId}
+          onSelect={onCategorySelect}
         />
       </FormSection>
 
       <FormSection label={translations.fields.status}>
-        <StatusField
-          selectedId={selectedStatus}
+        <StatusFormSelector
+          selectedStatusId={selectedStatus}
           onSelect={onStatusSelect}
         />
       </FormSection>

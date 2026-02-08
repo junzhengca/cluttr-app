@@ -14,6 +14,7 @@ export interface ItemFormValues {
   iconColor: string;
   location: string;
   status: string;
+  categoryId: string | null;
   purchaseDate: Date | null;
   expiryDate: Date | null;
 }
@@ -41,6 +42,7 @@ interface FormInitialValues {
   iconColor: string;
   location: string;
   status: string;
+  categoryId: string | null;
   purchaseDate: Date | null;
   expiryDate: Date | null;
 }
@@ -87,6 +89,7 @@ export const useUncontrolledItemForm = (
     iconColor: DEFAULT_COLOR,
     location: DEFAULT_LOCATION,
     status: DEFAULT_STATUS,
+    categoryId: null,
     purchaseDate: null,
     expiryDate: null,
   });
@@ -109,6 +112,7 @@ export const useUncontrolledItemForm = (
   const [selectedColor, setSelectedColor] = useState(DEFAULT_COLOR);
   const [selectedLocation, setSelectedLocation] = useState(DEFAULT_LOCATION);
   const [selectedStatus, setSelectedStatus] = useState(DEFAULT_STATUS);
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
   const [purchaseDate, setPurchaseDate] = useState<Date | null>(null);
   const [expiryDate, setExpiryDate] = useState<Date | null>(null);
 
@@ -137,7 +141,7 @@ export const useUncontrolledItemForm = (
           : '1';
       const warningThreshold =
         initialData.warningThreshold !== undefined &&
-        initialData.warningThreshold !== null
+          initialData.warningThreshold !== null
           ? initialData.warningThreshold.toString()
           : '0';
 
@@ -152,6 +156,7 @@ export const useUncontrolledItemForm = (
         iconColor: initialData.iconColor ?? DEFAULT_COLOR,
         location: initialData.location ?? DEFAULT_LOCATION,
         status: initialData.status ?? DEFAULT_STATUS,
+        categoryId: initialData.categoryId ?? null,
         purchaseDate: initialData.purchaseDate
           ? new Date(initialData.purchaseDate)
           : null,
@@ -178,6 +183,7 @@ export const useUncontrolledItemForm = (
       if (initialData.iconColor) setSelectedColor(initialData.iconColor);
       if (initialData.location) setSelectedLocation(initialData.location);
       if (initialData.status) setSelectedStatus(initialData.status);
+      if (initialData.categoryId !== undefined) setSelectedCategoryId(initialData.categoryId);
       if (initialData.purchaseDate)
         setPurchaseDate(new Date(initialData.purchaseDate));
       if (initialData.expiryDate)
@@ -208,6 +214,7 @@ export const useUncontrolledItemForm = (
       iconColor: DEFAULT_COLOR,
       location: DEFAULT_LOCATION,
       status: DEFAULT_STATUS,
+      categoryId: null,
       purchaseDate: null,
       expiryDate: null,
     };
@@ -231,6 +238,7 @@ export const useUncontrolledItemForm = (
     setSelectedColor(DEFAULT_COLOR);
     setSelectedLocation(DEFAULT_LOCATION);
     setSelectedStatus(DEFAULT_STATUS);
+    setSelectedCategoryId(null);
     setPurchaseDate(null);
     setExpiryDate(null);
     setFormKey((prev) => prev + 1);
@@ -248,6 +256,7 @@ export const useUncontrolledItemForm = (
       iconColor: selectedColor,
       location: selectedLocation,
       status: selectedStatus,
+      categoryId: selectedCategoryId,
       purchaseDate,
       expiryDate,
     };
@@ -256,6 +265,7 @@ export const useUncontrolledItemForm = (
     selectedColor,
     selectedLocation,
     selectedStatus,
+    selectedCategoryId,
     purchaseDate,
     expiryDate,
   ]);
@@ -312,7 +322,6 @@ export const useUncontrolledItemForm = (
           ? data.warningThreshold.toString()
           : '0';
 
-      // Store initial values for dirty state tracking
       initialValuesRef.current = {
         name,
         price,
@@ -323,6 +332,7 @@ export const useUncontrolledItemForm = (
         iconColor: data.iconColor ?? DEFAULT_COLOR,
         location: data.location ?? DEFAULT_LOCATION,
         status: data.status ?? DEFAULT_STATUS,
+        categoryId: data.categoryId ?? null,
         purchaseDate: data.purchaseDate
           ? new Date(data.purchaseDate)
           : null,
@@ -349,6 +359,7 @@ export const useUncontrolledItemForm = (
       if (data.iconColor) setSelectedColor(data.iconColor);
       if (data.location) setSelectedLocation(data.location);
       if (data.status) setSelectedStatus(data.status);
+      if (data.categoryId !== undefined) setSelectedCategoryId(data.categoryId);
       if (data.purchaseDate)
         setPurchaseDate(new Date(data.purchaseDate));
       if (data.expiryDate) setExpiryDate(new Date(data.expiryDate));
@@ -376,6 +387,7 @@ export const useUncontrolledItemForm = (
       iconColor: selectedColor,
       location: selectedLocation,
       status: selectedStatus,
+      categoryId: selectedCategoryId,
       purchaseDate,
       expiryDate,
     };
@@ -397,10 +409,11 @@ export const useUncontrolledItemForm = (
       currentValues.iconColor !== initial.iconColor ||
       currentValues.location !== initial.location ||
       currentValues.status !== initial.status ||
+      currentValues.categoryId !== initial.categoryId ||
       !datesEqual(currentValues.purchaseDate, initial.purchaseDate) ||
       !datesEqual(currentValues.expiryDate, initial.expiryDate)
     );
-  }, [selectedIcon, selectedColor, selectedLocation, selectedStatus, purchaseDate, expiryDate]);
+  }, [selectedIcon, selectedColor, selectedLocation, selectedStatus, selectedCategoryId, purchaseDate, expiryDate]);
 
   return {
     // Refs
@@ -424,6 +437,7 @@ export const useUncontrolledItemForm = (
     selectedColor,
     selectedLocation,
     selectedStatus,
+    selectedCategoryId,
     purchaseDate,
     expiryDate,
     formKey,
@@ -432,6 +446,7 @@ export const useUncontrolledItemForm = (
     setSelectedColor,
     setSelectedLocation,
     setSelectedStatus,
+    setSelectedCategoryId,
     setPurchaseDate,
     setExpiryDate,
     // Methods

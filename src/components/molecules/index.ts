@@ -39,6 +39,15 @@ export type { LocationSelectorProps } from './LocationSelector';
 export { StatusField } from './StatusField';
 export type { StatusFieldProps } from './StatusField';
 
+export { LocationFormSelector } from './LocationFormSelector';
+export type { LocationFormSelectorProps } from './LocationFormSelector';
+
+export { CategoryFormSelector } from './CategoryFormSelector';
+export type { CategoryFormSelectorProps } from './CategoryFormSelector';
+
+export { StatusFormSelector } from './StatusFormSelector';
+export type { StatusFormSelectorProps } from './StatusFormSelector';
+
 // Picker/selector molecules
 export { DatePicker } from './DatePicker';
 export type { DatePickerProps } from './DatePicker';

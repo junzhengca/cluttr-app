@@ -58,6 +58,7 @@ export interface ItemFormBottomSheetProps {
     location: string;
     detailedLocation: string;
     status: string;
+    categoryId: string | null;
     price: number;
     amount?: number;
     warningThreshold: number;
@@ -124,6 +125,7 @@ export const ItemFormBottomSheet = forwardRef<
     selectedColor,
     selectedLocation,
     selectedStatus,
+    selectedCategoryId,
     purchaseDate,
     expiryDate,
     formKey,
@@ -131,6 +133,7 @@ export const ItemFormBottomSheet = forwardRef<
     setSelectedColor,
     setSelectedLocation,
     setSelectedStatus,
+    setSelectedCategoryId,
     setPurchaseDate,
     setExpiryDate,
     getFormValues,
@@ -320,6 +323,7 @@ export const ItemFormBottomSheet = forwardRef<
         location: formValues.location,
         detailedLocation: formValues.detailedLocation.trim(),
         status: formValues.status,
+        categoryId: formValues.categoryId,
         price: priceNum,
         amount: amountNum,
         warningThreshold: warningThresholdNum,
@@ -368,6 +372,7 @@ export const ItemFormBottomSheet = forwardRef<
         status: t(`${mode}Item.fields.status`),
         price: t(`${mode}Item.fields.price`),
         detailedLocation: t(`${mode}Item.fields.detailedLocation`),
+        category: t(`${mode}Item.fields.category`),
         purchaseDate: t(`${mode}Item.fields.purchaseDate`),
         expiryDate: t(`${mode}Item.fields.expiryDate`),
       },
@@ -459,6 +464,7 @@ export const ItemFormBottomSheet = forwardRef<
             selectedColor={selectedColor}
             selectedLocation={selectedLocation}
             selectedStatus={selectedStatus}
+            selectedCategoryId={selectedCategoryId}
             purchaseDate={purchaseDate}
             expiryDate={expiryDate}
             formKey={formKey}
@@ -476,6 +482,7 @@ export const ItemFormBottomSheet = forwardRef<
             onColorSelect={setSelectedColor}
             onLocationSelect={setSelectedLocation}
             onStatusSelect={setSelectedStatus}
+            onCategorySelect={setSelectedCategoryId}
             onPurchaseDateChange={setPurchaseDate}
             onExpiryDateChange={setExpiryDate}
             onNameChangeText={handleNameChangeText}

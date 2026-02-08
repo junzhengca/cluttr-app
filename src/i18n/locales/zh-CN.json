@@ -227,7 +227,8 @@
       "amount": "数量",
       "warningThreshold": "警告阈值",
       "purchaseDate": "购买时间",
-      "expiryDate": "过期时间"
+      "expiryDate": "过期时间",
+      "category": "分类"
     },
     "placeholders": {
       "name": "例如:可爱的小杯子",
@@ -262,7 +263,8 @@
       "amount": "数量",
       "warningThreshold": "警告阈值",
       "purchaseDate": "购买时间",
-      "expiryDate": "过期时间"
+      "expiryDate": "过期时间",
+      "category": "分类"
     },
     "placeholders": {
       "name": "例如:可爱的小杯子",
