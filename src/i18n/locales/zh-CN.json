@@ -327,7 +327,8 @@
       "delete": "删除",
       "modify": "修改"
     },
-    "needsRestocking": "需补货"
+    "needsRestocking": "需补货",
+    "expiring": "临期"
   },
   "categoryManager": {
     "title": "管理分类",

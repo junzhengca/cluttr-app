@@ -343,7 +343,8 @@
       "delete": "Delete",
       "modify": "Modify"
     },
-    "needsRestocking": "Restock"
+    "needsRestocking": "Restock",
+    "expiring": "Expiring"
   },
   "categoryManager": {
     "title": "Manage Categories",

@@ -9,7 +9,6 @@ import {
   FlatList,
   ActivityIndicator,
   View,
-  Dimensions,
   Alert,
   Platform,
   TouchableWithoutFeedback,
@@ -25,7 +24,6 @@ import { useTranslation } from 'react-i18next';
 import * as ImagePicker from 'expo-image-picker';
 import * as ImageManipulator from 'expo-image-manipulator';
 import * as FileSystem from 'expo-file-system/legacy';
-import { useTheme } from '../theme/ThemeProvider';
 import type { StyledProps, StyledPropsWith } from '../utils/styledComponents';
 import { uiLogger } from '../utils/Logger';
 
@@ -112,14 +110,6 @@ export const HomeScreen: React.FC = () => {
   const { confirmDelete } = useItemActions();
   const { addTodo } = useTodos();
   const { showToast } = useToast();
-
-  // Calculate card width for 2-column grid to prevent the "last row single item" expansion issue
-  const cardWidth = useMemo(() => {
-    const screenWidth = Dimensions.get('window').width;
-    const contentPadding = 16 * 2; // theme.spacing.md on each side
-    const gap = 12;
-    return (screenWidth - contentPadding - gap) / 2;
-  }, []);
 
   useEffect(() => {
     loadItems();
@@ -350,10 +340,6 @@ export const HomeScreen: React.FC = () => {
   // Calculate bottom padding for scrollable content
   const bottomPadding = calculateBottomPadding(insets.bottom);
 
-  const headerSubtitle = isLoading
-    ? t('inventory.loading')
-    : t('inventory.itemsCount', { count: filteredItems.length });
-
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
       <Container>
@@ -467,22 +453,16 @@ export const HomeScreen: React.FC = () => {
                     ];
 
                     return (
-                      <View style={{ width: cardWidth }}>
-                        <ContextMenu items={menuItems}>
-                          <ItemCard item={item} onPress={handleItemPress} />
-                        </ContextMenu>
-                      </View>
+                      <ContextMenu items={menuItems}>
+                        <ItemCard item={item} onPress={handleItemPress} />
+                      </ContextMenu>
                     );
-                  }}
-                  numColumns={2}
-                  columnWrapperStyle={{
-                    gap: 12,
-                    marginBottom: 12,
                   }}
                   keyboardDismissMode="on-drag"
                   showsVerticalScrollIndicator={false}
                   contentContainerStyle={{
                     paddingBottom: bottomPadding,
+                    gap: 12,
                   }}
                 />
               )}

@@ -1,0 +1,84 @@
+import React from 'react';
+import { View, Text, TouchableOpacity, StyleProp, ViewStyle } from 'react-native';
+import { GlassView } from 'expo-glass-effect';
+import styled from 'styled-components/native';
+import { Ionicons } from '@expo/vector-icons';
+import { useTheme } from '../../theme/ThemeProvider';
+import { StyledProps } from '../../utils/styledComponents';
+
+interface GlassButtonProps {
+    onPress: () => void;
+    icon?: keyof typeof Ionicons.glyphMap;
+    text?: string;
+    tintColor?: string;
+    style?: StyleProp<ViewStyle>;
+    disabled?: boolean;
+}
+
+const StyledGlassView = styled(GlassView)`
+  border-radius: 20px;
+`;
+
+const ContentContainer = styled(TouchableOpacity) <{ hasText: boolean }>`
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  padding-horizontal: ${({ theme, hasText }: StyledProps & { hasText: boolean }) =>
+        hasText ? theme.spacing.md : 0}px;
+  height: 40px;
+  min-width: 40px;
+`;
+
+const ButtonText = styled(Text) <{ tintColor?: string }>`
+  font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.md}px;
+  font-weight: ${({ theme }: StyledProps) => theme.typography.fontWeight.medium};
+  color: ${({ theme, tintColor }: StyledProps & { tintColor?: string }) =>
+        tintColor || theme.colors.text};
+  margin-left: ${({ theme }: StyledProps) => theme.spacing.xs}px;
+`;
+
+export const GlassButton: React.FC<GlassButtonProps> = ({
+    onPress,
+    icon,
+    text,
+    tintColor,
+    style,
+    disabled
+}) => {
+    const theme = useTheme();
+    const iconColor = tintColor || theme.colors.text;
+
+    return (
+        <View style={style}>
+            <StyledGlassView
+                key={theme.colors.background} // Force re-render on theme change
+                glassEffectStyle={'regular'}
+                isInteractive={true}
+                style={{
+                    backgroundColor: tintColor ? `${tintColor}20` : 'rgba(255, 255, 255, 0.05)',
+                }}
+            >
+                <ContentContainer
+                    onPress={onPress}
+                    disabled={disabled}
+                    hasText={!!text}
+                    activeOpacity={0.7}
+                >
+                    {icon && (
+                        <Ionicons
+                            name={icon}
+                            size={20}
+                            color={iconColor}
+                            style={text ? { marginRight: 4 } : {}}
+                        />
+                    )}
+                    {text && (
+                        <ButtonText tintColor={tintColor}>
+                            {text}
+                        </ButtonText>
+                    )}
+                </ContentContainer>
+            </StyledGlassView>
+        </View>
+    );
+};

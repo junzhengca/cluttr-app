@@ -332,7 +332,8 @@
             "delete": "削除",
             "modify": "変更"
         },
-        "needsRestocking": "在庫補充"
+        "needsRestocking": "在庫補充",
+        "expiring": "臨期"
     },
     "categoryManager": {
         "title": "カテゴリー管理",

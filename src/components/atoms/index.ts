@@ -12,6 +12,9 @@ export type { BottomSheetHeaderProps } from './BottomSheetHeader';
 export { Button } from './Button';
 export type { ButtonProps, ButtonVariant } from './Button';
 
+// Glass Button component
+export { GlassButton } from './GlassButton';
+
 // Empty state component
 export { EmptyState } from './EmptyState';
 export type { EmptyStateProps } from './EmptyState';
