@@ -22,7 +22,7 @@ import {
 } from '../components';
 import { calculateBottomPadding } from '../utils/layout';
 import { RootStackParamList } from '../navigation/types';
-import { useAuth, useAppDispatch, useAppSelector } from '../store/hooks';
+import { useAuth } from '../store/hooks';
 import { useToast } from '../hooks/useToast';
 
 import { Member } from '../types/api';
@@ -74,7 +74,6 @@ export const ShareScreen: React.FC = () => {
   const { t } = useTranslation();
   const theme = useTheme();
   const insets = useSafeAreaInsets();
-  const dispatch = useAppDispatch();
   const navigation = useNavigation<NavigationProp>();
   const { user, isAuthenticated, getApiClient } = useAuth();
 
@@ -276,7 +275,7 @@ export const ShareScreen: React.FC = () => {
         showBackButton={false}
         showRightButtons={true}
         avatarUrl={user?.avatarUrl}
-        ownerAvatarUrl={currentHome?.role === 'owner' ? currentHome.owner?.avatarUrl : undefined}
+        ownerAvatarUrl={currentHome?.role === 'member' ? currentHome.owner?.avatarUrl : undefined}
         onAvatarPress={handleAvatarPress}
       />
 
@@ -298,7 +297,7 @@ export const ShareScreen: React.FC = () => {
             nickname: currentHome.owner.nickname,
             avatarUrl: currentHome.owner.avatarUrl,
           } : null}
-          members={members}
+          members={members.filter((member) => !member.isOwner)}
           isLoading={isLoadingMembers}
           error={membersError}
           onRemoveMember={currentHome?.role === 'owner' ? handleRemoveMember : undefined}

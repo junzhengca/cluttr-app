@@ -356,7 +356,7 @@ export const NotesScreen: React.FC = () => {
           titleComponent={<HomeSwitcher />}
           showRightButtons={true}
           avatarUrl={user?.avatarUrl}
-          ownerAvatarUrl={currentHome?.owner?.avatarUrl}
+          ownerAvatarUrl={currentHome?.role === 'member' ? currentHome?.owner?.avatarUrl : undefined}
           onAvatarPress={handleAvatarPress}
         />
         <LoginBottomSheet
@@ -379,7 +379,7 @@ export const NotesScreen: React.FC = () => {
           titleComponent={<HomeSwitcher />}
           showRightButtons={true}
           avatarUrl={user?.avatarUrl}
-          ownerAvatarUrl={currentHome?.owner?.avatarUrl}
+          ownerAvatarUrl={currentHome?.role === 'member' ? currentHome?.owner?.avatarUrl : undefined}
           onAvatarPress={handleAvatarPress}
         />
         {/* Check if user has access to notes */}

@@ -1,5 +1,5 @@
 import * as SecureStore from 'expo-secure-store';
-import { readFile, writeFile, deleteFile } from './FileSystemService';
+import { readFile, writeFile, deleteFile, listJsonFiles } from './FileSystemService';
 import { User } from '../types/api';
 import { authLogger } from '../utils/Logger';
 
@@ -146,5 +146,34 @@ export const clearAllAuthData = async (): Promise<void> => {
     clearUser(),
     removeActiveHomeId(),
   ]);
+};
+
+/**
+ * Clear all user data on logout (items, todos, categories, homes, etc.)
+ * Preserves settings only.
+ */
+export const clearAllUserData = async (): Promise<void> => {
+  try {
+    // Get all JSON files
+    const files = await listJsonFiles();
+
+    // Files to preserve (settings-related)
+    const filesToPreserve = ['settings.json'];
+
+    // Delete all files except settings
+    for (const file of files) {
+      if (!filesToPreserve.includes(file)) {
+        await deleteFile(file);
+        authLogger.info(`Deleted user data file: ${file}`);
+      }
+    }
+
+    // Clear SecureStore active home ID
+    await removeActiveHomeId();
+
+    authLogger.info('All user data cleared (settings preserved)');
+  } catch (error) {
+    authLogger.error('Error clearing user data:', error);
+  }
 };
 

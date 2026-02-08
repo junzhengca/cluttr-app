@@ -27,29 +27,17 @@ class HomeService {
     currentHomeId$ = this.currentHomeIdSubject.asObservable();
 
     /**
-     * Initialize the service: read homes from disk, create default if none exist.
+     * Initialize the service: read homes from disk.
+     * Does NOT create default home - homes should come from server sync or explicit creation.
      */
     async init() {
         let data = await readFile<HomesData>(HOMES_FILE);
 
+        // If no homes exist, initialize with empty array (no default home)
         if (!data || !data.homes || data.homes.length === 0) {
-            syncLogger.info('No homes found, creating default home...');
-            const defaultHome: Home = {
-                id: generateItemId(),
-                name: 'My Home',
-                createdAt: new Date().toISOString(),
-                updatedAt: new Date().toISOString(),
-                clientUpdatedAt: new Date().toISOString(),
-                pendingCreate: true,
-            };
-            data = { homes: [defaultHome] };
-            const success = await writeFile(HOMES_FILE, data);
-            if (!success) {
-                syncLogger.error('Failed to write default home');
-                return;
-            }
-            // Initialize home-specific data files for the default home
-            await initializeHomeData(defaultHome.id);
+            syncLogger.info('No homes found, initializing with empty list');
+            data = { homes: [] };
+            await writeFile(HOMES_FILE, data);
         }
 
         // Self-healing: Ensure local-only homes are marked as pendingCreate
@@ -84,6 +72,53 @@ class HomeService {
                 this.currentHomeIdSubject.next(availableHome.id);
             }
         }
+    }
+
+    /**
+     * Ensure at least one home exists, creating default if needed
+     */
+    async ensureDefaultHome(): Promise<Home | null> {
+        const homes = this.getHomes();
+
+        if (homes.length === 0) {
+            syncLogger.info('No homes found, creating default home...');
+            const defaultHome: Home = {
+                id: generateItemId(),
+                name: 'My Home',
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString(),
+                clientUpdatedAt: new Date().toISOString(),
+                pendingCreate: true,
+            };
+
+            const data: HomesData = { homes: [defaultHome] };
+            const success = await writeFile(HOMES_FILE, data);
+
+            if (success) {
+                this.homesSubject.next([defaultHome]);
+                this.currentHomeIdSubject.next(defaultHome.id);
+                // Initialize home-specific data files for the default home
+                await initializeHomeData(defaultHome.id);
+                syncLogger.info('Default home created and initialized');
+                return defaultHome;
+            } else {
+                syncLogger.error('Failed to write default home');
+                return null;
+            }
+        }
+
+        // If we have homes but no active home, set the first one
+        if (!this.currentHomeIdSubject.value) {
+            const availableHome = homes.find(h => !h.pendingDelete && !h.pendingLeave);
+            if (availableHome) {
+                this.currentHomeIdSubject.next(availableHome.id);
+                // Ensure home data is initialized
+                await initializeHomeData(availableHome.id);
+                return availableHome;
+            }
+        }
+
+        return this.getCurrentHome();
     }
 
     /**
@@ -411,11 +446,11 @@ class HomeService {
      * Get the current home object synchronously.
      * Returns undefined if current home is pending delete/leave.
      */
-    getCurrentHome(): Home | undefined {
+    getCurrentHome(): Home | null {
         const id = this.currentHomeIdSubject.value;
         const home = this.homesSubject.value.find((h) => h.id === id);
-        if (home && (home.pendingDelete || home.pendingLeave)) return undefined;
-        return home;
+        if (home && (home.pendingDelete || home.pendingLeave)) return null;
+        return home ?? null;
     }
 
     /**

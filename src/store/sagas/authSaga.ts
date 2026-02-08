@@ -24,6 +24,7 @@ import {
   saveActiveHomeId,
   getActiveHomeId,
   removeActiveHomeId,
+  clearAllUserData,
 } from '../../services/AuthService';
 import { homeService } from '../../services/HomeService';
 import { User, ErrorDetails } from '../../types/api';
@@ -120,9 +121,9 @@ function* initializeApiClientSaga(action: { type: string; payload: string }) {
     });
 
     // Set initial active home ID from state
-    const activeHomeId: string | null = (yield select((state: RootState) => state.auth.activeHomeId)) as string | null;
     // We don't set activeUserId on apiClient because activeHomeId is a context, not a user impersonation.
     // Inventory and Todo sagas handle scoping explicitly.
+    void (yield select((state: RootState) => state.auth.activeHomeId));
 
     yield put(setApiClient(apiClient));
 
@@ -146,9 +147,11 @@ function* clearAuthAndLogout() {
 
   yield put(setUser(null));
   yield put(setAuthenticated(false));
+  yield put(setActiveHomeId(null));
 
-  // Instead of setting null, try to select a default home (offline mode)
-  yield call(restoreOrSelectActiveHome);
+  // Clear all user data (items, todos, categories, homes) on logout
+  // Only settings should persist
+  yield call(clearAllUserData);
 }
 
 function* handleAuthError(action: { type: string; payload?: string }) {
@@ -215,6 +218,15 @@ function* restoreOrSelectActiveHome() {
   return null;
 }
 
+// Helper to ensure a default home exists after login/sync
+function* ensureDefaultHomeIfNeeded(): Generator {
+  try {
+    yield call([homeService, homeService.ensureDefaultHome]);
+  } catch (error) {
+    authLogger.error('Error ensuring default home', error);
+  }
+}
+
 function* checkAuthSaga(): Generator {
   const apiClient: ApiClient = (yield select((state: RootState) => state.auth.apiClient)) as ApiClient;
   if (!apiClient) {
@@ -226,8 +238,8 @@ function* checkAuthSaga(): Generator {
     const tokens: { accessToken: string } | null = (yield call(getAuthTokens)) as { accessToken: string } | null;
 
     if (!tokens || !tokens.accessToken) {
-      // Ensure a home is selected even if not logged in (offline mode)
-      yield call(restoreOrSelectActiveHome);
+      // No tokens found - user must login (no guest mode)
+      authLogger.info('No access token found, user must login');
       yield put(setLoading(false));
       return;
     }
@@ -257,6 +269,12 @@ function* checkAuthSaga(): Generator {
           yield put(setShowNicknameSetup(false));
         }
 
+        // Sync everything (Homes + Content) - this will pull homes from server first
+        yield put(syncItemsAction());
+
+        // After sync, ensure we have a default home if none exists
+        yield call(ensureDefaultHomeIfNeeded);
+
         // Restore active home ID or select default
         yield call(restoreOrSelectActiveHome);
 
@@ -264,14 +282,10 @@ function* checkAuthSaga(): Generator {
         yield put(loadItems());
         yield put(loadTodos());
         yield put(loadSettings());
-
-
-        // Sync everything (Homes + Content)
-        yield put(syncItemsAction());
       }
     } catch (error) {
       // Check if it's a 401 error
-      const errorStatus = (error as any)?.status;
+      const errorStatus = (error as Error & { status?: number })?.status;
 
       if (errorStatus === 401) {
         // If /me returns 401, user is not authenticated
@@ -296,6 +310,9 @@ function* checkAuthSaga(): Generator {
           } else {
             yield put(setShowNicknameSetup(false));
           }
+
+          // Ensure we have a home (offline mode)
+          yield call(ensureDefaultHomeIfNeeded);
 
           // Restore active home ID or select default
           yield call(restoreOrSelectActiveHome);
@@ -394,7 +411,12 @@ function* loginSaga(action: { type: string; payload: { email: string; password: 
 
     yield put(setAuthenticated(true));
     yield put(setError(null)); // Clear error on success
-    yield put(setLoading(false));
+
+    // Sync everything (Homes + Content) - this will pull homes from server first
+    yield put(syncItemsAction());
+
+    // After sync, ensure we have a default home if none exists
+    yield call(ensureDefaultHomeIfNeeded);
 
     // Restore active home ID or select default
     yield call(restoreOrSelectActiveHome);
@@ -404,9 +426,7 @@ function* loginSaga(action: { type: string; payload: { email: string; password: 
     yield put(loadTodos());
     yield put(loadSettings());
 
-
-    // Sync everything (Homes + Content)
-    yield put(syncItemsAction());
+    yield put(setLoading(false));
 
     // Show success toast
     const toast = getGlobalToast();
@@ -479,6 +499,12 @@ function* signupSaga(action: { type: string; payload: { email: string; password:
 
     yield put(setAuthenticated(true));
 
+    // Sync everything (Homes + Content) - this will pull homes from server first
+    yield put(syncItemsAction());
+
+    // After sync, ensure we have a default home if none exists
+    yield call(ensureDefaultHomeIfNeeded);
+
     // Restore active home ID or select default
     yield call(restoreOrSelectActiveHome);
 
@@ -486,10 +512,6 @@ function* signupSaga(action: { type: string; payload: { email: string; password:
     yield put(loadItems());
     yield put(loadTodos());
     yield put(loadSettings());
-
-
-    // Sync everything (Homes + Content)
-    yield put(syncItemsAction());
 
     // Show success toast
     const toast = getGlobalToast();
@@ -576,7 +598,12 @@ function* googleLoginSaga(action: { type: string; payload: { idToken: string; pl
 
     yield put(setAuthenticated(true));
     yield put(setError(null)); // Clear error on success
-    yield put(setLoading(false));
+
+    // Sync everything (Homes + Content) - this will pull homes from server first
+    yield put(syncItemsAction());
+
+    // After sync, ensure we have a default home if none exists
+    yield call(ensureDefaultHomeIfNeeded);
 
     // Restore active home ID or select default
     yield call(restoreOrSelectActiveHome);
@@ -586,9 +613,7 @@ function* googleLoginSaga(action: { type: string; payload: { idToken: string; pl
     yield put(loadTodos());
     yield put(loadSettings());
 
-
-    // Sync everything (Homes + Content)
-    yield put(syncItemsAction());
+    yield put(setLoading(false));
 
     // Show success toast
     const toast = getGlobalToast();
@@ -648,8 +673,6 @@ function* updateUserSaga(action: { type: string; payload: User }) {
 
 // Handle active home ID change
 function* handleActiveHomeIdChange(action: { type: string; payload: string | null }) {
-  const apiClient: ApiClient = (yield select((state: RootState) => state.auth.apiClient)) as ApiClient;
-
   authLogger.info('Active home ID changed, persisting', action.payload);
 
   if (action.payload) {
