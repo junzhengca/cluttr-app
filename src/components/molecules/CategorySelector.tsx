@@ -50,7 +50,7 @@ const ColorDot = styled(View) <{ color: string }>`
 
 const CategoryText = styled(Text) <{ isSelected: boolean }>`
   font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.md}px;
-  font-weight: ${({ theme }: StyledProps) => theme.typography.fontWeight.bold};
+  font-weight: ${({ theme }: StyledProps) => theme.typography.fontWeight.medium};
   color: ${({ theme, isSelected }: StyledPropsWith<{ isSelected: boolean }>) =>
     isSelected ? theme.colors.surface : theme.colors.textSecondary};
 `;
