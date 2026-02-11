@@ -13,7 +13,7 @@ import { ThemeProvider } from '../src/theme/ThemeProvider';
 import { initializeDataFiles } from '../src/services/DataInitializationService';
 import { homeService } from '../src/services/HomeService';
 import { ErrorBottomSheet, SetupNicknameBottomSheet, ToastProvider, InvitationBottomSheet, OfflineBadge, OfflineExplanationBottomSheet } from '../src/components';
-import { LoginScreen } from '../src/screens/LoginScreen';
+import { AuthNavigator } from '../src/navigation/AuthNavigator';
 import { ContextMenuProvider } from '../src/components/organisms/ContextMenu/ContextMenuProvider';
 import { ErrorDetails } from '../src/types/api';
 import i18n from '../src/i18n/i18n';
@@ -154,7 +154,7 @@ function AppInner() {
     if (!isAuthenticated) {
         return (
             <>
-                <LoginScreen />
+                <AuthNavigator />
                 <StatusBar style={darkMode ? 'light' : 'dark'} />
                 <ErrorBottomSheet
                     bottomSheetRef={errorBottomSheetRef}

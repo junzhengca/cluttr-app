@@ -424,6 +424,10 @@
     "submitting": "登录中...",
     "link": "还没有账户？注册",
     "loginWithGoogle": "使用 Google 登录",
+    "forgotPassword": "忘记密码？",
+    "socialDivider": "或继续使用",
+    "switchToSignup": "还没有账户？",
+    "switchToSignupLink": "立即注册",
     "errors": {
       "emptyFields": "请输入邮箱和密码",
       "failed": "登录失败，请重试。",
@@ -445,6 +449,7 @@
     "title": "注册",
     "subtitle": "创建新账户",
     "fields": {
+      "nickname": "你的昵称",
       "email": "邮箱",
       "password": "密码",
       "confirmPassword": "确认密码"
@@ -461,6 +466,8 @@
     "submit": "注册",
     "submitting": "注册中...",
     "link": "已有账户？登录",
+    "switchToLogin": "已有账户？",
+    "switchToLoginLink": "立即登录",
     "errors": {
       "emptyFields": "请填写所有字段",
       "passwordMismatch": "密码不匹配",
@@ -642,6 +649,8 @@
     }
   },
   "onboarding": {
-    "welcome": "整理您的生活"
+    "welcome": "整理您的生活",
+    "joinTitle": "加入 Cluttr",
+    "joinSubtitle": "开始管理你的美好生活"
   }
 }

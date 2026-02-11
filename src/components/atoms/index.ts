@@ -12,6 +12,10 @@ export type { BottomSheetHeaderProps } from './BottomSheetHeader';
 export { Button } from './Button';
 export type { ButtonProps, ButtonVariant } from './Button';
 
+// Auth text input component
+export { AuthTextInput } from './AuthTextInput';
+export type { AuthTextInputProps } from './AuthTextInput';
+
 // Glass Button component
 export { GlassButton } from './GlassButton';
 

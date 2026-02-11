@@ -440,6 +440,10 @@
     "submitting": "Logging in...",
     "link": "Don't have an account? Sign up",
     "loginWithGoogle": "Login with Google",
+    "forgotPassword": "Forgot your password?",
+    "socialDivider": "OR CONTINUED WITH",
+    "switchToSignup": "Dont have account ?",
+    "switchToSignupLink": "Register now",
     "errors": {
       "emptyFields": "Please enter both email and password",
       "failed": "Login failed. Please try again.",
@@ -461,6 +465,7 @@
     "title": "Sign Up",
     "subtitle": "Create a new account",
     "fields": {
+      "nickname": "Your nickname",
       "email": "Email",
       "password": "Password",
       "confirmPassword": "Confirm Password"
@@ -474,9 +479,11 @@
       "premium": "Unlock premium plans with AI-powered features",
       "share": "Share your inventory with family and friends"
     },
-    "submit": "Sign Up",
-    "submitting": "Signing up...",
+    "submit": "Create your profile",
+    "submitting": "Creating...",
     "link": "Already have an account? Log in",
+    "switchToLogin": "Already have account ?",
+    "switchToLoginLink": "Login now",
     "errors": {
       "emptyFields": "Please fill in all fields",
       "passwordMismatch": "Passwords do not match",
@@ -667,6 +674,8 @@
     }
   },
   "onboarding": {
-    "welcome": "Organize your life"
+    "welcome": "Organize your life",
+    "joinTitle": "Join Cluttr",
+    "joinSubtitle": "开始管理你的美好生活"
   }
 }

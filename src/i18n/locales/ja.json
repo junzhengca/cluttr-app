@@ -429,6 +429,10 @@
         "submitting": "ログイン中...",
         "link": "アカウントをお持ちでないですか？ サインアップ",
         "loginWithGoogle": "Googleでログイン",
+        "forgotPassword": "パスワードをお忘れですか？",
+        "socialDivider": "または以下で続ける",
+        "switchToSignup": "アカウントをお持ちでないですか？",
+        "switchToSignupLink": "今すぐ登録",
         "errors": {
             "emptyFields": "メールアドレスとパスワードの両方を入力してください",
             "failed": "ログインに失敗しました。もう一度お試しください。",
@@ -450,6 +454,7 @@
         "title": "サインアップ",
         "subtitle": "新しいアカウントを作成",
         "fields": {
+            "nickname": "あなたのニックネーム",
             "email": "メールアドレス",
             "password": "パスワード",
             "confirmPassword": "パスワード（確認）"
@@ -466,6 +471,8 @@
         "submit": "サインアップ",
         "submitting": "サインアップ中...",
         "link": "すでにアカウントをお持ちですか？ ログイン",
+        "switchToLogin": "すでにアカウントをお持ちですか？",
+        "switchToLoginLink": "ログイン",
         "errors": {
             "emptyFields": "すべてのフィールドに入力してください",
             "passwordMismatch": "パスワードが一致しません",
@@ -647,6 +654,8 @@
         }
     },
     "onboarding": {
-        "welcome": "あなたの生活を整理しましょう"
+        "welcome": "あなたの生活を整理しましょう",
+        "joinTitle": "Cluttrへようこそ",
+        "joinSubtitle": "素敵な暮らしの管理を始めましょう"
     }
 }

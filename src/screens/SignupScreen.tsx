@@ -1,11 +1,10 @@
-import React, { useState, useCallback, useEffect, useRef } from 'react';
+import React, { useState, useCallback, useRef } from 'react';
 import {
     View,
     Text,
     ScrollView,
     KeyboardAvoidingView,
     Platform,
-    Alert,
     TouchableOpacity,
     TextInput,
 } from 'react-native';
@@ -18,11 +17,8 @@ import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 import type { StyledProps } from '../utils/styledComponents';
-import { uiLogger } from '../utils/Logger';
 import { AuthTextInput, Button } from '../components';
-import { useAuth, useSettings, useAppDispatch } from '../store/hooks';
-import { setError } from '../store/slices/authSlice';
-import { signInWithGoogle } from '../services/GoogleAuthService';
+import { useAuth, useSettings } from '../store/hooks';
 import { useTheme } from '../theme/ThemeProvider';
 import type { AuthStackParamList } from '../navigation/AuthNavigator';
 
@@ -84,19 +80,9 @@ const InputSpacing = styled(View)`
   margin-bottom: ${({ theme }: StyledProps) => theme.spacing.md}px;
 `;
 
-const ForgotPasswordRow = styled(View)`
-  align-items: flex-end;
-  margin-bottom: ${({ theme }: StyledProps) => theme.spacing.lg}px;
-`;
-
-const ForgotPasswordText = styled(Text)`
-  font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.sm}px;
-  color: ${({ theme }: StyledProps) => theme.colors.primary};
-  font-weight: ${({ theme }: StyledProps) => theme.typography.fontWeight.medium};
-`;
-
 const ButtonContainer = styled(View)`
   width: 100%;
+  margin-top: ${({ theme }: StyledProps) => theme.spacing.lg}px;
   margin-bottom: ${({ theme }: StyledProps) => theme.spacing.lg}px;
 `;
 
@@ -157,110 +143,49 @@ const SocialButton = styled(TouchableOpacity)`
   justify-content: center;
 `;
 
-export const LoginScreen: React.FC = () => {
+export const SignupScreen: React.FC = () => {
     const { t } = useTranslation();
     const theme = useTheme();
     const insets = useSafeAreaInsets();
-    const dispatch = useAppDispatch();
     const navigation = useNavigation<NativeStackNavigationProp<AuthStackParamList>>();
     const { settings } = useSettings();
     const isDark = settings?.darkMode;
-    const { login, googleLogin, error: authError, isLoading: authLoading } = useAuth();
+    const { signup } = useAuth();
 
+    const [nickname, setNickname] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
-    const [localError, setLocalError] = useState<string | null>(null);
-    const [loginAttempted, setLoginAttempted] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+    const [isLoading, setIsLoading] = useState(false);
 
+    const emailRef = useRef<TextInput>(null);
     const passwordRef = useRef<TextInput>(null);
 
-    const handleEmailChange = useCallback(
-        (text: string) => {
-            setEmail(text);
-            if (localError || authError) {
-                setLocalError(null);
-                dispatch(setError(null));
-            }
-        },
-        [localError, authError, dispatch],
-    );
-
-    const handlePasswordChange = useCallback(
-        (text: string) => {
-            setPassword(text);
-            if (localError || authError) {
-                setLocalError(null);
-                dispatch(setError(null));
-            }
-        },
-        [localError, authError, dispatch],
-    );
-
-    const handleSubmit = useCallback(() => {
+    const handleSubmit = useCallback(async () => {
         if (!email.trim() || !password.trim()) {
-            setLocalError(t('login.errors.emptyFields'));
+            setError(t('signup.errors.emptyFields'));
             return;
         }
 
-        setLocalError(null);
-        setLoginAttempted(true);
-        login(email.trim(), password);
-    }, [email, password, login, t]);
-
-    // Watch for login success
-    useEffect(() => {
-        if (loginAttempted && !authLoading) {
-            if (!authError) {
-                // Login successful - navigation handled by _layout.tsx
-            }
+        if (password.length < 6) {
+            setError(t('signup.errors.passwordTooShort'));
+            return;
         }
-    }, [loginAttempted, authLoading, authError]);
 
-    const handleGoogleLogin = useCallback(async () => {
+        setIsLoading(true);
+        setError(null);
+
         try {
-            const idToken = await signInWithGoogle();
-            if (idToken) {
-                const platform = Platform.OS === 'ios' ? 'ios' : 'android';
-                googleLogin(idToken, platform);
-            }
-        } catch (error) {
-            uiLogger.error('Google login error', error);
-            Alert.alert(
-                t('login.errors.googleLoginFailed.title') || 'Google Login Failed',
-                error instanceof Error
-                    ? error.message
-                    : t('login.errors.googleLoginFailed.message') || 'Failed to sign in with Google.',
-            );
+            await signup(email.trim(), password);
+            // Navigation handled by _layout.tsx on auth state change
+        } catch (err) {
+            const errorMessage =
+                err instanceof Error ? err.message : t('signup.errors.failed');
+            setError(errorMessage);
+        } finally {
+            setIsLoading(false);
         }
-    }, [t, googleLogin]);
-
-    // Handle auth errors from Google login
-    useEffect(() => {
-        if (authError && !authLoading) {
-            let errorMessage = authError;
-            let errorTitle = t('login.errors.googleLoginFailed.title') || 'Google Login Failed';
-
-            if (authError.includes('Email already registered with email/password')) {
-                errorMessage =
-                    t('login.errors.emailAlreadyRegistered.message') ||
-                    'Email already registered with email/password.';
-                errorTitle =
-                    t('login.errors.emailAlreadyRegistered.title') || 'Account Already Exists';
-            } else if (authError.includes('Invalid Google account')) {
-                errorMessage =
-                    t('login.errors.invalidGoogleAccount.message') || 'Invalid Google account.';
-            }
-
-            if (
-                authError.includes('Google') ||
-                authError.includes('Email already registered')
-            ) {
-                Alert.alert(errorTitle, errorMessage);
-            }
-        }
-    }, [authError, authLoading, t]);
-
-    const displayError = localError || authError;
+    }, [email, password, signup, t]);
 
     return (
         <Container>
@@ -289,10 +214,23 @@ export const LoginScreen: React.FC = () => {
                         <FormContainer>
                             <InputSpacing>
                                 <AuthTextInput
+                                    icon="person-outline"
+                                    placeholder={t('signup.fields.nickname')}
+                                    value={nickname}
+                                    onChangeText={setNickname}
+                                    autoCapitalize="words"
+                                    returnKeyType="next"
+                                    onSubmitEditing={() => emailRef.current?.focus()}
+                                />
+                            </InputSpacing>
+
+                            <InputSpacing>
+                                <AuthTextInput
+                                    ref={emailRef}
                                     icon="mail-outline"
-                                    placeholder={t('login.placeholders.email')}
+                                    placeholder={t('signup.placeholders.email')}
                                     value={email}
-                                    onChangeText={handleEmailChange}
+                                    onChangeText={setEmail}
                                     keyboardType="email-address"
                                     autoCapitalize="none"
                                     returnKeyType="next"
@@ -304,39 +242,37 @@ export const LoginScreen: React.FC = () => {
                                 <AuthTextInput
                                     ref={passwordRef}
                                     icon="lock-closed-outline"
-                                    placeholder={t('login.placeholders.password')}
+                                    placeholder={t('signup.placeholders.password')}
                                     value={password}
-                                    onChangeText={handlePasswordChange}
+                                    onChangeText={setPassword}
                                     secureTextEntry
                                     returnKeyType="go"
                                     onSubmitEditing={handleSubmit}
-                                    error={!!displayError}
-                                    errorMessage={displayError || undefined}
+                                    error={!!error}
+                                    errorMessage={error || undefined}
                                 />
                             </InputSpacing>
 
-                            <ForgotPasswordRow>
-                                <TouchableOpacity>
-                                    <ForgotPasswordText>{t('login.forgotPassword')}</ForgotPasswordText>
-                                </TouchableOpacity>
-                            </ForgotPasswordRow>
-
                             <ButtonContainer>
                                 <Button
-                                    label={authLoading ? t('login.submitting') : t('login.submit')}
+                                    label={
+                                        isLoading
+                                            ? t('signup.submitting')
+                                            : t('signup.submit')
+                                    }
                                     onPress={handleSubmit}
                                     variant="primary"
                                     icon="arrow-forward"
-                                    disabled={authLoading}
+                                    disabled={isLoading}
                                     fullWidth
                                     useGlass={false}
                                 />
                             </ButtonContainer>
 
                             <SwitchRow>
-                                <SwitchText>{t('login.switchToSignup')}</SwitchText>
-                                <TouchableOpacity onPress={() => navigation.navigate('Signup')}>
-                                    <SwitchLinkText>{t('login.switchToSignupLink')}</SwitchLinkText>
+                                <SwitchText>{t('signup.switchToLogin')}</SwitchText>
+                                <TouchableOpacity onPress={() => navigation.navigate('Login')}>
+                                    <SwitchLinkText>{t('signup.switchToLoginLink')}</SwitchLinkText>
                                 </TouchableOpacity>
                             </SwitchRow>
 
@@ -347,7 +283,7 @@ export const LoginScreen: React.FC = () => {
                             </DividerRow>
 
                             <SocialRow>
-                                <SocialButton onPress={handleGoogleLogin}>
+                                <SocialButton onPress={() => { }}>
                                     <Ionicons name="logo-google" size={22} color={theme.colors.text} />
                                 </SocialButton>
                                 <SocialButton onPress={() => { }}>
