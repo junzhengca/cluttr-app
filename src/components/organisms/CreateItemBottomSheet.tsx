@@ -135,17 +135,35 @@ export const CreateItemBottomSheet: React.FC<CreateItemBottomSheetProps> = ({
 
   const {
     nameInputRef,
+    priceInputRef,
+    amountInputRef,
+    unitInputRef,
+    vendorInputRef,
     defaultName,
+    defaultPrice,
+    defaultAmount,
+    defaultUnit,
+    defaultVendor,
     selectedLocation,
     selectedCategoryId,
+    expiryDate,
     formKey,
     setSelectedLocation,
     setSelectedCategoryId,
+    setExpiryDate,
     getFormValues,
     isFormDirty,
     resetForm,
     handleNameChangeText,
     handleNameBlur,
+    handlePriceChange,
+    handlePriceBlur,
+    handleAmountChange,
+    handleAmountBlur,
+    handleUnitChange,
+    handleUnitBlur,
+    handleVendorChange,
+    handleVendorBlur,
   } = useCreateItemForm({
     initialLocation: resolvedInitialLocation,
     initialCategoryId: initialData?.categoryId ?? null,
@@ -292,10 +310,17 @@ export const CreateItemBottomSheet: React.FC<CreateItemBottomSheetProps> = ({
     try {
       const now = new Date().toISOString();
 
-      // Build a default first batch so existing logic still works
+      // Build the first batch from user-entered values
+      const parsedAmount = parseInt(formValues.amount || '1', 10);
+      const parsedPrice = parseFloat(formValues.price);
+
       const firstBatch: ItemBatch = {
         id: generateItemId(),
-        amount: 1,
+        amount: isNaN(parsedAmount) || parsedAmount < 1 ? 1 : parsedAmount,
+        price: isNaN(parsedPrice) ? undefined : parsedPrice,
+        unit: formValues.unit.trim() || undefined,
+        vendor: formValues.vendor.trim() || undefined,
+        expiryDate: formValues.expiryDate?.toISOString(),
         createdAt: now,
       };
 
@@ -343,6 +368,7 @@ export const CreateItemBottomSheet: React.FC<CreateItemBottomSheetProps> = ({
         name: t('createItem.fields.name'),
         location: t('createItem.fields.location'),
         category: t('createItem.fields.category'),
+        expiryDate: t('createItem.fields.expiryDate'),
       },
       placeholders: {
         name: t('createItem.placeholders.name'),
@@ -424,11 +450,29 @@ export const CreateItemBottomSheet: React.FC<CreateItemBottomSheetProps> = ({
             selectedCategoryId={selectedCategoryId}
             formKey={formKey}
             nameInputRef={nameInputRef}
+            priceInputRef={priceInputRef}
+            amountInputRef={amountInputRef}
+            unitInputRef={unitInputRef}
+            vendorInputRef={vendorInputRef}
             defaultName={defaultName}
+            defaultPrice={defaultPrice}
+            defaultAmount={defaultAmount}
+            defaultUnit={defaultUnit}
+            defaultVendor={defaultVendor}
             onLocationSelect={setSelectedLocation}
             onCategorySelect={setSelectedCategoryId}
             onNameChangeText={handleNameChangeText}
             onNameBlur={handleNameBlur}
+            onPriceChange={handlePriceChange}
+            onPriceBlur={handlePriceBlur}
+            onAmountChange={handleAmountChange}
+            onAmountBlur={handleAmountBlur}
+            onUnitChange={handleUnitChange}
+            onUnitBlur={handleUnitBlur}
+            onVendorChange={handleVendorChange}
+            onVendorBlur={handleVendorBlur}
+            expiryDate={expiryDate}
+            onExpiryDateChange={setExpiryDate}
             translations={translations}
           />
         </BottomSheetScrollView>

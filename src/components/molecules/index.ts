@@ -48,6 +48,9 @@ export type { CategoryFormSelectorProps } from './CategoryFormSelector';
 export { StatusFormSelector } from './StatusFormSelector';
 export type { StatusFormSelectorProps } from './StatusFormSelector';
 
+export { BatchDetailsFormSection } from './BatchDetailsFormSection';
+export type { BatchDetailsFormSectionProps } from './BatchDetailsFormSection';
+
 // Picker/selector molecules
 export { DatePicker } from './DatePicker';
 export type { DatePickerProps } from './DatePicker';

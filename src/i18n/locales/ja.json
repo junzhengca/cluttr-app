@@ -316,8 +316,15 @@
         },
         "sections": {
             "general": "一般情報",
-            "inventory": "在庫と日付"
+            "inventory": "在庫と日付",
+            "batches": "バッチ情報"
         },
+        "batchLabel": "バッチ #{{index}}",
+        "batchFields": {
+            "vendor": "購入先",
+            "note": "メモ"
+        },
+        "noBatches": "バッチ記録なし",
         "fields": {
             "valuation": "評価額",
             "purchaseDate": "購入日",

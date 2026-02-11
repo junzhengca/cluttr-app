@@ -311,8 +311,15 @@
     },
     "sections": {
       "general": "基本信息",
-      "inventory": "库存与日期"
+      "inventory": "库存与日期",
+      "batches": "批次信息"
     },
+    "batchLabel": "批次 #{{index}}",
+    "batchFields": {
+      "vendor": "商家",
+      "note": "备注"
+    },
+    "noBatches": "暂无批次记录",
     "fields": {
       "valuation": "估值",
       "purchaseDate": "购买时间",

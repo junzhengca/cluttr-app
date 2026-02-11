@@ -23,7 +23,7 @@ import {
 } from '../components';
 import { useItemActions } from '../hooks/useItemActions';
 import { formatDate, formatPrice } from '../utils/formatters';
-import { getLightColor } from '../utils/colors';
+
 import { calculateBottomActionBarPadding } from '../utils/layout';
 import { getTotalAmount, getTotalValue, getEarliestExpiry, getLatestPurchase } from '../utils/batchUtils';
 import type { Theme } from '../theme/types';
@@ -51,25 +51,57 @@ const Content = styled(ScrollView)`
   padding: ${({ theme }: StyledProps) => theme.spacing.md}px;
 `;
 
-const IconContainer = styled(View) <{ backgroundColor: string }>`
-  width: 100px;
-  height: 100px;
-  border-radius: ${({ theme }: StyledProps) => theme.borderRadius.xl}px;
-  background-color: ${({ backgroundColor }: { backgroundColor: string }) => backgroundColor};
-  align-items: center;
-  justify-content: center;
-  margin-bottom: ${({ theme }: StyledProps) => theme.spacing.lg}px;
-  shadow-color: #000;
-  shadow-offset: 0px 4px;
-  shadow-opacity: 0.1;
-  shadow-radius: 8px;
-  elevation: 4;
+const BatchCard = styled(View)`
+  background-color: ${({ theme }: StyledProps) => theme.colors.background};
+  border-radius: ${({ theme }: StyledProps) => theme.borderRadius.md}px;
+  padding: ${({ theme }: StyledProps) => theme.spacing.md}px;
+  margin-bottom: ${({ theme }: StyledProps) => theme.spacing.sm}px;
+  border-width: 1px;
+  border-color: ${({ theme }: StyledProps) => theme.colors.borderLight};
 `;
 
-const HeaderSection = styled(View)`
+const BatchHeader = styled(View)`
+  flex-direction: row;
   align-items: center;
-  padding: 0 ${({ theme }: StyledProps) => theme.spacing.lg}px;
-  margin-bottom: ${({ theme }: StyledProps) => theme.spacing.xl}px;
+  justify-content: space-between;
+  margin-bottom: ${({ theme }: StyledProps) => theme.spacing.sm}px;
+`;
+
+const BatchTitle = styled(Text)`
+  font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.md}px;
+  font-weight: ${({ theme }: StyledProps) => theme.typography.fontWeight.medium};
+  color: ${({ theme }: StyledProps) => theme.colors.text};
+`;
+
+const BatchAmount = styled(Text)`
+  font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.md}px;
+  font-weight: ${({ theme }: StyledProps) => theme.typography.fontWeight.bold};
+  color: ${({ theme }: StyledProps) => theme.colors.primary};
+`;
+
+const BatchDetailRow = styled(View)`
+  flex-direction: row;
+  align-items: center;
+  padding-vertical: 3px;
+`;
+
+const BatchDetailLabel = styled(Text)`
+  font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.sm}px;
+  color: ${({ theme }: StyledProps) => theme.colors.textLight};
+  width: 80px;
+`;
+
+const BatchDetailValue = styled(Text)`
+  font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.sm}px;
+  color: ${({ theme }: StyledProps) => theme.colors.text};
+  flex: 1;
+`;
+
+const EmptyBatchText = styled(Text)`
+  font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.sm}px;
+  color: ${({ theme }: StyledProps) => theme.colors.textLight};
+  text-align: center;
+  padding: ${({ theme }: StyledProps) => theme.spacing.md}px;
 `;
 
 
@@ -315,11 +347,6 @@ export const ItemDetailsScreen: React.FC = () => {
 
       <ScrollContainer>
         <Content contentContainerStyle={{ paddingBottom: bottomPadding }}>
-          <HeaderSection>
-            <IconContainer backgroundColor={getLightColor(item.iconColor)}>
-              <Ionicons name={item.icon} size={48} color={item.iconColor} />
-            </IconContainer>
-          </HeaderSection>
 
           {/* General Information Section */}
           <Section>
@@ -407,6 +434,57 @@ export const ItemDetailsScreen: React.FC = () => {
                 <PropertyValue>{formatDate(getEarliestExpiry(item.batches || []), getLocale(), t)}</PropertyValue>
               </PropertyContent>
             </PropertyRowLast>
+          </Section>
+
+          {/* Batches Section */}
+          <Section>
+            <SectionTitle>{t('itemDetails.sections.batches')}</SectionTitle>
+            {(item.batches || []).length > 0 ? (
+              (item.batches || []).map((batch, index) => (
+                <BatchCard key={batch.id}>
+                  <BatchHeader>
+                    <BatchTitle>
+                      {t('itemDetails.batchLabel', { index: index + 1 })}
+                    </BatchTitle>
+                    <BatchAmount>
+                      {batch.amount}{batch.unit ? ` ${batch.unit}` : ''}
+                    </BatchAmount>
+                  </BatchHeader>
+                  {batch.price != null && batch.price > 0 && (
+                    <BatchDetailRow>
+                      <BatchDetailLabel>{t('itemDetails.fields.valuation')}</BatchDetailLabel>
+                      <BatchDetailValue>{formatPrice(batch.price, currencySymbol)}</BatchDetailValue>
+                    </BatchDetailRow>
+                  )}
+                  {batch.vendor && (
+                    <BatchDetailRow>
+                      <BatchDetailLabel>{t('itemDetails.batchFields.vendor')}</BatchDetailLabel>
+                      <BatchDetailValue>{batch.vendor}</BatchDetailValue>
+                    </BatchDetailRow>
+                  )}
+                  {batch.purchaseDate && (
+                    <BatchDetailRow>
+                      <BatchDetailLabel>{t('itemDetails.fields.purchaseDate')}</BatchDetailLabel>
+                      <BatchDetailValue>{formatDate(batch.purchaseDate, getLocale(), t)}</BatchDetailValue>
+                    </BatchDetailRow>
+                  )}
+                  {batch.expiryDate && (
+                    <BatchDetailRow>
+                      <BatchDetailLabel>{t('itemDetails.fields.expiryDate')}</BatchDetailLabel>
+                      <BatchDetailValue>{formatDate(batch.expiryDate, getLocale(), t)}</BatchDetailValue>
+                    </BatchDetailRow>
+                  )}
+                  {batch.note && (
+                    <BatchDetailRow>
+                      <BatchDetailLabel>{t('itemDetails.batchFields.note')}</BatchDetailLabel>
+                      <BatchDetailValue>{batch.note}</BatchDetailValue>
+                    </BatchDetailRow>
+                  )}
+                </BatchCard>
+              ))
+            ) : (
+              <EmptyBatchText>{t('itemDetails.noBatches')}</EmptyBatchText>
+            )}
           </Section>
         </Content>
       </ScrollContainer>

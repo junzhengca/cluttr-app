@@ -327,8 +327,15 @@
     },
     "sections": {
       "general": "General Information",
-      "inventory": "Inventory & Dates"
+      "inventory": "Inventory & Dates",
+      "batches": "Batches"
     },
+    "batchLabel": "Batch #{{index}}",
+    "batchFields": {
+      "vendor": "Vendor",
+      "note": "Note"
+    },
+    "noBatches": "No batches recorded",
     "fields": {
       "valuation": "Valuation",
       "purchaseDate": "Purchase Date",
