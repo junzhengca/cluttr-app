@@ -6,13 +6,14 @@ import { Ionicons } from '@expo/vector-icons';
 
 import type {
     StyledProps,
-    StyledPropsWith,
 } from '../../utils/styledComponents';
 import { locations } from '../../data/locations';
 import type { Theme } from '../../theme/types';
 
-const SelectorContainer = styled(View)`
+const SelectorContainer = styled(View) <{ edgeToEdge?: boolean }>`
   flex-direction: column;
+  ${({ edgeToEdge, theme }: StyledProps & { edgeToEdge?: boolean }) =>
+        edgeToEdge ? `margin-horizontal: -${theme.spacing.md}px;` : ''}
 `;
 
 const LocationScrollView = styled(ScrollView).attrs(() => ({
@@ -61,12 +62,14 @@ export interface LocationSelectorProps {
     // Counts props are kept for interface compatibility but ignored in rendering as requested
     showCounts?: boolean;
     counts?: Record<string, number>;
+    edgeToEdge?: boolean;
 }
 
 export const LocationSelector: React.FC<LocationSelectorProps> = ({
     selectedLocationId,
     onSelect,
     showAllOption = false,
+    edgeToEdge = false,
 }) => {
     const { t } = useTranslation();
     const theme = useTheme() as Theme;
@@ -79,7 +82,7 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
     };
 
     return (
-        <SelectorContainer>
+        <SelectorContainer edgeToEdge={edgeToEdge}>
             <LocationScrollView
                 contentContainerStyle={scrollContentStyle}
             >

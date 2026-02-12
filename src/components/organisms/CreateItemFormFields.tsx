@@ -4,7 +4,7 @@ import styled from 'styled-components/native';
 import { useTheme } from '../../theme/ThemeProvider';
 import type { StyledProps } from '../../utils/styledComponents';
 import { FormSection, UncontrolledInput } from '../atoms';
-import { LocationFormSelector, CategoryFormSelector, BatchDetailsFormSection, DatePicker, StatusFormSelector, CollapsibleSection } from '../molecules';
+import { LocationSelector, CategoryFormSelector, BatchDetailsFormSection, DatePicker, StatusFormSelector, CollapsibleSection } from '../molecules';
 
 // ---------------------------------------------------------------------------
 // Styled helpers
@@ -160,9 +160,11 @@ export const CreateItemFormFields: React.FC<CreateItemFormFieldsProps> = ({
 
             {/* Row 2 — Location */}
             <FormSection label={translations.fields.location}>
-                <LocationFormSelector
+                <LocationSelector
                     selectedLocationId={selectedLocation}
-                    onSelect={onLocationSelect}
+                    onSelect={(id: string | null) => id && onLocationSelect(id)}
+                    showAllOption={false}
+                    edgeToEdge={true}
                 />
             </FormSection>
 
