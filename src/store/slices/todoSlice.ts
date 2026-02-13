@@ -84,12 +84,18 @@ const selectTodos = (state: { todo: TodoState }) => state.todo.todos;
 
 export const selectPendingTodos = createSelector(
   [selectTodos],
-  (todos) => todos.filter((todo) => !todo.completed)
+  (todos) =>
+    [...todos]
+      .filter((todo) => !todo.completed)
+      .sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''))
 );
 
 export const selectCompletedTodos = createSelector(
   [selectTodos],
-  (todos) => todos.filter((todo) => todo.completed)
+  (todos) =>
+    [...todos]
+      .filter((todo) => todo.completed)
+      .sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''))
 );
 
 export default todoSlice.reducer;

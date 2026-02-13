@@ -207,7 +207,7 @@ export const syncItems = async (
   syncLogger.info('Starting item sync...');
   try {
     const data = await readFile<ItemsData>(ITEMS_FILE, homeId);
-    const items = data?.items || [];
+    let items = data?.items || [];
     const lastSyncTime = data?.lastSyncTime;
     const lastPulledVersion = data?.lastPulledVersion || 0;
 
@@ -266,6 +266,14 @@ export const syncItems = async (
     if (!response.success) {
       syncLogger.error('Sync failed:', response);
       return;
+    }
+
+    // CRITICAL FIX: Re-read data before applying results to capture any local changes
+    // that happened while we were waiting for the server response
+    const freshData = await readFile<ItemsData>(ITEMS_FILE, homeId);
+    if (freshData?.items) {
+      // Update our local reference to the fresh data
+      items = freshData.items;
     }
 
     // 4. Process Push Results

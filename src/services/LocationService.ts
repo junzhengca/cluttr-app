@@ -162,7 +162,7 @@ export const syncLocations = async (
   syncLogger.info('Starting location sync...');
   try {
     const data = await readFile<LocationsData>(LOCATIONS_FILE, homeId);
-    const locations = data?.locations || [];
+    let locations = data?.locations || [];
     const lastSyncTime = data?.lastSyncTime;
     const lastPulledVersion = data?.lastPulledVersion || 0;
 
@@ -214,6 +214,14 @@ export const syncLocations = async (
     if (!response.success) {
       syncLogger.error('Sync failed:', response);
       return;
+    }
+
+    // CRITICAL FIX: Re-read data before applying results to capture any local changes
+    // that happened while we were waiting for the server response
+    const freshData = await readFile<LocationsData>(LOCATIONS_FILE, homeId);
+    if (freshData?.locations) {
+      // Update our local reference to the fresh data
+      locations = freshData.locations;
     }
 
     // 4. Process Push Results

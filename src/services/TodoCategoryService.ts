@@ -251,7 +251,7 @@ export const syncCategories = async (
   syncLogger.info('Starting todo category sync...');
   try {
     const data = await readFile<TodoCategoriesData>(TODO_CATEGORIES_FILE, homeId);
-    const categories = data?.categories || [];
+    let categories = data?.categories || [];
     const lastSyncTime = data?.lastSyncTime;
     const lastPulledVersion = data?.lastPulledVersion || 0;
 
@@ -302,6 +302,14 @@ export const syncCategories = async (
     if (!response.success) {
       syncLogger.error('Todo category sync failed:', response);
       return;
+    }
+
+    // CRITICAL FIX: Re-read data before applying results to capture any local changes
+    // that happened while we were waiting for the server response
+    const freshData = await readFile<TodoCategoriesData>(TODO_CATEGORIES_FILE, homeId);
+    if (freshData?.categories) {
+      // Update our local reference to the fresh data
+      categories = freshData.categories;
     }
 
     // 4. Process Push Results

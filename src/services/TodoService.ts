@@ -218,7 +218,7 @@ export const syncTodos = async (
   syncLogger.info('Starting todo sync...');
   try {
     const data = await readFile<TodosData>(TODOS_FILE, homeId);
-    const todos = data?.todos || [];
+    let todos = data?.todos || [];
     const lastSyncTime = data?.lastSyncTime;
     const lastPulledVersion = data?.lastPulledVersion || 0;
 
@@ -273,6 +273,14 @@ export const syncTodos = async (
       return;
     }
 
+    // CRITICAL FIX: Re-read data before applying results to capture any local changes
+    // that happened while we were waiting for the server response
+    const freshData = await readFile<TodosData>(TODOS_FILE, homeId);
+    if (freshData?.todos) {
+      // Update our local reference to the fresh data
+      todos = freshData.todos;
+    }
+
     // 4. Process Push Results
     if (response.pushResults) {
       for (const pushResult of response.pushResults) {
@@ -282,16 +290,23 @@ export const syncTodos = async (
             if (index === -1) continue;
 
             if (result.status === 'created' || result.status === 'updated') {
-              todos[index] = {
-                ...todos[index],
-                pendingCreate: false,
-                pendingUpdate: false,
-                pendingDelete: false,
-                serverUpdatedAt: result.serverUpdatedAt,
-                lastSyncedAt: response.serverTimestamp,
-              };
-              if (result.status === 'created' && result.serverVersion) {
-                todos[index].version = result.serverVersion;
+              // FIX: Check if the todo has been modified locally while sync was in progress
+              const originalTodo = pendingTodos.find(t => t.id === result.entityId);
+
+              if (originalTodo && todos[index].version === originalTodo.version) {
+                todos[index] = {
+                  ...todos[index],
+                  pendingCreate: false,
+                  pendingUpdate: false,
+                  pendingDelete: false,
+                  serverUpdatedAt: result.serverUpdatedAt,
+                  lastSyncedAt: response.serverTimestamp,
+                };
+                if (result.status === 'created' && result.serverVersion) {
+                  todos[index].version = result.serverVersion;
+                }
+              } else {
+                syncLogger.info(`Todo ${result.entityId} was modified during sync (ver ${originalTodo?.version} -> ${todos[index].version}), keeping pending state`);
               }
             } else if (result.status === 'server_version' && result.winner === 'server') {
               // Server won, update local with server data
@@ -311,13 +326,17 @@ export const syncTodos = async (
               }
             } else if (result.status === 'deleted') {
               // Confirmed deletion
-              // We keep it as soft deleted in local storage if we want to sync deletion to other devices
-              // But since server confirmed it, we can just ensure it's marked deleted and not pending
-              todos[index] = {
-                ...todos[index],
-                pendingDelete: false,
-                lastSyncedAt: response.serverTimestamp
-              };
+              const originalTodo = pendingTodos.find(t => t.id === result.entityId);
+
+              if (originalTodo && todos[index].version === originalTodo.version) {
+                todos[index] = {
+                  ...todos[index],
+                  pendingDelete: false,
+                  lastSyncedAt: response.serverTimestamp
+                };
+              } else {
+                syncLogger.info(`Todo ${result.entityId} was modified during sync (delete), keeping pending state`);
+              }
             }
           }
         }
@@ -360,7 +379,14 @@ export const syncTodos = async (
               // Or if we decided not to push.
               // Here we blindly overwrite if not pending.
               if (!todos[index].pendingUpdate && !todos[index].pendingCreate && !todos[index].pendingDelete) {
-                todos[index] = { ...todos[index], ...newTodo };
+                // Fix: Preserve original createdAt to prevent reordering
+                // The server doesn't return createdAt, so newTodo uses updatedAt as an approximation
+                // But for existing items, we MUST keep their original creation time
+                todos[index] = {
+                  ...todos[index],
+                  ...newTodo,
+                  createdAt: todos[index].createdAt || newTodo.createdAt
+                };
               }
             } else {
               todos.push(newTodo);
