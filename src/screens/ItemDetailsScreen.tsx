@@ -11,8 +11,9 @@ import { useTheme } from '../theme/ThemeProvider';
 import { useInventory, useSettings, useAppSelector } from '../store/hooks';
 import { selectItemById } from '../store/slices/inventorySlice';
 import { RootStackParamList } from '../navigation/types';
-import { InventoryItem } from '../types/inventory';
+import { InventoryItem, Category } from '../types/inventory';
 import { getItemById } from '../services/InventoryService';
+import { getCategoryById } from '../services/CategoryService';
 import { locations } from '../data/locations';
 import {
   getCurrencySymbol,
@@ -20,6 +21,9 @@ import {
   type EditItemBottomSheetRef,
   PageHeader,
   BottomActionBar,
+  BatchItemCard,
+  Button,
+  AddBatchBottomSheet,
 } from '../components';
 import { useItemActions } from '../hooks/useItemActions';
 import { formatDate, formatPrice } from '../utils/formatters';
@@ -51,51 +55,6 @@ const Content = styled(ScrollView)`
   padding: ${({ theme }: StyledProps) => theme.spacing.md}px;
 `;
 
-const BatchCard = styled(View)`
-  background-color: ${({ theme }: StyledProps) => theme.colors.background};
-  border-radius: ${({ theme }: StyledProps) => theme.borderRadius.md}px;
-  padding: ${({ theme }: StyledProps) => theme.spacing.md}px;
-  margin-bottom: ${({ theme }: StyledProps) => theme.spacing.sm}px;
-  border-width: 1px;
-  border-color: ${({ theme }: StyledProps) => theme.colors.borderLight};
-`;
-
-const BatchHeader = styled(View)`
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: ${({ theme }: StyledProps) => theme.spacing.sm}px;
-`;
-
-const BatchTitle = styled(Text)`
-  font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.md}px;
-  font-weight: ${({ theme }: StyledProps) => theme.typography.fontWeight.medium};
-  color: ${({ theme }: StyledProps) => theme.colors.text};
-`;
-
-const BatchAmount = styled(Text)`
-  font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.md}px;
-  font-weight: ${({ theme }: StyledProps) => theme.typography.fontWeight.bold};
-  color: ${({ theme }: StyledProps) => theme.colors.primary};
-`;
-
-const BatchDetailRow = styled(View)`
-  flex-direction: row;
-  align-items: center;
-  padding-vertical: 3px;
-`;
-
-const BatchDetailLabel = styled(Text)`
-  font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.sm}px;
-  color: ${({ theme }: StyledProps) => theme.colors.textLight};
-  width: 80px;
-`;
-
-const BatchDetailValue = styled(Text)`
-  font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.sm}px;
-  color: ${({ theme }: StyledProps) => theme.colors.text};
-  flex: 1;
-`;
 
 const EmptyBatchText = styled(Text)`
   font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.sm}px;
@@ -104,14 +63,62 @@ const EmptyBatchText = styled(Text)`
   padding: ${({ theme }: StyledProps) => theme.spacing.md}px;
 `;
 
-
-const Section = styled(View)`
+const HeaderCard = styled(View)`
   background-color: ${({ theme }: StyledProps) => theme.colors.surface};
   border-radius: ${({ theme }: StyledProps) => theme.borderRadius.lg}px;
   padding: ${({ theme }: StyledProps) => theme.spacing.lg}px;
   margin-bottom: ${({ theme }: StyledProps) => theme.spacing.md}px;
-  border-width: 1px;
-  border-color: ${({ theme }: StyledProps) => theme.colors.border};
+`;
+
+const ItemName = styled(Text)`
+  font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.xl}px;
+  font-weight: ${({ theme }: StyledProps) => theme.typography.fontWeight.bold};
+  color: ${({ theme }: StyledProps) => theme.colors.text};
+  margin-bottom: ${({ theme }: StyledProps) => theme.spacing.md}px;
+`;
+
+const BadgesContainer = styled(View)`
+  flex-direction: row;
+  flex-wrap: wrap;
+  margin-bottom: ${({ theme }: StyledProps) => theme.spacing.md}px;
+  gap: 8px;
+`;
+
+const Badge = styled(View) <{ color?: string }>`
+  background-color: ${({ color, theme }: StyledProps & { color?: string }) => color || theme.colors.primary};
+  padding-horizontal: 12px;
+  padding-vertical: 4px;
+  border-radius: 12px;
+  justify-content: center;
+  align-items: center;
+`;
+
+const BadgeText = styled(Text)`
+  color: white;
+  font-size: 12px;
+  font-weight: bold;
+`;
+
+const TotalAmountRow = styled(View)`
+  flex-direction: row;
+  align-items: baseline;
+`;
+
+const TotalAmountLabel = styled(Text)`
+  font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.md}px;
+  color: ${({ theme }: StyledProps) => theme.colors.textSecondary};
+  margin-right: 4px;
+`;
+
+const TotalAmountValue = styled(Text)`
+  font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.lg}px;
+  font-weight: ${({ theme }: StyledProps) => theme.typography.fontWeight.medium};
+  color: ${({ theme }: StyledProps) => theme.colors.text};
+`;
+
+
+const Section = styled(View)`
+  margin-bottom: ${({ theme }: StyledProps) => theme.spacing.md}px;
 `;
 
 const SectionTitle = styled(Text)`
@@ -212,8 +219,12 @@ export const ItemDetailsScreen: React.FC = () => {
   const [isLoading, setIsLoading] = useState(!itemFromRedux && itemsLoading);
   const [locationName, setLocationName] = useState<string>('');
   const [statusName, setStatusName] = useState<string>('');
+  const [categoryName, setCategoryName] = useState<string>('');
+  const [categoryColor, setCategoryColor] = useState<string | undefined>(undefined);
   const bottomSheetModalRef = useRef<BottomSheetModal>(null);
+  const addBatchBottomSheetRef = useRef<BottomSheetModal>(null);
   const editBottomSheetRef = useRef<EditItemBottomSheetRef>(null);
+  const activeHomeId = useAppSelector(state => state.auth.activeHomeId);
 
   const currencySymbol = getCurrencySymbol(settings.currency);
 
@@ -269,8 +280,24 @@ export const ItemDetailsScreen: React.FC = () => {
 
       // Use i18n translation for status name
       setStatusName(t(`statuses.${item.status}`));
+
+      // Load category if exists
+      if (item.categoryId && activeHomeId) {
+        getCategoryById(item.categoryId, activeHomeId).then(category => {
+          if (category) {
+            setCategoryName(category.name);
+            setCategoryColor(category.color);
+          } else {
+            setCategoryName('');
+            setCategoryColor(undefined);
+          }
+        });
+      } else {
+        setCategoryName('');
+        setCategoryColor(undefined);
+      }
     }
-  }, [item, t]);
+  }, [item, t, activeHomeId]);
 
   const handleDelete = () => {
     confirmDelete(itemId, () => {
@@ -288,6 +315,14 @@ export const ItemDetailsScreen: React.FC = () => {
 
   const handleClose = () => {
     navigation.goBack();
+  };
+
+  const handleAddBatch = () => {
+    addBatchBottomSheetRef.current?.present();
+  };
+
+  const handleBatchAdded = () => {
+    // Item will be updated in Redux
   };
 
   const totalAmount = item ? getTotalAmount(item.batches || []) : 0;
@@ -348,139 +383,49 @@ export const ItemDetailsScreen: React.FC = () => {
       <ScrollContainer>
         <Content contentContainerStyle={{ paddingBottom: bottomPadding }}>
 
-          {/* General Information Section */}
-          <Section>
-            <SectionTitle>{t('itemDetails.sections.general')}</SectionTitle>
-            <PropertyRow>
-              <PropertyIcon>
-                <Ionicons name="home" size={18} color={theme.colors.textSecondary} />
-              </PropertyIcon>
-              <PropertyContent>
-                <PropertyLabel>{t('itemDetails.fields.location')}</PropertyLabel>
-                <PropertyValue>{locationName}</PropertyValue>
-              </PropertyContent>
-            </PropertyRow>
-            <PropertyRow>
-              <PropertyIcon>
-                <Ionicons name="location" size={18} color={theme.colors.textSecondary} />
-              </PropertyIcon>
-              <PropertyContent>
-                <PropertyLabel>{t('itemDetails.fields.detailedLocation')}</PropertyLabel>
-                <PropertyValue>{item.detailedLocation || t('itemDetails.notSet')}</PropertyValue>
-              </PropertyContent>
-            </PropertyRow>
-            <PropertyRowLast>
-              <PropertyIcon>
-                <Ionicons name="information-circle" size={18} color={theme.colors.textSecondary} />
-              </PropertyIcon>
-              <PropertyContent>
-                <PropertyLabel>{t('itemDetails.fields.status')}</PropertyLabel>
-                <PropertyValue>{statusName}</PropertyValue>
-              </PropertyContent>
-            </PropertyRowLast>
-          </Section>
+          {/* Item Header Card */}
+          <HeaderCard>
+            <ItemName>{item.name}</ItemName>
 
-          {/* Inventory & Dates Section */}
-          <Section>
-            <SectionTitle>{t('itemDetails.sections.inventory')}</SectionTitle>
-            <PropertyRow>
-              <PropertyIcon>
-                <Ionicons name="cube" size={18} color={theme.colors.textSecondary} />
-              </PropertyIcon>
-              <PropertyContent>
-                <PropertyLabel>{t('itemDetails.fields.quantity')}</PropertyLabel>
-                <PropertyValue>{totalAmount}</PropertyValue>
-                {needsRestock && (
-                  <RestockBadge>
-                    <Ionicons name="alert-circle" size={14} color="#FF5252" />
-                    <RestockText>{t('itemDetails.needsRestocking')}</RestockText>
-                  </RestockBadge>
-                )}
-              </PropertyContent>
-            </PropertyRow>
-            <PropertyRow>
-              <PropertyIcon>
-                <Ionicons name="notifications" size={18} color={theme.colors.textSecondary} />
-              </PropertyIcon>
-              <PropertyContent>
-                <PropertyLabel>{t('itemDetails.fields.warningThreshold')}</PropertyLabel>
-                <PropertyValue>{item.warningThreshold || 0}</PropertyValue>
-              </PropertyContent>
-            </PropertyRow>
-            <PropertyRow>
-              <PropertyIcon>
-                <Ionicons name="pricetag" size={18} color={theme.colors.textSecondary} />
-              </PropertyIcon>
-              <PropertyContent>
-                <PropertyLabel>{t('itemDetails.fields.valuation')}</PropertyLabel>
-                <PropertyValue>{formatPrice(getTotalValue(item.batches || []), currencySymbol)}</PropertyValue>
-              </PropertyContent>
-            </PropertyRow>
-            <PropertyRow>
-              <PropertyIcon>
-                <Ionicons name="calendar" size={18} color={theme.colors.textSecondary} />
-              </PropertyIcon>
-              <PropertyContent>
-                <PropertyLabel>{t('itemDetails.fields.purchaseDate')}</PropertyLabel>
-                <PropertyValue>{formatDate(getLatestPurchase(item.batches || []), getLocale(), t)}</PropertyValue>
-              </PropertyContent>
-            </PropertyRow>
-            <PropertyRowLast>
-              <PropertyIcon>
-                <Ionicons name="hourglass" size={18} color={theme.colors.textSecondary} />
-              </PropertyIcon>
-              <PropertyContent>
-                <PropertyLabel>{t('itemDetails.fields.expiryDate')}</PropertyLabel>
-                <PropertyValue>{formatDate(getEarliestExpiry(item.batches || []), getLocale(), t)}</PropertyValue>
-              </PropertyContent>
-            </PropertyRowLast>
-          </Section>
+            <BadgesContainer>
+              <Badge color={theme.colors.primary}>
+                <BadgeText>{locationName}</BadgeText>
+              </Badge>
+              {categoryName ? (
+                <Badge color={categoryColor || theme.colors.secondary}>
+                  <BadgeText>{categoryName}</BadgeText>
+                </Badge>
+              ) : null}
+            </BadgesContainer>
+
+            <TotalAmountRow>
+              <TotalAmountLabel>{t('itemDetails.fields.quantity')} : </TotalAmountLabel>
+              <TotalAmountValue>
+                {totalAmount}{item.batches && item.batches.length > 0 && item.batches[0].unit ? ` ${item.batches[0].unit}` : ''}
+              </TotalAmountValue>
+            </TotalAmountRow>
+          </HeaderCard>
+
+
 
           {/* Batches Section */}
           <Section>
             <SectionTitle>{t('itemDetails.sections.batches')}</SectionTitle>
+            <View style={{ marginBottom: 12 }}>
+              <Button
+                label={t('itemDetails.batch.addBatch')}
+                onPress={handleAddBatch}
+                variant="secondary"
+                icon="add"
+              />
+            </View>
             {(item.batches || []).length > 0 ? (
               (item.batches || []).map((batch, index) => (
-                <BatchCard key={batch.id}>
-                  <BatchHeader>
-                    <BatchTitle>
-                      {t('itemDetails.batchLabel', { index: index + 1 })}
-                    </BatchTitle>
-                    <BatchAmount>
-                      {batch.amount}{batch.unit ? ` ${batch.unit}` : ''}
-                    </BatchAmount>
-                  </BatchHeader>
-                  {batch.price != null && batch.price > 0 && (
-                    <BatchDetailRow>
-                      <BatchDetailLabel>{t('itemDetails.fields.valuation')}</BatchDetailLabel>
-                      <BatchDetailValue>{formatPrice(batch.price, currencySymbol)}</BatchDetailValue>
-                    </BatchDetailRow>
-                  )}
-                  {batch.vendor && (
-                    <BatchDetailRow>
-                      <BatchDetailLabel>{t('itemDetails.batchFields.vendor')}</BatchDetailLabel>
-                      <BatchDetailValue>{batch.vendor}</BatchDetailValue>
-                    </BatchDetailRow>
-                  )}
-                  {batch.purchaseDate && (
-                    <BatchDetailRow>
-                      <BatchDetailLabel>{t('itemDetails.fields.purchaseDate')}</BatchDetailLabel>
-                      <BatchDetailValue>{formatDate(batch.purchaseDate, getLocale(), t)}</BatchDetailValue>
-                    </BatchDetailRow>
-                  )}
-                  {batch.expiryDate && (
-                    <BatchDetailRow>
-                      <BatchDetailLabel>{t('itemDetails.fields.expiryDate')}</BatchDetailLabel>
-                      <BatchDetailValue>{formatDate(batch.expiryDate, getLocale(), t)}</BatchDetailValue>
-                    </BatchDetailRow>
-                  )}
-                  {batch.note && (
-                    <BatchDetailRow>
-                      <BatchDetailLabel>{t('itemDetails.batchFields.note')}</BatchDetailLabel>
-                      <BatchDetailValue>{batch.note}</BatchDetailValue>
-                    </BatchDetailRow>
-                  )}
-                </BatchCard>
+                <BatchItemCard
+                  key={batch.id || index}
+                  batch={batch}
+                  currencySymbol={currencySymbol}
+                />
               ))
             ) : (
               <EmptyBatchText>{t('itemDetails.noBatches')}</EmptyBatchText>
@@ -512,6 +457,14 @@ export const ItemDetailsScreen: React.FC = () => {
         bottomSheetRef={bottomSheetModalRef}
         onItemUpdated={handleItemUpdated}
       />
+
+      {item && (
+        <AddBatchBottomSheet
+          bottomSheetRef={addBatchBottomSheetRef}
+          item={item}
+          onBatchAdded={handleBatchAdded}
+        />
+      )}
     </Container>
   );
 };

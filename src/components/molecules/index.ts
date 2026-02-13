@@ -30,6 +30,7 @@ export { CategoryFilter } from './CategoryFilter';
 export type { CategoryFilterProps } from './CategoryFilter';
 
 // Form field molecules
+export * from './BatchItemCard';
 export { CategoryField } from './CategoryField';
 export type { CategoryFieldProps } from './CategoryField';
 

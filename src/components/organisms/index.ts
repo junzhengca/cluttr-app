@@ -15,6 +15,9 @@ export type { ToastProviderProps } from './ToastProvider';
 export { CreateItemBottomSheet } from './CreateItemBottomSheet';
 export type { CreateItemBottomSheetProps } from './CreateItemBottomSheet';
 
+export { AddBatchBottomSheet } from './AddBatchBottomSheet';
+export type { AddBatchBottomSheetProps } from './AddBatchBottomSheet';
+
 export { EditItemBottomSheet } from './EditItemBottomSheet';
 export type { EditItemBottomSheetProps, EditItemBottomSheetRef } from './EditItemBottomSheet';
 

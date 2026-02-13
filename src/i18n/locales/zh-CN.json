@@ -10,7 +10,9 @@
     "filter": "筛选",
     "status": "状态",
     "location": "位置",
-    "category": "分类"
+    "category": "分类",
+    "save": "保存",
+    "error": "错误"
   },
   "navigation": {
     "home": "首页",
@@ -336,7 +338,17 @@
       "modify": "修改"
     },
     "needsRestocking": "需补货",
-    "expiring": "临期"
+    "expiring": "临期",
+    "batch": {
+      "remainingDays": "剩 {{days}} 天",
+      "daysOverdue": "逾期 {{days}} 天",
+      "today": "今天",
+      "expired": "已过期",
+      "unitPrice": "单价",
+      "inboundDate": "入库 : ",
+      "expiryDate": "到期 : ",
+      "addBatch": "添加批次"
+    }
   },
   "categoryManager": {
     "title": "管理分类",

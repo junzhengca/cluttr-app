@@ -10,7 +10,9 @@
     "filter": "Filter",
     "status": "Status",
     "location": "Location",
-    "category": "Category"
+    "category": "Category",
+    "save": "Save",
+    "error": "Error"
   },
   "navigation": {
     "home": "Home",
@@ -353,7 +355,17 @@
       "modify": "Modify"
     },
     "needsRestocking": "Restock",
-    "expiring": "Expiring"
+    "expiring": "Expiring",
+    "batch": {
+      "remainingDays": "Left {{days}} days",
+      "daysOverdue": "Overdue {{days}} days",
+      "today": "Today",
+      "expired": "Expired",
+      "unitPrice": "Unit Price : ",
+      "inboundDate": "Inbound : ",
+      "expiryDate": "Expire : ",
+      "addBatch": "Add Batch"
+    }
   },
   "categoryManager": {
     "title": "Manage Categories",
