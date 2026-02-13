@@ -1,0 +1,13 @@
+{
+  "extends": "./tsconfig.json",
+  "include": [
+    "src/store/slices/todoSlice.ts",
+    "src/store/hooks.ts", 
+    "src/store/sagas/todoSaga.ts",
+    "src/services/TodoCategoryService.ts",
+    "src/data/defaultTodoCategories.ts",
+    "src/services/DataInitializationService.ts",
+    "src/types/inventory.ts",
+    "src/i18n/locales/*.json"
+  ]
+}

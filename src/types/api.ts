@@ -87,6 +87,13 @@ export interface TodoItemServerData {
   text: string;
   completed: boolean;
   note?: string;
+  categoryId?: string;
+}
+
+export interface TodoCategoryServerData {
+  id: string;
+  name: string;
+  homeId: string;
 }
 
 export interface CategoryServerData {
@@ -112,7 +119,7 @@ export interface LocationServerData {
 
 export type SyncFileType = 'categories' | 'locations' | 'inventoryItems' | 'todoItems' | 'settings';
 
-export type SyncEntityType = 'inventoryItems' | 'todoItems' | 'categories' | 'locations' | 'settings';
+export type SyncEntityType = 'inventoryItems' | 'todoItems' | 'categories' | 'todoCategories' | 'locations' | 'settings';
 
 export interface PushFileRequest {
   version: string;

@@ -1,13 +1,15 @@
 import { createSlice, PayloadAction, createSelector } from '@reduxjs/toolkit';
-import { TodoItem } from '../../types/inventory';
+import { TodoItem, TodoCategory } from '../../types/inventory';
 
 interface TodoState {
   todos: TodoItem[];
+  categories: TodoCategory[];
   loading: boolean;
 }
 
 const initialState: TodoState = {
   todos: [],
+  categories: [],
   loading: true,
 };
 
@@ -52,10 +54,29 @@ const todoSlice = createSlice({
       if (idsToRemove.size === 0) return;
       state.todos = state.todos.filter(todo => !idsToRemove.has(todo.id));
     },
+    setTodoCategories: (state, action: PayloadAction<TodoCategory[]>) => {
+      state.categories = action.payload;
+    },
+    silentSetTodoCategories: (state, action: PayloadAction<TodoCategory[]>) => {
+      // Silent update - only updates categories, does not touch loading state
+      state.categories = action.payload;
+    },
+    addTodoCategory: (state, action: PayloadAction<TodoCategory>) => {
+      state.categories.push(action.payload);
+    },
+    updateTodoCategory: (state, action: PayloadAction<TodoCategory>) => {
+      const index = state.categories.findIndex((cat) => cat.id === action.payload.id);
+      if (index !== -1) {
+        state.categories[index] = action.payload;
+      }
+    },
+    removeTodoCategory: (state, action: PayloadAction<string>) => {
+      state.categories = state.categories.filter((cat) => cat.id !== action.payload);
+    },
   },
 });
 
-export const { setTodos, silentSetTodos, addTodo, updateTodo, removeTodo, setLoading, upsertTodos, removeTodos } =
+export const { setTodos, silentSetTodos, addTodo, updateTodo, removeTodo, setLoading, upsertTodos, removeTodos, setTodoCategories, silentSetTodoCategories, addTodoCategory, updateTodoCategory, removeTodoCategory } =
   todoSlice.actions;
 
 // Selectors

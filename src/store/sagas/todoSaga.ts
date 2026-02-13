@@ -6,6 +6,11 @@ import {
   updateTodo as updateTodoSlice,
   removeTodo as removeTodoSlice,
   setLoading,
+  setTodoCategories,
+  silentSetTodoCategories,
+  addTodoCategory as addTodoCategorySlice,
+  updateTodoCategory as updateTodoCategorySlice,
+  removeTodoCategory as removeTodoCategorySlice,
 } from '../slices/todoSlice';
 import {
   getAllTodos,
@@ -15,7 +20,14 @@ import {
   updateTodo,
   syncTodos,
 } from '../../services/TodoService';
-import { TodoItem } from '../../types/inventory';
+import {
+  getAllCategories as getAllTodoCategories,
+  createCategory as createTodoCategoryService,
+  updateCategory as updateTodoCategoryService,
+  deleteCategory as deleteTodoCategoryService,
+  syncCategories as syncTodoCategories,
+} from '../../services/TodoCategoryService';
+import { TodoItem, TodoCategory } from '../../types/inventory';
 import type { RootState } from '../types';
 import { homeService } from '../../services/HomeService';
 import { ApiClient } from '../../services/ApiClient';
@@ -30,6 +42,11 @@ const TOGGLE_TODO = 'todo/TOGGLE_TODO';
 const DELETE_TODO = 'todo/DELETE_TODO';
 const UPDATE_TODO = 'todo/UPDATE_TODO';
 const SYNC_TODOS = 'todo/SYNC_TODOS'; // New action
+const LOAD_TODO_CATEGORIES = 'todo/LOAD_TODO_CATEGORIES';
+const SILENT_REFRESH_TODO_CATEGORIES = 'todo/SILENT_REFRESH_TODO_CATEGORIES';
+const ADD_TODO_CATEGORY = 'todo/ADD_TODO_CATEGORY';
+const UPDATE_TODO_CATEGORY = 'todo/UPDATE_TODO_CATEGORY';
+const DELETE_TODO_CATEGORY = 'todo/DELETE_TODO_CATEGORY';
 
 // Action creators
 export const loadTodos = () => ({ type: LOAD_TODOS });
@@ -42,6 +59,11 @@ export const updateTodoText = (id: string, text: string, note?: string) => ({
   payload: { id, text, note },
 });
 export const syncTodosAction = () => ({ type: SYNC_TODOS });
+export const loadTodoCategoriesAction = () => ({ type: LOAD_TODO_CATEGORIES });
+export const silentRefreshTodoCategoriesAction = () => ({ type: SILENT_REFRESH_TODO_CATEGORIES });
+export const addTodoCategoryAction = (name: string, homeId: string) => ({ type: ADD_TODO_CATEGORY, payload: { name, homeId } });
+export const updateTodoCategoryAction = (id: string, name: string) => ({ type: UPDATE_TODO_CATEGORY, payload: { id, name } });
+export const deleteTodoCategoryAction = (id: string) => ({ type: DELETE_TODO_CATEGORY, payload: id });
 
 function* getFileUserId() {
   const state: RootState = yield select();
@@ -97,11 +119,14 @@ function* syncTodosSaga() {
     // 1. Sync Homes first (Important rule)
     yield call([homeService, homeService.syncHomes], apiClient);
 
-    // 2. Sync Todos
+    // 2. Sync Todo Categories
     const deviceId: string = yield call(getDeviceId);
+    yield call(syncTodoCategories, activeHomeId, apiClient as ApiClient, deviceId);
+
+    // 3. Sync Todos
     yield call(syncTodos, activeHomeId, apiClient as ApiClient, deviceId);
 
-    // 3. Refresh UI
+    // 4. Refresh UI
     yield call(silentRefreshTodosSaga);
 
   } catch (error) {
@@ -228,6 +253,108 @@ function* updateTodoSaga(action: { type: string; payload: { id: string; text: st
   }
 }
 
+function* loadTodoCategoriesSaga() {
+  try {
+    const userId: string | undefined = yield call(getFileUserId);
+    const allCategories: TodoCategory[] = yield call(getAllTodoCategories, userId);
+    yield put(setTodoCategories(allCategories));
+  } catch (error) {
+    sagaLogger.error('Error loading todo categories', error);
+  }
+}
+
+function* silentRefreshTodoCategoriesSaga() {
+  try {
+    const userId: string | undefined = yield call(getFileUserId);
+    const allCategories: TodoCategory[] = yield call(getAllTodoCategories, userId);
+    yield put(silentSetTodoCategories(allCategories));
+  } catch (error) {
+    sagaLogger.error('Error silently refreshing todo categories', error);
+  }
+}
+
+function* addTodoCategorySaga(action: { type: string; payload: { name: string; homeId: string } }) {
+  const { name, homeId } = action.payload;
+  if (!name.trim()) return;
+
+  try {
+    const userId: string | undefined = yield call(getFileUserId);
+    if (!userId) {
+      sagaLogger.error('Cannot create todo category: No active home selected');
+      return;
+    }
+    const newCategory: TodoCategory = yield call(createTodoCategoryService, { name }, userId);
+    if (newCategory) {
+      yield put(addTodoCategorySlice(newCategory));
+
+      // Refresh to ensure sync
+      const allCategories: TodoCategory[] = yield call(getAllTodoCategories, userId);
+      yield put(setTodoCategories(allCategories));
+
+      // Trigger sync
+      yield put(syncTodosAction());
+    }
+  } catch (error) {
+    sagaLogger.error('Error adding todo category', error);
+    yield loadTodoCategoriesSaga();
+  }
+}
+
+function* updateTodoCategorySaga(action: { type: string; payload: { id: string; name: string } }) {
+  const { id, name } = action.payload;
+
+  try {
+    const userId: string | undefined = yield call(getFileUserId);
+    if (!userId) return;
+
+    // Optimistically update to state
+    const currentCategories: TodoCategory[] = yield select((state: RootState) => state.todo.categories);
+    const categoryToUpdate = currentCategories.find((cat) => cat.id === id);
+    if (categoryToUpdate) {
+      const updatedCategory = { ...categoryToUpdate, name };
+      yield put(updateTodoCategorySlice(updatedCategory));
+    }
+
+    // Then update in storage
+    yield call(updateTodoCategoryService, id, { name }, userId);
+
+    // Refresh to ensure sync
+    const allCategories: TodoCategory[] = yield call(getAllTodoCategories, userId);
+    yield put(setTodoCategories(allCategories));
+
+    // Trigger sync
+    yield put(syncTodosAction());
+  } catch (error) {
+    sagaLogger.error('Error updating todo category', error);
+    yield loadTodoCategoriesSaga();
+  }
+}
+
+function* deleteTodoCategorySaga(action: { type: string; payload: string }) {
+  const id = action.payload;
+
+  try {
+    const userId: string | undefined = yield call(getFileUserId);
+    if (!userId) return;
+
+    // Optimistically remove from state
+    yield put(removeTodoCategorySlice(id));
+
+    // Then delete from storage
+    yield call(deleteTodoCategoryService, id, userId);
+
+    // Refresh to ensure sync
+    const allCategories: TodoCategory[] = yield call(getAllTodoCategories, userId);
+    yield put(setTodoCategories(allCategories));
+
+    // Trigger sync
+    yield put(syncTodosAction());
+  } catch (error) {
+    sagaLogger.error('Error deleting todo category', error);
+    yield loadTodoCategoriesSaga();
+  }
+}
+
 function* periodicSyncSaga() {
   while (true) {
     // Wait 5 minutes
@@ -249,6 +376,13 @@ export function* todoSaga() {
   yield takeLatest(DELETE_TODO, deleteTodoSaga);
   yield takeLatest(UPDATE_TODO, updateTodoSaga);
   yield takeLatest(SYNC_TODOS, syncTodosSaga); // Listen for explicit sync requests
+
+  // Todo categories
+  yield takeLatest(LOAD_TODO_CATEGORIES, loadTodoCategoriesSaga);
+  yield takeLatest(SILENT_REFRESH_TODO_CATEGORIES, silentRefreshTodoCategoriesSaga);
+  yield takeLatest(ADD_TODO_CATEGORY, addTodoCategorySaga);
+  yield takeLatest(UPDATE_TODO_CATEGORY, updateTodoCategorySaga);
+  yield takeLatest(DELETE_TODO_CATEGORY, deleteTodoCategorySaga);
 
   // Start periodic sync
   yield spawn(periodicSyncSaga);

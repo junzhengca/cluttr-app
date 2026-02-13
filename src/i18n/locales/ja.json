@@ -79,6 +79,21 @@
         "home": "ホーム",
         "other": "その他"
     },
+    "todoCategories": {
+        "all": "すべて",
+        "produce": "野菜・果物",
+        "dairy": "乳製品・卵",
+        "meat": "肉類",
+        "seafood": "魚介類",
+        "bakery": "パン・菓子",
+        "frozen": "冷凍食品",
+        "pantry": "穀物・調味料",
+        "beverages": "飲み物",
+        "snacks": "お菓子",
+        "household": "日用品",
+        "personal-care": "ピーアール・ケア",
+        "other": "その他"
+    },
     "locations": {
         "living-room": "リビングルーム",
         "kitchen": "キッチン",

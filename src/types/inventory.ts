@@ -86,7 +86,27 @@ export interface TodoItem {
   text: string;
   completed: boolean;
   note?: string; // Optional note field
+  categoryId?: string; // Optional reference to TodoCategory
   createdAt: string; // ISO date string
+  updatedAt?: string; // ISO date string
+  deletedAt?: string; // ISO date string - marks soft deletion
+
+  // Sync metadata
+  version: number;
+  clientUpdatedAt: string;
+  serverUpdatedAt?: string;
+  lastSyncedAt?: string;
+  pendingCreate?: boolean;
+  pendingUpdate?: boolean;
+  pendingDelete?: boolean;
+}
+
+export interface TodoCategory {
+  id: string;
+  name: string;
+  homeId: string;
+
+  createdAt?: string; // ISO date string
   updatedAt?: string; // ISO date string
   deletedAt?: string; // ISO date string - marks soft deletion
 

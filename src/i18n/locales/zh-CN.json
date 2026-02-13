@@ -75,6 +75,21 @@
     "home": "家居",
     "other": "其他"
   },
+  "todoCategories": {
+    "all": "全部",
+    "produce": "蔬果",
+    "dairy": "奶蛋",
+    "meat": "肉类",
+    "seafood": "海鲜",
+    "bakery": "烘焙",
+    "frozen": "冷冻",
+    "pantry": "粮油副食",
+    "beverages": "饮品",
+    "snacks": "零食",
+    "household": "日用百货",
+    "personal-care": "个人护理",
+    "other": "其他"
+  },
   "locations": {
     "living-room": "客厅",
     "kitchen": "厨房",

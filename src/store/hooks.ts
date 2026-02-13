@@ -132,6 +132,7 @@ export const useSettings = () => {
 export const useTodos = () => {
   const dispatch = useAppDispatch();
   const todos = useAppSelector((state) => state.todo.todos);
+  const categories = useAppSelector((state) => state.todo.categories);
   const loading = useAppSelector((state) => state.todo.loading);
   const pendingTodos = useAppSelector(selectPendingTodos);
   const completedTodos = useAppSelector(selectCompletedTodos);
@@ -170,6 +171,7 @@ export const useTodos = () => {
 
   return {
     todos,
+    categories,
     pendingTodos,
     completedTodos,
     loading,
@@ -178,6 +180,45 @@ export const useTodos = () => {
     toggleTodoCompletion,
     removeTodo,
     updateTodo,
+  };
+};
+
+// Todo Categories hook
+export const useTodoCategories = () => {
+  const dispatch = useAppDispatch();
+  const categories = useAppSelector((state) => state.todo.categories);
+
+  const createCategory = useCallback(
+    (name: string, homeId: string) => {
+      dispatch({ type: 'todo/ADD_TODO_CATEGORY', payload: { name, homeId } });
+    },
+    [dispatch]
+  );
+
+  const updateCategory = useCallback(
+    (id: string, name: string) => {
+      dispatch({ type: 'todo/UPDATE_TODO_CATEGORY', payload: { id, name } });
+    },
+    [dispatch]
+  );
+
+  const deleteCategory = useCallback(
+    (id: string) => {
+      dispatch({ type: 'todo/DELETE_TODO_CATEGORY', payload: id });
+    },
+    [dispatch]
+  );
+
+  const refreshCategories = useCallback(() => {
+    dispatch({ type: 'todo/SILENT_REFRESH_TODO_CATEGORIES' });
+  }, [dispatch]);
+
+  return {
+    categories,
+    createCategory,
+    updateCategory,
+    deleteCategory,
+    refreshCategories,
   };
 };
 

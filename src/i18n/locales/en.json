@@ -91,6 +91,21 @@
     "home": "Home",
     "other": "Other"
   },
+  "todoCategories": {
+    "all": "All",
+    "produce": "Produce",
+    "dairy": "Dairy & Eggs",
+    "meat": "Meat",
+    "seafood": "Seafood",
+    "bakery": "Bakery",
+    "frozen": "Frozen",
+    "pantry": "Pantry Staples",
+    "beverages": "Beverages",
+    "snacks": "Snacks",
+    "household": "Household",
+    "personal-care": "Personal Care",
+    "other": "Other"
+  },
   "locations": {
     "living-room": "Living Room",
     "kitchen": "Kitchen",
