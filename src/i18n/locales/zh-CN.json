@@ -228,23 +228,6 @@
       "lilac": "丁香"
     },
     "versionPrefix": "当前版本",
-    "clearData": {
-      "button": "清除所有数据",
-      "confirm": {
-        "title": "确认清除所有数据",
-        "message": "您确定要清除所有数据吗？这将删除您的所有物品、分类和待办事项。此操作无法撤销。",
-        "cancel": "取消",
-        "confirm": "清除所有数据"
-      },
-      "success": {
-        "title": "成功",
-        "message": "所有数据已清除并重置为默认值。"
-      },
-      "error": {
-        "title": "错误",
-        "message": "清除数据失败，请重试。"
-      }
-    },
     "logout": {
       "title": "确认登出",
       "message": "您确定要登出吗？",

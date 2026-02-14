@@ -16,13 +16,12 @@ import {
   CurrencySelector,
   LanguageSelector,
   ExportDataButton,
-  ClearDataButton,
   SettingsToggleItem,
   SettingsItem,
   EditHomeBottomSheet,
   HomeSwitcher,
 } from '../components';
-import { useSettings, useAuth, useAppSelector } from '../store/hooks';
+import { useSettings, useAuth } from '../store/hooks';
 import { useHome } from '../hooks/useHome';
 import { useToast } from '../hooks/useToast';
 import { calculateBottomPadding } from '../utils/layout';
@@ -224,7 +223,6 @@ export const SettingsScreen: React.FC = () => {
         <SettingsSection>
           <SectionTitle>{t('settings.dataAndSecurity')}</SectionTitle>
           <ExportDataButton />
-          <ClearDataButton />
         </SettingsSection>
 
         {/* Experimental Section */}

@@ -3,8 +3,6 @@ import { useDispatch, useSelector } from 'react-redux';
 import { homeService } from '../services/HomeService';
 import { Home } from '../types/home';
 import { setActiveHomeId } from '../store/slices/authSlice';
-import { loadItems } from '../store/sagas/inventorySaga';
-import { loadTodos } from '../store/sagas/todoSaga';
 import { RootState } from '../store';
 
 export const useHome = () => {

@@ -4,7 +4,7 @@ import styled from 'styled-components/native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../theme/ThemeProvider';
-import { TodoItem, TodoCategory } from '../../types/inventory';
+import { TodoItem } from '../../types/inventory';
 import { useTodoCategories } from '../../store/hooks';
 import type { StyledProps, StyledPropsWith } from '../../utils/styledComponents';
 import { BaseCard } from '../atoms';

@@ -53,7 +53,6 @@ export const BottomSheetHeader: React.FC<BottomSheetHeaderProps> = ({
   onClose,
   closeIcon = 'close',
 }) => {
-  const theme = useTheme();
   return (
     <HeaderContainer>
       <TitleContainer>

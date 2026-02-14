@@ -5,7 +5,6 @@ import {
   Text,
   Pressable,
   ActivityIndicator,
-  StyleSheet,
   ViewStyle,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -107,7 +106,6 @@ export const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({
   isAIRecognizing = false,
 }) => {
   const theme = useTheme();
-  const { settings } = useSettings();
   const insets = useSafeAreaInsets();
   const { t } = useTranslation();
   const [isExpanded, setIsExpanded] = useState(false);

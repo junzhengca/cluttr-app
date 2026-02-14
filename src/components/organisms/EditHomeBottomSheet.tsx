@@ -126,7 +126,7 @@ export const EditHomeBottomSheet: React.FC<EditHomeBottomSheetProps> = ({
                 fullWidth
             />
         </FooterContainer>
-    ), [insets.bottom, isKeyboardVisible, handleSubmit, name, isLoading]);
+    ), [insets.bottom, isKeyboardVisible, handleSubmit, name, isLoading, t]);
 
     const footerHeight = 82 + (isKeyboardVisible ? 0 : insets.bottom);
 

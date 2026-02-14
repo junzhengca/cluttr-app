@@ -1,7 +1,7 @@
-import React, { useState, useCallback, useMemo, useEffect, memo, useRef } from 'react';
+import React, { useState, useCallback, useRef } from 'react';
 import { TouchableOpacity, View, Text, Keyboard, TextInput } from 'react-native';
 import styled from 'styled-components/native';
-import { BottomSheetModal, BottomSheetBackdrop, BottomSheetTextInput, BottomSheetScrollView, BottomSheetView } from '@gorhom/bottom-sheet';
+import { BottomSheetModal, BottomSheetBackdrop, BottomSheetView } from '@gorhom/bottom-sheet';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
@@ -11,6 +11,11 @@ import { useAuth } from '../../store/hooks';
 import { useKeyboardVisibility } from '../../hooks/useKeyboardVisibility';
 import { BottomSheetHeader, UncontrolledInput, FormSection, Button } from '../atoms';
 
+interface FooterContainerProps {
+  bottomInset: number;
+  showSafeArea: boolean;
+  theme: StyledProps['theme'];
+}
 
 const ContentContainer = styled.View`
   flex: 1;
@@ -19,14 +24,11 @@ const ContentContainer = styled.View`
   overflow: hidden;
 `;
 
-const FooterContainer = styled(View) <{
-  bottomInset: number;
-  showSafeArea: boolean;
-}>`
+const FooterContainer = styled(View) <FooterContainerProps>`
   background-color: ${({ theme }: StyledProps) => theme.colors.surface};
   padding: ${({ theme }: StyledProps) => theme.spacing.md}px;
   padding-top: ${({ theme }: StyledProps) => theme.spacing.md}px;
-  padding-bottom: ${({ bottomInset, showSafeArea, theme }: any) =>
+  padding-bottom: ${({ bottomInset, showSafeArea, theme }: FooterContainerProps) =>
     showSafeArea ? bottomInset + theme.spacing.md : theme.spacing.md}px;
   border-top-width: 1px;
   border-top-color: ${({ theme }: StyledProps) => theme.colors.borderLight};

@@ -6,12 +6,9 @@ import Animated, {
   useAnimatedStyle,
   useSharedValue,
   withTiming,
-  measure,
-  runOnUI,
-  useAnimatedRef,
 } from 'react-native-reanimated';
 import { useTranslation } from 'react-i18next';
-import type { StyledProps, StyledPropsWith } from '../../utils/styledComponents';
+import type { StyledProps } from '../../utils/styledComponents';
 
 import { useTheme } from '../../theme/ThemeProvider';
 import { GlassButton } from '../atoms/GlassButton';

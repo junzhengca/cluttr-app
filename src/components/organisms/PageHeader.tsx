@@ -83,15 +83,6 @@ const RightSection = styled(View)`
   gap: ${({ theme }: StyledProps) => theme.spacing.sm}px;
 `;
 
-const ActionButton = styled(TouchableOpacity)`
-  width: 40px;
-  height: 40px;
-  border-radius: ${({ theme }: StyledProps) => theme.borderRadius.full}px;
-  background-color: ${({ theme }: StyledProps) => theme.colors.surface};
-  align-items: center;
-  justify-content: center;
-`;
-
 const AvatarButton = styled(View)`
   border: 2px solid ${({ theme }: StyledProps) => theme.colors.primary};
   width: 40px;

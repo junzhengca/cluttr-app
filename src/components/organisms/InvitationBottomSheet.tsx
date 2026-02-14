@@ -1,22 +1,18 @@
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
-import { View, Text, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, ActivityIndicator } from 'react-native';
 import styled from 'styled-components/native';
 import { BottomSheetModal, BottomSheetBackdrop, BottomSheetView, BottomSheetBackdropProps } from '@gorhom/bottom-sheet';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../theme/ThemeProvider';
 import { ValidateInvitationResponse } from '../../types/api';
-import { Button, BottomSheetHeader, HEADER_HEIGHT } from '../atoms';
-import { useAppSelector, useAppDispatch } from '../../store/hooks';
+import { Button, BottomSheetHeader } from '../atoms';
+import { useAppSelector } from '../../store/hooks';
 import { useToast } from '../../hooks/useToast';
 import type { StyledProps } from '../../utils/styledComponents';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { uiLogger } from '../../utils/Logger';
-import { setActiveHomeId } from '../../store/slices/authSlice';
 import { homeService } from '../../services/HomeService';
-import { loadItems } from '../../store/sagas/inventorySaga';
-import { loadTodos } from '../../store/sagas/todoSaga';
-import { loadSettings } from '../../store/sagas/settingsSaga';
 
 
 const ErrorRow = styled(View)`
@@ -135,7 +131,6 @@ export const InvitationBottomSheet: React.FC<InvitationBottomSheetProps> = ({
     const apiClient = useAppSelector((state) => state.auth.apiClient);
     const currentUser = useAppSelector((state) => state.auth.user);
 
-    const dispatch = useAppDispatch();
     const { showToast } = useToast();
 
     const [loading, setLoading] = useState(false);
@@ -148,15 +143,7 @@ export const InvitationBottomSheet: React.FC<InvitationBottomSheetProps> = ({
         return invitationData.accountEmail?.toLowerCase() === currentUser.email.toLowerCase();
     }, [invitationData, currentUser]);
 
-
-
-    useEffect(() => {
-        if (inviteCode && apiClient) {
-            fetchInvitationDetails(inviteCode);
-        }
-    }, [inviteCode, apiClient]);
-
-    const fetchInvitationDetails = async (code: string) => {
+    const fetchInvitationDetails = useCallback(async (code: string) => {
         if (!apiClient) return;
 
         setLoading(true);
@@ -176,15 +163,9 @@ export const InvitationBottomSheet: React.FC<InvitationBottomSheetProps> = ({
         } finally {
             setLoading(false);
         }
-    };
+    }, [apiClient]);
 
-    const handleAccept = async () => {
-        if (!apiClient || !inviteCode) return;
-
-        await processAccept();
-    };
-
-    const processAccept = async () => {
+    const processAccept = useCallback(async () => {
         if (!apiClient || !inviteCode) return;
         setLoading(true);
         uiLogger.info(`Accepting invite: ${inviteCode}`);
@@ -207,7 +188,19 @@ export const InvitationBottomSheet: React.FC<InvitationBottomSheetProps> = ({
         } finally {
             setLoading(false);
         }
-    };
+    }, [apiClient, inviteCode, t, showToast, onDismiss, bottomSheetRef]);
+
+    useEffect(() => {
+        if (inviteCode && apiClient) {
+            fetchInvitationDetails(inviteCode);
+        }
+    }, [inviteCode, apiClient, fetchInvitationDetails]);
+
+    const handleAccept = useCallback(async () => {
+        if (!apiClient || !inviteCode) return;
+
+        await processAccept();
+    }, [apiClient, inviteCode, processAccept]);
 
     const handleClose = useCallback(() => {
         bottomSheetRef.current?.dismiss();

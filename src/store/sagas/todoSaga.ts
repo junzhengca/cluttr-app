@@ -155,7 +155,12 @@ function* addTodoSaga(action: { type: string; payload: { text: string; note?: st
       return;
     }
     // homeId comes from getFileHomeId which returns activeHomeId
-    const newTodo: TodoItem = yield call([todoService, 'createTodo'], text, homeId, note, categoryId);
+    const createInput = {
+      text,
+      note,
+      categoryId,
+    };
+    const newTodo: TodoItem = yield call([todoService, 'createTodo'], createInput, homeId);
     if (newTodo) {
       // Optimistically add to state
       yield put(addTodoSlice(newTodo));

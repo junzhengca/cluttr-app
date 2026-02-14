@@ -74,12 +74,6 @@ export const CategoryFilter: React.FC<CategoryFilterProps> = ({
 
     const totalCount = Object.values(counts).reduce((sum, count) => sum + count, 0);
 
-    // Scroll content padding uses theme spacing for consistency
-    const scrollContentStyle = {
-        paddingLeft: theme.spacing.md,
-        paddingRight: theme.spacing.md,
-    };
-
     if (loading && categories.length === 0) {
         return null; // Or skeleton
     }

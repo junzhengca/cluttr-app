@@ -5,13 +5,14 @@ import { authLogger } from '../utils/Logger';
 
 const ACCESS_TOKEN_KEY = 'access_token';
 const USER_FILE = 'user.json';
+const ACTIVE_HOME_ID_KEY = 'active_home_id';
 
 interface AuthTokens {
   accessToken: string;
 }
 
 class AuthService {
-  public constructor() {}
+
 
   /**
    * Get stored authentication tokens
@@ -174,8 +175,6 @@ class AuthService {
     }
   }
 }
-
-const ACTIVE_HOME_ID_KEY = 'active_home_id';
 
 export const authService = new AuthService();
 export type { AuthService };

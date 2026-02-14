@@ -6,7 +6,6 @@ import type {
   StyledProps,
   StyledPropsWith,
 } from '../../utils/styledComponents';
-import { itemStatuses } from '../../data/itemStatuses';
 
 const StatusContainer = styled(View)`
   flex-direction: row;

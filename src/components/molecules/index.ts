@@ -88,9 +88,6 @@ export { SettingsItem } from './SettingsItem';
 export type { SettingsItemProps } from './SettingsItem';
 
 // Action button molecules
-export { ClearDataButton } from './ClearDataButton';
-export type { ClearDataButtonProps } from './ClearDataButton';
-
 export { LogoutButton } from './LogoutButton';
 export type { LogoutButtonProps } from './LogoutButton';
 

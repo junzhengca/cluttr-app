@@ -66,7 +66,6 @@ const STORAGE_KEY_LOCATION = 'LAST_CREATED_ITEM_LOCATION';
 /** Sensible defaults for fields the create-item form no longer exposes. */
 const DEFAULT_ICON = 'cube-outline' as const;
 const DEFAULT_COLOR = '#95A5A6';
-const DEFAULT_STATUS = 'using';
 
 // ---------------------------------------------------------------------------
 // Props

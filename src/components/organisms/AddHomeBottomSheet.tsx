@@ -1,6 +1,6 @@
 import React, { useCallback, useState, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Keyboard, TextInput, View } from 'react-native';
+import { Keyboard, TextInput } from 'react-native';
 import { BottomSheetModal, BottomSheetBackdrop, BottomSheetView, BottomSheetBackdropProps } from '@gorhom/bottom-sheet';
 import styled from 'styled-components/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';

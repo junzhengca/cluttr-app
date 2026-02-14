@@ -244,23 +244,6 @@
       "lilac": "Lilac"
     },
     "versionPrefix": "Current version",
-    "clearData": {
-      "button": "Clear All Data",
-      "confirm": {
-        "title": "Confirm Clear All Data",
-        "message": "Are you sure you want to clear all data? This will delete all your items, categories, and todos. This action cannot be undone.",
-        "cancel": "Cancel",
-        "confirm": "Clear All Data"
-      },
-      "success": {
-        "title": "Success",
-        "message": "All data has been cleared and reset to defaults."
-      },
-      "error": {
-        "title": "Error",
-        "message": "Failed to clear data. Please try again."
-      }
-    },
     "logout": {
       "title": "Confirm Logout",
       "message": "Are you sure you want to log out?",

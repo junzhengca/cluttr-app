@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { TouchableOpacity, Platform, StatusBar } from 'react-native';
-import styled, { useTheme } from 'styled-components/native';
+import styled from 'styled-components/native';
 import { useTranslation } from 'react-i18next';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';

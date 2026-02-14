@@ -1,5 +1,5 @@
 import React, { ReactNode } from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View } from 'react-native';
 import { GestureDetector, Gesture } from 'react-native-gesture-handler';
 import Animated, {
     useAnimatedRef,
@@ -7,12 +7,11 @@ import Animated, {
     runOnJS,
     useSharedValue,
     useAnimatedStyle,
-    withSpring,
     withTiming,
-    MeasuredDimensions
+    MeasuredDimensions,
 } from 'react-native-reanimated';
 import { useContextMenu } from './ContextMenuContext';
-import { ContextMenuItemData, ContextMenuLayout } from './types';
+import { ContextMenuItemData } from './types';
 import * as Haptics from 'expo-haptics';
 
 interface ContextMenuProps {

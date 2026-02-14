@@ -3,7 +3,6 @@ import { TextInput } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { locations } from '../data/locations';
 import type { InventoryItem, ItemBatch } from '../types/inventory';
-import { getTotalAmount, getEarliestExpiry, getLatestPurchase } from '../utils/batchUtils';
 
 export interface ItemFormValues {
   name: string;

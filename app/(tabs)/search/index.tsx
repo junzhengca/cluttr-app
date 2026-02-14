@@ -11,6 +11,15 @@ import { Ionicons } from '@expo/vector-icons';
 import { PageHeader } from '../../../src/components/organisms/PageHeader';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+const styles = StyleSheet.create({
+    container: {
+        flex: 1,
+    },
+    listContent: {
+        paddingHorizontal: 16,
+    },
+});
+
 // Union type for the data in the SectionList
 // For 'items', the data is an array of arrays (rows), where each row has 1 or 2 InventoryItems.
 // For 'notes', the data is an array of TodoItems.
@@ -98,8 +107,8 @@ export default function SearchIndex() {
     }, [router]);
 
     const renderSectionHeader = ({ section: { title } }: { section: SectionType }) => (
-        <View style={[styles.sectionHeader, { backgroundColor: theme.colors.background }]}>
-            <Text style={[styles.sectionHeaderText, { color: theme.colors.text }]}>{title}</Text>
+        <View style={[{ backgroundColor: theme.colors.background }]}>
+            <Text style={[{ color: theme.colors.text }]}>{title}</Text>
         </View>
     );
 
@@ -108,20 +117,20 @@ export default function SearchIndex() {
             // Render a row of items
             const rowItems = item as ItemRow;
             return (
-                <View style={[styles.rowContainer, { gap: 12 }]}>
+                <View style={[{ gap: 12 }]}>
                     {rowItems.map((inventoryItem) => (
                         <View key={inventoryItem.id} style={{ width: cardWidth }}>
                             <ItemCard item={inventoryItem} onPress={handleItemPress} />
                         </View>
                     ))}
-                    {/* Fill empty space if row has only 1 item to maintain alignment if we were using flex-start, 
+                    {/* Fill empty space if row has only 1 item to maintain alignment if we were using flex-start,
                         but simply not rendering the second item works fine with default flex behavior */}
                 </View>
             );
         } else {
             // Render a single todo item
             return (
-                <View style={styles.cardContainer}>
+                <View style={{ marginBottom: 12 }}>
                     <TodoCard
                         todo={item as TodoItem}
                         onToggle={toggleTodoCompletion}
@@ -163,15 +172,15 @@ export default function SearchIndex() {
                 keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
             >
                 {searchQuery.trim() === '' ? (
-                    <View style={styles.emptyState}>
+                    <View style={{ flex: 1, justifyContent: 'flex-start', alignItems: 'center', padding: 20, paddingTop: 100 }}>
                         <Ionicons name="search-outline" size={64} color={theme.colors.textLight} />
-                        <Text style={[styles.emptyStateText, { color: theme.colors.textLight }]}>
+                        <Text style={[{ color: theme.colors.textLight }]}>
                             {t('search.placeholder')}
                         </Text>
                     </View>
                 ) : sections.length === 0 ? (
-                    <View style={styles.emptyState}>
-                        <Text style={[styles.emptyStateText, { color: theme.colors.text }]}>
+                    <View style={{ flex: 1, justifyContent: 'flex-start', alignItems: 'center', padding: 20, paddingTop: 100 }}>
+                        <Text style={[{ color: theme.colors.text }]}>
                             {t('inventory.empty.filtered')}
                         </Text>
                     </View>
@@ -194,46 +203,9 @@ export default function SearchIndex() {
                         ]}
                         keyboardDismissMode="on-drag"
                         stickySectionHeadersEnabled={false}
-                        contentInsetAdjustmentBehavior="automatic"
                     />
                 )}
             </KeyboardAvoidingView>
         </View>
     );
 }
-
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-    },
-    listContent: {
-        paddingHorizontal: 16,
-    },
-    sectionHeader: {
-        paddingVertical: 12,
-        marginBottom: 8,
-    },
-    sectionHeaderText: {
-        fontSize: 20,
-        fontWeight: 'bold',
-    },
-    cardContainer: {
-        marginBottom: 12,
-    },
-    rowContainer: {
-        flexDirection: 'row',
-        marginBottom: 12,
-    },
-    emptyState: {
-        flex: 1,
-        justifyContent: 'flex-start',
-        alignItems: 'center',
-        padding: 20,
-        paddingTop: 100,
-    },
-    emptyStateText: {
-        fontSize: 16,
-        marginTop: 16,
-        textAlign: 'center',
-    },
-});

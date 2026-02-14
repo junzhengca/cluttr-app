@@ -45,23 +45,6 @@ const Subtitle = styled(Text) <{ isActive?: boolean }>`
   font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.sm}px;
 `;
 
-const Badge = styled(View)`
-  background-color: rgba(255, 255, 255, 0.15);
-  border-radius: ${({ theme }: StyledProps) => theme.borderRadius.sm}px;
-  padding-horizontal: ${({ theme }: StyledProps) => theme.spacing.sm}px;
-  padding-vertical: ${({ theme }: StyledProps) => theme.spacing.xs}px;
-  flex-direction: row;
-  align-items: center;
-  margin-left: ${({ theme }: StyledProps) => theme.spacing.sm}px;
-`;
-
-const BadgeText = styled(Text)`
-  color: #FFD700;
-  font-size: 10px;
-  font-weight: bold;
-  text-transform: uppercase;
-`;
-
 const SwitchButton = styled(TouchableOpacity)`
   align-items: center;
   justify-content: center;

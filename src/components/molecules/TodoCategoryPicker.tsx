@@ -54,7 +54,6 @@ export const TodoCategoryPicker: React.FC<TodoCategoryPickerProps> = ({
     selectedCategoryId,
     onSelect,
 }) => {
-    const { t } = useTranslation();
     const theme = useTheme() as Theme;
     const { categories } = useTodoCategories();
 

@@ -1,4 +1,3 @@
-import { Tabs } from 'expo-router';
 import { NativeTabs, Label, Icon, VectorIcon } from 'expo-router/unstable-native-tabs';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 

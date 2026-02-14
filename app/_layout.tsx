@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { StatusBar } from 'expo-status-bar';
-import { ActivityIndicator, View, Appearance, Alert } from 'react-native';
+import { ActivityIndicator, View, Appearance } from 'react-native';
 import * as Linking from 'expo-linking';
 import * as SystemUI from 'expo-system-ui';
 import { Stack } from 'expo-router';

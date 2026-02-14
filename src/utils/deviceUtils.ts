@@ -1,7 +1,5 @@
 import * as SecureStore from 'expo-secure-store';
 import { generateId } from './idGenerator';
-import { Platform } from 'react-native';
-import * as Application from 'expo-application';
 import { storageLogger } from './Logger';
 
 const DEVICE_ID_KEY = 'device_id';

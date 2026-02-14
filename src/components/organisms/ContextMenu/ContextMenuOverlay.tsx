@@ -3,18 +3,45 @@ import { StyleSheet, View, Text, Pressable, Dimensions } from 'react-native';
 import Animated, {
     useAnimatedStyle,
     withSpring,
-    withTiming,
     useSharedValue,
     interpolate,
     Extrapolate,
 } from 'react-native-reanimated';
 import { useContextMenu } from './ContextMenuContext';
 import { useTheme } from '../../../theme/ThemeProvider';
-import { ContextMenuItemData } from './types';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { uiLogger } from '../../../utils/Logger';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
+
+const styles = StyleSheet.create({
+    backdrop: {
+        ...StyleSheet.absoluteFillObject,
+    },
+    menuContainer: {
+        width: 200,
+        borderRadius: 16,
+        overflow: 'hidden',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.15,
+        shadowRadius: 10,
+        elevation: 8,
+    },
+    menuItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: 14,
+        borderBottomWidth: StyleSheet.hairlineWidth,
+    },
+    menuIcon: {
+        marginRight: 12,
+    },
+    menuLabel: {
+        fontSize: 16,
+        fontWeight: '500',
+    },
+});
 
 export const ContextMenuOverlay: React.FC = () => {
     const { state, hideMenu } = useContextMenu();
@@ -23,13 +50,12 @@ export const ContextMenuOverlay: React.FC = () => {
 
     const animation = useSharedValue(0);
 
-    const SPRING_CONFIG = {
-        damping: 25,
-        stiffness: 300,
-        mass: 0.8,
-    };
-
     useEffect(() => {
+        const SPRING_CONFIG = {
+            damping: 25,
+            stiffness: 300,
+            mass: 0.8,
+        };
         animation.value = withSpring(isVisible ? 1 : 0, SPRING_CONFIG);
     }, [isVisible, animation]);
 
@@ -116,32 +142,3 @@ export const ContextMenuOverlay: React.FC = () => {
         </View>
     );
 };
-
-const styles = StyleSheet.create({
-    backdrop: {
-        ...StyleSheet.absoluteFillObject,
-    },
-    menuContainer: {
-        width: 200,
-        borderRadius: 16,
-        overflow: 'hidden',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.15,
-        shadowRadius: 10,
-        elevation: 8,
-    },
-    menuItem: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        padding: 14,
-        borderBottomWidth: StyleSheet.hairlineWidth,
-    },
-    menuIcon: {
-        marginRight: 12,
-    },
-    menuLabel: {
-        fontSize: 16,
-        fontWeight: '500',
-    },
-});

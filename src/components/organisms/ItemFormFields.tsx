@@ -21,19 +21,10 @@ const FormContainer = styled.View`
   gap: ${({ theme }: StyledProps) => theme.spacing.sm}px;
 `;
 
-const Row = styled.View`
-  flex-direction: row;
-  gap: ${({ theme }: StyledProps) => theme.spacing.md}px;
-`;
-
 const NameRow = styled.View`
   flex-direction: row;
   align-items: center;
   gap: ${({ theme }: StyledProps) => theme.spacing.md}px;
-`;
-
-const HalfContainer = styled.View`
-  flex: 1;
 `;
 
 const HalfInput = styled(UncontrolledInput)`

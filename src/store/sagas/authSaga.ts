@@ -12,12 +12,8 @@ import {
 import { loadItems, syncItemsAction } from './inventorySaga';
 import { loadTodos, loadTodoCategoriesAction } from './todoSaga';
 import { loadSettings } from './settingsSaga';
-import {
-  ApiClient,
-} from '../../services/ApiClient';
+import { ApiClient, apiClient, type ApiClient as ApiClientType } from '../../services/ApiClient';
 import { authService } from '../../services/AuthService';
-import { apiClient } from '../../services/ApiClient';
-import type { ApiClient as ApiClientType } from '../../services/ApiClient';
 import { homeService } from '../../services/HomeService';
 import { User, ErrorDetails } from '../../types/api';
 import type { RootState } from '../types';

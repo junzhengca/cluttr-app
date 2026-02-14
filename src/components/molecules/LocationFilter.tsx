@@ -1,8 +1,7 @@
 import React from 'react';
-import styled from 'styled-components/native';
 import { View } from 'react-native';
+import styled from 'styled-components/native';
 
-import type { StyledProps } from '../../utils/styledComponents';
 import { LocationSelector } from './LocationSelector';
 
 const FilterContainer = styled(View)`

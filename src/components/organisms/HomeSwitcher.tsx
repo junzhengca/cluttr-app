@@ -1,6 +1,6 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { View, Text, TouchableOpacity, Modal, FlatList, TouchableWithoutFeedback, StyleSheet, Dimensions } from 'react-native';
+import { View, Text, TouchableOpacity, Modal, FlatList, TouchableWithoutFeedback, StyleSheet } from 'react-native';
 import styled from 'styled-components/native';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, {
@@ -20,7 +20,22 @@ import { useTheme } from '../../theme/ThemeProvider';
 import { AddHomeBottomSheet } from './AddHomeBottomSheet';
 import { BottomSheetModal } from '@gorhom/bottom-sheet';
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const styles = StyleSheet.create({
+  backdrop: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  menuContainer: {
+    position: 'absolute',
+    width: 280,
+    borderRadius: 16,
+    padding: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 5,
+  },
+});
 
 const Container = styled(TouchableOpacity)`
   flex-direction: row;
@@ -263,20 +278,3 @@ export const HomeSwitcher: React.FC = () => {
     </>
   );
 };
-
-const styles = StyleSheet.create({
-  backdrop: {
-    ...StyleSheet.absoluteFillObject,
-  },
-  menuContainer: {
-    position: 'absolute',
-    width: 280,
-    borderRadius: 16,
-    padding: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
-    elevation: 5,
-  },
-});
