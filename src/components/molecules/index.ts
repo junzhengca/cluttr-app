@@ -91,9 +91,6 @@ export type { SettingsItemProps } from './SettingsItem';
 export { LogoutButton } from './LogoutButton';
 export type { LogoutButtonProps } from './LogoutButton';
 
-export { ExportDataButton } from './ExportDataButton';
-export type { ExportDataButtonProps } from './ExportDataButton';
-
 export { BottomActionBar } from './BottomActionBar';
 export type { BottomActionBarProps } from './BottomActionBar';
 

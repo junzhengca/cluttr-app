@@ -26,8 +26,6 @@ export type TabParamList = {
 export type RootStackParamList = {
   MainTabs: NavigatorScreenParams<TabParamList>;
   ItemDetails: { itemId: string };
-  ExportData: undefined;
-  ExportDataDetail: { filename: string };
   Profile: undefined;
 };
 

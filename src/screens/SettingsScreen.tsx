@@ -15,7 +15,6 @@ import {
   ThemeChooser,
   CurrencySelector,
   LanguageSelector,
-  ExportDataButton,
   SettingsToggleItem,
   SettingsItem,
   EditHomeBottomSheet,
@@ -216,12 +215,6 @@ export const SettingsScreen: React.FC = () => {
             />
           </SettingsSection>
         )}
-
-        {/* Data & Security Section */}
-        <SettingsSection>
-          <SectionTitle>{t('settings.dataAndSecurity')}</SectionTitle>
-          <ExportDataButton />
-        </SettingsSection>
 
         {/* Experimental Section */}
         <SettingsSection>

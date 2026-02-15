@@ -185,8 +185,6 @@ function AppInner() {
             <Stack screenOptions={{ headerShown: false }}>
                 <Stack.Screen name="(tabs)" />
                 <Stack.Screen name="ItemDetails" />
-                <Stack.Screen name="ExportData" />
-                <Stack.Screen name="ExportDataDetail" />
                 <Stack.Screen name="Profile" />
             </Stack>
             <OfflineBadge onPress={handleOfflineBadgePress} />
