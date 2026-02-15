@@ -3,7 +3,7 @@ import { buffers } from '@redux-saga/core';
 import { triggerCategoryRefresh } from '../slices/refreshSlice';
 import { dataInitializationService } from '../../services/DataInitializationService';
 import { Home } from '../../types/home';
-import { HomeScopedEntity, InventoryItem, TodoCategory } from '../../types/inventory';
+import { HomeScopedEntity, InventoryItem } from '../../types/inventory';
 import { SyncDelta } from '../../types/sync';
 import type { ApiClient } from '../../services/ApiClient';
 import type { RootState } from '../types';
@@ -79,39 +79,44 @@ function* syncAllSaga(): Generator<unknown, void, unknown> {
               deviceId,
             )) as SyncDelta<HomeScopedEntity>;
 
-            if (isActiveHome && !delta.unchanged && (entry as { type: string }).type === 'delta') {
+            if (isActiveHome && !delta.unchanged) {
               activeHomeChanged = true;
 
               // Apply delta to Redux for delta-dispatched entities only
-              const currentState = (yield select()) as RootState;
-              const pendingIds = getPendingIdsFromState(currentState, entry.key);
-              const deltaEntry = entry as DeltaDispatchedEntity<InventoryItem> | DeltaDispatchedEntity<TodoCategory>;
+              if ((entry as { type: string }).type === 'delta') {
+                const currentState = (yield select()) as RootState;
+                const pendingIds = getPendingIdsFromState(currentState, entry.key);
+                // Only inventoryItems uses delta-dispatched pattern currently
+                const deltaEntry = entry as DeltaDispatchedEntity<InventoryItem>;
 
-              // Dispatch created before updated to ensure new entities exist before updates
-              if (delta.created.length > 0) {
-                const filtered = delta.created.filter(e => !pendingIds.has(e.id));
-                if (filtered.length > 0) {
-                  if ('addAction' in deltaEntry) {
-                    yield put(deltaEntry.addAction(filtered as InventoryItem[] & TodoCategory[]));
+                // Dispatch created before updated to ensure new entities exist before updates
+                if (delta.created.length > 0) {
+                  const filtered = delta.created.filter(e => !pendingIds.has(e.id));
+                  if (filtered.length > 0) {
+                    if ('addAction' in deltaEntry) {
+                      yield put(deltaEntry.addAction(filtered as InventoryItem[]));
+                    }
+                  }
+                }
+                if (delta.updated.length > 0) {
+                  const filtered = delta.updated.filter(e => !pendingIds.has(e.id));
+                  if (filtered.length > 0) {
+                    if ('upsertAction' in deltaEntry) {
+                      yield put(deltaEntry.upsertAction(filtered as InventoryItem[]));
+                    }
+                  }
+                }
+                if (delta.deleted.length > 0) {
+                  const filtered = delta.deleted.filter(id => !pendingIds.has(id));
+                  if (filtered.length > 0) {
+                    if ('removeAction' in deltaEntry) {
+                      yield put(deltaEntry.removeAction(filtered));
+                    }
                   }
                 }
               }
-              if (delta.updated.length > 0) {
-                const filtered = delta.updated.filter(e => !pendingIds.has(e.id));
-                if (filtered.length > 0) {
-                  if ('upsertAction' in deltaEntry) {
-                    yield put(deltaEntry.upsertAction(filtered as InventoryItem[] & TodoCategory[]));
-                  }
-                }
-              }
-              if (delta.deleted.length > 0) {
-                const filtered = delta.deleted.filter(id => !pendingIds.has(id));
-                if (filtered.length > 0) {
-                  if ('removeAction' in deltaEntry) {
-                    yield put(deltaEntry.removeAction(filtered));
-                  }
-                }
-              }
+              // Storage-only entities (categories, locations) trigger UI refresh
+              // This is handled after all entities are synced
             }
           } catch (entityError) {
             syncLogger.error(`Error syncing ${entry.key} for home ${home.id}`, entityError);

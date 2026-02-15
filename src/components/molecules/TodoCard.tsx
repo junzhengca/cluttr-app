@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, ViewStyle, TextInput, Animated, NativeSyn
 import styled from 'styled-components/native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
+import { getTodoCategoryDisplayName } from '../../utils/todoCategoryI18n';
 import { useTheme } from '../../theme/ThemeProvider';
 import { TodoItem } from '../../types/inventory';
 import { useTodoCategories } from '../../store/hooks';
@@ -484,7 +485,7 @@ export const TodoCard: React.FC<TodoCardProps> = ({
                 )}
                 {category && (
                   <CategoryTag>
-                    <CategoryTagText>{category.name}</CategoryTagText>
+                    <CategoryTagText>{getTodoCategoryDisplayName(category, t)}</CategoryTagText>
                   </CategoryTag>
                 )}
               </BadgeContainer>

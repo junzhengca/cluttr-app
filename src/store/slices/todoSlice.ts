@@ -109,31 +109,6 @@ const todoSlice = createSlice({
         (cat) => cat.id !== action.payload
       );
     },
-    upsertTodoCategories: (state, action: PayloadAction<TodoCategory[]>) => {
-      const categoriesToUpsert = action.payload;
-      if (categoriesToUpsert.length === 0) return;
-
-      const categoryMap = new Map(state.categories.map((cat) => [cat.id, cat]));
-      categoriesToUpsert.forEach((category) => {
-        categoryMap.set(category.id, category);
-      });
-      state.categories = Array.from(categoryMap.values());
-    },
-    addTodoCategories: (state, action: PayloadAction<TodoCategory[]>) => {
-      action.payload.forEach((category) => {
-        const index = state.categories.findIndex((c) => c.id === category.id);
-        if (index === -1) {
-          state.categories.push(category);
-        }
-      });
-    },
-    removeTodoCategories: (state, action: PayloadAction<string[]>) => {
-      const idsToRemove = new Set(action.payload);
-      if (idsToRemove.size === 0) return;
-      state.categories = state.categories.filter(
-        (cat) => !idsToRemove.has(cat.id)
-      );
-    },
   },
 });
 
@@ -156,9 +131,6 @@ export const {
   addTodoCategory,
   updateTodoCategory,
   removeTodoCategory,
-  upsertTodoCategories,
-  addTodoCategories,
-  removeTodoCategories,
 } = todoSlice.actions;
 
 // Selectors

@@ -4,7 +4,7 @@
 
 Home Inventory Sync Server API
 
-**Generated:** 2026-02-15T06:11:09.683Z
+**Generated:** 2026-02-15T10:44:05.944Z
 
 ## Table of Contents
 
@@ -910,7 +910,7 @@ An unexpected error occurred on server
 
 ## Todo Categories
 
-### DELETE /homes/:homeId/todoCategories/:categoryId
+### DELETE /homes/:homeId/todo-categories/:categoryId
 
 <a id="todo-categories-delete"></a>
 
@@ -1056,7 +1056,7 @@ An unexpected error occurred on server
 - [`todo_categories.get`](#todo-categories-get)
 - [`todo_categories.update`](#todo-categories-update)
 
-### PATCH /homes/:homeId/todoCategories/:categoryId
+### PATCH /homes/:homeId/todo-categories/:categoryId
 
 <a id="todo-categories-update"></a>
 
@@ -1292,7 +1292,7 @@ An unexpected error occurred on server
 - [`todo_categories.get`](#todo-categories-get)
 - [`todo_categories.delete`](#todo-categories-delete)
 
-### GET /homes/:homeId/todoCategories
+### GET /homes/:homeId/todo-categories
 
 <a id="todo-categories-list"></a>
 
@@ -1422,7 +1422,7 @@ An unexpected error occurred on server
 - [`todo_categories.update`](#todo-categories-update)
 - [`todo_categories.delete`](#todo-categories-delete)
 
-### POST /homes/:homeId/todoCategories
+### POST /homes/:homeId/todo-categories
 
 <a id="todo-categories-create"></a>
 
@@ -1647,7 +1647,7 @@ An unexpected error occurred on server
 - [`todo_categories.update`](#todo-categories-update)
 - [`todo_categories.delete`](#todo-categories-delete)
 
-### GET /homes/:homeId/todoCategories/:categoryId
+### GET /homes/:homeId/todo-categories/:categoryId
 
 <a id="todo-categories-get"></a>
 

@@ -22,6 +22,10 @@ import {
 import { BottomSheetModal } from '@gorhom/bottom-sheet';
 import type { StyledProps, StyledPropsWith } from '../utils/styledComponents';
 import { useTranslation } from 'react-i18next';
+import {
+  getTodoCategoryDisplayName,
+  type TodoCategoryTranslateFn,
+} from '../utils/todoCategoryI18n';
 
 import {
   PageHeader,
@@ -141,8 +145,8 @@ const BannerContent = styled(View)`
 `;
 
 const IconContainer = styled(View) <{ mode: TodoMode }>`
-  width: 40px;
-  height: 40px;
+  width: 32px;
+  height: 32px;
   border-radius: ${({ theme }: StyledProps) => theme.borderRadius.lg}px;
   background-color: ${({ theme, mode }: StyledPropsWith<{ mode: TodoMode }>) =>
     mode === 'shopping' ? 'rgba(255, 255, 255, 0.2)' : theme.colors.background};
@@ -156,7 +160,7 @@ const TextContainer = styled(View)`
 `;
 
 const BannerTitle = styled(Text) <{ mode: TodoMode }>`
-  font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.lg}px;
+  font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.md}px;
   font-weight: 600;
   color: ${({ theme, mode }: StyledPropsWith<{ mode: TodoMode }>) =>
     mode === 'shopping' ? '#FFFFFF' : theme.colors.text};
@@ -164,7 +168,7 @@ const BannerTitle = styled(Text) <{ mode: TodoMode }>`
 `;
 
 const BannerSubtitle = styled(Text) <{ mode: TodoMode }>`
-  font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.sm}px;
+  font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.xs}px;
   color: ${({ theme, mode }: StyledPropsWith<{ mode: TodoMode }>) =>
     mode === 'shopping' ? 'rgba(255, 255, 255, 0.8)' : theme.colors.textSecondary};
 `;
@@ -184,8 +188,9 @@ const BannerButtonText = styled(Text) <{ mode: TodoMode }>`
     mode === 'shopping' ? theme.colors.primary : '#FFFFFF'};
 `;
 
-const AddButton = styled(TouchableOpacity)`
-  background-color: ${({ theme }: StyledProps) => theme.colors.primary};
+const AddButton = styled(TouchableOpacity)<{ disabled?: boolean }>`
+  background-color: ${({ theme, disabled }: StyledPropsWith<{ disabled?: boolean }>) =>
+    disabled ? theme.colors.borderLight : theme.colors.primary};
   border-radius: ${({ theme }: StyledProps) => theme.borderRadius.md}px;
   margin-left: ${({ theme }: StyledProps) => theme.spacing.sm}px;
   height: 28px;
@@ -419,8 +424,8 @@ export const NotesScreen: React.FC = () => {
       await addTodo(newTodoText.trim(), newTodoNote.trim() || undefined, selectedCategoryId || undefined);
       setNewTodoText('');
       setNewTodoNote('');
-      setSelectedCategoryId(null);
       setShowNotesField(false);
+      // Keep selectedCategoryId so user can add another todo in the same category
     }
   };
 
@@ -570,7 +575,7 @@ export const NotesScreen: React.FC = () => {
                   <IconContainer mode={mode}>
                     <Ionicons
                       name={mode === 'shopping' ? 'cart' : 'grid-outline'}
-                      size={24}
+                      size={18}
                       color={mode === 'shopping' ? '#FFFFFF' : theme.colors.primary}
                     />
                   </IconContainer>
@@ -626,15 +631,19 @@ export const NotesScreen: React.FC = () => {
                         />
                       </ToggleNotesButton>
                       <AddButton
-                        onPress={addingTodo ? undefined : handleAddTodo}
+                        onPress={addingTodo || !newTodoText.trim() ? undefined : handleAddTodo}
                         activeOpacity={0.7}
                         hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                        disabled={addingTodo}
+                        disabled={addingTodo || !newTodoText.trim()}
                       >
                         {addingTodo ? (
                           <ActivityIndicator size="small" color="white" />
                         ) : (
-                          <Ionicons name="add" size={18} color="white" />
+                          <Ionicons
+                            name="add"
+                            size={18}
+                            color={!newTodoText.trim() ? theme.colors.textSecondary : 'white'}
+                          />
                         )}
                       </AddButton>
                     </TodoInputRow>
@@ -692,7 +701,9 @@ export const NotesScreen: React.FC = () => {
                 <>
                   {Object.entries(groupedPendingTodos).map(([catId, todos]) => {
                     const category = categories.find(c => c.id === catId);
-                    const title = category ? category.name : t('notes.uncategorized', 'Uncategorized');
+                    const title = category
+                      ? getTodoCategoryDisplayName(category, t as TodoCategoryTranslateFn)
+                      : t('notes.uncategorized', 'Uncategorized');
 
                     return (
                       <View key={catId} style={{ marginBottom: 16 }}>

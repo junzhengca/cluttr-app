@@ -1,8 +1,7 @@
-import { Category, InventoryItem, TodoItem, TodoCategory, Location } from '../types/inventory';
+import { Category, InventoryItem, TodoItem, Location } from '../types/inventory';
 import { Settings, defaultSettings } from '../types/settings';
 import { fileSystemService } from './FileSystemService';
 import { itemCategories as defaultItemCategories } from '../data/defaultCategories';
-import { todoCategories as defaultTodoCategories } from '../data/defaultTodoCategories';
 import { locations as defaultLocations } from '../data/locations';
 import { getLocationIdsSet } from '../utils/locationUtils';
 import i18n from '../i18n/i18n';
@@ -10,7 +9,6 @@ import { storageLogger } from '../utils/Logger';
 
 const ITEMS_FILE = 'items.json';
 const CATEGORIES_FILE = 'categories.json';
-const TODO_CATEGORIES_FILE = 'todo_categories.json';
 const SETTINGS_FILE = 'settings.json';
 const TODOS_FILE = 'todos.json';
 const LOCATIONS_FILE = 'locations.json';
@@ -30,10 +28,6 @@ interface LocationsData {
 
 interface TodosData {
   todos: TodoItem[];
-}
-
-interface TodoCategoriesData {
-  categories: TodoCategory[];
 }
 
 class DataInitializationService {
@@ -164,48 +158,8 @@ class DataInitializationService {
         storageLogger.info(`Todos file initialized for home ${homeId}`);
       }
 
-      // Initialize todo categories for this home
-      const todoCategoriesFile = TODO_CATEGORIES_FILE;
-      if (!(await fileSystemService.fileExists(todoCategoriesFile, homeId))) {
-        const todoCats: TodoCategory[] = defaultTodoCategories.map((cat) => ({
-          ...cat,
-          homeId: homeId,
-          name: i18n.t(`todoCategories.${cat.id}`), // Use localized name
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-          pendingCreate: true,
-        }));
-
-        await fileSystemService.writeFile<TodoCategoriesData>(todoCategoriesFile, {
-          categories: todoCats,
-        }, homeId);
-        storageLogger.info(`Todo categories file initialized for home ${homeId}`);
-      } else {
-        // Ensure todo categories exist even if file already exists
-        const existingData = await fileSystemService.readFile<TodoCategoriesData>(todoCategoriesFile, homeId);
-        const existingCategories = existingData?.categories || [];
-        const existingIds = new Set(existingCategories.map(cat => cat.id));
-
-        const missingCategories = defaultTodoCategories.filter(cat => !existingIds.has(cat.id));
-        if (missingCategories.length > 0) {
-          const updatedCategories = [
-            ...existingCategories,
-            ...missingCategories.map(cat => ({
-              ...cat,
-              homeId: homeId,
-              name: i18n.t(`todoCategories.${cat.id}`),
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString(),
-              pendingCreate: true,
-            }))
-          ];
-
-          await fileSystemService.writeFile<TodoCategoriesData>(todoCategoriesFile, {
-            categories: updatedCategories,
-          }, homeId);
-          storageLogger.info(`Added missing todo categories for home ${homeId}`);
-        }
-      }
+      // Note: Todo categories are managed via CRUD API, not file storage
+      // They are NOT initialized here and do not have default values
 
     } catch (error) {
       storageLogger.error(`Error initializing home data for ${homeId}:`, error);
@@ -259,48 +213,6 @@ class DataInitializationService {
       }
     } catch (error) {
       storageLogger.error('Error relocalizing categories:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Relocalize default todo categories when language changes
-   */
-  async relocalizeDefaultTodoCategories(homeId: string): Promise<void> {
-    try {
-      const todoCategoriesFile = TODO_CATEGORIES_FILE;
-      const existingData = await fileSystemService.readFile<TodoCategoriesData>(todoCategoriesFile, homeId);
-      const categories = existingData?.categories || [];
-
-      let updated = false;
-      const updatedCategories = categories.map(cat => {
-        const isDefault = defaultTodoCategories.some(defaultCat => defaultCat.id === cat.id);
-        if (isDefault) {
-          const localizedName = i18n.t(`todoCategories.${cat.id}`);
-          if (cat.name !== localizedName) {
-            updated = true;
-            const now = new Date().toISOString();
-            return {
-              ...cat,
-              name: localizedName,
-              updatedAt: now,
-              version: cat.version + 1,
-              clientUpdatedAt: now,
-              pendingUpdate: !cat.pendingCreate,
-            };
-          }
-        }
-        return cat;
-      });
-
-      if (updated) {
-        await fileSystemService.writeFile<TodoCategoriesData>(todoCategoriesFile, {
-          categories: updatedCategories,
-        }, homeId);
-        storageLogger.info(`Relocalized todo categories for home ${homeId}`);
-      }
-    } catch (error) {
-      storageLogger.error('Error relocalizing todo categories:', error);
       throw error;
     }
   }

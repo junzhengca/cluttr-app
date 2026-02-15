@@ -7,6 +7,7 @@ import type {
     StyledPropsWith,
 } from '../../utils/styledComponents';
 import { useTodoCategories } from '../../store/hooks';
+import { getTodoCategoryDisplayName } from '../../utils/todoCategoryI18n';
 import type { Theme } from '../../theme/types';
 
 const PickerContainer = styled(View)`
@@ -55,6 +56,7 @@ export const TodoCategoryPicker: React.FC<TodoCategoryPickerProps> = ({
     onSelect,
 }) => {
     const theme = useTheme() as Theme;
+    const { t } = useTranslation();
     const { categories } = useTodoCategories();
 
     // Select first category by default if none selected
@@ -93,7 +95,7 @@ export const TodoCategoryPicker: React.FC<TodoCategoryPickerProps> = ({
                             activeOpacity={0.7}
                         >
                             <CategoryText isSelected={isSelected}>
-                                {category.name}
+                                {getTodoCategoryDisplayName(category, t)}
                             </CategoryText>
                         </CategoryButton>
                     );

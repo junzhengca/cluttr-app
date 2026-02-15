@@ -996,22 +996,22 @@ class ApiClient {
   // =============================================================================
 
   /**
-   * GET /api/homes/:homeId/todoCategories
+   * GET /api/homes/:homeId/todo-categories
    * List all todo categories for a home
    */
   async listTodoCategories(homeId: string): Promise<ListTodoCategoriesResponse> {
-    return this.request<ListTodoCategoriesResponse>(`/api/homes/${homeId}/todoCategories`, {
+    return this.request<ListTodoCategoriesResponse>(`/api/homes/${homeId}/todo-categories`, {
       method: 'GET',
       requiresAuth: true,
     });
   }
 
   /**
-   * POST /api/homes/:homeId/todoCategories
+   * POST /api/homes/:homeId/todo-categories
    * Create a new todo category
    */
   async createTodoCategory(homeId: string, request: CreateTodoCategoryRequest): Promise<CreateTodoCategoryResponse> {
-    return this.request<CreateTodoCategoryResponse>(`/api/homes/${homeId}/todoCategories`, {
+    return this.request<CreateTodoCategoryResponse>(`/api/homes/${homeId}/todo-categories`, {
       method: 'POST',
       body: request,
       requiresAuth: true,
@@ -1019,22 +1019,22 @@ class ApiClient {
   }
 
   /**
-   * GET /api/homes/:homeId/todoCategories/:categoryId
+   * GET /api/homes/:homeId/todo-categories/:categoryId
    * Get details of a specific todo category
    */
   async getTodoCategory(homeId: string, categoryId: string): Promise<GetTodoCategoryResponse> {
-    return this.request<GetTodoCategoryResponse>(`/api/homes/${homeId}/todoCategories/${categoryId}`, {
+    return this.request<GetTodoCategoryResponse>(`/api/homes/${homeId}/todo-categories/${categoryId}`, {
       method: 'GET',
       requiresAuth: true,
     });
   }
 
   /**
-   * PATCH /api/homes/:homeId/todoCategories/:categoryId
+   * PATCH /api/homes/:homeId/todo-categories/:categoryId
    * Update a todo category
    */
   async updateTodoCategory(homeId: string, categoryId: string, request: UpdateTodoCategoryRequest): Promise<UpdateTodoCategoryResponse> {
-    return this.request<UpdateTodoCategoryResponse>(`/api/homes/${homeId}/todoCategories/${categoryId}`, {
+    return this.request<UpdateTodoCategoryResponse>(`/api/homes/${homeId}/todo-categories/${categoryId}`, {
       method: 'PATCH',
       body: request,
       requiresAuth: true,
@@ -1042,11 +1042,11 @@ class ApiClient {
   }
 
   /**
-   * DELETE /api/homes/:homeId/todoCategories/:categoryId
+   * DELETE /api/homes/:homeId/todo-categories/:categoryId
    * Delete a todo category
    */
   async deleteTodoCategory(homeId: string, categoryId: string): Promise<DeleteTodoCategoryResponse> {
-    return this.request<DeleteTodoCategoryResponse>(`/api/homes/${homeId}/todoCategories/${categoryId}`, {
+    return this.request<DeleteTodoCategoryResponse>(`/api/homes/${homeId}/todo-categories/${categoryId}`, {
       method: 'DELETE',
       requiresAuth: true,
     });
