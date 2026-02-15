@@ -61,10 +61,16 @@ export interface InventoryItem extends HomeScopedEntity {
 export interface TodoItem extends HomeScopedEntity {
   text: string;
   completed: boolean;
+  completedAt?: string | null; // ISO date string when completed
+  position?: number; // Position for ordering
   note?: string; // Optional note field
   categoryId?: string; // Optional reference to TodoCategory
 }
 
 export interface TodoCategory extends HomeScopedEntity {
   name: string;
+  description?: string;
+  color?: string;
+  icon?: string;
+  position?: number;
 }

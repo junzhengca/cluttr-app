@@ -1,10 +1,18 @@
 import { useCallback, useEffect, useRef, useMemo } from 'react';
 import { useDispatch, useSelector, TypedUseSelectorHook } from 'react-redux';
 import type { RootState, AppDispatch } from './index';
-import { selectPendingTodos, selectCompletedTodos } from './slices/todoSlice';
+import {
+  selectPendingTodos,
+  selectCompletedTodos,
+  selectLoading,
+  selectAddingTodo,
+  selectUpdatingTodoIds,
+  selectError,
+} from './slices/todoSlice';
 import { clearUpdateResult } from './slices/settingsSlice';
 import { User } from '../types/api';
 import { Settings } from '../types/settings';
+import { InventoryItem } from '../types/inventory';
 import { reduxLogger } from '../utils/Logger';
 
 // Typed hooks
@@ -82,7 +90,9 @@ export const useSettings = () => {
   const dispatch = useAppDispatch();
   const settings = useAppSelector((state) => state.settings.settings);
   const isLoading = useAppSelector((state) => state.settings.isLoading);
-  const lastUpdateSuccess = useAppSelector((state) => state.settings.lastUpdateSuccess);
+  const lastUpdateSuccess = useAppSelector(
+    (state) => state.settings.lastUpdateSuccess
+  );
   const pendingResolversRef = useRef<((value: boolean) => void)[]>([]);
 
   // Resolve pending promises when update result changes
@@ -133,7 +143,10 @@ export const useTodos = () => {
   const dispatch = useAppDispatch();
   const todos = useAppSelector((state) => state.todo.todos);
   const categories = useAppSelector((state) => state.todo.categories);
-  const loading = useAppSelector((state) => state.todo.loading);
+  const loading = useAppSelector(selectLoading);
+  const addingTodo = useAppSelector(selectAddingTodo);
+  const updatingTodoIds = useAppSelector(selectUpdatingTodoIds);
+  const error = useAppSelector(selectError);
   const pendingTodos = useAppSelector(selectPendingTodos);
   const completedTodos = useAppSelector(selectCompletedTodos);
 
@@ -175,6 +188,9 @@ export const useTodos = () => {
     pendingTodos,
     completedTodos,
     loading,
+    addingTodo,
+    updatingTodoIds,
+    error,
     refreshTodos,
     addTodo,
     toggleTodoCompletion,
@@ -256,10 +272,16 @@ export const useCategory = () => {
   const registerRefreshCallback = useCallback(
     (_callback: () => void) => {
       const callbackId = Math.random().toString(36).substring(7);
-      dispatch({ type: 'refresh/registerCategoryCallback', payload: callbackId });
+      dispatch({
+        type: 'refresh/registerCategoryCallback',
+        payload: callbackId,
+      });
 
       return () => {
-        dispatch({ type: 'refresh/unregisterCategoryCallback', payload: callbackId });
+        dispatch({
+          type: 'refresh/unregisterCategoryCallback',
+          payload: callbackId,
+        });
       };
     },
     [dispatch]
@@ -282,14 +304,14 @@ export const useInventory = () => {
   }, [dispatch]);
 
   const createItem = useCallback(
-    (item: Omit<import('../types/inventory').InventoryItem, 'id'>) => {
+    (item: Omit<InventoryItem, 'id'>) => {
       dispatch({ type: 'inventory/CREATE_ITEM', payload: item });
     },
     [dispatch]
   );
 
   const updateItem = useCallback(
-    (id: string, updates: Partial<Omit<import('../types/inventory').InventoryItem, 'id'>>) => {
+    (id: string, updates: Partial<Omit<InventoryItem, 'id'>>) => {
       reduxLogger.info(`updateItem called with id: ${id}`, updates);
       dispatch({ type: 'inventory/UPDATE_ITEM', payload: { id, updates } });
     },

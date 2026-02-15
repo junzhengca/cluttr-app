@@ -9,6 +9,7 @@ import {
   Animated,
   KeyboardAvoidingView,
   Platform,
+  ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import styled from 'styled-components/native';
@@ -274,6 +275,9 @@ export const NotesScreen: React.FC = () => {
     pendingTodos,
     completedTodos,
     loading,
+    addingTodo,
+    updatingTodoIds,
+    error,
     refreshTodos,
     addTodo,
     toggleTodoCompletion,
@@ -474,6 +478,7 @@ export const NotesScreen: React.FC = () => {
             onUpdate={updateTodo}
             style={{ marginBottom: 0 }}
             editable={false}
+            isSaving={updatingTodoIds.includes(todo.id)}
           />
         </CardWrapper>
       );
@@ -498,6 +503,7 @@ export const NotesScreen: React.FC = () => {
               onToggle={handleToggleTodo}
               onUpdate={updateTodo}
               style={{ marginBottom: 0 }}
+              isSaving={updatingTodoIds.includes(todo.id)}
             />
           </CardWrapper>
         </Swipeable>
@@ -620,11 +626,16 @@ export const NotesScreen: React.FC = () => {
                         />
                       </ToggleNotesButton>
                       <AddButton
-                        onPress={handleAddTodo}
+                        onPress={addingTodo ? undefined : handleAddTodo}
                         activeOpacity={0.7}
                         hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                        disabled={addingTodo}
                       >
-                        <Ionicons name="add" size={18} color="white" />
+                        {addingTodo ? (
+                          <ActivityIndicator size="small" color="white" />
+                        ) : (
+                          <Ionicons name="add" size={18} color="white" />
+                        )}
                       </AddButton>
                     </TodoInputRow>
                     <NotesHeightWrapper

@@ -147,7 +147,8 @@ class InventoryService extends BaseSyncableEntityService<
 
   // Method aliases for backward compatibility with components
   async getAllItems(homeId: string): Promise<InventoryItem[]> {
-    return this.getAll(homeId);
+    const items: InventoryItem[] = await this.getAll(homeId);
+    return items;
   }
 
   async getAllItemsForSync(homeId: string): Promise<InventoryItem[]> {

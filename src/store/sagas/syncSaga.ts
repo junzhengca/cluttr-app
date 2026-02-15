@@ -3,13 +3,13 @@ import { buffers } from '@redux-saga/core';
 import { triggerCategoryRefresh } from '../slices/refreshSlice';
 import { dataInitializationService } from '../../services/DataInitializationService';
 import { Home } from '../../types/home';
-import { HomeScopedEntity } from '../../types/inventory';
+import { HomeScopedEntity, InventoryItem, TodoCategory } from '../../types/inventory';
 import { SyncDelta } from '../../types/sync';
-import { ApiClient } from '../../services/ApiClient';
+import type { ApiClient } from '../../services/ApiClient';
 import type { RootState } from '../types';
 import { getDeviceId } from '../../utils/deviceUtils';
 import { syncLogger } from '../../utils/Logger';
-import { syncRegistry } from './syncRegistry';
+import { syncRegistry, type DeltaDispatchedEntity } from './syncRegistry';
 
 // Action types
 const SYNC_ALL = 'sync/SYNC_ALL';
@@ -21,17 +21,15 @@ export const requestSync = () => ({ type: REQUEST_SYNC });
 
 /**
  * Resolve pending IDs from Redux state for a given registry key.
+ * Note: todoItems and todoCategories no longer use pending states (direct CRUD API)
  */
 function getPendingIdsFromState(state: RootState, key: string): Set<string> {
   let items: { pendingUpdate?: boolean; pendingCreate?: boolean; id: string }[] = [];
+  
   if (key === 'inventoryItems') {
     items = state.inventory.items;
-  } else if (key === 'todoItems') {
-    items = state.todo.todos;
-  } else if (key === 'todoCategories') {
-    items = state.todo.categories;
   }
-
+  
   return new Set(
     items.filter(i => i.pendingUpdate || i.pendingCreate).map(i => i.id)
   );
@@ -42,7 +40,7 @@ function getPendingIdsFromState(state: RootState, key: string): Set<string> {
  * Replaces both syncItemsSaga and syncTodosSaga.
  * Note: Homes are now fetched during auth flow, not during periodic sync.
  */
-function* syncAllSaga(): Generator {
+function* syncAllSaga(): Generator<unknown, void, unknown> {
   try {
     const state = (yield select()) as RootState;
     const { apiClient, isAuthenticated, activeHomeId } = state.auth;
@@ -52,8 +50,9 @@ function* syncAllSaga(): Generator {
     syncLogger.info('Starting unified sync sequence');
 
     // 1. Get all homes from HomeService (homes should already be loaded from auth flow)
-    const { homeService } = yield import('../../services/HomeService');
-    const homes = (yield call([homeService, homeService.getHomes])) as Home[];
+    const HomeModule = (yield import('../../services/HomeService')) as { homeService: { getHomes: () => Home[] } };
+    const homeService = HomeModule.homeService;
+    const homes = (yield call([homeService, 'getHomes'])) as Home[];
     const deviceId = (yield call(getDeviceId)) as string;
 
     syncLogger.info(`Syncing content for ${homes.length} homes`);
@@ -70,7 +69,7 @@ function* syncAllSaga(): Generator {
 
         const isActiveHome = home.id === activeHomeId;
 
-        // Sync every registered entity type (unconditionally -- fixes the pull bug)
+        // Sync every registered entity type (unconditionally -- fixes pull bug)
         for (const entry of syncRegistry) {
           try {
             const delta = (yield call(
@@ -80,31 +79,36 @@ function* syncAllSaga(): Generator {
               deviceId,
             )) as SyncDelta<HomeScopedEntity>;
 
-            if (isActiveHome && !delta.unchanged) {
+            if (isActiveHome && !delta.unchanged && (entry as { type: string }).type === 'delta') {
               activeHomeChanged = true;
 
               // Apply delta to Redux for delta-dispatched entities only
-              if (entry.type === 'delta') {
-                const currentState = (yield select()) as RootState;
-                const pendingIds = getPendingIdsFromState(currentState, entry.key);
+              const currentState = (yield select()) as RootState;
+              const pendingIds = getPendingIdsFromState(currentState, entry.key);
+              const deltaEntry = entry as DeltaDispatchedEntity<InventoryItem> | DeltaDispatchedEntity<TodoCategory>;
 
-                // Dispatch created before updated to ensure new entities exist before updates
-                if (delta.created.length > 0) {
-                  const filtered = delta.created.filter(e => !pendingIds.has(e.id));
-                  if (filtered.length > 0) {
-                    yield put(entry.addAction(filtered));
+              // Dispatch created before updated to ensure new entities exist before updates
+              if (delta.created.length > 0) {
+                const filtered = delta.created.filter(e => !pendingIds.has(e.id));
+                if (filtered.length > 0) {
+                  if ('addAction' in deltaEntry) {
+                    yield put(deltaEntry.addAction(filtered as InventoryItem[] & TodoCategory[]));
                   }
                 }
-                if (delta.updated.length > 0) {
-                  const filtered = delta.updated.filter(e => !pendingIds.has(e.id));
-                  if (filtered.length > 0) {
-                    yield put(entry.upsertAction(filtered));
+              }
+              if (delta.updated.length > 0) {
+                const filtered = delta.updated.filter(e => !pendingIds.has(e.id));
+                if (filtered.length > 0) {
+                  if ('upsertAction' in deltaEntry) {
+                    yield put(deltaEntry.upsertAction(filtered as InventoryItem[] & TodoCategory[]));
                   }
                 }
-                if (delta.deleted.length > 0) {
-                  const filtered = delta.deleted.filter(id => !pendingIds.has(id));
-                  if (filtered.length > 0) {
-                    yield put(entry.removeAction(filtered));
+              }
+              if (delta.deleted.length > 0) {
+                const filtered = delta.deleted.filter(id => !pendingIds.has(id));
+                if (filtered.length > 0) {
+                  if ('removeAction' in deltaEntry) {
+                    yield put(deltaEntry.removeAction(filtered));
                   }
                 }
               }
@@ -135,7 +139,7 @@ function* syncAllSaga(): Generator {
 /**
  * Single periodic sync timer (replaces two independent timers).
  */
-function* periodicSyncSaga(): Generator {
+function* periodicSyncSaga(): Generator<unknown, void, unknown> {
   while (true) {
     yield delay(5 * 60 * 1000);
     const state = (yield select()) as RootState;
@@ -148,15 +152,15 @@ function* periodicSyncSaga(): Generator {
 
 /**
  * Single debounced sync channel (replaces two independent channels).
- * Uses a sliding buffer so only the latest request is kept.
+ * Uses a sliding buffer so only latest request is kept.
  */
-function* debouncedSyncSaga(): Generator {
+function* debouncedSyncSaga(): Generator<unknown, void, unknown> {
   const channel = yield actionChannel(REQUEST_SYNC, buffers.sliding(1));
 
   syncLogger.verbose('Debounced sync saga started');
 
   while (true) {
-    yield take(channel);
+    yield take(channel as Parameters<typeof take>[0]);
 
     // Wait 2 seconds for more requests to accumulate
     yield delay(2000);
@@ -167,7 +171,7 @@ function* debouncedSyncSaga(): Generator {
 }
 
 // Root sync saga
-export function* syncSaga() {
+export function* syncSaga(): Generator<unknown, void, unknown> {
   // Listen for immediate sync requests
   yield spawn(function* () {
     while (true) {

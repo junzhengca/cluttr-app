@@ -1,5 +1,5 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
-import { View, Text, TouchableOpacity, ViewStyle, TextInput, Animated, NativeSyntheticEvent, TextInputContentSizeChangeEventData } from 'react-native';
+import { View, Text, TouchableOpacity, ViewStyle, TextInput, Animated, NativeSyntheticEvent, TextInputContentSizeChangeEventData, ActivityIndicator } from 'react-native';
 import styled from 'styled-components/native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
@@ -69,6 +69,8 @@ const TitleRow = styled(View)`
 `;
 
 const BadgeContainer = styled(View)`
+  flex-direction: row;
+  align-items: center;
   height: ${({ theme }: StyledProps) => theme.typography.fontSize.md * 1.2}px;
   justify-content: center;
   margin-left: ${({ theme }: StyledProps) => theme.spacing.sm}px;
@@ -141,6 +143,7 @@ export interface TodoCardProps {
   onUpdate?: (id: string, text: string, note?: string) => void;
   style?: ViewStyle;
   editable?: boolean;
+  isSaving?: boolean;
 }
 
 /**
@@ -154,6 +157,7 @@ export const TodoCard: React.FC<TodoCardProps> = ({
   onUpdate,
   style,
   editable = true,
+  isSaving = false,
 }) => {
   const theme = useTheme();
   const { t } = useTranslation();
@@ -180,6 +184,7 @@ export const TodoCard: React.FC<TodoCardProps> = ({
   const notesOpacity = useRef(new Animated.Value(todo.note ? 1 : 0)).current;
   const previousNoteRef = useRef(todo.note);
   const editingFieldRef = useRef(editingField);
+  const pendingSavedRef = useRef<{ text: string; note: string } | null>(null);
   const [showNotesWrapper, setShowNotesWrapper] = useState(!!todo.note || editingField === 'text' || editingField === 'note');
 
   // Keep refs in sync with state
@@ -187,12 +192,14 @@ export const TodoCard: React.FC<TodoCardProps> = ({
     editingFieldRef.current = editingField;
   }, [editingField]);
 
-  // Sync refs when todo changes
+  // Sync refs from todo only when not editing (so we don't overwrite in-progress edits)
   useEffect(() => {
-    textValueRef.current = todo.text;
-    noteValueRef.current = todo.note || '';
-    previousNoteRef.current = todo.note;
-  }, [todo.text, todo.note]);
+    if (editingField === null) {
+      textValueRef.current = todo.text;
+      noteValueRef.current = todo.note || '';
+      previousNoteRef.current = todo.note;
+    }
+  }, [todo.text, todo.note, editingField]);
 
   // Exit editing mode if todo becomes completed
   useEffect(() => {
@@ -284,31 +291,62 @@ export const TodoCard: React.FC<TodoCardProps> = ({
   const saveText = useCallback(() => {
     const newText = textValueRef.current.trim();
     const newNote = noteValueRef.current.trim();
-    if (newText && (newText !== todo.text || newNote !== (todo.note || '')) && onUpdate) {
+    const hasChange = newText && (newText !== todo.text || newNote !== (todo.note || ''));
+    if (hasChange && onUpdate) {
       onUpdate(todo.id, newText, newNote || undefined);
+      pendingSavedRef.current = { text: newText, note: newNote };
+    } else {
+      setEditingField(null);
     }
-    // Don't reset hasMeasuredRef here - let the animation complete first
-    // It will be reset in the animation completion callback
-    setEditingField(null);
   }, [todo.id, todo.text, todo.note, onUpdate]);
 
   const saveNote = useCallback(() => {
     const newText = textValueRef.current.trim();
     const newNote = noteValueRef.current.trim();
-    // If editing text, save both; otherwise just save note
-    if (editingField === 'text') {
-      if (newText && (newText !== todo.text || newNote !== (todo.note || '')) && onUpdate) {
+    const field = editingFieldRef.current;
+    if (field === 'text') {
+      const hasChange = newText && (newText !== todo.text || newNote !== (todo.note || ''));
+      if (hasChange && onUpdate) {
         onUpdate(todo.id, newText, newNote || undefined);
+        pendingSavedRef.current = { text: newText, note: newNote };
+      } else {
+        setEditingField(null);
       }
     } else {
       if (newNote !== (todo.note || '') && onUpdate) {
         onUpdate(todo.id, todo.text, newNote || undefined);
+        pendingSavedRef.current = { text: todo.text, note: newNote };
+      } else {
+        setEditingField(null);
       }
     }
-    // Don't reset hasMeasuredRef here - let the animation complete first
-    // It will be reset in the animation completion callback
-    setEditingField(null);
-  }, [todo.id, todo.text, todo.note, editingField, onUpdate]);
+  }, [todo.id, todo.text, todo.note, onUpdate]);
+
+  // Save with explicitly captured values (used by blur timeout so we don't read refs 150ms later)
+  const applySaveWithValues = useCallback(
+    (id: string, text: string, note: string, previousText: string, previousNote: string) => {
+      const newText = text.trim();
+      const newNote = note.trim();
+      const hasChange = newText && (newText !== previousText || newNote !== previousNote);
+      if (hasChange && onUpdate) {
+        onUpdate(id, newText, newNote || undefined);
+        pendingSavedRef.current = { text: newText, note: newNote };
+      } else {
+        setEditingField(null);
+      }
+    },
+    [onUpdate]
+  );
+
+  // Exit edit mode only when store reflects our saved value (avoids flash of old text)
+  useEffect(() => {
+    const pending = pendingSavedRef.current;
+    if (editingField === null || !pending) return;
+    if (todo.text === pending.text && (todo.note ?? '') === (pending.note ?? '')) {
+      pendingSavedRef.current = null;
+      setEditingField(null);
+    }
+  }, [editingField, todo.text, todo.note]);
 
   const handleTextSubmit = useCallback(() => {
     saveText();
@@ -320,23 +358,22 @@ export const TodoCard: React.FC<TodoCardProps> = ({
 
   const handleTextBlur = useCallback(() => {
     textInputFocusedRef.current = false;
-    // Use a small delay to check if note input is being focused
+    // Capture values at blur time so the 150ms timeout saves what the user had, not refs later
+    const capturedId = todo.id;
+    const capturedText = textValueRef.current;
+    const capturedNote = noteValueRef.current;
+    const previousText = todo.text;
+    const previousNote = todo.note || '';
     setTimeout(() => {
-      // Check current state via ref to avoid stale closure
-      if (editingFieldRef.current !== 'text') {
-        return; // Already changed
-      }
-      // Don't save if we're transitioning to note input
+      if (editingFieldRef.current !== 'text') return;
       if (isFocusingNoteRef.current || noteInputFocusedRef.current) {
         isFocusingNoteRef.current = false;
-        // Switch to note editing mode
         setEditingField('note');
         return;
       }
-      // Both inputs are blurred, save and close
-      saveText();
+      applySaveWithValues(capturedId, capturedText, capturedNote, previousText, previousNote);
     }, 150);
-  }, [saveText]);
+  }, [todo.id, todo.text, todo.note, applySaveWithValues]);
 
   const handleNoteSubmit = useCallback(() => {
     saveNote();
@@ -351,22 +388,21 @@ export const TodoCard: React.FC<TodoCardProps> = ({
 
   const handleNoteBlur = useCallback(() => {
     noteInputFocusedRef.current = false;
-    // Use a small delay to check if text input is being focused
+    // Capture values at blur time so the 150ms timeout saves what the user had
+    const capturedId = todo.id;
+    const capturedText = textValueRef.current;
+    const capturedNote = noteValueRef.current;
+    const previousText = todo.text;
+    const previousNote = todo.note || '';
     setTimeout(() => {
-      // Check current state via ref to avoid stale closure
-      if (editingFieldRef.current !== 'note') {
-        return; // Already changed
-      }
-      // Check if text input is still focused
+      if (editingFieldRef.current !== 'note') return;
       if (textInputFocusedRef.current) {
-        // Text input is focused, switch back to text editing mode
         setEditingField('text');
         return;
       }
-      // Both inputs are blurred, save and close
-      saveNote();
+      applySaveWithValues(capturedId, capturedText, capturedNote, previousText, previousNote);
     }, 150);
-  }, [saveNote]);
+  }, [todo.id, todo.text, todo.note, applySaveWithValues]);
 
   return (
     <BaseCard compact style={style}>
@@ -437,11 +473,20 @@ export const TodoCard: React.FC<TodoCardProps> = ({
                 </TouchableOpacity>
               )}
             </View>
-            {category && (
+            {(isSaving || category) && (
               <BadgeContainer>
-                <CategoryTag>
-                  <CategoryTagText>{category.name}</CategoryTagText>
-                </CategoryTag>
+                {isSaving && (
+                  <ActivityIndicator
+                    size="small"
+                    color={theme.colors.textSecondary}
+                    style={{ marginRight: 6 }}
+                  />
+                )}
+                {category && (
+                  <CategoryTag>
+                    <CategoryTagText>{category.name}</CategoryTagText>
+                  </CategoryTag>
+                )}
               </BadgeContainer>
             )}
           </TitleRow>

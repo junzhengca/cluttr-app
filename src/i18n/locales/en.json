@@ -689,6 +689,11 @@
     "signupSuccess": "Account created successfully",
     "addToTodoSuccess": "Added to todo list"
   },
+  "todo": {
+    "updateError": "Failed to save todo",
+    "toggleError": "Failed to toggle todo",
+    "deleteError": "Failed to delete todo"
+  },
   "setupNickname": {
     "title": "Setup Profile",
     "subtitle": "Just one last step.",

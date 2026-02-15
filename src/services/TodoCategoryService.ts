@@ -1,232 +1,246 @@
-import { TodoCategory } from '../types/inventory';
-import {
-  BaseSyncableEntityService,
-  SyncableEntityConfig,
-  CreateEntityInput,
-} from './syncable/BaseSyncableEntityService';
 import { generateItemId } from '../utils/idGenerator';
 import { ApiClient } from './ApiClient';
-import { TodoCategoryServerData, SyncEntityType } from '../types/api';
-import { SyncDelta } from '../types/sync';
-import { syncLogger } from '../utils/Logger';
+import {
+  TodoCategoryDto,
+  CreateTodoCategoryRequest,
+  UpdateTodoCategoryRequest,
+  DeleteTodoCategoryResponse,
+  ListTodoCategoriesResponse,
+  CreateTodoCategoryResponse,
+  UpdateTodoCategoryResponse,
+} from '../types/api';
+import { TodoCategory } from '../types/inventory';
+import { apiLogger } from '../utils/Logger';
 
-// Base file name (FileSystemService appends _homeId for scoping)
-const TODO_CATEGORIES_FILE = 'todo_categories.json';
-const ENTITY_TYPE: SyncEntityType = 'todoCategories';
-
-interface CreateTodoCategoryInput {
-  name: string;
+// Simple state for in-memory storage (no file persistence)
+interface CategoryState {
+  categories: TodoCategory[];
 }
 
-class TodoCategoryService extends BaseSyncableEntityService<
-  TodoCategory,
-  TodoCategoryServerData
-> {
-  constructor() {
-    const config: SyncableEntityConfig<TodoCategory, TodoCategoryServerData> = {
-      entityType: ENTITY_TYPE,
-      fileName: TODO_CATEGORIES_FILE,
-      entityName: 'todo category',
+interface CategoryLoadingState {
+  isLoading: boolean;
+  operation: 'list' | 'create' | 'update' | 'delete' | null;
+  error: string | null;
+}
 
-      generateId: generateItemId,
+/**
+ * Convert API DTO to domain model
+ */
+function dtoToTodoCategory(dto: TodoCategoryDto): TodoCategory {
+  return {
+    id: dto.categoryId,
+    homeId: dto.homeId,
+    name: dto.name,
+    description: dto.description,
+    color: dto.color,
+    icon: dto.icon,
+    position: dto.position,
+    createdAt: dto.createdAt,
+    updatedAt: dto.updatedAt,
+    version: 1,
+    clientUpdatedAt: dto.updatedAt,
+    pendingCreate: false,
+    pendingUpdate: false,
+    pendingDelete: false,
+  };
+}
 
-      toServerData: (category) => ({
-        id: category.id,
-        name: category.name,
-        homeId: category.homeId,
-      }),
+class TodoCategoryService {
+  // Simple state instead of file storage
+  private state: Map<string, CategoryState> = new Map(); // homeId -> state
+  private listeners: Set<() => void> = new Set();
 
-      fromServerData: (serverData, meta) => ({
-        id: meta.entityId,
-        homeId: meta.homeId,
-        name: serverData.name,
-        createdAt: meta.updatedAt,
-        updatedAt: meta.updatedAt,
-        version: meta.version,
-        serverUpdatedAt: meta.updatedAt,
-        clientUpdatedAt: meta.clientUpdatedAt,
-        lastSyncedAt: meta.serverTimestamp,
-      }),
+  // Loading state tracking
+  private loadingState: CategoryLoadingState = {
+    isLoading: false,
+    operation: null,
+    error: null,
+  };
 
-      toSyncEntity: (category, homeId) => ({
-        entityId: category.id,
-        entityType: ENTITY_TYPE,
-        homeId,
-        data: {
-          id: category.id,
-          name: category.name,
-        },
-        version: category.version,
-        clientUpdatedAt: category.clientUpdatedAt,
-        pendingCreate: !!category.pendingCreate,
-        pendingDelete: !!category.pendingDelete,
-      }),
+  /**
+   * Get state for a specific home
+   */
+  private getState(homeId: string): CategoryState {
+    if (!this.state.has(homeId)) {
+      this.state.set(homeId, { categories: [] });
+    }
+    return this.state.get(homeId)!;
+  }
 
-      createEntity: (input, homeId, id, now) => ({
-        ...input,
-        homeId,
-        id,
-        createdAt: now,
-        updatedAt: now,
-        version: 1,
-        clientUpdatedAt: now,
-        pendingCreate: true,
-        pendingUpdate: false,
-        pendingDelete: false,
-      }),
-
-      applyUpdate: (entity, updates, now) => ({
-        ...entity,
-        ...updates,
-        updatedAt: now,
-        version: entity.version + 1,
-        clientUpdatedAt: now,
-      }),
+  /**
+   * Subscribe to category state changes
+   * @returns Unsubscribe function
+   */
+  subscribe(callback: () => void): () => void {
+    this.listeners.add(callback);
+    return () => {
+      this.listeners.delete(callback);
     };
-
-    super(config);
   }
 
   /**
-   * Initialize default todo categories for a home
+   * Notify all listeners of state change
    */
-  async initializeDefaultCategories(
-    defaultCategories: Omit<TodoCategory, 'homeId'>[],
-    homeId: string,
-    getLocalizedNames: () => Record<string, string>
-  ): Promise<void> {
+  private notifyListeners(): void {
+    this.listeners.forEach(cb => cb());
+  }
+
+  /**
+   * Get current loading state
+   */
+  getLoadingState(): CategoryLoadingState {
+    return { ...this.loadingState };
+  }
+
+  /**
+   * Set loading state
+   */
+  private setLoading(operation: CategoryLoadingState['operation'], error: string | null = null): void {
+    this.loadingState = {
+      isLoading: operation !== null,
+      operation,
+      error,
+    };
+    this.notifyListeners();
+  }
+
+  /**
+   * Fetch categories from server for a home
+   */
+  async fetchCategories(apiClient: ApiClient, homeId: string): Promise<TodoCategory[]> {
+    this.setLoading('list');
     try {
-      const data = await this.readFileScoped(homeId);
-      const categories = data?.categories || [];
+      const response = await apiClient.listTodoCategories(homeId) as ListTodoCategoriesResponse;
+      const categories = response.todoCategories.map(dto => dtoToTodoCategory(dto));
 
-      // Check which default categories are missing
-      const existingIds = new Set(categories.map((cat) => cat.id));
-      const missingCategories = defaultCategories.filter(
-        (cat) => !existingIds.has(cat.id)
-      );
+      // Update state
+      const state = this.getState(homeId);
+      state.categories = categories;
 
-      if (missingCategories.length > 0) {
-        const localizedNames = getLocalizedNames();
-        const now = new Date().toISOString();
-
-        const newCategories = missingCategories.map((cat) => ({
-          ...cat,
-          homeId,
-          name: localizedNames[cat.id] || cat.name,
-          createdAt: now,
-          updatedAt: now,
-          pendingCreate: true,
-        }));
-
-        const updatedCategories = [...categories, ...newCategories];
-        await this.writeFile(
-          {
-            categories: updatedCategories,
-            lastSyncTime: data?.lastSyncTime,
-            lastPulledVersion: data?.lastPulledVersion,
-          },
-          homeId
-        );
-
-        syncLogger.info(
-          `Initialized ${newCategories.length} default todo categories for home ${homeId}`
-        );
-      }
+      this.setLoading(null);
+      this.notifyListeners();
+      return categories;
     } catch (error) {
-      syncLogger.error('Error initializing default todo categories:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Failed to fetch categories';
+      apiLogger.error('Failed to fetch categories:', error);
+      this.setLoading(null, errorMessage);
       throw error;
     }
   }
 
   /**
-   * Relocalize default todo categories when language changes
+   * Create a new category
    */
-  async relocalizeDefaultCategories(
-    defaultCategoryIds: string[],
-    homeId: string,
-    getLocalizedNames: () => Record<string, string>
-  ): Promise<void> {
+  async createCategory(apiClient: ApiClient, homeId: string, input: {
+    name: string;
+  }): Promise<TodoCategory | null> {
+    this.setLoading('create');
     try {
-      const data = await this.readFileScoped(homeId);
-      const categories = data?.categories || [];
-      const localizedNames = getLocalizedNames();
+      const newId = generateItemId();
+      const request: CreateTodoCategoryRequest = {
+        categoryId: newId,
+        name: input.name.trim(),
+      };
 
-      let hasChanges = false;
-      const updatedCategories = categories.map((cat) => {
-        const isDefault = defaultCategoryIds.includes(cat.id);
-        if (isDefault) {
-          const localizedName = localizedNames[cat.id];
-          if (localizedName && cat.name !== localizedName) {
-            hasChanges = true;
-            const now = new Date().toISOString();
-            return {
-              ...cat,
-              name: localizedName,
-              updatedAt: now,
-              version: cat.version + 1,
-              clientUpdatedAt: now,
-              pendingUpdate: !cat.pendingCreate,
-            };
-          }
-        }
-        return cat;
-      });
+      const response = await apiClient.createTodoCategory(homeId, request) as CreateTodoCategoryResponse;
+      const newCategory = dtoToTodoCategory(response.todoCategory);
 
-      // Only write if something actually changed
-      if (hasChanges) {
-        await this.writeFile(
-          {
-            categories: updatedCategories,
-            lastSyncTime: data?.lastSyncTime,
-            lastPulledVersion: data?.lastPulledVersion,
-          },
-          homeId
-        );
-      }
+      // Add to state
+      const state = this.getState(homeId);
+      state.categories.push(newCategory);
 
-      syncLogger.info(`Relocalized todo categories for home ${homeId}`);
+      this.setLoading(null);
+      this.notifyListeners();
+      return newCategory;
     } catch (error) {
-      syncLogger.error('Error relocalizing todo categories:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Failed to create category';
+      apiLogger.error('Failed to create category:', error);
+      this.setLoading(null, errorMessage);
       throw error;
     }
   }
 
-  // Method aliases for backward compatibility with components
-  async getAllCategories(homeId: string): Promise<TodoCategory[]> {
-    return this.getAll(homeId);
+  /**
+   * Update a category
+   */
+  async updateCategory(apiClient: ApiClient, homeId: string, categoryId: string, updates: {
+    name?: string;
+  }): Promise<TodoCategory | null> {
+    this.setLoading('update');
+    try {
+      const request: UpdateTodoCategoryRequest = {
+        name: updates.name,
+      };
+
+      const response = await apiClient.updateTodoCategory(homeId, categoryId, request) as UpdateTodoCategoryResponse;
+      const updatedCategory = dtoToTodoCategory(response.todoCategory);
+
+      // Update in state
+      const state = this.getState(homeId);
+      const index = state.categories.findIndex(c => c.id === categoryId);
+      if (index >= 0) {
+        state.categories[index] = updatedCategory;
+      }
+
+      this.setLoading(null);
+      this.notifyListeners();
+      return updatedCategory;
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to update category';
+      apiLogger.error('Failed to update category:', error);
+      this.setLoading(null, errorMessage);
+      throw error;
+    }
   }
 
-  async getCategoryById(id: string, homeId: string): Promise<TodoCategory | null> {
-    return this.getById(id, homeId);
+  /**
+   * Delete a category
+   */
+  async deleteCategory(apiClient: ApiClient, homeId: string, categoryId: string): Promise<boolean> {
+    this.setLoading('delete');
+    try {
+      await apiClient.deleteTodoCategory(homeId, categoryId) as DeleteTodoCategoryResponse;
+
+      // Remove from state
+      const state = this.getState(homeId);
+      state.categories = state.categories.filter(c => c.id !== categoryId);
+
+      this.setLoading(null);
+      this.notifyListeners();
+      return true;
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to delete category';
+      apiLogger.error('Failed to delete category:', error);
+      this.setLoading(null, errorMessage);
+      throw error;
+    }
   }
 
-  async createCategory(
-    input: CreateTodoCategoryInput,
-    homeId: string
-  ): Promise<TodoCategory | null> {
-    return this.create(input, homeId);
+  /**
+   * Get all categories for a home (from state)
+   */
+  getAllCategories(homeId: string): TodoCategory[] {
+    const state = this.getState(homeId);
+    return [...state.categories];
   }
 
-  async updateCategory(
-    id: string,
-    updates: Partial<Omit<TodoCategory, 'id' | 'version' | 'clientUpdatedAt'>>,
-    homeId: string
-  ): Promise<TodoCategory | null> {
-    return this.update(id, updates, homeId);
+  /**
+   * Get a specific category by ID
+   */
+  getCategoryById(homeId: string, categoryId: string): TodoCategory | null {
+    const state = this.getState(homeId);
+    return state.categories.find(c => c.id === categoryId) || null;
   }
 
-  async deleteCategory(id: string, homeId: string): Promise<boolean> {
-    return this.delete(id, homeId);
-  }
-
-  async syncCategories(
-    homeId: string,
-    apiClient: ApiClient,
-    deviceId: string
-  ): Promise<SyncDelta<TodoCategory>> {
-    return this.sync(homeId, apiClient, deviceId);
+  /**
+   * Clear all categories for a home (useful when switching homes)
+   */
+  clearCategories(homeId: string): void {
+    const state = this.getState(homeId);
+    state.categories = [];
+    this.notifyListeners();
   }
 }
 
 export const todoCategoryService = new TodoCategoryService();
-export type { TodoCategoryService, CreateTodoCategoryInput };
+export type { TodoCategoryService };

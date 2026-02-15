@@ -635,6 +635,11 @@
         "signupSuccess": "アカウントを作成しました",
         "addToTodoSuccess": "TODOリストに追加しました"
     },
+    "todo": {
+        "updateError": "TODOの保存に失敗しました",
+        "toggleError": "TODOの完了状態の変更に失敗しました",
+        "deleteError": "TODOの削除に失敗しました"
+    },
     "setupNickname": {
         "title": "プロフィール設定",
         "subtitle": "あと少しです。",

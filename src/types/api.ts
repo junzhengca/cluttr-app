@@ -117,9 +117,20 @@ export interface LocationServerData {
 // Sync Request Types
 // =============================================================================
 
-export type SyncFileType = 'categories' | 'locations' | 'inventoryItems' | 'todoItems' | 'settings';
+export type SyncFileType =
+  | 'categories'
+  | 'locations'
+  | 'inventoryItems'
+  | 'todoItems'
+  | 'settings';
 
-export type SyncEntityType = 'inventoryItems' | 'todoItems' | 'categories' | 'todoCategories' | 'locations' | 'settings';
+export type SyncEntityType =
+  | 'inventoryItems'
+  | 'todoItems'
+  | 'categories'
+  | 'todoCategories'
+  | 'locations'
+  | 'settings';
 
 export interface PushFileRequest {
   version: string;
@@ -555,6 +566,124 @@ export interface LeaveHomeResponse {
 
 export interface HomeMembersResponse {
   members: Member[];
+}
+
+// =============================================================================
+// =============================================================================
+// Todo Item CRUD Types
+// =============================================================================
+
+export interface TodoItemDto {
+  todoId: string;
+  homeId: string;
+  text: string;
+  completed: boolean;
+  completedAt: string | null;
+  position: number;
+  categoryId?: string;
+  note?: string;
+  createdBy: string;
+  updatedBy: string;
+  createdByDeviceId: string | null;
+  updatedByDeviceId: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ListTodosResponse {
+  todoItems: TodoItemDto[];
+}
+
+export interface CreateTodoRequest {
+  todoId?: string;
+  text: string;
+  completed?: boolean;
+  position?: number;
+  categoryId?: string;
+  note?: string;
+}
+
+export interface CreateTodoResponse {
+  todoItem: TodoItemDto;
+}
+
+export interface UpdateTodoRequest {
+  text?: string;
+  completed?: boolean;
+  position?: number;
+  categoryId?: string;
+  note?: string;
+}
+
+export interface UpdateTodoResponse {
+  todoItem: TodoItemDto;
+}
+
+export interface GetTodoResponse {
+  todoItem: TodoItemDto;
+}
+
+export interface DeleteTodoResponse {
+  success: boolean;
+  message: string;
+  deletedAt: string;
+}
+
+// =============================================================================
+// =============================================================================
+// Todo Category CRUD Types
+// =============================================================================
+
+export interface TodoCategoryDto {
+  categoryId: string;
+  homeId: string;
+  name: string;
+  description?: string;
+  color?: string;
+  icon?: string;
+  position: number;
+  createdBy: string;
+  updatedBy: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ListTodoCategoriesResponse {
+  todoCategories: TodoCategoryDto[];
+}
+
+export interface CreateTodoCategoryRequest {
+  categoryId?: string;
+  name: string;
+  description?: string;
+  color?: string;
+  icon?: string;
+  position?: number;
+}
+
+export interface CreateTodoCategoryResponse {
+  todoCategory: TodoCategoryDto;
+}
+
+export interface UpdateTodoCategoryRequest {
+  name?: string;
+  description?: string;
+  color?: string;
+  icon?: string;
+  position?: number;
+}
+
+export interface UpdateTodoCategoryResponse {
+  todoCategory: TodoCategoryDto;
+}
+
+export interface GetTodoCategoryResponse {
+  todoCategory: TodoCategoryDto;
+}
+
+export interface DeleteTodoCategoryResponse {
+  message: string;
+  categoryId: string;
 }
 
 // =============================================================================

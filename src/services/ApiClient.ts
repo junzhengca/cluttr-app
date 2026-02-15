@@ -47,6 +47,22 @@ import {
   DeleteHomeResponse,
   LeaveHomeResponse,
   HomeMembersResponse,
+  // Todo Item CRUD Types
+  ListTodosResponse,
+  CreateTodoRequest,
+  CreateTodoResponse,
+  UpdateTodoRequest,
+  UpdateTodoResponse,
+  GetTodoResponse,
+  DeleteTodoResponse,
+  // Todo Category CRUD Types
+  ListTodoCategoriesResponse,
+  CreateTodoCategoryRequest,
+  CreateTodoCategoryResponse,
+  UpdateTodoCategoryRequest,
+  UpdateTodoCategoryResponse,
+  GetTodoCategoryResponse,
+  DeleteTodoCategoryResponse,
 } from '../types/api';
 import { apiLogger } from '../utils/Logger';
 
@@ -909,6 +925,128 @@ class ApiClient {
       queryParams.append('entityType', entityType);
     }
     return this.request<ResetSyncResponse>(`/api/sync/entities/reset?${queryParams.toString()}`, {
+      method: 'DELETE',
+      requiresAuth: true,
+    });
+  }
+
+  // =============================================================================
+  // Todo Item CRUD Endpoints
+  // =============================================================================
+
+  /**
+   * GET /api/homes/:homeId/todos
+   * List all todo items for a home
+   */
+  async listTodos(homeId: string): Promise<ListTodosResponse> {
+    return this.request<ListTodosResponse>(`/api/homes/${homeId}/todos`, {
+      method: 'GET',
+      requiresAuth: true,
+    });
+  }
+
+  /**
+   * POST /api/homes/:homeId/todos
+   * Create a new todo item
+   */
+  async createTodo(homeId: string, request: CreateTodoRequest): Promise<CreateTodoResponse> {
+    return this.request<CreateTodoResponse>(`/api/homes/${homeId}/todos`, {
+      method: 'POST',
+      body: request,
+      requiresAuth: true,
+    });
+  }
+
+  /**
+   * GET /api/homes/:homeId/todos/:todoId
+   * Get details of a specific todo item
+   */
+  async getTodo(homeId: string, todoId: string): Promise<GetTodoResponse> {
+    return this.request<GetTodoResponse>(`/api/homes/${homeId}/todos/${todoId}`, {
+      method: 'GET',
+      requiresAuth: true,
+    });
+  }
+
+  /**
+   * PATCH /api/homes/:homeId/todos/:todoId
+   * Update a todo item
+   */
+  async updateTodo(homeId: string, todoId: string, request: UpdateTodoRequest): Promise<UpdateTodoResponse> {
+    return this.request<UpdateTodoResponse>(`/api/homes/${homeId}/todos/${todoId}`, {
+      method: 'PATCH',
+      body: request,
+      requiresAuth: true,
+    });
+  }
+
+  /**
+   * DELETE /api/homes/:homeId/todos/:todoId
+   * Delete a todo item
+   */
+  async deleteTodo(homeId: string, todoId: string): Promise<DeleteTodoResponse> {
+    return this.request<DeleteTodoResponse>(`/api/homes/${homeId}/todos/${todoId}`, {
+      method: 'DELETE',
+      requiresAuth: true,
+    });
+  }
+
+  // =============================================================================
+  // Todo Category CRUD Endpoints
+  // =============================================================================
+
+  /**
+   * GET /api/homes/:homeId/todoCategories
+   * List all todo categories for a home
+   */
+  async listTodoCategories(homeId: string): Promise<ListTodoCategoriesResponse> {
+    return this.request<ListTodoCategoriesResponse>(`/api/homes/${homeId}/todoCategories`, {
+      method: 'GET',
+      requiresAuth: true,
+    });
+  }
+
+  /**
+   * POST /api/homes/:homeId/todoCategories
+   * Create a new todo category
+   */
+  async createTodoCategory(homeId: string, request: CreateTodoCategoryRequest): Promise<CreateTodoCategoryResponse> {
+    return this.request<CreateTodoCategoryResponse>(`/api/homes/${homeId}/todoCategories`, {
+      method: 'POST',
+      body: request,
+      requiresAuth: true,
+    });
+  }
+
+  /**
+   * GET /api/homes/:homeId/todoCategories/:categoryId
+   * Get details of a specific todo category
+   */
+  async getTodoCategory(homeId: string, categoryId: string): Promise<GetTodoCategoryResponse> {
+    return this.request<GetTodoCategoryResponse>(`/api/homes/${homeId}/todoCategories/${categoryId}`, {
+      method: 'GET',
+      requiresAuth: true,
+    });
+  }
+
+  /**
+   * PATCH /api/homes/:homeId/todoCategories/:categoryId
+   * Update a todo category
+   */
+  async updateTodoCategory(homeId: string, categoryId: string, request: UpdateTodoCategoryRequest): Promise<UpdateTodoCategoryResponse> {
+    return this.request<UpdateTodoCategoryResponse>(`/api/homes/${homeId}/todoCategories/${categoryId}`, {
+      method: 'PATCH',
+      body: request,
+      requiresAuth: true,
+    });
+  }
+
+  /**
+   * DELETE /api/homes/:homeId/todoCategories/:categoryId
+   * Delete a todo category
+   */
+  async deleteTodoCategory(homeId: string, categoryId: string): Promise<DeleteTodoCategoryResponse> {
+    return this.request<DeleteTodoCategoryResponse>(`/api/homes/${homeId}/todoCategories/${categoryId}`, {
       method: 'DELETE',
       requiresAuth: true,
     });

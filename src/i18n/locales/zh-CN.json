@@ -663,6 +663,11 @@
     "signupSuccess": "账户创建成功",
     "addToTodoSuccess": "已添加到待办列表"
   },
+  "todo": {
+    "updateError": "保存待办失败",
+    "toggleError": "更新待办状态失败",
+    "deleteError": "删除待办失败"
+  },
   "setupNickname": {
     "title": "设置个人资料",
     "subtitle": "只差最后一步了",

@@ -5,12 +5,18 @@ interface TodoState {
   todos: TodoItem[];
   categories: TodoCategory[];
   loading: boolean;
+  addingTodo: boolean;
+  updatingTodoIds: string[];
+  error: string | null;
 }
 
 const initialState: TodoState = {
   todos: [],
   categories: [],
   loading: true,
+  addingTodo: false,
+  updatingTodoIds: [],
+  error: null,
 };
 
 const todoSlice = createSlice({
@@ -28,7 +34,9 @@ const todoSlice = createSlice({
       state.todos.unshift(action.payload);
     },
     updateTodo: (state, action: PayloadAction<TodoItem>) => {
-      const index = state.todos.findIndex((todo) => todo.id === action.payload.id);
+      const index = state.todos.findIndex(
+        (todo) => todo.id === action.payload.id
+      );
       if (index !== -1) {
         state.todos[index] = action.payload;
       }
@@ -39,12 +47,28 @@ const todoSlice = createSlice({
     setLoading: (state, action: PayloadAction<boolean>) => {
       state.loading = action.payload;
     },
+    setAddingTodo: (state, action: PayloadAction<boolean>) => {
+      state.addingTodo = action.payload;
+    },
+    addUpdatingTodoId: (state, action: PayloadAction<string>) => {
+      if (!state.updatingTodoIds.includes(action.payload)) {
+        state.updatingTodoIds.push(action.payload);
+      }
+    },
+    removeUpdatingTodoId: (state, action: PayloadAction<string>) => {
+      state.updatingTodoIds = state.updatingTodoIds.filter(
+        (id) => id !== action.payload
+      );
+    },
+    setError: (state, action: PayloadAction<string | null>) => {
+      state.error = action.payload;
+    },
     upsertTodos: (state, action: PayloadAction<TodoItem[]>) => {
       const todosToUpsert = action.payload;
       if (todosToUpsert.length === 0) return;
 
-      const todoMap = new Map(state.todos.map(todo => [todo.id, todo]));
-      todosToUpsert.forEach(todo => {
+      const todoMap = new Map(state.todos.map((todo) => [todo.id, todo]));
+      todosToUpsert.forEach((todo) => {
         todoMap.set(todo.id, todo);
       });
       state.todos = Array.from(todoMap.values());
@@ -52,11 +76,11 @@ const todoSlice = createSlice({
     removeTodos: (state, action: PayloadAction<string[]>) => {
       const idsToRemove = new Set(action.payload);
       if (idsToRemove.size === 0) return;
-      state.todos = state.todos.filter(todo => !idsToRemove.has(todo.id));
+      state.todos = state.todos.filter((todo) => !idsToRemove.has(todo.id));
     },
     addTodos: (state, action: PayloadAction<TodoItem[]>) => {
-      action.payload.forEach(todo => {
-        const index = state.todos.findIndex(t => t.id === todo.id);
+      action.payload.forEach((todo) => {
+        const index = state.todos.findIndex((t) => t.id === todo.id);
         if (index === -1) {
           state.todos.push(todo); // Only add if not exists
         }
@@ -73,27 +97,31 @@ const todoSlice = createSlice({
       state.categories.push(action.payload);
     },
     updateTodoCategory: (state, action: PayloadAction<TodoCategory>) => {
-      const index = state.categories.findIndex((cat) => cat.id === action.payload.id);
+      const index = state.categories.findIndex(
+        (cat) => cat.id === action.payload.id
+      );
       if (index !== -1) {
         state.categories[index] = action.payload;
       }
     },
     removeTodoCategory: (state, action: PayloadAction<string>) => {
-      state.categories = state.categories.filter((cat) => cat.id !== action.payload);
+      state.categories = state.categories.filter(
+        (cat) => cat.id !== action.payload
+      );
     },
     upsertTodoCategories: (state, action: PayloadAction<TodoCategory[]>) => {
       const categoriesToUpsert = action.payload;
       if (categoriesToUpsert.length === 0) return;
 
-      const categoryMap = new Map(state.categories.map(cat => [cat.id, cat]));
-      categoriesToUpsert.forEach(category => {
+      const categoryMap = new Map(state.categories.map((cat) => [cat.id, cat]));
+      categoriesToUpsert.forEach((category) => {
         categoryMap.set(category.id, category);
       });
       state.categories = Array.from(categoryMap.values());
     },
     addTodoCategories: (state, action: PayloadAction<TodoCategory[]>) => {
-      action.payload.forEach(category => {
-        const index = state.categories.findIndex(c => c.id === category.id);
+      action.payload.forEach((category) => {
+        const index = state.categories.findIndex((c) => c.id === category.id);
         if (index === -1) {
           state.categories.push(category);
         }
@@ -102,7 +130,9 @@ const todoSlice = createSlice({
     removeTodoCategories: (state, action: PayloadAction<string[]>) => {
       const idsToRemove = new Set(action.payload);
       if (idsToRemove.size === 0) return;
-      state.categories = state.categories.filter(cat => !idsToRemove.has(cat.id));
+      state.categories = state.categories.filter(
+        (cat) => !idsToRemove.has(cat.id)
+      );
     },
   },
 });
@@ -114,6 +144,10 @@ export const {
   updateTodo,
   removeTodo,
   setLoading,
+  setAddingTodo,
+  addUpdatingTodoId,
+  removeUpdatingTodoId,
+  setError,
   upsertTodos,
   removeTodos,
   addTodos,
@@ -129,22 +163,30 @@ export const {
 
 // Selectors
 const selectTodos = (state: { todo: TodoState }) => state.todo.todos;
+const selectLoading = (state: { todo: TodoState }) => state.todo.loading;
+const selectAddingTodo = (state: { todo: TodoState }) => state.todo.addingTodo;
+const selectUpdatingTodoIds = (state: { todo: TodoState }) =>
+  state.todo.updatingTodoIds;
+const selectError = (state: { todo: TodoState }) => state.todo.error;
 
-export const selectPendingTodos = createSelector(
-  [selectTodos],
-  (todos) =>
-    [...todos]
-      .filter((todo) => !todo.completed)
-      .sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''))
+export {
+  selectTodos,
+  selectLoading,
+  selectAddingTodo,
+  selectUpdatingTodoIds,
+  selectError,
+};
+
+export const selectPendingTodos = createSelector([selectTodos], (todos) =>
+  [...todos]
+    .filter((todo) => !todo.completed)
+    .sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''))
 );
 
-export const selectCompletedTodos = createSelector(
-  [selectTodos],
-  (todos) =>
-    [...todos]
-      .filter((todo) => todo.completed)
-      .sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''))
+export const selectCompletedTodos = createSelector([selectTodos], (todos) =>
+  [...todos]
+    .filter((todo) => todo.completed)
+    .sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''))
 );
 
 export default todoSlice.reducer;
-
