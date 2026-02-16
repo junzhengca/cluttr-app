@@ -1,5 +1,4 @@
-import { call, put, select, takeLatest, takeEvery, delay, fork, cancel } from 'redux-saga/effects';
-import type { Task } from 'redux-saga';
+import { call, put, select, takeLatest, takeEvery } from 'redux-saga/effects';
 import type { RootState } from '../types';
 import {
   setTodos,
@@ -63,9 +62,6 @@ export const deleteTodoCategoryAction = (id: string) => ({
   type: DELETE_TODO_CATEGORY,
   payload: id,
 });
-
-const DEBOUNCE_MS = 400;
-const pendingUpdateTasks = new Map<string, Task>();
 
 /**
  * Get API client from Redux state
@@ -261,26 +257,39 @@ function* deleteTodoSaga(action: {
 }
 
 /**
- * Runs after DEBOUNCE_MS: sends current state for this id to API, then applies or reverts.
- * previousTodo is the state before the optimistic update (used to revert on error).
+ * On each UPDATE_TODO: apply optimistic update, then immediately call API.
  */
-function* debouncedUpdateForId(
-  id: string,
-  previousTodo: TodoItem
-): Generator<unknown, void, unknown> {
-  let payloadSent = { text: '', note: '' };
+function* updateTodoSaga(action: {
+  type: string;
+  payload: { id: string; text: string; note?: string };
+}): Generator<unknown, void, unknown> {
+  const { id, text, note } = action.payload;
+
+  const state = (yield select()) as RootState;
+  const previousTodo = state.todo.todos.find((t) => t.id === id);
+  if (!previousTodo) {
+    sagaLogger.error('updateTodoSaga: todo not found', id);
+    const errorMessage = i18n.t('todo.updateError', 'Failed to save todo');
+    yield put(setError(errorMessage));
+    const toast = getGlobalToast();
+    if (toast) toast(errorMessage, 'error');
+    return;
+  }
+
+  const optimisticTodo: TodoItem = {
+    ...previousTodo,
+    text: text.trim(),
+    note: note !== undefined ? note : previousTodo.note,
+  };
+  yield put(updateTodoSlice(optimisticTodo));
+  yield put(addUpdatingTodoId(id));
+
+  const payloadSent = {
+    text: optimisticTodo.text.trim(),
+    note: optimisticTodo.note ?? previousTodo.note ?? '',
+  };
+
   try {
-    yield delay(DEBOUNCE_MS);
-
-    const state = (yield select()) as RootState;
-    const currentTodo = state.todo.todos.find((t) => t.id === id);
-    if (!currentTodo) return;
-
-    payloadSent = {
-      text: currentTodo.text.trim(),
-      note: currentTodo.note ?? previousTodo.note ?? '',
-    };
-
     const apiClient = (yield call(getApiClient)) as ApiClient;
     const homeId = (yield call(getActiveHomeId)) as string;
 
@@ -321,45 +330,7 @@ function* debouncedUpdateForId(
     }
   } finally {
     yield put(removeUpdatingTodoId(id));
-    pendingUpdateTasks.delete(id);
   }
-}
-
-/**
- * On each UPDATE_TODO: apply optimistic update, then schedule a single debounced API call per id.
- */
-function* updateTodoDebounceSaga(action: {
-  type: string;
-  payload: { id: string; text: string; note?: string };
-}): Generator<unknown, void, unknown> {
-  const { id, text, note } = action.payload;
-
-  const state = (yield select()) as RootState;
-  const previousTodo = state.todo.todos.find((t) => t.id === id);
-  if (!previousTodo) {
-    sagaLogger.error('updateTodoSaga: todo not found', id);
-    const errorMessage = i18n.t('todo.updateError', 'Failed to save todo');
-    yield put(setError(errorMessage));
-    const toast = getGlobalToast();
-    if (toast) toast(errorMessage, 'error');
-    return;
-  }
-
-  const optimisticTodo: TodoItem = {
-    ...previousTodo,
-    text: text.trim(),
-    note: note !== undefined ? note : previousTodo.note,
-  };
-  yield put(updateTodoSlice(optimisticTodo));
-  yield put(addUpdatingTodoId(id));
-
-  const existing = pendingUpdateTasks.get(id);
-  if (existing) {
-    yield cancel(existing);
-    pendingUpdateTasks.delete(id);
-  }
-  const task = (yield fork(debouncedUpdateForId, id, previousTodo)) as Task;
-  pendingUpdateTasks.set(id, task);
 }
 
 function* loadTodoCategoriesSaga(): Generator<unknown, void, unknown> {
@@ -504,7 +475,7 @@ export function* todoSaga(): Generator<unknown, void, unknown> {
   yield takeLatest(ADD_TODO, addTodoSaga);
   yield takeEvery(TOGGLE_TODO, toggleTodoSaga);
   yield takeEvery(DELETE_TODO, deleteTodoSaga);
-  yield takeEvery(UPDATE_TODO, updateTodoDebounceSaga);
+  yield takeEvery(UPDATE_TODO, updateTodoSaga);
 
   // Todo categories
   yield takeLatest(LOAD_TODO_CATEGORIES, loadTodoCategoriesSaga);

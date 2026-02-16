@@ -12,7 +12,8 @@
     "location": "位置",
     "category": "分类",
     "save": "保存",
-    "error": "错误"
+    "error": "错误",
+    "delete": "删除"
   },
   "navigation": {
     "home": "首页",

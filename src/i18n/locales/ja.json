@@ -10,7 +10,8 @@
         "filter": "フィルター",
         "status": "状態",
         "location": "場所",
-        "category": "カテゴリー"
+        "category": "カテゴリー",
+        "delete": "削除"
     },
     "navigation": {
         "home": "ホーム",

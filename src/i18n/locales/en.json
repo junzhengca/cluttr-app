@@ -12,7 +12,8 @@
     "location": "Location",
     "category": "Category",
     "save": "Save",
-    "error": "Error"
+    "error": "Error",
+    "delete": "Delete"
   },
   "navigation": {
     "home": "Home",
