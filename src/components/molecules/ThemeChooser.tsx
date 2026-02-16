@@ -1,9 +1,10 @@
 import React from 'react';
 import { TouchableOpacity, ScrollView, View, Text } from 'react-native';
-import styled from 'styled-components/native';
+import styled, { useTheme } from 'styled-components/native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import type { StyledProps, StyledPropsWith } from '../../utils/styledComponents';
+import type { Theme } from '../../theme/types';
 import { SectionTitle } from '../atoms';
 
 export type ThemeOption = {
@@ -21,13 +22,18 @@ const Container = styled(View)`
   margin-bottom: ${({ theme }: StyledProps) => theme.spacing.xl}px;
 `;
 
-const OptionsScroll = styled(ScrollView).attrs(() => ({
-  horizontal: true,
-  showsHorizontalScrollIndicator: false,
-  contentContainerStyle: {
-    paddingHorizontal: 4,
-  },
-}))``;
+/**
+ * Container with negative horizontal margins to enable edge-to-edge scrolling.
+ * The ScrollView's contentContainerStyle adds horizontal padding to restore
+ * proper spacing while allowing content to scroll to the screen edges.
+ */
+const ScrollContainer = styled(View)<{ horizontalPadding: number }>`
+  margin-horizontal: -${({ horizontalPadding }: { horizontalPadding: number }) => horizontalPadding}px;
+`;
+
+const OptionsScroll = styled(ScrollView)`
+  flex-direction: row;
+`;
 
 const OptionsContainer = styled(View)`
   flex-direction: row;
@@ -79,33 +85,47 @@ export const ThemeChooser: React.FC<ThemeChooserProps> = ({
   onThemeSelect,
 }) => {
   const { t } = useTranslation();
+  const theme = useTheme() as Theme;
+
+  const horizontalPadding = theme.spacing.md;
+
+  const scrollContentStyle = {
+    paddingLeft: horizontalPadding,
+    paddingRight: horizontalPadding,
+  };
 
   return (
     <Container>
       <SectionTitle title={t('settings.theme')} icon="color-palette" />
-      <OptionsScroll>
-        <OptionsContainer>
-          {defaultThemes.map((themeOption) => {
-            const isSelected = selectedThemeId === themeOption.id;
-            return (
-              <OptionContainer
-                key={themeOption.id}
-                isSelected={isSelected}
-                color={themeOption.color}
-                onPress={() => onThemeSelect?.(themeOption.id)}
-                activeOpacity={0.7}
-              >
-                <ColorCircle color={themeOption.color}>
-                  {isSelected && (
-                    <Checkmark name="checkmark" size={24} />
-                  )}
-                </ColorCircle>
-                <OptionLabel isSelected={isSelected}>{t(`settings.themeNames.${themeOption.id}`)}</OptionLabel>
-              </OptionContainer>
-            );
-          })}
-        </OptionsContainer>
-      </OptionsScroll>
+      <ScrollContainer horizontalPadding={horizontalPadding}>
+        <OptionsScroll
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={scrollContentStyle}
+        >
+          <OptionsContainer>
+            {defaultThemes.map((themeOption) => {
+              const isSelected = selectedThemeId === themeOption.id;
+              return (
+                <OptionContainer
+                  key={themeOption.id}
+                  isSelected={isSelected}
+                  color={themeOption.color}
+                  onPress={() => onThemeSelect?.(themeOption.id)}
+                  activeOpacity={0.7}
+                >
+                  <ColorCircle color={themeOption.color}>
+                    {isSelected && (
+                      <Checkmark name="checkmark" size={24} />
+                    )}
+                  </ColorCircle>
+                  <OptionLabel isSelected={isSelected}>{t(`settings.themeNames.${themeOption.id}`)}</OptionLabel>
+                </OptionContainer>
+              );
+            })}
+          </OptionsContainer>
+        </OptionsScroll>
+      </ScrollContainer>
     </Container>
   );
 };

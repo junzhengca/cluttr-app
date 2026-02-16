@@ -1,9 +1,10 @@
 import React from 'react';
-import { TouchableOpacity, View, Text } from 'react-native';
-import styled from 'styled-components/native';
+import { TouchableOpacity, ScrollView, View, Text } from 'react-native';
+import styled, { useTheme } from 'styled-components/native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import type { StyledProps, StyledPropsWith } from '../../utils/styledComponents';
+import type { Theme } from '../../theme/types';
 import { SectionTitle } from '../atoms';
 
 export type LanguageOption = {
@@ -22,6 +23,19 @@ const Container = styled(View)`
   margin-bottom: ${({ theme }: StyledProps) => theme.spacing.xl}px;
 `;
 
+/**
+ * Container with negative horizontal margins to enable edge-to-edge scrolling.
+ * The ScrollView's contentContainerStyle adds horizontal padding to restore
+ * proper spacing while allowing content to scroll to the screen edges.
+ */
+const ScrollContainer = styled(View)<{ horizontalPadding: number }>`
+  margin-horizontal: -${({ horizontalPadding }: { horizontalPadding: number }) => horizontalPadding}px;
+`;
+
+const LanguageScrollView = styled(ScrollView)`
+  flex-direction: row;
+`;
+
 const OptionsContainer = styled(View)`
   flex-direction: row;
   justify-content: flex-start;
@@ -29,7 +43,6 @@ const OptionsContainer = styled(View)`
 `;
 
 const LanguageButton = styled(TouchableOpacity) <{ isSelected: boolean }>`
-  flex: 1;
   padding-vertical: ${({ theme }: StyledProps) => theme.spacing.md}px;
   padding-horizontal: ${({ theme }: StyledProps) => theme.spacing.lg}px;
   border-radius: ${({ theme }: StyledProps) => theme.borderRadius.xl}px;
@@ -72,29 +85,45 @@ export const LanguageSelector: React.FC<LanguageSelectorProps> = ({
   onLanguageSelect,
 }) => {
   const { t } = useTranslation();
+  const theme = useTheme() as Theme;
+
+  const horizontalPadding = theme.spacing.md;
+
+  const scrollContentStyle = {
+    paddingLeft: horizontalPadding,
+    paddingRight: horizontalPadding,
+  };
 
   return (
     <Container>
       <SectionTitle title={t('language.title')} icon="globe" />
-      <OptionsContainer>
-        {defaultLanguages.map((language) => (
-          <LanguageButton
-            key={language.id}
-            isSelected={selectedLanguageId === language.id}
-            onPress={() => onLanguageSelect?.(language.id)}
-            activeOpacity={0.7}
-          >
-            {language.flag && (
-              <FlagContainer>
-                <FlagText>{language.flag}</FlagText>
-              </FlagContainer>
-            )}
-            <LanguageButtonText isSelected={selectedLanguageId === language.id}>
-              {language.name}
-            </LanguageButtonText>
-          </LanguageButton>
-        ))}
-      </OptionsContainer>
+      <ScrollContainer horizontalPadding={horizontalPadding}>
+        <LanguageScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={scrollContentStyle}
+        >
+          <OptionsContainer>
+            {defaultLanguages.map((language) => (
+              <LanguageButton
+                key={language.id}
+                isSelected={selectedLanguageId === language.id}
+                onPress={() => onLanguageSelect?.(language.id)}
+                activeOpacity={0.7}
+              >
+                {language.flag && (
+                  <FlagContainer>
+                    <FlagText>{language.flag}</FlagText>
+                  </FlagContainer>
+                )}
+                <LanguageButtonText isSelected={selectedLanguageId === language.id}>
+                  {language.name}
+                </LanguageButtonText>
+              </LanguageButton>
+            ))}
+          </OptionsContainer>
+        </LanguageScrollView>
+      </ScrollContainer>
     </Container>
   );
 };
