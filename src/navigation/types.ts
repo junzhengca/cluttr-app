@@ -8,10 +8,6 @@ export type NotesStackParamList = {
   Notes: undefined;
 };
 
-export type ShareStackParamList = {
-  Share: undefined;
-};
-
 export type SettingsStackParamList = {
   Settings: undefined;
 };
@@ -19,7 +15,6 @@ export type SettingsStackParamList = {
 export type TabParamList = {
   HomeTab: NavigatorScreenParams<HomeStackParamList>;
   NotesTab: NavigatorScreenParams<NotesStackParamList>;
-  ShareTab: NavigatorScreenParams<ShareStackParamList>;
   SettingsTab: NavigatorScreenParams<SettingsStackParamList>;
 };
 

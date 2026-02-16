@@ -6,7 +6,7 @@
 
 ## OVERVIEW
 
-2-level navigation: RootStack (native stack for modals) → MainTabs (bottom tabs) → 4 tab stacks.
+2-level navigation: RootStack (native stack for modals) → MainTabs (bottom tabs) → tab stacks.
 
 ## STRUCTURE
 
@@ -17,8 +17,7 @@ navigation/
 ├── TabNavigator.tsx       # Bottom tab navigator (4 tabs)
 ├── HomeStack.tsx         # Home tab stack
 ├── NotesStack.tsx         # Notes tab stack
-├── ShareStack.tsx         # Share tab stack
-└── SettingsStack.tsx       # Settings tab stack
+└── SettingsStack.tsx       # Settings tab stack (includes sharing UI)
 ```
 
 ## WHERE TO LOOK
@@ -32,7 +31,7 @@ navigation/
 ## CONVENTIONS
 
 - **RootStack**: Native stack for modal screens and detail navigation
-- **MainTabs**: Bottom tab navigator with 4 tabs (Home, Notes, Share, Settings)
+- **MainTabs**: Bottom tab navigator with 4 tabs (Home, Search, Notes, Settings). Sharing is part of the Settings screen, not a separate tab.
 - **Tab stacks**: Each tab has its own stack for navigation within that tab
 - **Screen naming**: `{Tab}Screen.tsx` pattern (HomeScreen.tsx, NotesScreen.tsx, etc.)
 

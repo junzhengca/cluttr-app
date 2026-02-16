@@ -32,10 +32,6 @@ export default function TabLayout() {
                 <Label>{t('navigation.notes')}</Label>
                 <Icon src={<VectorIcon family={MaterialCommunityIcons} name="notebook-edit" />} />
             </NativeTabs.Trigger>
-            <NativeTabs.Trigger name="share">
-                <Label>{t('navigation.share')}</Label>
-                <Icon src={<VectorIcon family={Ionicons} name="share" />} />
-            </NativeTabs.Trigger>
             <NativeTabs.Trigger name="settings">
                 <Label>{t('navigation.settings')}</Label>
                 <Icon src={<VectorIcon family={Ionicons} name="settings" />} />

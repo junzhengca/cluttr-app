@@ -43,8 +43,6 @@ export type { LocationSelectorProps } from './LocationSelector';
 export { StatusField } from './StatusField';
 export type { StatusFieldProps } from './StatusField';
 
-
-
 export { CategoryFormSelector } from './CategoryFormSelector';
 export type { CategoryFormSelectorProps } from './CategoryFormSelector';
 

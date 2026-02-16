@@ -87,8 +87,6 @@ export const BottomNavBar: React.FC<BottomTabBarProps> = ({ state, navigation })
             if (routeName === 'NotesTab') {
               iconName = 'notebook-edit-outline' as keyof typeof MaterialCommunityIcons.glyphMap;
               IconComponent = MaterialCommunityIcons;
-            } else if (routeName === 'ShareTab') {
-              iconName = 'share-outline';
             } else if (routeName === 'SettingsTab') {
               iconName = 'settings-outline';
             }
