@@ -1,7 +1,9 @@
 import React, { useEffect } from 'react';
 import { ScrollView, TouchableOpacity, View, Text } from 'react-native';
 import styled, { useTheme } from 'styled-components/native';
+import { useTranslation } from 'react-i18next';
 import { useInventoryCategories } from '../../store/hooks';
+import { getInventoryCategoryDisplayName } from '../../utils/inventoryCategoryI18n';
 import type { StyledProps, StyledPropsWith } from '../../utils/styledComponents';
 import type { Theme } from '../../theme/types';
 
@@ -61,6 +63,7 @@ export const CategoryFormSelector: React.FC<CategoryFormSelectorProps> = ({
     onSelect,
 }) => {
     const theme = useTheme() as Theme;
+    const { t } = useTranslation();
     const { categories } = useInventoryCategories();
 
     const horizontalPadding = theme.spacing.md;
@@ -100,7 +103,7 @@ export const CategoryFormSelector: React.FC<CategoryFormSelectorProps> = ({
                         >
                             {category.color && <ColorDot color={category.color} />}
                             <CategoryText isSelected={isSelected}>
-                                {category.label || category.name}
+                                {category.label || getInventoryCategoryDisplayName(category, t)}
                             </CategoryText>
                         </CategoryButton>
                     );

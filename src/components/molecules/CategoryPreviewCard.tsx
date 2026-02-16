@@ -5,6 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { Category } from '../../types/inventory';
 import { getLightColor } from '../../utils/colors';
+import { getInventoryCategoryDisplayName } from '../../utils/inventoryCategoryI18n';
 import type { StyledProps } from '../../utils/styledComponents';
 import { BaseCard } from '../atoms';
 import { useTheme } from '../../theme/ThemeProvider';
@@ -58,7 +59,7 @@ export const CategoryPreviewCard: React.FC<CategoryPreviewCardProps> = ({
   const theme = useTheme();
   const { t } = useTranslation();
 
-  const displayLabel = category.label || (category.isCustom ? category.name : t(`categories.${category.name}`));
+  const displayLabel = category.label || getInventoryCategoryDisplayName(category, t);
 
   return (
     <BaseCard compact>

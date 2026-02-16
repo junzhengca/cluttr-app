@@ -91,6 +91,20 @@
     "other": "其他",
     "uncategorized": "未分类"
   },
+  "inventoryCategories": {
+    "produce": "蔬果",
+    "dairy": "奶蛋",
+    "meat": "肉类",
+    "seafood": "海鲜",
+    "bakery": "烘焙",
+    "frozen": "冷冻",
+    "pantry": "粮油副食",
+    "beverages": "饮品",
+    "snacks": "零食",
+    "household": "日用百货",
+    "personal-care": "个人护理",
+    "other": "其他"
+  },
   "locations": {
     "living-room": "客厅",
     "kitchen": "厨房",
@@ -101,7 +115,13 @@
     "freezer": "冷冻",
     "bathroom": "卫生间",
     "medical-cabinet": "药箱",
-    "bookshelf": "书架"
+    "bookshelf": "书架",
+    "pantry": "储物间",
+    "refrigerator": "冰箱",
+    "garage": "车库",
+    "basement": "地下室",
+    "laundry-room": "洗衣房",
+    "other": "其他"
   },
   "statuses": {
     "using": "使用中",

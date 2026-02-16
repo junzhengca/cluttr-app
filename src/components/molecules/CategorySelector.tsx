@@ -4,6 +4,7 @@ import styled, { useTheme } from 'styled-components/native';
 import { useTranslation } from 'react-i18next';
 import type { Category } from '../../types/inventory';
 import { useInventoryCategories } from '../../store/hooks';
+import { getInventoryCategoryDisplayName } from '../../utils/inventoryCategoryI18n';
 import type { StyledProps, StyledPropsWith } from '../../utils/styledComponents';
 import type { Theme } from '../../theme/types';
 
@@ -131,7 +132,7 @@ export const CategorySelector: React.FC<CategorySelectorProps> = ({
             <CategoryText isSelected={selectedCategory === category.id}>
               {category.label || (category.id === 'all'
                 ? t('categories.all')
-                : category.name)}
+                : getInventoryCategoryDisplayName(category, t))}
             </CategoryText>
           </CategoryButton>
         ))}

@@ -28,6 +28,8 @@ import { useHome } from '../hooks/useHome';
 
 import { calculateBottomActionBarPadding } from '../utils/layout';
 import { getTotalAmount } from '../utils/batchUtils';
+import { getLocationDisplayName } from '../utils/locationI18n';
+import { getInventoryCategoryDisplayName } from '../utils/inventoryCategoryI18n';
 import type { StyledProps } from '../utils/styledComponents';
 import { uiLogger } from '../utils/Logger';
 
@@ -228,14 +230,13 @@ export const ItemDetailsScreen: React.FC = () => {
   useEffect(() => {
     if (item) {
       const location = locations.find((loc) => loc.id === item.location);
-      // Use location name from API
-      setLocationName(location ? location.name : item.location);
+      setLocationName(location ? getLocationDisplayName(location, t) : item.location);
 
       // Load category if exists
       if (item.categoryId) {
         const category = categories.find(c => c.id === item.categoryId);
         if (category) {
-          setCategoryName(category.name);
+          setCategoryName(getInventoryCategoryDisplayName(category, t));
           setCategoryColor(category.color);
         } else {
           setCategoryName('');

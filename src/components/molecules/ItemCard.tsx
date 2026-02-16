@@ -8,6 +8,7 @@ import { useInventoryCategories } from '../../store/hooks';
 import { formatLocation } from '../../utils/formatters';
 import { isExpiringSoon } from '../../utils/dateUtils';
 import { getTotalAmount, getEarliestExpiry } from '../../utils/batchUtils';
+import { getInventoryCategoryDisplayName } from '../../utils/inventoryCategoryI18n';
 import type { StyledProps } from '../../utils/styledComponents';
 import { BaseCard } from '../atoms';
 
@@ -179,8 +180,9 @@ export const ItemCard: React.FC<ItemCardProps> = ({ item, onPress }) => {
 
   // Build metadata text: category name + location name
   const locationText = formatLocation(item.location, item.detailedLocation, t);
-  // Use category name directly (user-provided or built-in) - no i18n translation
-  const categoryName = category?.label || category?.name || null;
+  const categoryName = category
+    ? (category.label || getInventoryCategoryDisplayName(category, t))
+    : null;
 
   const metadataParts = [categoryName, locationText].filter(Boolean);
   const metadataText = metadataParts.length > 0 ? metadataParts.join(' · ') : locationText;

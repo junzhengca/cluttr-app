@@ -7,6 +7,7 @@ import type {
     StyledPropsWith,
 } from '../../utils/styledComponents';
 import { useCategories } from '../../hooks/useCategories';
+import { getInventoryCategoryDisplayName } from '../../utils/inventoryCategoryI18n';
 import type { Theme } from '../../theme/types';
 
 const FilterContainer = styled(View)`
@@ -112,7 +113,7 @@ export const CategoryFilter: React.FC<CategoryFilterProps> = ({
                         >
                             {category.color && <ColorDot color={category.color} />}
                             <CategoryText isSelected={isSelected}>
-                                {category.name}
+                                {getInventoryCategoryDisplayName(category, t)}
                             </CategoryText>
                             <CountText isSelected={isSelected}>
                                 {counts[category.id] || 0}

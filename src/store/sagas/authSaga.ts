@@ -677,18 +677,29 @@ function* handleActiveHomeIdChange(action: { type: string; payload: string | nul
   if (action.payload) {
     yield call([authService, 'saveActiveHomeId'], action.payload);
 
-    // Sync HomeService state
-    // We call this to ensure HomeService's internal state matches Redux
-    // But we don't want it to trigger another dispatch loop, so useHome must be fixed next
-    homeService.switchHome(action.payload);
+    // Check if user is authenticated before loading data
+    // During initial app startup, setActiveHomeId may be dispatched before auth check completes
+    // In that case, the auth saga will handle loading data after successful authentication
+    const isAuthenticated: boolean = (yield select((state: RootState) => state.auth.isAuthenticated)) as boolean;
+    const authLoading: boolean = (yield select((state: RootState) => state.auth.isLoading)) as boolean;
 
-    // Reload data for the new home
-    authLogger.info('Reloading data for new home', action.payload);
-    yield put(loadItems());
-    yield put(loadTodos());
-    yield put(loadTodoCategoriesAction());
-        yield put(loadCategories());
-    yield put(loadSettings());
+    // Only sync HomeService and reload data if auth is complete
+    // During auth loading, the data will be loaded by checkAuthSaga after successful auth
+    if (!authLoading && isAuthenticated) {
+      // Sync HomeService state
+      // We call this to ensure HomeService's internal state matches Redux
+      homeService.switchHome(action.payload);
+
+      // Reload data for the new home
+      authLogger.info('Reloading data for new home (user authenticated)', action.payload);
+      yield put(loadItems());
+      yield put(loadTodos());
+      yield put(loadTodoCategoriesAction());
+      yield put(loadCategories());
+      yield put(loadSettings());
+    } else {
+      authLogger.info('Skipping data reload during auth initialization, will load after auth completes');
+    }
   } else {
     yield call([authService, 'removeActiveHomeId']);
     // If no home is active, we might want to clear data or ensure HomeService knows

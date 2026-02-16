@@ -2,6 +2,9 @@
  * Date formatting utilities
  */
 
+import { getLocationDisplayNameForId } from './locationI18n';
+import type { LocationTranslateFn } from './locationI18n';
+
 /**
  * Format location text with optional detailed location
  * @param locationId - Location ID (e.g., "living-room")
@@ -12,9 +15,9 @@
 export const formatLocation = (
   locationId: string,
   detailedLocation: string | undefined,
-  t: (key: string) => string
+  t: LocationTranslateFn
 ): string => {
-  const locationText = t(`locations.${locationId}`);
+  const locationText = getLocationDisplayNameForId(locationId, undefined, t);
   
   if (!detailedLocation || detailedLocation.trim() === '') {
     return locationText;

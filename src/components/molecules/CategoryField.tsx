@@ -10,6 +10,7 @@ import type {
 } from '../../utils/styledComponents';
 import type { Category } from '../../types/inventory';
 import { filterItemCategories } from '../../utils/categoryUtils';
+import { getInventoryCategoryDisplayName } from '../../utils/inventoryCategoryI18n';
 
 const CategoryGrid = styled.View`
   flex-direction: row;
@@ -114,9 +115,7 @@ export const CategoryField: React.FC<CategoryFieldProps> = ({
           </CategoryIcon>
         )}
         <CategoryLabel isSelected={selectedId === category.id}>
-          {category.label || (category.isCustom
-            ? category.name
-            : t(`categories.${category.name}`))}
+          {category.label || getInventoryCategoryDisplayName(category, t)}
         </CategoryLabel>
       </CategoryButton>
     );

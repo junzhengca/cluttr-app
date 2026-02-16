@@ -9,6 +9,7 @@ import type {
 } from '../../utils/styledComponents';
 import type { Theme } from '../../theme/types';
 import { useLocations } from '../../store/hooks';
+import { getLocationDisplayName } from '../../utils/locationI18n';
 
 const SelectorContainer = styled(View) <{ edgeToEdge?: boolean }>`
   flex-direction: column;
@@ -125,7 +126,7 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
                                 color={theme.colors.primary}
                             />
                             <LocationLabel isSelected={isSelected}>
-                                {location.name}
+                                {getLocationDisplayName(location, t)}
                             </LocationLabel>
                         </LocationButton>
                     );

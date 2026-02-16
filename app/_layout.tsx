@@ -111,9 +111,15 @@ function AppInner() {
         setHomeSynced(true);
     }, [dispatch, activeHomeId]);
 
-    // Load data after home is synced
+    // Load data after home is synced AND auth check completes
+    // IMPORTANT: We must wait for isLoading to be false to ensure the access token
+    // has been retrieved from secure storage and set in the API client.
+    // We also need isAuthenticated to be true to ensure we only load for logged-in users.
+    // Otherwise, API calls will be made without authentication headers.
     useEffect(() => {
         if (!homeSynced) return;
+        if (isLoading) return;
+        if (!isAuthenticated) return;
 
         // Load settings
         dispatch(loadSettings());
@@ -123,7 +129,7 @@ function AppInner() {
 
         // Load inventory items
         dispatch(loadItems());
-    }, [dispatch, homeSynced]);
+    }, [dispatch, homeSynced, isLoading, isAuthenticated]);
 
     // Sync system appearance to prevent flashing
     useEffect(() => {
