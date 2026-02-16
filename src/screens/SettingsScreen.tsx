@@ -26,6 +26,9 @@ import {
   MemberList,
   InviteMenuBottomSheet,
   HorizontalSplitter,
+  IconContainer,
+  Toggle,
+  SectionTitle,
 } from '../components';
 import { useSettings, useAuth } from '../store/hooks';
 import { useHome } from '../hooks/useHome';
@@ -50,13 +53,6 @@ const SettingsSectionCard = styled(View)`
   border-radius: ${({ theme }: StyledProps) => theme.borderRadius.xxl}px;
   padding: ${({ theme }: StyledProps) => theme.spacing.md}px;
   margin-bottom: ${({ theme }: StyledProps) => theme.spacing.xl}px;
-`;
-
-const SectionTitle = styled(Text)`
-  font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.lg}px;
-  font-weight: ${({ theme }: StyledProps) => theme.typography.fontWeight.bold};
-  color: ${({ theme }: StyledProps) => theme.colors.text};
-  margin-bottom: ${({ theme }: StyledProps) => theme.spacing.md}px;
 `;
 
 const VersionText = styled(Text)`
@@ -106,7 +102,45 @@ const CardFootnote = styled(Text)`
   font-weight: ${({ theme }: StyledProps) => theme.typography.fontWeight.regular};
   color: ${({ theme }: StyledProps) => theme.colors.textLight};
   text-align: center;
-  margin-top: ${({ theme }: StyledProps) => theme.spacing.lg}px;
+  margin-top: 0px;
+  margin-bottom: 0px;
+`;
+
+const SectionWrapper = styled(View)`
+  margin-top: ${({ theme }: StyledProps) => theme.spacing.xl}px;
+`;
+
+const PermissionRow = styled(View)`
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  padding-vertical: ${({ theme }: StyledProps) => theme.spacing.md}px;
+`;
+
+const LeftSection = styled(View)`
+  flex-direction: row;
+  align-items: center;
+  flex: 1;
+  margin-right: ${({ theme }: StyledProps) => theme.spacing.md}px;
+`;
+
+const TextContainer = styled(View)`
+  flex: 1;
+  flex-direction: column;
+  margin-left: ${({ theme }: StyledProps) => theme.spacing.md}px;
+`;
+
+const ItemLabel = styled(Text)`
+  font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.md}px;
+  font-weight: ${({ theme }: StyledProps) => theme.typography.fontWeight.medium};
+  color: ${({ theme }: StyledProps) => theme.colors.text};
+  margin-bottom: ${({ theme }: StyledProps) => theme.spacing.xs}px;
+`;
+
+const ItemDescription = styled(Text)`
+  font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.sm}px;
+  font-weight: ${({ theme }: StyledProps) => theme.typography.fontWeight.regular};
+  color: ${({ theme }: StyledProps) => theme.colors.textLight};
 `;
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
@@ -362,7 +396,10 @@ export const SettingsScreen: React.FC = () => {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: bottomPadding }}
       >
-        {/* Card 1 – Managing current home */}
+        {/* Home Settings Section */}
+        {currentHome && (
+          <SectionTitle title={t('settings.homeSettings')} icon="home-outline" />
+        )}
         <SettingsSectionCard>
           {!isAuthenticated ? (
             <>
@@ -436,15 +473,17 @@ export const SettingsScreen: React.FC = () => {
               )}
             </>
           )}
-          {currentHome && (
-            <CardFootnote>
-              {t('settings.appliesToHome', { homeName: currentHome.name })}
-            </CardFootnote>
-          )}
         </SettingsSectionCard>
+        {currentHome && (
+          <CardFootnote>
+            {t('settings.appliesToHome', { homeName: currentHome.name })}
+          </CardFootnote>
+        )}
 
-        {/* Card 2 – Global settings (Appearance) */}
-        <SettingsSectionCard>
+        {/* Appearance Section */}
+        <SectionWrapper>
+          <SectionTitle title={t('settings.appearance')} icon="color-palette-outline" />
+          <SettingsSectionCard>
           <ThemeChooser
             selectedThemeId={settings.theme}
             onThemeSelect={handleThemeChange}
@@ -457,13 +496,21 @@ export const SettingsScreen: React.FC = () => {
             selectedLanguageId={settings.language}
             onLanguageSelect={handleLanguageChange}
           />
-          <SettingsToggleItem
-            label={t('settings.darkMode')}
-            description={t('settings.darkModeDescription')}
-            value={settings.darkMode ?? false}
-            onValueChange={handleDarkModeChange}
-          />
+          <PermissionRow>
+            <LeftSection>
+              <IconContainer icon="moon-outline" />
+              <TextContainer>
+                <ItemLabel>{t('settings.darkMode')}</ItemLabel>
+                <ItemDescription>{t('settings.darkModeDescription')}</ItemDescription>
+              </TextContainer>
+            </LeftSection>
+            <Toggle
+              value={settings.darkMode ?? false}
+              onValueChange={handleDarkModeChange}
+            />
+          </PermissionRow>
         </SettingsSectionCard>
+        </SectionWrapper>
 
         {/* Version Info */}
         <VersionText>
