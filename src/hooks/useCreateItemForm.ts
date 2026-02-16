@@ -1,6 +1,5 @@
 import { useRef, useCallback, useEffect, useState } from 'react';
 import { TextInput } from 'react-native';
-import { locations } from '../data/locations';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -36,7 +35,7 @@ export interface UseCreateItemFormOptions {
 // Defaults
 // ---------------------------------------------------------------------------
 
-const DEFAULT_LOCATION = locations.length > 0 ? locations[0].id : '';
+const DEFAULT_LOCATION = '';
 const DEFAULT_PRICE = '';
 const DEFAULT_AMOUNT = '1';
 const DEFAULT_UNIT = '';

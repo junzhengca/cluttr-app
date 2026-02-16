@@ -1,42 +1,38 @@
-import { useState, useCallback, useEffect } from 'react';
-import { Category } from '../types/inventory';
-import { categoryService } from '../services/CategoryService';
-import { useHome } from './useHome';
-import { useAppSelector } from '../store/hooks';
-import { selectCategoryRefreshTimestamp } from '../store/slices/refreshSlice';
-import { uiLogger } from '../utils/Logger';
+import { useCallback, useEffect } from 'react';
+import { useAppSelector, useAppDispatch } from '../store/hooks';
 
+/**
+ * Hook for accessing inventory categories.
+ * Categories are now managed via Redux state and CRUD API endpoints (not sync).
+ *
+ * @deprecated Use useInventoryCategories from src/store/hooks.ts instead for full CRUD operations.
+ * This hook is kept for backward compatibility.
+ */
 export const useCategories = () => {
-    const [categories, setCategories] = useState<Category[]>([]);
-    const [loading, setLoading] = useState(false);
-    const { currentHomeId } = useHome();
-    const refreshTimestamp = useAppSelector(selectCategoryRefreshTimestamp);
+  const dispatch = useAppDispatch();
+  const allCategories = useAppSelector((state) => state.inventoryCategory.categories);
+  const loading = useAppSelector((state) => state.inventoryCategory.loading);
+  const error = useAppSelector((state) => state.inventoryCategory.error);
+  const activeHomeId = useAppSelector((state) => state.auth.activeHomeId);
 
-    const loadCategories = useCallback(async () => {
-        if (!currentHomeId) {
-            setCategories([]);
-            return;
-        }
+  // Filter categories by active home
+  const categories = allCategories.filter((c) => c.homeId === activeHomeId);
 
-        setLoading(true);
-        try {
-            const data = await categoryService.getAllCategories(currentHomeId);
-            setCategories(data);
-        } catch (error) {
-            uiLogger.error('Failed to load categories', error);
-        } finally {
-            setLoading(false);
-        }
-    }, [currentHomeId]);
+  const refreshCategories = useCallback(() => {
+    dispatch({ type: 'inventoryCategory/SILENT_LOAD_CATEGORIES' });
+  }, [dispatch]);
 
-    // Load categories when home changes or when refresh timestamp changes
-    useEffect(() => {
-        loadCategories();
-    }, [loadCategories, refreshTimestamp]);
+  // Load categories when home changes
+  useEffect(() => {
+    if (activeHomeId) {
+      dispatch({ type: 'inventoryCategory/LOAD_CATEGORIES' });
+    }
+  }, [activeHomeId, dispatch]);
 
-    return {
-        categories,
-        loading,
-        refreshCategories: loadCategories,
-    };
+  return {
+    categories,
+    loading,
+    error,
+    refreshCategories,
+  };
 };

@@ -2,7 +2,7 @@ import { fileSystemService } from './FileSystemService';
 import { Home, HomeLoadingState, HomeOperationType } from '../types/home';
 import { generateItemId } from '../utils/idGenerator';
 import { dataInitializationService } from './DataInitializationService';
-import { syncLogger } from '../utils/Logger';
+import { storageLogger } from '../utils/Logger';
 import { ApiClient } from './ApiClient';
 import {
     ListHomesResponse,
@@ -42,7 +42,7 @@ class HomeService {
 
         // If no homes exist, initialize with empty array (no default home)
         if (!homesData.homes || homesData.homes.length === 0) {
-            syncLogger.info('No homes found, initializing with empty list');
+            storageLogger.info('No homes found, initializing with empty list');
             homesData.homes = [];
             await fileSystemService.writeFile(HOMES_FILE, homesData);
         }
@@ -55,7 +55,7 @@ class HomeService {
             ];
             const hasLegacyKeys = legacyKeys.some(key => key in home);
             if (hasLegacyKeys) {
-                syncLogger.info(`Migrating home ${home.id}, removing sync metadata`);
+                storageLogger.info(`Migrating home ${home.id}, removing sync metadata`);
                 const cleaned = { ...home };
                 legacyKeys.forEach(key => delete (cleaned as Record<string, unknown>)[key]);
                 return cleaned as Home;
@@ -172,7 +172,7 @@ class HomeService {
             return this.homes;
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : 'Failed to fetch homes';
-            syncLogger.error('Failed to fetch homes:', error);
+            storageLogger.error('Failed to fetch homes:', error);
             this.setLoading(null, errorMessage);
             throw error;
         }
@@ -209,7 +209,7 @@ class HomeService {
             return newHome;
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : 'Failed to create home';
-            syncLogger.error('Failed to create home:', error);
+            storageLogger.error('Failed to create home:', error);
             this.setLoading(null, errorMessage);
             throw error;
         }
@@ -236,7 +236,7 @@ class HomeService {
             return true;
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : 'Failed to update home';
-            syncLogger.error('Failed to update home:', error);
+            storageLogger.error('Failed to update home:', error);
             this.setLoading(null, errorMessage);
             return false;
         }
@@ -289,7 +289,7 @@ class HomeService {
             return true;
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : 'Failed to delete home';
-            syncLogger.error('Failed to delete home:', error);
+            storageLogger.error('Failed to delete home:', error);
             this.setLoading(null, errorMessage);
             return false;
         }
@@ -304,7 +304,7 @@ class HomeService {
             this.currentHomeId = id;
             this.notifyListeners();
         } else {
-            syncLogger.warn(`Attempted to switch to non-existent homeId: ${id}`);
+            storageLogger.warn(`Attempted to switch to non-existent homeId: ${id}`);
         }
     }
 
@@ -330,15 +330,15 @@ class HomeService {
         const homes = this.getHomes();
 
         if (homes.length === 0) {
-            syncLogger.info('No homes found, creating default home...');
+            storageLogger.info('No homes found, creating default home...');
             try {
                 const newHome = await this.createHome(apiClient, 'My Home');
                 if (newHome) {
-                    syncLogger.info('Default home created and initialized');
+                    storageLogger.info('Default home created and initialized');
                     return newHome;
                 }
             } catch (error) {
-                syncLogger.error('Failed to create default home via API, falling back to local-only home', error);
+                storageLogger.error('Failed to create default home via API, falling back to local-only home', error);
                 // Fallback: create local-only home
                 const now = new Date().toISOString();
                 const defaultHome: Home = {

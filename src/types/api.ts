@@ -96,93 +96,11 @@ export interface TodoCategoryServerData {
   homeId: string;
 }
 
-export interface CategoryServerData {
-  id: string;
-  name: string;
-  label?: string;
-  isCustom: boolean;
-  icon?: keyof typeof Ionicons.glyphMap;
-  color?: string;
-  homeId: string;
-}
-
 export interface LocationServerData {
   id: string;
   name: string;
   homeId: string;
   icon?: keyof typeof Ionicons.glyphMap;
-}
-
-// =============================================================================
-// Sync Request Types
-// =============================================================================
-
-export type SyncFileType =
-  | 'categories'
-  | 'locations'
-  | 'inventoryItems'
-  | 'todoItems'
-  | 'settings';
-
-export type SyncEntityType =
-  | 'inventoryItems'
-  | 'todoItems'
-  | 'categories'
-  | 'todoCategories'
-  | 'locations'
-  | 'settings';
-
-export interface PushFileRequest {
-  version: string;
-  deviceId: string;
-  syncTimestamp: string; // ISO 8601
-  data: unknown[];
-  deviceName?: string;
-  userId?: string;
-}
-
-export interface BatchSyncPullRequest {
-  entityType: SyncEntityType;
-  since?: string; // ISO 8601
-  includeDeleted?: boolean;
-  checkpoint?: {
-    lastPulledVersion?: number;
-  };
-}
-
-export interface SyncEntity {
-  entityId: string;
-  entityType: SyncEntityType;
-  homeId: string;
-  data: Record<string, unknown>;
-  version: number;
-  clientUpdatedAt: string; // ISO 8601
-  pendingCreate?: boolean;
-  pendingDelete?: boolean;
-}
-
-export interface BatchSyncPushRequest {
-  entityType: SyncEntityType;
-  entities: SyncEntity[];
-  lastPulledAt?: string; // ISO 8601
-  checkpoint?: {
-    lastPulledVersion?: number;
-  };
-}
-
-export interface BatchSyncRequest {
-  homeId: string;
-  deviceId: string;
-  pullRequests?: BatchSyncPullRequest[];
-  pushRequests?: BatchSyncPushRequest[];
-}
-
-export interface PushEntitiesRequest {
-  entities: SyncEntity[];
-  lastPulledAt?: string; // ISO 8601
-  checkpoint?: {
-    lastPulledVersion?: number;
-  };
 }
 
 // =============================================================================
@@ -311,154 +229,10 @@ export interface AcceptInvitationResponse {
   message: string;
 }
 
-// =============================================================================
-// Sync Response Types
-// =============================================================================
-
-export interface SyncFileStatus {
-  lastSyncTime: string;
-  lastSyncedByDeviceId: string;
-  lastSyncedAt: string;
-  clientVersion: string;
-  deviceName: string;
-  totalSyncs: number;
-}
-
-export interface SyncStatusResponse {
-  categories?: SyncFileStatus;
-  locations?: SyncFileStatus;
-  inventoryItems?: SyncFileStatus;
-  todoItems?: SyncFileStatus;
-  settings?: SyncFileStatus;
-}
-
-export interface PullFileResponse<T = unknown> {
-  success: boolean;
-  data: T[];
-  serverTimestamp: string;
-  lastSyncTime: string;
-}
-
-export interface PushFileResponse {
-  success: boolean;
-  serverTimestamp: string;
-  lastSyncTime: string;
-  entriesCount: number;
-  message: string;
-}
-
-export interface DeleteFileDataResponse {
-  success: boolean;
-  message: string;
-}
-
 export interface ApiError {
   message: string;
   code?: string;
   statusCode?: number;
-}
-
-// =============================================================================
-// Sync Entities Response Types
-// =============================================================================
-
-export interface UpdatedByInfo {
-  userId: string;
-  email: string;
-  nickname?: string;
-}
-
-export interface SyncEntityWithMeta extends SyncEntity {
-  updatedAt: string;
-  updatedBy?: UpdatedByInfo;
-  updatedByDeviceId?: string;
-}
-
-export interface Checkpoint {
-  homeId: string;
-  entityType: SyncEntityType;
-  lastSyncedAt?: string;
-  lastPulledVersion?: number;
-  lastPushedVersion?: number;
-}
-
-export interface BatchSyncPullResult {
-  entityType: SyncEntityType;
-  entities: SyncEntityWithMeta[];
-  deletedEntityIds: string[];
-  checkpoint: Checkpoint;
-}
-
-export interface EntitySyncResult {
-  entityId: string;
-  status: 'created' | 'updated' | 'server_version' | 'deleted';
-  winner?: 'client' | 'server';
-  serverVersion?: number;
-  serverUpdatedAt?: string;
-  serverVersionData?: {
-    data: Record<string, unknown>;
-    version: number;
-    updatedAt: string;
-    updatedBy?: UpdatedByInfo;
-  };
-}
-
-export interface BatchSyncPushResult {
-  entityType: SyncEntityType;
-  results: EntitySyncResult[];
-  newEntitiesFromServer: SyncEntityWithMeta[];
-  deletedEntityIds: string[];
-  errors: { entityId: string; error: string }[];
-  checkpoint: Checkpoint;
-}
-
-export interface BatchSyncResponse {
-  success: boolean;
-  pullResults?: BatchSyncPullResult[];
-  pushResults?: BatchSyncPushResult[];
-  serverTimestamp: string;
-}
-
-export interface EntitySyncStatus {
-  homeId: string;
-  entityType: SyncEntityType;
-  lastSyncedAt: string | null;
-  lastPulledVersion: number;
-  lastPushedVersion: number;
-  pendingLocalChanges: number;
-  serverVersion: number;
-  needsPull: boolean;
-  needsPush: boolean;
-}
-
-export interface SyncEntitiesStatusResponse {
-  success: boolean;
-  status: Record<string, EntitySyncStatus>;
-}
-
-export interface PullEntitiesResponse {
-  success: boolean;
-  entities: SyncEntityWithMeta[];
-  deletedEntityIds: string[];
-  serverTimestamp: string;
-  checkpoint: Checkpoint;
-}
-
-export interface PushEntitiesResponse {
-  success: boolean;
-  results: EntitySyncResult[];
-  newEntitiesFromServer: SyncEntityWithMeta[];
-  deletedEntityIds: string[];
-  errors: { entityId: string; error: string }[];
-  checkpoint: Checkpoint;
-  serverTimestamp: string;
-}
-
-export interface ResetSyncResponse {
-  success: boolean;
-  message: string;
-  resetEntityTypes: SyncEntityType[];
-  deletedCount: number;
 }
 
 // =============================================================================
@@ -688,88 +462,190 @@ export interface DeleteTodoCategoryResponse {
 
 // =============================================================================
 // =============================================================================
-// Home Sync Response Types (Deprecated - use CRUD endpoints instead)
+// Inventory Item CRUD Types
 // =============================================================================
 
-/**
- * @deprecated Use ListHomesResponse instead
- */
-export interface HomeSyncData {
+export interface InventoryItemDto {
+  inventoryId: string;
   homeId: string;
   name: string;
-  address?: string;
-  invitationCode?: string;
-  settings?: {
-    canShareInventory: boolean;
-    canShareTodos: boolean;
-  };
-  memberCount?: number;
-  owner?: {
-    userId: string;
-    email: string;
-    nickname: string;
-    avatarUrl?: string;
-  };
-  role?: 'owner' | 'member';
-  createdAt?: string;
-  updatedAt?: string;
-  serverUpdatedAt?: string;
+  location?: string;
+  detailedLocation?: string;
+  status: string;
+  icon?: string;
+  iconColor?: string;
+  warningThreshold?: number;
+  categoryId?: string;
+  batches: InventoryItemBatchDto[];
+  createdBy: string;
+  updatedBy: string;
+  createdByDeviceId: string | null;
+  updatedByDeviceId: string | null;
+  createdAt: string;
+  updatedAt: string;
 }
 
-/**
- * @deprecated Use ListHomesResponse instead
- */
-export interface SyncHomesResponse {
-  homes: HomeSyncData[];
-  deletedHomeIds: string[];
-  timestamp: string;
-  serverTimestamp: string;
+export interface InventoryItemBatchDto {
+  id: string;
+  amount: number;
+  unit?: string;
+  expiryDate?: string;
+  purchaseDate?: string;
+  price?: number;
+  vendor?: string;
+  note?: string;
+  createdAt: string;
 }
 
-/**
- * @deprecated Use CreateHomeRequest/UpdateHomeRequest instead
- */
-export interface PushHomesRequest {
-  homes: {
-    homeId: string;
-    name: string;
-    address?: string;
-    clientUpdatedAt: string;
-    pendingCreate?: boolean;
-    pendingUpdate?: boolean;
-    pendingLeave?: boolean;
-    pendingJoin?: boolean;
-  }[];
-  lastSyncedAt?: string;
+export interface ListInventoryItemsResponse {
+  inventoryItems: InventoryItemDto[];
 }
 
-/**
- * @deprecated
- */
-export interface HomeSyncResult {
+export interface CreateInventoryItemRequest {
+  inventoryId?: string;
+  name: string;
+  location?: string;
+  detailedLocation?: string;
+  status?: string;
+  icon?: string;
+  iconColor?: string;
+  warningThreshold?: number;
+  categoryId?: string;
+  batches?: InventoryItemBatchDto[];
+}
+
+export interface CreateInventoryItemResponse {
+  inventoryItem: InventoryItemDto;
+}
+
+export interface UpdateInventoryItemRequest {
+  name?: string;
+  location?: string;
+  detailedLocation?: string;
+  status?: string;
+  icon?: string;
+  iconColor?: string;
+  warningThreshold?: number;
+  categoryId?: string;
+  batches?: InventoryItemBatchDto[];
+}
+
+export interface UpdateInventoryItemResponse {
+  inventoryItem: InventoryItemDto;
+}
+
+export interface GetInventoryItemResponse {
+  inventoryItem: InventoryItemDto;
+}
+
+export interface DeleteInventoryItemResponse {
+  success: boolean;
+  message: string;
+  deletedAt: string;
+}
+
+// =============================================================================
+// =============================================================================
+// Inventory Category CRUD Types
+// =============================================================================
+
+export interface InventoryCategoryDto {
+  categoryId: string;
   homeId: string;
-  status: 'created' | 'updated' | 'server_version' | 'error' | 'deleted';
-  winner?: 'client' | 'server';
-  serverUpdatedAt?: string;
-  serverVersion?: {
-    name: string;
-    address?: string;
-    serverUpdatedAt: string;
-  };
+  name: string;
+  description?: string;
+  color?: string;
+  icon?: string;
+  position?: number;
+  isCustom?: boolean;
+  createdBy: string;
+  updatedBy: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
-/**
- * @deprecated
- */
-export interface PushHomesResponse {
-  results: HomeSyncResult[];
-  newHomesFromServer: HomeSyncData[];
-  errors: {
-    homeId: string;
-    code: string;
-    message: string;
-    suggestedHomeId?: string;
-  }[];
-  deletedHomeIds: string[];
-  serverTimestamp: string;
+export interface ListInventoryCategoriesResponse {
+  inventoryCategories: InventoryCategoryDto[];
+}
+
+export interface CreateInventoryCategoryRequest {
+  categoryId?: string;
+  name: string;
+  description?: string;
+  color?: string;
+  icon?: string;
+  position?: number;
+}
+
+export interface CreateInventoryCategoryResponse {
+  inventoryCategory: InventoryCategoryDto;
+}
+
+export interface UpdateInventoryCategoryRequest {
+  name?: string;
+  description?: string;
+  color?: string;
+  icon?: string;
+  position?: number;
+}
+
+export interface UpdateInventoryCategoryResponse {
+  inventoryCategory: InventoryCategoryDto;
+}
+
+export interface GetInventoryCategoryResponse {
+  inventoryCategory: InventoryCategoryDto;
+}
+
+export interface DeleteInventoryCategoryResponse {
+  message: string;
+  categoryId: string;
+}
+
+// =============================================================================
+// =============================================================================
+// Location CRUD Types
+// =============================================================================
+
+export interface LocationDto {
+  locationId: string;
+  homeId: string;
+  name: string;
+  icon?: string;
+  createdBy: string;
+  updatedBy: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ListLocationsResponse {
+  locations: LocationDto[];
+}
+
+export interface CreateLocationRequest {
+  locationId?: string;
+  name: string;
+  icon?: string;
+}
+
+export interface CreateLocationResponse {
+  location: LocationDto;
+}
+
+export interface UpdateLocationRequest {
+  name?: string;
+  icon?: string;
+}
+
+export interface UpdateLocationResponse {
+  location: LocationDto;
+}
+
+export interface GetLocationResponse {
+  location: LocationDto;
+}
+
+export interface DeleteLocationResponse {
+  message: string;
+  locationId: string;
 }

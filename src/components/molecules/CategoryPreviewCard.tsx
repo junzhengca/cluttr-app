@@ -58,13 +58,13 @@ export const CategoryPreviewCard: React.FC<CategoryPreviewCardProps> = ({
   const theme = useTheme();
   const { t } = useTranslation();
 
-  const displayLabel = category.isCustom ? category.label : t(`categories.${category.name}`);
+  const displayLabel = category.label || (category.isCustom ? category.name : t(`categories.${category.name}`));
 
   return (
     <BaseCard compact>
       <IconContainer backgroundColor={getLightColor(theme.colors.primary)}>
         <Ionicons
-          name={category.icon || 'cube-outline'}
+          name={(category.icon || 'cube-outline') as keyof typeof Ionicons.glyphMap}
           size={24}
           color={theme.colors.primary}
         />

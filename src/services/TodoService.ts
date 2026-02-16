@@ -38,11 +38,6 @@ function dtoToTodoItem(dto: TodoItemDto): TodoItem {
     note: dto.note,
     createdAt: dto.createdAt,
     updatedAt: dto.updatedAt,
-    version: 1,
-    clientUpdatedAt: dto.updatedAt,
-    pendingCreate: false,
-    pendingUpdate: false,
-    pendingDelete: false,
   };
 }
 

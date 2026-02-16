@@ -20,7 +20,6 @@ import styled from 'styled-components/native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { GlassView } from 'expo-glass-effect';
 import { useTheme } from '../../theme/ThemeProvider';
-import { useSettings } from '../../store/hooks';
 import type { StyledProps } from '../../utils/styledComponents';
 import { useTranslation } from 'react-i18next';
 

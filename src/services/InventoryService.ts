@@ -1,136 +1,275 @@
-import { InventoryItem, ItemBatch } from '../types/inventory';
-import {
-  BaseSyncableEntityService,
-  SyncableEntityConfig,
-  CreateEntityInput,
-} from './syncable/BaseSyncableEntityService';
 import { generateItemId } from '../utils/idGenerator';
-import { isExpiringSoon } from '../utils/dateUtils';
-import { getEarliestExpiry } from '../utils/batchUtils';
 import { ApiClient } from './ApiClient';
-import { InventoryItemServerData, SyncEntityType } from '../types/api';
-import { SyncDelta } from '../types/sync';
+import {
+  InventoryItemDto,
+  CreateInventoryItemRequest,
+  UpdateInventoryItemRequest,
+  DeleteInventoryItemResponse,
+  ListInventoryItemsResponse,
+  CreateInventoryItemResponse,
+  UpdateInventoryItemResponse,
+} from '../types/api';
+import { InventoryItem } from '../types/inventory';
+import { apiLogger } from '../utils/Logger';
 import Ionicons from '@expo/vector-icons/Ionicons';
 
-// Base file name (FileSystemService appends _homeId for scoping)
-const ITEMS_FILE = 'items.json';
-const ENTITY_TYPE: SyncEntityType = 'inventoryItems';
+// Simple state for in-memory storage (no file persistence)
+interface InventoryState {
+  items: InventoryItem[];
+}
 
-// Type for the create method - matches old Omit<InventoryItem, 'id'>
-export type CreateInventoryItemMethodInput = Omit<InventoryItem, 'id'>;
+interface InventoryLoadingState {
+  isLoading: boolean;
+  operation: 'list' | 'create' | 'update' | 'delete' | null;
+  error: string | null;
+}
 
-class InventoryService extends BaseSyncableEntityService<
-  InventoryItem,
-  InventoryItemServerData
-> {
-  constructor() {
-    const config: SyncableEntityConfig<InventoryItem, InventoryItemServerData> = {
-      entityType: ENTITY_TYPE,
-      fileName: ITEMS_FILE,
-      entityName: 'item',
+/**
+ * Convert API DTO to domain model
+ */
+function dtoToInventoryItem(dto: InventoryItemDto): InventoryItem {
+  return {
+    id: dto.inventoryId,
+    homeId: dto.homeId,
+    name: dto.name,
+    location: dto.location || '',
+    detailedLocation: dto.detailedLocation || '',
+    status: dto.status,
+    icon: (dto.icon as keyof typeof Ionicons.glyphMap) || 'cube',
+    iconColor: dto.iconColor || '#3B82F6',
+    warningThreshold: dto.warningThreshold,
+    batches: dto.batches || [],
+    categoryId: dto.categoryId,
+    createdAt: dto.createdAt,
+    updatedAt: dto.updatedAt,
+  };
+}
 
-      generateId: generateItemId,
+class InventoryService {
+  // Simple state instead of file storage
+  private state: Map<string, InventoryState> = new Map(); // homeId -> state
+  private listeners: Set<() => void> = new Set();
 
-      toServerData: (item) => ({
-        id: item.id,
-        name: item.name,
-        location: item.location,
-        detailedLocation: item.detailedLocation,
-        status: item.status,
-        icon: item.icon,
-        iconColor: item.iconColor,
-        warningThreshold: item.warningThreshold,
-        batches: item.batches,
-        categoryId: item.categoryId,
-        homeId: item.homeId,
-      }),
+  // Loading state tracking
+  private loadingState: InventoryLoadingState = {
+    isLoading: false,
+    operation: null,
+    error: null,
+  };
 
-      fromServerData: (serverData, meta) => ({
-        id: meta.entityId,
-        homeId: meta.homeId,
-        name: serverData.name,
-        location: serverData.location,
-        detailedLocation: serverData.detailedLocation,
-        status: serverData.status,
-        icon: serverData.icon as keyof typeof Ionicons.glyphMap,
-        iconColor: serverData.iconColor,
-        warningThreshold: serverData.warningThreshold,
-        batches: serverData.batches || [],
-        categoryId: serverData.categoryId,
-        createdAt: meta.updatedAt,
-        updatedAt: meta.updatedAt,
-        version: meta.version,
-        serverUpdatedAt: meta.updatedAt,
-        clientUpdatedAt: meta.clientUpdatedAt,
-        lastSyncedAt: meta.serverTimestamp,
-      }),
-
-      toSyncEntity: (item, homeId) => ({
-        entityId: item.id,
-        entityType: ENTITY_TYPE,
-        homeId,
-        data: {
-          id: item.id,
-          name: item.name,
-          location: item.location,
-          detailedLocation: item.detailedLocation,
-          status: item.status,
-          icon: item.icon,
-          iconColor: item.iconColor,
-          warningThreshold: item.warningThreshold,
-          batches: item.batches,
-          categoryId: item.categoryId,
-        },
-        version: item.version,
-        clientUpdatedAt: item.clientUpdatedAt,
-        pendingCreate: !!item.pendingCreate,
-        pendingDelete: !!item.pendingDelete,
-      }),
-
-      createEntity: (input, homeId, id, now) => ({
-        ...input,
-        homeId,
-        id,
-        status: input.status || 'using',
-        createdAt: now,
-        updatedAt: now,
-        version: 1,
-        clientUpdatedAt: now,
-        pendingCreate: true,
-        pendingUpdate: false,
-        pendingDelete: false,
-      }),
-
-      applyUpdate: (entity, updates, now) => ({
-        ...entity,
-        ...updates,
-        updatedAt: now,
-        version: entity.version + 1,
-        clientUpdatedAt: now,
-      }),
-    };
-
-    super(config);
+  /**
+   * Get state for a specific home
+   */
+  private getState(homeId: string): InventoryState {
+    if (!this.state.has(homeId)) {
+      this.state.set(homeId, { items: [] });
+    }
+    return this.state.get(homeId)!;
   }
 
   /**
-   * Search and filter items
+   * Subscribe to inventory state changes
+   * @returns Unsubscribe function
    */
-  async searchItems(
+  subscribe(callback: () => void): () => void {
+    this.listeners.add(callback);
+    return () => {
+      this.listeners.delete(callback);
+    };
+  }
+
+  /**
+   * Notify all listeners of state change
+   */
+  private notifyListeners(): void {
+    this.listeners.forEach((cb) => cb());
+  }
+
+  /**
+   * Get current loading state
+   */
+  getLoadingState(): InventoryLoadingState {
+    return { ...this.loadingState };
+  }
+
+  /**
+   * Set loading state
+   */
+  private setLoading(
+    operation: InventoryLoadingState['operation'],
+    error: string | null = null
+  ): void {
+    this.loadingState = {
+      isLoading: operation !== null,
+      operation,
+      error,
+    };
+    this.notifyListeners();
+  }
+
+  /**
+   * Fetch inventory items from server for a home
+   */
+  async fetchInventoryItems(apiClient: ApiClient, homeId: string): Promise<InventoryItem[]> {
+    this.setLoading('list');
+    try {
+      const response = (await apiClient.listInventoryItems(homeId)) as ListInventoryItemsResponse;
+      const items = response.inventoryItems.map((dto) => dtoToInventoryItem(dto));
+
+      // Update state
+      const state = this.getState(homeId);
+      state.items = items;
+
+      this.setLoading(null);
+      this.notifyListeners();
+      return items;
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : 'Failed to fetch inventory items';
+      apiLogger.error('Failed to fetch inventory items:', error);
+      this.setLoading(null, errorMessage);
+      throw error;
+    }
+  }
+
+  /**
+   * Create a new inventory item
+   */
+  async createInventoryItem(
+    apiClient: ApiClient,
+    homeId: string,
+    input: Omit<InventoryItem, 'id' | 'homeId' | 'createdAt' | 'updatedAt'>
+  ): Promise<InventoryItem | null> {
+    this.setLoading('create');
+    try {
+      const newId = generateItemId();
+      const request: CreateInventoryItemRequest = {
+        inventoryId: newId,
+        name: input.name,
+        location: input.location,
+        detailedLocation: input.detailedLocation,
+        status: input.status,
+        icon: input.icon,
+        iconColor: input.iconColor,
+        warningThreshold: input.warningThreshold,
+        categoryId: input.categoryId,
+        batches: input.batches,
+      };
+
+      const response = (await apiClient.createInventoryItem(
+        homeId,
+        request
+      )) as CreateInventoryItemResponse;
+      const newItem = dtoToInventoryItem(response.inventoryItem);
+
+      // Add to state
+      const state = this.getState(homeId);
+      state.items = [newItem, ...state.items];
+
+      this.setLoading(null);
+      this.notifyListeners();
+      return newItem;
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : 'Failed to create inventory item';
+      apiLogger.error('Failed to create inventory item:', error);
+      this.setLoading(null, errorMessage);
+      throw error;
+    }
+  }
+
+  /**
+   * Update an inventory item
+   */
+  async updateInventoryItem(
+    apiClient: ApiClient,
+    homeId: string,
+    inventoryId: string,
+    updates: Partial<Omit<InventoryItem, 'id' | 'homeId' | 'createdAt' | 'updatedAt'>>
+  ): Promise<InventoryItem | null> {
+    this.setLoading('update');
+    try {
+      const request: UpdateInventoryItemRequest = {
+        name: updates.name,
+        location: updates.location,
+        detailedLocation: updates.detailedLocation,
+        status: updates.status,
+        icon: updates.icon,
+        iconColor: updates.iconColor,
+        warningThreshold: updates.warningThreshold,
+        categoryId: updates.categoryId,
+        batches: updates.batches,
+      };
+
+      const response = (await apiClient.updateInventoryItem(
+        homeId,
+        inventoryId,
+        request
+      )) as UpdateInventoryItemResponse;
+      const updatedItem = dtoToInventoryItem(response.inventoryItem);
+
+      // Update in state
+      const state = this.getState(homeId);
+      const index = state.items.findIndex((i) => i.id === inventoryId);
+      if (index >= 0) {
+        state.items = [
+          ...state.items.slice(0, index),
+          updatedItem,
+          ...state.items.slice(index + 1),
+        ];
+      }
+
+      this.setLoading(null);
+      this.notifyListeners();
+      return updatedItem;
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : 'Failed to update inventory item';
+      apiLogger.error('Failed to update inventory item:', error);
+      this.setLoading(null, errorMessage);
+      throw error;
+    }
+  }
+
+  /**
+   * Delete an inventory item
+   */
+  async deleteInventoryItem(
+    apiClient: ApiClient,
+    homeId: string,
+    inventoryId: string
+  ): Promise<boolean> {
+    this.setLoading('delete');
+    try {
+      (await apiClient.deleteInventoryItem(homeId, inventoryId)) as DeleteInventoryItemResponse;
+
+      // Remove from state
+      const state = this.getState(homeId);
+      state.items = state.items.filter((i) => i.id !== inventoryId);
+
+      this.setLoading(null);
+      this.notifyListeners();
+      return true;
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : 'Failed to delete inventory item';
+      apiLogger.error('Failed to delete inventory item:', error);
+      this.setLoading(null, errorMessage);
+      throw error;
+    }
+  }
+
+  /**
+   * Search and filter items (local search on state)
+   */
+  searchItems(
     homeId: string,
     query?: string,
-    filters?: {
-      expiringSoon?: boolean; // Items expiring within 7 days
+    _filters?: {
+      expiringSoon?: boolean;
     }
-  ): Promise<InventoryItem[]> {
-    let items = await this.getAll(homeId); // Already filters out deleted items
-
-    if (filters?.expiringSoon) {
-      items = items.filter((item) => {
-        const earliestExpiry = getEarliestExpiry(item.batches || []);
-        return earliestExpiry ? isExpiringSoon(earliestExpiry) : false;
-      });
-    }
+  ): InventoryItem[] {
+    let items = this.getAllItems(homeId);
 
     if (query?.trim()) {
       const lowerQuery = query.toLowerCase();
@@ -145,46 +284,31 @@ class InventoryService extends BaseSyncableEntityService<
     return items;
   }
 
-  // Method aliases for backward compatibility with components
-  async getAllItems(homeId: string): Promise<InventoryItem[]> {
-    const items: InventoryItem[] = await this.getAll(homeId);
-    return items;
+  /**
+   * Get all inventory items for a home (from state)
+   */
+  getAllItems(homeId: string): InventoryItem[] {
+    const state = this.getState(homeId);
+    return [...state.items];
   }
 
-  async getAllItemsForSync(homeId: string): Promise<InventoryItem[]> {
-    return this.getAllForSync(homeId);
+  /**
+   * Get a specific inventory item by ID
+   */
+  getItemById(homeId: string, itemId: string): InventoryItem | null {
+    const state = this.getState(homeId);
+    return state.items.find((i) => i.id === itemId) || null;
   }
 
-  async getItemById(id: string, homeId: string): Promise<InventoryItem | null> {
-    return this.getById(id, homeId);
-  }
-
-  async createItem(
-    input: CreateInventoryItemMethodInput,
-    homeId: string
-  ): Promise<InventoryItem | null> {
-    return this.create(input as CreateEntityInput<InventoryItem>, homeId);
-  }
-
-  async updateItem(
-    id: string,
-    updates: Partial<Omit<InventoryItem, 'id'>>,
-    homeId: string
-  ): Promise<InventoryItem | null> {
-    return this.update(id, updates, homeId);
-  }
-
-  async deleteItem(id: string, homeId: string): Promise<boolean> {
-    return this.delete(id, homeId);
-  }
-
-  async syncItems(
-    homeId: string,
-    apiClient: ApiClient,
-    deviceId: string
-  ): Promise<SyncDelta<InventoryItem>> {
-    return this.sync(homeId, apiClient, deviceId);
+  /**
+   * Clear all inventory items for a home (useful when switching homes)
+   */
+  clearInventoryItems(homeId: string): void {
+    const state = this.getState(homeId);
+    state.items = [];
+    this.notifyListeners();
   }
 }
 
 export const inventoryService = new InventoryService();
+export type { InventoryService };

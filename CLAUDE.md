@@ -25,6 +25,13 @@ npm run lint:fix      # Fix ESLint issues automatically
 npm run build         # Run TypeScript compiler check
 ```
 
+### Testing
+```bash
+npm test              # Run Jest tests
+npm run test:watch    # Run Jest in watch mode
+npm run test:coverage # Run tests with coverage report
+```
+
 ### Building (via Makefile)
 ```bash
 make install-deps                    # Install dependencies with --legacy-peer-deps
@@ -55,12 +62,12 @@ See README.md for detailed Google OAuth configuration instructions.
 ## Architecture
 
 ### Technology Stack
-- **Framework**: React Native 0.81.5 with Expo ~54.0.31
+- **Framework**: React Native 0.81.5 with Expo ~54.0.33
 - **Language**: TypeScript 5.9.3
 - **Navigation**: React Navigation 7.x (Bottom tabs + Stack navigation)
 - **State Management**: Redux Toolkit + Redux Saga
 - **Styling**: Styled Components
-- **Internationalization**: i18next (English and Chinese/zh-CN)
+- **Internationalization**: i18next (English, Chinese/zh-CN, Japanese/ja)
 
 ### State Management Pattern
 
@@ -68,10 +75,13 @@ The app uses **Redux hooks** instead of React Context for state management. Doma
 
 ```typescript
 // Instead of useContext, use these hooks:
-import { useAuth, useSettings, useTodos, useSync, useInventory, useCategory, useSelectedCategory } from '../store/hooks';
+import { useAuth, useSettings, useTodos, useInventory, useInventoryCategories, useTodoCategories, useSelectedCategory, useLocations } from '../store/hooks';
 
 const { user, isAuthenticated, getApiClient } = useAuth();
 const { items, createItem, updateItem } = useInventory();
+const { categories } = useInventoryCategories();  // For inventory item categories
+const { categories: todoCategories } = useTodoCategories();  // For todo categories
+const { locations } = useLocations();  // For storage locations
 ```
 
 ### API Client Architecture
@@ -101,12 +111,11 @@ Sagas access the API client via:
 const apiClient: ApiClient = yield select((state: RootState) => state.auth.apiClient);
 ```
 
-### Non-Serializable State
+#### Non-Serializable State
 
 Redux store contains non-serializable values (ignored in serializableCheck):
 - `auth.apiClient` - ApiClient class instance
-- `sync.syncService` - SyncService class instance
-- `refresh.categoryCallbacks` - Set of callback functions
+- `refresh.categoryCallbacks` - Set of callback functions (deprecated, replaced by Redux state)
 
 ### Home-Scoped Data Architecture
 
@@ -114,7 +123,7 @@ All data (inventory items, todos, categories) is scoped to the **active home**. 
 
 - `activeHomeId` in Redux `auth` state is the source of truth for which home is selected
 - `useHome()` hook (`src/hooks/useHome.ts`) manages home CRUD and switching via `HomeService`
-- `HomeService` (`src/services/HomeService.ts`) uses RxJS `BehaviorSubject` for reactive home state
+- `HomeService` (`src/services/HomeService.ts`) uses simple state with listener pattern (not RxJS)
 - `FileSystemService` scopes files by appending `_{homeId}` to filenames (e.g., `items_abc123.json`)
 - Global files (like `settings.json`, `homes.json`) are NOT home-scoped
 
@@ -126,22 +135,19 @@ function* getFileUserId() {
 }
 ```
 
-### Sync Architecture
+### CRUD Services Architecture
 
-**Sync ordering** (in `inventorySaga.ts`): Homes sync first, then per-home content:
-1. `homeService.syncHomes(apiClient)` - sync home list
-2. For each home: `syncItems()` → `syncCategories()` → `syncTodos()`
-3. Silent refresh of active home's UI state
-
-**Pending-state pattern**: All entities (Home, InventoryItem, TodoItem, Category) carry sync metadata:
-- `pendingCreate`, `pendingUpdate`, `pendingDelete` - offline operation flags
-- `clientUpdatedAt` / `serverUpdatedAt` - conflict detection timestamps
-- `version` - optimistic concurrency (on items/todos)
-- `lastSyncedAt` - last successful sync timestamp
-
-Homes also have `pendingJoin` and `pendingLeave` flags. The `homes$` observable filters out pending-delete/leave homes so UI updates immediately.
-
-**Device identification**: `getDeviceId()` from `src/utils/deviceUtils.ts` provides a persistent device ID (stored in SecureStore) passed to batch sync requests.
+Categories, locations, and homes now use **RESTful CRUD API endpoints** (not legacy sync):
+- **Categories** (`useInventoryCategories`): Create, update, delete via API with Redux state management
+- **Locations** (`useLocations`): Create, update, delete via API with Redux state management
+- **Todo Categories** (`useTodoCategories`): Create, update, delete via API with Redux state management
+- **Homes** (`useHome`): Full CRUD with owner/member roles and invitation codes
+```typescript
+function* getFileUserId() {
+  const state: RootState = yield select();
+  return state.auth.activeHomeId || undefined;
+}
+```
 
 ### Household Sharing
 
@@ -151,7 +157,7 @@ Users can share their inventory and todos with family members via invitation cod
 - Members can pull shared data but cannot push to shared accounts
 - Maximum 20 members per household
 
-See `SHARING_API.md` for detailed API documentation.
+See `API.md` for detailed API documentation including sharing endpoints.
 
 ## Important Patterns
 
@@ -394,7 +400,7 @@ src/
 ├── i18n/               # i18next internationalization (en, zh-CN)
 ├── navigation/         # React Navigation (2-level: RootStack → MainTabs)
 ├── screens/            # Screen components
-├── services/           # Business logic (ApiClient, AuthService, SyncService, etc.)
+├── services/           # Business logic (ApiClient, AuthService, HomeService, etc.)
 ├── store/              # Redux Toolkit + Saga (slices/, sagas/, hooks.ts)
 ├── theme/              # Theme provider and styled-components configuration
 ├── types/              # TypeScript type definitions
@@ -411,6 +417,7 @@ src/
 - **NEVER** populate modal forms after presentation - ALWAYS pre-fill before presenting via `present(data)` method
 - **NEVER** omit `backgroundStyle={{ backgroundColor: 'transparent' }}` on `BottomSheetModal` when using custom `ContentContainer` - causes double-layer visual artifact
 - **NEVER** assume handler parameters have default values when used with event handlers - ALL event handlers (`onPress`, `onClick`, `onChange`, etc.) pass an event object as first argument, always check `typeof param` or use arrow function wrapper
+- **NEVER** call `homeService.switchHome()` directly from components without also dispatching `setActiveHomeId` action - this causes state desync
 
 ## Cursor Rules
 
@@ -442,18 +449,18 @@ The app uses a centralized logging system (`src/utils/Logger.ts`) with configura
 
 **IMPORTANT**: Use the logger instead of `console.log()` for consistent, configurable logging:
 ```typescript
-import { syncLogger, apiLogger, authLogger } from '../utils/Logger';
+import { storageLogger, apiLogger, authLogger } from '../utils/Logger';
 
 // Basic logging
-syncLogger.info('Sync started');
-syncLogger.error('Sync failed', error);
-syncLogger.warn('Deprecated API used');
+storageLogger.info('Operation started');
+storageLogger.error('Operation failed', error);
+authLogger.warn('Deprecated API used');
 
 // Operation lifecycle
-syncLogger.start('Full sync');
+storageLogger.start('Full data load');
 // ... do work ...
-syncLogger.end('Full sync', durationMs);
-syncLogger.fail('Full sync', error);
+storageLogger.end('Full data load', durationMs);
+storageLogger.fail('Full data load', error);
 
 // Create a scoped logger for custom categories
 import { logger } from '../utils/Logger';
@@ -462,8 +469,34 @@ const customLogger = logger.scoped('myFeature');
 
 ### Configuration via .env
 - `EXPO_PUBLIC_LOG_LEVEL`: silent | error | warn | info | debug | verbose
-- `EXPO_PUBLIC_LOG_CATEGORIES`: Comma-separated list (api, sync, auth, storage, etc.) or * for all
+- `EXPO_PUBLIC_LOG_CATEGORIES`: Comma-separated list (api, auth, storage, etc.) or * for all
 - `EXPO_PUBLIC_LOG_TIMESTAMPS`: true/false
 - `EXPO_PUBLIC_LOG_EMOJIS`: true/false
 
 See `LOGGING.md` for detailed documentation.
+
+## Testing
+
+The project uses Jest for unit testing services and business logic:
+
+```bash
+npm test              # Run Jest tests
+npm run test:watch    # Run Jest in watch mode
+npm run test:coverage # Run tests with coverage report
+```
+
+**Test configuration**: `jest.config.js` with `ts-jest` preset
+**Test environment**: Node (not jsdom - for pure logic testing, not components)
+**Test patterns**: `**/*.spec.ts`, `**/*.test.ts`, `**/__tests__/**/*.ts`
+**Setup file**: `jest.setup.js` (mocks React Native modules: expo-file-system, AsyncStorage, expo-secure-store)
+
+**Focus areas for testing**:
+- Services (`src/services/`) - business logic, API client interactions
+- Utilities (`src/utils/`) - pure functions, formatters, validators
+- Store slices - Redux reducers and selectors
+- Sagas - async flows (use proper saga test helpers)
+
+**Avoid testing**:
+- Components - prefer manual testing or E2E for UI
+- Navigation - screen navigators are better tested manually
+- Third-party integrations - mock external dependencies

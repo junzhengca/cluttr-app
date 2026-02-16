@@ -90,32 +90,6 @@ export const EditHomeBottomSheet: React.FC<EditHomeBottomSheetProps> = ({
         bottomSheetRef.current?.dismiss();
     }, [bottomSheetRef]);
 
-    const handleSubmit = async () => {
-        if (!name.trim() || !home) return;
-
-        if (!isAuthenticated) {
-            uiLogger.error('Cannot update home: user not authenticated');
-            return;
-        }
-
-        const apiClient = getApiClient();
-        if (!apiClient) {
-            uiLogger.error('Cannot update home: API client not available');
-            return;
-        }
-
-        try {
-            const success = await updateHome(apiClient, home.id, { name, address });
-
-            if (success) {
-                handleClose();
-                onHomeUpdated?.();
-            }
-        } catch (error) {
-            uiLogger.error('Failed to update home', error);
-        }
-    };
-
     const renderBackdrop = useCallback(
         (props: BottomSheetBackdropProps) => (
             <BottomSheetBackdrop
@@ -131,22 +105,50 @@ export const EditHomeBottomSheet: React.FC<EditHomeBottomSheetProps> = ({
     const isLoading = loadingState.operation === 'update' && loadingState.isLoading;
     const error = loadingState.operation === 'update' ? loadingState.error : null;
 
-    const renderFooter = useCallback(() => (
-        <FooterContainer bottomInset={insets.bottom} showSafeArea={!isKeyboardVisible}>
-            {error && (
-                <ErrorBanner style={{ marginBottom: 8 }}>
-                    <ErrorText>{error}</ErrorText>
-                </ErrorBanner>
-            )}
-            <Button
-                label={t('home.edit.submit')}
-                onPress={handleSubmit}
-                variant="primary"
-                disabled={!name.trim() || isLoading}
-                fullWidth
-            />
-        </FooterContainer>
-    ), [insets.bottom, isKeyboardVisible, handleSubmit, name, isLoading, error, t]);
+    const renderFooter = useCallback(() => {
+        const handleSubmit = async () => {
+            if (!name.trim() || !home) return;
+
+            if (!isAuthenticated) {
+                uiLogger.error('Cannot update home: user not authenticated');
+                return;
+            }
+
+            const apiClient = getApiClient();
+            if (!apiClient) {
+                uiLogger.error('Cannot update home: API client not available');
+                return;
+            }
+
+            try {
+                const success = await updateHome(apiClient, home.id, { name, address });
+
+                if (success) {
+                    handleClose();
+                    onHomeUpdated?.();
+                }
+            } catch (error) {
+                uiLogger.error('Failed to update home', error);
+            }
+        };
+
+        return (
+            <FooterContainer bottomInset={insets.bottom} showSafeArea={!isKeyboardVisible}>
+                {error && (
+                    <ErrorBanner style={{ marginBottom: 8 }}>
+                        <ErrorText>{error}</ErrorText>
+                    </ErrorBanner>
+                )}
+                <Button
+                    label={t('home.edit.submit')}
+                    onPress={handleSubmit}
+                    variant="primary"
+                    disabled={!name.trim() || isLoading}
+                    fullWidth
+                />
+            </FooterContainer>
+        );
+    }, [insets.bottom, isKeyboardVisible, isAuthenticated, getApiClient, updateHome, home, name, address, error, isLoading, handleClose, onHomeUpdated, t]);
 
     const footerHeight = 82 + (isKeyboardVisible ? 0 : insets.bottom);
 

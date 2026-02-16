@@ -53,35 +53,6 @@ const Content = styled(ScrollView)`
   padding: ${({ theme }: StyledProps) => theme.spacing.md}px;
 `;
 
-const ModeToggleContainer = styled(View)`
-  background-color: ${({ theme }: StyledProps) => theme.colors.surface};
-  border-radius: ${({ theme }: StyledProps) => theme.borderRadius.xl}px;
-  margin-bottom: ${({ theme }: StyledProps) => theme.spacing.md}px;
-  padding: ${({ theme }: StyledProps) => theme.spacing.xs}px;
-  flex-direction: row;
-  height: 48px;
-  border-width: 1px;
-  border-color: ${({ theme }: StyledProps) => theme.colors.borderLight};
-`;
-
-const ModeButton = styled(TouchableOpacity) <{ isActive: boolean }>`
-  flex: 1;
-  flex-direction: row;
-  align-items: center;
-  justify-content: center;
-  border-radius: ${({ theme }: StyledProps) => theme.borderRadius.lg}px;
-  background-color: ${({ theme, isActive }: StyledPropsWith<{ isActive: boolean }>) =>
-    isActive ? theme.colors.primary : 'transparent'};
-`;
-
-const ModeText = styled(Text) <{ isActive: boolean }>`
-  font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.sm}px;
-  font-weight: 600;
-  color: ${({ theme, isActive }: StyledPropsWith<{ isActive: boolean }>) =>
-    isActive ? '#FFFFFF' : theme.colors.textSecondary};
-  margin-left: ${({ theme }: StyledProps) => theme.spacing.xs}px;
-`;
-
 const AddTodoContainer = styled(View) <{ isFocused: boolean }>`
   background-color: ${({ theme }: StyledProps) => theme.colors.surface};
   border-radius: ${({ theme }: StyledProps) => theme.borderRadius.xl}px;
@@ -282,7 +253,6 @@ export const NotesScreen: React.FC = () => {
     loading,
     addingTodo,
     updatingTodoIds,
-    error,
     refreshTodos,
     addTodo,
     toggleTodoCompletion,

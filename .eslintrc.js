@@ -50,8 +50,8 @@ module.exports = {
       ignoreTypeReferences: false,
     }],
 
-    // Ensure all imports are used
-    '@typescript-eslint/no-unused-vars': ['warn', {
+    // Ensure all imports are used (ERROR to prevent future violations)
+    '@typescript-eslint/no-unused-vars': ['error', {
       argsIgnorePattern: '^_',
       varsIgnorePattern: '^_',
     }],
@@ -72,6 +72,9 @@ module.exports = {
     // Ensure React is in scope when using JSX
     'react/react-in-jsx-scope': 'off', // Not needed in React 17+
     'react/jsx-uses-react': 'off', // Not needed in React 17+
+
+    // React Hooks: ensure all dependencies are listed (ERROR to prevent future bugs)
+    'react-hooks/exhaustive-deps': 'error',
 
     // Disable prop-types validation (TypeScript handles this better)
     'react/prop-types': 'off', // TypeScript provides type checking, prop-types is redundant

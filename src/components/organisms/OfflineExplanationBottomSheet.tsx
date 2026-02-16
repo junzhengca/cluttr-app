@@ -1,5 +1,5 @@
 import React, { forwardRef, useMemo } from 'react';
-import { StyleSheet, View, Text as RNText } from 'react-native';
+import { Text as RNText } from 'react-native';
 import { BottomSheetModal, BottomSheetView } from '@gorhom/bottom-sheet';
 import styled, { useTheme } from 'styled-components/native';
 import { useTranslation } from 'react-i18next';
@@ -51,7 +51,7 @@ interface OfflineExplanationBottomSheetProps {
 }
 
 export const OfflineExplanationBottomSheet = forwardRef<BottomSheetModal, OfflineExplanationBottomSheetProps>(
-    ({ bottomSheetRef, onDismiss }, ref) => {
+    ({ bottomSheetRef, onDismiss }, _ref) => {
         const theme = useTheme();
         const { t } = useTranslation();
         const snapPoints = useMemo(() => ['45%'], []);
@@ -96,3 +96,5 @@ export const OfflineExplanationBottomSheet = forwardRef<BottomSheetModal, Offlin
         );
     }
 );
+
+OfflineExplanationBottomSheet.displayName = 'OfflineExplanationBottomSheet';

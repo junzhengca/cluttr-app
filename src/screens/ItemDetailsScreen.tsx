@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Alert, ActivityIndicator, ScrollView, View, Text } from 'react-native';
 import styled from 'styled-components/native';
 import { useRoute, useNavigation } from '@react-navigation/native';
@@ -8,13 +8,11 @@ import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../theme/ThemeProvider';
-import { useInventory, useSettings, useAppSelector } from '../store/hooks';
+import { useInventory, useSettings, useAppSelector, useInventoryCategories, useLocations } from '../store/hooks';
 import { selectItemById } from '../store/slices/inventorySlice';
 import { RootStackParamList } from '../navigation/types';
-import { InventoryItem, Category } from '../types/inventory';
+import { InventoryItem } from '../types/inventory';
 import { inventoryService } from '../services/InventoryService';
-import { categoryService } from '../services/CategoryService';
-import { locations } from '../data/locations';
 import {
   getCurrencySymbol,
   EditItemBottomSheet,
@@ -27,11 +25,9 @@ import {
 } from '../components';
 import { useItemActions } from '../hooks/useItemActions';
 import { useHome } from '../hooks/useHome';
-import { formatDate, formatPrice } from '../utils/formatters';
 
 import { calculateBottomActionBarPadding } from '../utils/layout';
-import { getTotalAmount, getTotalValue, getEarliestExpiry, getLatestPurchase } from '../utils/batchUtils';
-import type { Theme } from '../theme/types';
+import { getTotalAmount } from '../utils/batchUtils';
 import type { StyledProps } from '../utils/styledComponents';
 import { uiLogger } from '../utils/Logger';
 
@@ -44,7 +40,7 @@ type RouteProp = {
 
 const Container = styled(View)`
   flex: 1;
-  background-color: ${({ theme }: { theme: Theme }) => theme.colors.background};
+  background-color: ${({ theme }: StyledProps) => theme.colors.background};
 `;
 
 const ScrollContainer = styled(View)`
@@ -129,58 +125,6 @@ const SectionTitle = styled(Text)`
   margin-bottom: ${({ theme }: StyledProps) => theme.spacing.md}px;
 `;
 
-const PropertyRow = styled(View)`
-  flex-direction: row;
-  align-items: center;
-  padding-vertical: ${({ theme }: StyledProps) => theme.spacing.sm}px;
-  border-bottom-width: 1px;
-  border-color: ${({ theme }: StyledProps) => theme.colors.borderLight};
-`;
-
-const PropertyRowLast = styled(View)`
-  flex-direction: row;
-  align-items: center;
-  padding-vertical: ${({ theme }: StyledProps) => theme.spacing.sm}px;
-`;
-
-const PropertyIcon = styled(View)`
-  width: 36px;
-  height: 36px;
-  border-radius: 18px;
-  background-color: ${({ theme }: StyledProps) => theme.colors.borderLight};
-  align-items: center;
-  justify-content: center;
-  margin-right: ${({ theme }: StyledProps) => theme.spacing.md}px;
-`;
-
-const PropertyContent = styled(View)`
-  flex: 1;
-`;
-
-const PropertyLabel = styled(Text)`
-  font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.sm}px;
-  color: ${({ theme }: StyledProps) => theme.colors.textLight};
-  margin-bottom: 2px;
-`;
-
-const PropertyValue = styled(Text)`
-  font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.md}px;
-  color: ${({ theme }: StyledProps) => theme.colors.text};
-`;
-
-const RestockBadge = styled(View)`
-  flex-direction: row;
-  align-items: center;
-  margin-top: 4px;
-`;
-
-const RestockText = styled(Text)`
-  font-size: 12px;
-  color: #FF5252;
-  font-weight: ${({ theme }: StyledProps) => theme.typography.fontWeight.medium};
-  margin-left: 4px;
-`;
-
 const LoadingContainer = styled(View)`
   flex: 1;
   justify-content: center;
@@ -208,31 +152,27 @@ export const ItemDetailsScreen: React.FC = () => {
   const { settings } = useSettings();
   const { confirmDelete } = useItemActions();
   const { currentHomeId } = useHome();
-  const { deleteItem, loading: itemsLoading, loadItems } = useInventory();
+  const { categories } = useInventoryCategories();
+  const { locations, refreshLocations } = useLocations();
+  const { loading: itemsLoading, loadItems } = useInventory();
   const navigation = useNavigation<NavigationProp>();
   const route = useRoute<RouteProp>();
   const { itemId } = route.params;
   const insets = useSafeAreaInsets();
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
 
   // Get item from Redux store
   const itemFromRedux = useAppSelector((state) => selectItemById(state, itemId));
   const [item, setItem] = useState<InventoryItem | null>(itemFromRedux);
   const [isLoading, setIsLoading] = useState(!itemFromRedux && itemsLoading);
   const [locationName, setLocationName] = useState<string>('');
-  const [statusName, setStatusName] = useState<string>('');
   const [categoryName, setCategoryName] = useState<string>('');
   const [categoryColor, setCategoryColor] = useState<string | undefined>(undefined);
   const bottomSheetModalRef = useRef<BottomSheetModal>(null);
   const addBatchBottomSheetRef = useRef<BottomSheetModal>(null);
   const editBottomSheetRef = useRef<EditItemBottomSheetRef>(null);
-  const activeHomeId = useAppSelector(state => state.auth.activeHomeId);
 
   const currencySymbol = getCurrencySymbol(settings.currency);
-
-  const getLocale = useCallback(() => {
-    return i18n.language === 'zh' ? 'zh-CN' : 'en-US';
-  }, [i18n.language]);
 
   // Load item if not in Redux
   useEffect(() => {
@@ -258,7 +198,7 @@ export const ItemDetailsScreen: React.FC = () => {
           navigation.goBack();
           return;
         }
-        const itemData = await inventoryService.getItemById(itemId, currentHomeId);
+        const itemData = inventoryService.getItemById(currentHomeId, itemId);
         if (itemData) {
           setItem(itemData);
           // Trigger a reload of items to sync Redux
@@ -277,35 +217,36 @@ export const ItemDetailsScreen: React.FC = () => {
     };
 
     loadItem();
-  }, [itemFromRedux, itemId, itemsLoading, loadItems, navigation, t]);
+  }, [itemFromRedux, currentHomeId, itemId, itemsLoading, loadItems, navigation, t]);
+
+  // Load locations on mount
+  useEffect(() => {
+    refreshLocations();
+  }, [refreshLocations]);
 
   // Load location and status when item changes
   useEffect(() => {
     if (item) {
       const location = locations.find((loc) => loc.id === item.location);
-      // Use i18n translation for location name
-      setLocationName(location ? t(`locations.${location.id}`) : item.location);
-
-      // Use i18n translation for status name
-      setStatusName(t(`statuses.${item.status}`));
+      // Use location name from API
+      setLocationName(location ? location.name : item.location);
 
       // Load category if exists
-      if (item.categoryId && activeHomeId) {
-        categoryService.getCategoryById(item.categoryId, activeHomeId).then(category => {
-          if (category) {
-            setCategoryName(category.name);
-            setCategoryColor(category.color);
-          } else {
-            setCategoryName('');
-            setCategoryColor(undefined);
-          }
-        });
+      if (item.categoryId) {
+        const category = categories.find(c => c.id === item.categoryId);
+        if (category) {
+          setCategoryName(category.name);
+          setCategoryColor(category.color);
+        } else {
+          setCategoryName('');
+          setCategoryColor(undefined);
+        }
       } else {
         setCategoryName('');
         setCategoryColor(undefined);
       }
     }
-  }, [item, t, activeHomeId]);
+  }, [item, t, categories, locations]);
 
   const handleDelete = () => {
     confirmDelete(itemId, () => {
@@ -334,9 +275,6 @@ export const ItemDetailsScreen: React.FC = () => {
   };
 
   const totalAmount = item ? getTotalAmount(item.batches || []) : 0;
-  const needsRestock =
-    item &&
-    totalAmount <= (item.warningThreshold ?? 0);
 
   // Calculate bottom padding for action bar
   const bottomPadding = calculateBottomActionBarPadding(insets.bottom);

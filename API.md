@@ -4,7 +4,7 @@
 
 Home Inventory Sync Server API
 
-**Generated:** 2026-02-15T10:44:05.944Z
+**Generated:** 2026-02-16T04:38:08.029Z
 
 ## Table of Contents
 
@@ -39,14 +39,26 @@ Home Inventory Sync Server API
   - [POST Regenerate home invitation code](#homes-regenerate-invitation)
   - [POST Create a new home](#homes-create)
   - [GET List all members of a home](#homes-list-members)
+- [Inventory Items](#inventory-items)
+  - [GET Get details of a specific inventory item](#inventory-items-get)
+  - [PATCH Update an inventory item](#inventory-items-update)
+  - [DELETE Delete an inventory item](#inventory-items-delete)
+  - [GET List all inventory items for a home](#inventory-items-list)
+  - [POST Create a new inventory item](#inventory-items-create)
 - [Ai](#ai)
   - [POST Recognize inventory item from image](#ai-recognize-item)
-- [Sync Entities](#sync-entities)
-  - [GET Pull entities for a home and entity type](#sync-entities-pull-entities)
-  - [POST Combined pull and push in a single request](#sync-entities-batch-sync)
-  - [POST Push entity changes to the server with automatic conflict resolution](#sync-entities-push-entities)
-  - [DELETE Clear sync checkpoints forcing full re-sync](#sync-entities-reset-sync)
-  - [GET Get sync status for entity types in a home](#sync-entities-get-sync-status)
+- [Locations](#locations)
+  - [POST Create a new location](#locations-create)
+  - [GET List all locations for a home](#locations-list)
+  - [DELETE Delete a location](#locations-delete)
+  - [PATCH Update a location](#locations-update)
+  - [GET Get details of a specific location](#locations-get)
+- [Inventory Categories](#inventory-categories)
+  - [DELETE Delete an inventory category](#inventory-categories-delete)
+  - [GET Get a specific inventory category](#inventory-categories-get)
+  - [PATCH Update an inventory category](#inventory-categories-update)
+  - [POST Create a new inventory category](#inventory-categories-create)
+  - [GET List all inventory categories for a home](#inventory-categories-list)
 - [Debug](#debug)
   - [GET Interactive API Debug Dashboard](#debug-get-debugz)
   - [POST Proxy requests to API endpoints](#debug-proxy-debugz-request)
@@ -3818,6 +3830,947 @@ An unexpected error occurred on the server
 
 ---
 
+## Inventory Items
+
+### GET /homes/:homeId/inventory/:inventoryId
+
+<a id="inventory-items-get"></a>
+
+**ID:** `inventory_items.get`
+
+**Get details of a specific inventory item**
+
+Retrieves detailed information about a specific inventory item. User must be a member of the home that contains the inventory item.
+
+**Authentication:** Required (jwt)
+
+**Tags:** `Inventory Items`
+
+#### Path Parameters
+
+| Name          | Type   | Required | Description                                  |
+| ------------- | ------ | -------- | -------------------------------------------- |
+| `homeId`      | string | Yes      | The home ID that contains the inventory item |
+| `inventoryId` | string | Yes      | The unique identifier of the inventory item  |
+
+#### Response (200)
+
+Inventory item details retrieved successfully
+
+**Example:**
+
+```json
+{
+  "inventoryItem": {
+    "inventoryId": "milk-carton",
+    "homeId": "my-home",
+    "name": "Milk",
+    "status": "new",
+    "warningThreshold": 2,
+    "categoryId": "dairy",
+    "batches": [
+      {
+        "id": "batch-1",
+        "amount": 1,
+        "unit": "gallon",
+        "expiryDate": "2024-02-01T00:00:00.000Z",
+        "createdAt": "2024-01-15T10:30:00.000Z"
+      }
+    ],
+    "createdBy": "507f1f77bcf86cd799439011",
+    "updatedBy": "507f1f77bcf86cd799439011",
+    "createdByDeviceId": null,
+    "updatedByDeviceId": null,
+    "createdAt": "2024-01-15T10:30:00.000Z",
+    "updatedAt": "2024-01-15T10:30:00.000Z"
+  }
+}
+```
+
+#### Error Responses
+
+##### 400 - `HOME_ID_REQUIRED`
+
+homeId is required
+
+The homeId path parameter must be provided
+
+**Example:**
+
+```json
+{
+  "error": "homeId_required",
+  "message": "homeId is required"
+}
+```
+
+##### 400 - `INVENTORY_ID_REQUIRED`
+
+inventoryId is required
+
+The inventoryId path parameter must be provided
+
+**Example:**
+
+```json
+{
+  "error": "inventoryId_required",
+  "message": "inventoryId is required"
+}
+```
+
+##### 401 - `UNAUTHORIZED`
+
+Unauthorized
+
+No authentication token provided
+
+**Example:**
+
+```json
+{
+  "message": "Unauthorized"
+}
+```
+
+##### 403 - `FORBIDDEN`
+
+Forbidden
+
+User is not a member of this home
+
+**Example:**
+
+```json
+{
+  "error": "forbidden",
+  "message": "Not a member of this home"
+}
+```
+
+##### 404 - `HOME_NOT_FOUND`
+
+Home not found
+
+The specified home does not exist
+
+**Example:**
+
+```json
+{
+  "error": "home_not_found",
+  "message": "Home not found"
+}
+```
+
+##### 404 - `INVENTORY_NOT_FOUND`
+
+Inventory item not found
+
+No inventory item exists with the provided inventoryId
+
+**Example:**
+
+```json
+{
+  "error": "inventory_not_found",
+  "message": "Inventory item not found"
+}
+```
+
+##### 500 - `SERVER_ERROR`
+
+Internal server error
+
+An unexpected error occurred on server
+
+**Example:**
+
+```json
+{
+  "message": "Internal server error"
+}
+```
+
+**Related Endpoints:**
+
+- [`inventory_items.create`](#inventory-items-create)
+- [`inventory_items.list`](#inventory-items-list)
+- [`inventory_items.update`](#inventory-items-update)
+- [`inventory_items.delete`](#inventory-items-delete)
+
+### PATCH /homes/:homeId/inventory/:inventoryId
+
+<a id="inventory-items-update"></a>
+
+**ID:** `inventory_items.update`
+
+**Update an inventory item**
+
+Updates specific fields of an existing inventory item. User must be a member of the home that contains the inventory item. Only fields provided in request body will be updated.
+
+**Authentication:** Required (jwt)
+
+**Tags:** `Inventory Items`
+
+#### Path Parameters
+
+| Name          | Type   | Required | Description                                  |
+| ------------- | ------ | -------- | -------------------------------------------- |
+| `homeId`      | string | Yes      | The home ID that contains the inventory item |
+| `inventoryId` | string | Yes      | The unique identifier of the inventory item  |
+
+#### Request Body
+
+**Content-Type:** `application/json`
+
+Inventory item fields to update
+
+**Required:** Yes
+
+**Example:**
+
+```json
+{
+  "name": "Organic Milk",
+  "status": "using",
+  "warningThreshold": 1,
+  "categoryId": "dairy"
+}
+```
+
+#### Response (200)
+
+Inventory item updated successfully
+
+**Example:**
+
+```json
+{
+  "inventoryItem": {
+    "inventoryId": "milk-carton",
+    "homeId": "my-home",
+    "name": "Organic Milk",
+    "status": "using",
+    "warningThreshold": 1,
+    "categoryId": "dairy",
+    "batches": [
+      {
+        "id": "batch-1",
+        "amount": 1,
+        "unit": "gallon",
+        "expiryDate": "2024-02-01T00:00:00.000Z",
+        "createdAt": "2024-01-15T10:30:00.000Z"
+      }
+    ],
+    "createdBy": "507f1f77bcf86cd799439011",
+    "updatedBy": "507f1f77bcf86cd799439011",
+    "createdByDeviceId": null,
+    "updatedByDeviceId": null,
+    "createdAt": "2024-01-15T10:30:00.000Z",
+    "updatedAt": "2024-01-15T11:00:00.000Z"
+  }
+}
+```
+
+#### Error Responses
+
+##### 400 - `INVENTORY_ID_REQUIRED`
+
+inventoryId is required
+
+The inventoryId path parameter must be provided
+
+**Example:**
+
+```json
+{
+  "error": "inventoryId_required",
+  "message": "inventoryId is required"
+}
+```
+
+##### 400 - `INVALID_NAME`
+
+Invalid name
+
+Name cannot be empty
+
+**Example:**
+
+```json
+{
+  "error": "invalid_name",
+  "message": "name cannot be empty"
+}
+```
+
+##### 400 - `NAME_TOO_LONG`
+
+Name too long
+
+Name must be 200 characters or less
+
+**Example:**
+
+```json
+{
+  "error": "name_too_long",
+  "message": "name must be 200 characters or less"
+}
+```
+
+##### 400 - `INVALID_STATUS`
+
+Invalid status
+
+status must be one of: using, new, out\-of\-stock, expired, en\-route
+
+**Example:**
+
+```json
+{
+  "error": "invalid_status",
+  "message": "status must be one of: using, new, out-of-stock, expired, en-route"
+}
+```
+
+##### 400 - `INVALID_WARNING_THRESHOLD`
+
+Invalid warning threshold
+
+warningThreshold must be a non\-negative number
+
+**Example:**
+
+```json
+{
+  "error": "invalid_warning_threshold",
+  "message": "warningThreshold must be a non-negative number"
+}
+```
+
+##### 400 - `INVALID_BATCHES`
+
+Invalid batches
+
+batches must be an array
+
+**Example:**
+
+```json
+{
+  "error": "invalid_batches",
+  "message": "batches must be an array"
+}
+```
+
+##### 401 - `UNAUTHORIZED`
+
+Unauthorized
+
+No authentication token provided
+
+**Example:**
+
+```json
+{
+  "message": "Unauthorized"
+}
+```
+
+##### 403 - `FORBIDDEN`
+
+Forbidden
+
+User is not a member of this home
+
+**Example:**
+
+```json
+{
+  "error": "forbidden",
+  "message": "Not a member of this home"
+}
+```
+
+##### 404 - `HOME_NOT_FOUND`
+
+Home not found
+
+The specified home does not exist
+
+**Example:**
+
+```json
+{
+  "error": "home_not_found",
+  "message": "Home not found"
+}
+```
+
+##### 404 - `INVENTORY_NOT_FOUND`
+
+Inventory item not found
+
+No inventory item exists with the provided inventoryId
+
+**Example:**
+
+```json
+{
+  "error": "inventory_not_found",
+  "message": "Inventory item not found"
+}
+```
+
+##### 500 - `SERVER_ERROR`
+
+Internal server error
+
+An unexpected error occurred on server
+
+**Example:**
+
+```json
+{
+  "message": "Internal server error"
+}
+```
+
+**Related Endpoints:**
+
+- [`inventory_items.create`](#inventory-items-create)
+- [`inventory_items.list`](#inventory-items-list)
+- [`inventory_items.get`](#inventory-items-get)
+- [`inventory_items.delete`](#inventory-items-delete)
+
+### DELETE /homes/:homeId/inventory/:inventoryId
+
+<a id="inventory-items-delete"></a>
+
+**ID:** `inventory_items.delete`
+
+**Delete an inventory item**
+
+Soft deletes an inventory item by setting deletedAt and deletedBy fields. User must be a member of the home that contains the inventory item. The inventory item remains in the database but is excluded from queries.
+
+**Authentication:** Required (jwt)
+
+**Tags:** `Inventory Items`
+
+#### Path Parameters
+
+| Name          | Type   | Required | Description                                  |
+| ------------- | ------ | -------- | -------------------------------------------- |
+| `homeId`      | string | Yes      | The home ID that contains the inventory item |
+| `inventoryId` | string | Yes      | The unique identifier of the inventory item  |
+
+#### Response (200)
+
+Inventory item deleted successfully
+
+**Example:**
+
+```json
+{
+  "success": true,
+  "message": "Inventory item deleted successfully",
+  "deletedAt": "2024-01-15T11:00:00.000Z"
+}
+```
+
+#### Error Responses
+
+##### 400 - `INVENTORY_ID_REQUIRED`
+
+inventoryId is required
+
+The inventoryId path parameter must be provided
+
+**Example:**
+
+```json
+{
+  "error": "inventoryId_required",
+  "message": "inventoryId is required"
+}
+```
+
+##### 400 - `HOME_ID_REQUIRED`
+
+homeId is required
+
+The homeId path parameter must be provided
+
+**Example:**
+
+```json
+{
+  "error": "homeId_required",
+  "message": "homeId is required"
+}
+```
+
+##### 401 - `UNAUTHORIZED`
+
+Unauthorized
+
+No authentication token provided
+
+**Example:**
+
+```json
+{
+  "message": "Unauthorized"
+}
+```
+
+##### 403 - `FORBIDDEN`
+
+Forbidden
+
+User is not a member of this home
+
+**Example:**
+
+```json
+{
+  "error": "forbidden",
+  "message": "Not a member of this home"
+}
+```
+
+##### 404 - `HOME_NOT_FOUND`
+
+Home not found
+
+The specified home does not exist
+
+**Example:**
+
+```json
+{
+  "error": "home_not_found",
+  "message": "Home not found"
+}
+```
+
+##### 404 - `INVENTORY_NOT_FOUND`
+
+Inventory item not found
+
+No inventory item exists with the provided inventoryId
+
+**Example:**
+
+```json
+{
+  "error": "inventory_not_found",
+  "message": "Inventory item not found"
+}
+```
+
+##### 500 - `SERVER_ERROR`
+
+Internal server error
+
+An unexpected error occurred on server
+
+**Example:**
+
+```json
+{
+  "message": "Internal server error"
+}
+```
+
+**Related Endpoints:**
+
+- [`inventory_items.create`](#inventory-items-create)
+- [`inventory_items.list`](#inventory-items-list)
+- [`inventory_items.get`](#inventory-items-get)
+- [`inventory_items.update`](#inventory-items-update)
+
+### GET /homes/:homeId/inventory
+
+<a id="inventory-items-list"></a>
+
+**ID:** `inventory_items.list`
+
+**List all inventory items for a home**
+
+Retrieves a list of all inventory items for a home. User must be a member of home. Optionally filter by status.
+
+**Authentication:** Required (jwt)
+
+**Tags:** `Inventory Items`
+
+#### Path Parameters
+
+| Name     | Type   | Required | Description                             |
+| -------- | ------ | -------- | --------------------------------------- |
+| `homeId` | string | Yes      | The home ID to get inventory items from |
+
+#### Response (200)
+
+List of inventory items retrieved successfully
+
+**Example:**
+
+```json
+{
+  "inventoryItems": [
+    {
+      "inventoryId": "milk-carton",
+      "homeId": "my-home",
+      "name": "Milk",
+      "status": "new",
+      "warningThreshold": 2,
+      "categoryId": "dairy",
+      "batches": [
+        {
+          "id": "batch-1",
+          "amount": 1,
+          "unit": "gallon",
+          "expiryDate": "2024-02-01T00:00:00.000Z",
+          "createdAt": "2024-01-15T10:30:00.000Z"
+        }
+      ],
+      "createdBy": "507f1f77bcf86cd799439011",
+      "updatedBy": "507f1f77bcf86cd799439011",
+      "createdByDeviceId": null,
+      "updatedByDeviceId": null,
+      "createdAt": "2024-01-15T10:30:00.000Z",
+      "updatedAt": "2024-01-15T10:30:00.000Z"
+    }
+  ]
+}
+```
+
+#### Error Responses
+
+##### 400 - `HOME_ID_REQUIRED`
+
+homeId is required
+
+The homeId path parameter must be provided
+
+**Example:**
+
+```json
+{
+  "error": "homeId_required",
+  "message": "homeId is required"
+}
+```
+
+##### 401 - `UNAUTHORIZED`
+
+Unauthorized
+
+No authentication token provided
+
+**Example:**
+
+```json
+{
+  "message": "Unauthorized"
+}
+```
+
+##### 403 - `FORBIDDEN`
+
+Forbidden
+
+User is not a member of this home
+
+**Example:**
+
+```json
+{
+  "error": "forbidden",
+  "message": "Not a member of this home"
+}
+```
+
+##### 404 - `HOME_NOT_FOUND`
+
+Home not found
+
+The specified home does not exist
+
+**Example:**
+
+```json
+{
+  "error": "home_not_found",
+  "message": "Home not found"
+}
+```
+
+##### 500 - `SERVER_ERROR`
+
+Internal server error
+
+An unexpected error occurred on server
+
+**Example:**
+
+```json
+{
+  "message": "Internal server error"
+}
+```
+
+**Related Endpoints:**
+
+- [`inventory_items.create`](#inventory-items-create)
+- [`inventory_items.get`](#inventory-items-get)
+- [`inventory_items.update`](#inventory-items-update)
+- [`inventory_items.delete`](#inventory-items-delete)
+
+### POST /homes/:homeId/inventory
+
+<a id="inventory-items-create"></a>
+
+**ID:** `inventory_items.create`
+
+**Create a new inventory item**
+
+Creates a new inventory item in a home. The user must be a member of home. Each inventory item has a unique inventoryId within the home, name, status, and optional batches.
+
+**Authentication:** Required (jwt)
+
+**Tags:** `Inventory Items`
+
+#### Path Parameters
+
+| Name     | Type   | Required | Description                                 |
+| -------- | ------ | -------- | ------------------------------------------- |
+| `homeId` | string | Yes      | The home ID to create the inventory item in |
+
+#### Request Body
+
+**Content-Type:** `application/json`
+
+Inventory item creation details
+
+**Required:** Yes
+
+**Example:**
+
+```json
+{
+  "inventoryId": "milk-carton",
+  "name": "Milk",
+  "status": "new",
+  "warningThreshold": 2,
+  "batches": [
+    {
+      "id": "batch-1",
+      "amount": 1,
+      "unit": "gallon",
+      "expiryDate": "2024-02-01T00:00:00.000Z"
+    }
+  ]
+}
+```
+
+#### Response (201)
+
+Inventory item created successfully
+
+**Example:**
+
+```json
+{
+  "inventoryItem": {
+    "inventoryId": "milk-carton",
+    "homeId": "my-home",
+    "name": "Milk",
+    "status": "new",
+    "warningThreshold": 2,
+    "categoryId": "dairy",
+    "batches": [
+      {
+        "id": "batch-1",
+        "amount": 1,
+        "unit": "gallon",
+        "expiryDate": "2024-02-01T00:00:00.000Z",
+        "createdAt": "2024-01-15T10:30:00.000Z"
+      }
+    ],
+    "createdBy": "507f1f77bcf86cd799439011",
+    "updatedBy": "507f1f77bcf86cd799439011",
+    "createdByDeviceId": null,
+    "updatedByDeviceId": null,
+    "createdAt": "2024-01-15T10:30:00.000Z",
+    "updatedAt": "2024-01-15T10:30:00.000Z"
+  }
+}
+```
+
+#### Error Responses
+
+##### 400 - `VALIDATION_ERROR`
+
+Validation error
+
+Invalid request parameters
+
+**Example:**
+
+```json
+{
+  "error": "inventoryId_required",
+  "message": "inventoryId is required"
+}
+```
+
+##### 400 - `INVALID_INVENTORY_ID`
+
+Invalid inventoryId format
+
+inventoryId must be 4\-50 characters, alphanumeric with hyphens or underscores
+
+**Example:**
+
+```json
+{
+  "error": "invalid_inventory_id",
+  "message": "inventoryId must be 4-50 characters, alphanumeric with hyphens or underscores"
+}
+```
+
+##### 400 - `NAME_REQUIRED`
+
+Name is required
+
+Name cannot be empty
+
+**Example:**
+
+```json
+{
+  "error": "name_required",
+  "message": "name is required"
+}
+```
+
+##### 400 - `NAME_TOO_LONG`
+
+Name too long
+
+Name must be 200 characters or less
+
+**Example:**
+
+```json
+{
+  "error": "name_too_long",
+  "message": "name must be 200 characters or less"
+}
+```
+
+##### 400 - `INVALID_STATUS`
+
+Invalid status
+
+status must be one of: using, new, out\-of\-stock, expired, en\-route
+
+**Example:**
+
+```json
+{
+  "error": "invalid_status",
+  "message": "status must be one of: using, new, out-of-stock, expired, en-route"
+}
+```
+
+##### 401 - `UNAUTHORIZED`
+
+Unauthorized
+
+No authentication token provided
+
+**Example:**
+
+```json
+{
+  "message": "Unauthorized"
+}
+```
+
+##### 403 - `FORBIDDEN`
+
+Forbidden
+
+User is not a member of this home
+
+**Example:**
+
+```json
+{
+  "error": "forbidden",
+  "message": "Not a member of this home"
+}
+```
+
+##### 404 - `HOME_NOT_FOUND`
+
+Home not found
+
+The specified home does not exist
+
+**Example:**
+
+```json
+{
+  "error": "home_not_found",
+  "message": "Home not found"
+}
+```
+
+##### 409 - `INVENTORY_ID_EXISTS`
+
+Inventory ID already exists
+
+An inventory item with this ID already exists in this home
+
+**Example:**
+
+```json
+{
+  "error": "inventory_id_exists",
+  "message": "An inventory item with this ID already exists in this home",
+  "suggestedInventoryId": "milk-carton-2"
+}
+```
+
+##### 500 - `SERVER_ERROR`
+
+Internal server error
+
+An unexpected error occurred on server
+
+**Example:**
+
+```json
+{
+  "message": "Internal server error"
+}
+```
+
+**Related Endpoints:**
+
+- [`inventory_items.list`](#inventory-items-list)
+- [`inventory_items.get`](#inventory-items-get)
+- [`inventory_items.update`](#inventory-items-update)
+- [`inventory_items.delete`](#inventory-items-delete)
+
+---
+
 ## Ai
 
 ### POST /ai/recognize-item
@@ -3925,243 +4878,33 @@ An unexpected error occurred on the server
 
 ---
 
-## Sync Entities
+## Locations
 
-### GET /sync/entities/pull
+### POST /homes/:homeId/locations
 
-<a id="sync-entities-pull-entities"></a>
+<a id="locations-create"></a>
 
-**ID:** `sync_entities.pull_entities`
+**ID:** `locations.create`
 
-**Pull entities for a home and entity type**
+**Create a new location**
 
-Retrieves entities that have been created, updated, or deleted since a given timestamp. Supports incremental sync for efficient data transfer.
+Creates a new location in a home. The user must be a member of home. Each location has a unique locationId within the home, name, description, icon, color, and position.
 
-**Supported entity types:** `inventoryItems`, `todoItems`, `categories`, `locations`, `settings`
+**Authentication:** Required (jwt)
 
-**Permission requirements:**
+**Tags:** `Locations`
 
-- `inventoryItems`: Members require `canShareInventory: true` on the home
-- `todoItems`: Members require `canShareTodos: true` on the home
-- Other types: Always allowed for members
-- Home owners: Always have full access regardless of permissions
+#### Path Parameters
 
-**Conflict Resolution:** Automatic last-write-wins based on timestamps. Never prompts users.
-
-**Soft Deletes:** Deleted entities are tracked for 90 days before permanent deletion.
-
-**Authentication:** Required (jwt) - Requires valid JWT token from login/signup/google_login
-
-**Tags:** `Synchronization`
-
-#### Query Parameters
-
-| Name             | Type                                                              | Required | Default | Description                                                                               |
-| ---------------- | ----------------------------------------------------------------- | -------- | ------- | ----------------------------------------------------------------------------------------- |
-| `homeId`         | string                                                            | Yes      | -       | Home ID to pull entities from                                                             |
-| `entityType`     | enum (inventoryItems, todoItems, categories, locations, settings) | Yes      | -       | Type of entities to pull                                                                  |
-| `deviceId`       | string                                                            | Yes      | -       | Client device identifier for checkpoint tracking                                          |
-| `since`          | string                                                            | No       | -       | ISO 8601 timestamp for incremental sync \(only return entities modified after this time\) |
-| `includeDeleted` | boolean                                                           | No       | -       | Include soft\-deleted entities in response                                                |
-
-#### Response (200)
-
-Entities retrieved successfully
-
-**Example:**
-
-```json
-{
-  "success": true,
-  "entities": [
-    {
-      "entityId": "inv_12345",
-      "entityType": "inventoryItems",
-      "homeId": "my-family-home",
-      "data": {
-        "id": "inv_12345",
-        "name": "Milk",
-        "status": "using",
-        "price": 3.99,
-        "amount": 1,
-        "category": "dairy",
-        "location": "refrigerator"
-      },
-      "version": 5,
-      "updatedAt": "2024-01-15T10:30:00.000Z",
-      "updatedBy": {
-        "userId": "507f1f77bcf86cd799439011",
-        "email": "user@example.com",
-        "nickname": "John"
-      },
-      "updatedByDeviceId": "iphone-15-pro"
-    }
-  ],
-  "deletedEntityIds": ["inv_67890"],
-  "serverTimestamp": "2024-01-15T10:35:00.000Z",
-  "checkpoint": {
-    "homeId": "my-family-home",
-    "entityType": "inventoryItems",
-    "lastSyncedAt": "2024-01-15T10:35:00.000Z",
-    "lastPulledVersion": 100
-  }
-}
-```
-
-#### Error Responses
-
-##### 400 - `INVALID_HOME_ID`
-
-homeId is required
-
-**Example:**
-
-```json
-{
-  "success": false,
-  "error": {
-    "message": "homeId is required",
-    "code": "INVALID_HOME_ID"
-  }
-}
-```
-
-##### 400 - `INVALID_ENTITY_TYPE`
-
-entityType is required
-
-**Example:**
-
-```json
-{
-  "success": false,
-  "error": {
-    "message": "entityType is required",
-    "code": "INVALID_ENTITY_TYPE"
-  }
-}
-```
-
-##### 400 - `INVALID_DEVICE_ID`
-
-deviceId is required
-
-**Example:**
-
-```json
-{
-  "success": false,
-  "error": {
-    "message": "deviceId is required",
-    "code": "INVALID_DEVICE_ID"
-  }
-}
-```
-
-##### 400 - `INVALID_TIMESTAMP`
-
-since must be a valid ISO date
-
-**Example:**
-
-```json
-{
-  "success": false,
-  "error": {
-    "message": "since must be a valid ISO date",
-    "code": "INVALID_TIMESTAMP"
-  }
-}
-```
-
-##### 401 - `UNAUTHORIZED`
-
-Unauthorized \- invalid or expired token
-
-**Example:**
-
-```json
-{
-  "success": false,
-  "error": {
-    "message": "Unauthorized - invalid or expired token",
-    "code": "UNAUTHORIZED"
-  }
-}
-```
-
-##### 403 - `FORBIDDEN`
-
-You do not have permission to pull this entity type
-
-Thrown when a member tries to pull inventoryItems or todoItems without the required permission
-
-**Example:**
-
-```json
-{
-  "success": false,
-  "error": {
-    "message": "You do not have permission to pull this entity type",
-    "code": "FORBIDDEN"
-  }
-}
-```
-
-##### 500 - `SERVER_ERROR`
-
-Internal server error
-
-**Example:**
-
-```json
-{
-  "success": false,
-  "error": {
-    "message": "Internal server error",
-    "code": "SERVER_ERROR"
-  }
-}
-```
-
-**Related Endpoints:**
-
-- [`sync_entities.push_entities`](#sync-entities-push-entities)
-- [`sync_entities.batch_sync`](#sync-entities-batch-sync)
-- [`sync_entities.get_sync_status`](#sync-entities-get-sync-status)
-- [`sync_entities.reset_sync`](#sync-entities-reset-sync)
-
-### POST /sync/entities/batch
-
-<a id="sync-entities-batch-sync"></a>
-
-**ID:** `sync_entities.batch_sync`
-
-**Combined pull and push in a single request**
-
-Performs multiple pull and push operations in a single request for efficient synchronization. Useful for syncing multiple entity types at once.
-
-**Pull Requests:** Retrieves entities updated since a given timestamp for each entity type.
-
-**Push Requests:** Pushes entity changes with automatic conflict resolution.
-
-**Advantages:**
-
-- Single round-trip for multiple entity types
-- Atomic operation per entity type
-- Efficient bandwidth usage
-
-**Note:** Push requests in batch mode do not return full conflict resolution details. Use individual push endpoint for detailed results.
-
-**Authentication:** Required (jwt) - Requires valid JWT token from login/signup/google_login
-
-**Tags:** `Synchronization`
+| Name     | Type   | Required | Description                           |
+| -------- | ------ | -------- | ------------------------------------- |
+| `homeId` | string | Yes      | The home ID to create the location in |
 
 #### Request Body
 
 **Content-Type:** `application/json`
 
-Batch sync request with pull and push operations
+Location creation details
 
 **Required:** Yes
 
@@ -4169,454 +4912,129 @@ Batch sync request with pull and push operations
 
 ```json
 {
-  "homeId": "my-family-home",
-  "deviceId": "iphone-15-pro",
-  "pullRequests": [
-    {
-      "entityType": "inventoryItems",
-      "since": "2024-01-15T09:00:00.000Z",
-      "includeDeleted": true,
-      "checkpoint": {
-        "lastPulledVersion": 95
-      }
-    },
-    {
-      "entityType": "todoItems",
-      "since": "2024-01-15T09:00:00.000Z",
-      "includeDeleted": true,
-      "checkpoint": {
-        "lastPulledVersion": 50
-      }
-    }
-  ],
-  "pushRequests": [
-    {
-      "entityType": "inventoryItems",
-      "entities": [
-        {
-          "entityId": "inv_12345",
-          "entityType": "inventoryItems",
-          "homeId": "my-family-home",
-          "data": {
-            "id": "inv_12345",
-            "name": "Milk",
-            "status": "using",
-            "price": 3.99
-          },
-          "version": 5,
-          "clientUpdatedAt": "2024-01-15T10:25:00.000Z"
-        }
-      ],
-      "lastPulledAt": "2024-01-15T09:00:00.000Z",
-      "checkpoint": {
-        "lastPulledVersion": 95
-      }
-    }
-  ]
+  "locationId": "kitchen",
+  "name": "Kitchen",
+  "description": "Main kitchen area",
+  "icon": "kitchen",
+  "color": "#FF5722",
+  "position": 0
 }
 ```
 
-#### Response (200)
+#### Response (201)
 
-Batch sync completed successfully
+Location created successfully
 
 **Example:**
 
 ```json
 {
-  "success": true,
-  "pullResults": [
-    {
-      "entityType": "inventoryItems",
-      "entities": [
-        {
-          "entityId": "inv_12345",
-          "entityType": "inventoryItems",
-          "homeId": "my-family-home",
-          "data": {
-            "id": "inv_12345",
-            "name": "Milk",
-            "status": "using"
-          },
-          "version": 5,
-          "updatedAt": "2024-01-15T10:30:00.000Z",
-          "updatedBy": {
-            "userId": "507f1f77bcf86cd799439011",
-            "email": "user@example.com",
-            "nickname": "John"
-          }
-        }
-      ],
-      "deletedEntityIds": [],
-      "checkpoint": {
-        "homeId": "my-family-home",
-        "entityType": "inventoryItems",
-        "lastSyncedAt": "2024-01-15T10:35:00.000Z",
-        "lastPulledVersion": 100
-      }
-    },
-    {
-      "entityType": "todoItems",
-      "entities": [],
-      "deletedEntityIds": [],
-      "checkpoint": {
-        "homeId": "my-family-home",
-        "entityType": "todoItems",
-        "lastSyncedAt": "2024-01-15T10:35:00.000Z",
-        "lastPulledVersion": 50
-      }
-    }
-  ],
-  "pushResults": [
-    {
-      "entityType": "inventoryItems",
-      "results": [
-        {
-          "entityId": "inv_12345",
-          "status": "updated",
-          "winner": "client",
-          "serverVersion": 6,
-          "serverUpdatedAt": "2024-01-15T10:35:00.000Z"
-        }
-      ],
-      "newEntitiesFromServer": [],
-      "deletedEntityIds": [],
-      "errors": [],
-      "checkpoint": {
-        "homeId": "my-family-home",
-        "entityType": "inventoryItems",
-        "lastSyncedAt": "2024-01-15T10:35:00.000Z",
-        "lastPushedVersion": 100
-      }
-    }
-  ],
-  "serverTimestamp": "2024-01-15T10:35:00.000Z"
+  "location": {
+    "locationId": "kitchen",
+    "homeId": "my-home",
+    "name": "Kitchen",
+    "description": "Main kitchen area",
+    "icon": "kitchen",
+    "color": "#FF5722",
+    "position": 0,
+    "createdBy": "507f1f77bcf86cd799439011",
+    "updatedBy": "507f1f77bcf86cd799439011",
+    "createdByDeviceId": null,
+    "updatedByDeviceId": null,
+    "createdAt": "2024-01-15T10:30:00.000Z",
+    "updatedAt": "2024-01-15T10:30:00.000Z"
+  }
 }
 ```
 
 #### Error Responses
 
-##### 400 - `INVALID_HOME_ID`
+##### 400 - `VALIDATION_ERROR`
 
-homeId is required
+Validation error
+
+Invalid request parameters
 
 **Example:**
 
 ```json
 {
-  "success": false,
-  "error": {
-    "message": "homeId is required",
-    "code": "INVALID_HOME_ID"
-  }
+  "error": "locationId_required",
+  "message": "locationId is required"
 }
 ```
 
-##### 400 - `INVALID_DEVICE_ID`
+##### 400 - `INVALID_LOCATION_ID`
 
-deviceId is required
+Invalid locationId format
+
+locationId must be 4\-50 characters, alphanumeric with hyphens or underscores
 
 **Example:**
 
 ```json
 {
-  "success": false,
-  "error": {
-    "message": "deviceId is required",
-    "code": "INVALID_DEVICE_ID"
-  }
+  "error": "invalid_location_id",
+  "message": "locationId must be 4-50 characters, alphanumeric with hyphens or underscores"
 }
 ```
 
-##### 400 - `INVALID_DATA`
+##### 400 - `NAME_REQUIRED`
 
-At least one of pullRequests or pushRequests is required
+Name is required
+
+Name cannot be empty
 
 **Example:**
 
 ```json
 {
-  "success": false,
-  "error": {
-    "message": "At least one of pullRequests or pushRequests is required",
-    "code": "INVALID_DATA"
-  }
+  "error": "name_required",
+  "message": "name is required"
 }
 ```
 
-##### 401 - `UNAUTHORIZED`
+##### 400 - `NAME_TOO_LONG`
 
-Unauthorized \- invalid or expired token
+Name too long
 
-**Example:**
-
-```json
-{
-  "success": false,
-  "error": {
-    "message": "Unauthorized - invalid or expired token",
-    "code": "UNAUTHORIZED"
-  }
-}
-```
-
-##### 500 - `SERVER_ERROR`
-
-Internal server error
+Name must be 200 characters or less
 
 **Example:**
 
 ```json
 {
-  "success": false,
-  "error": {
-    "message": "Internal server error",
-    "code": "SERVER_ERROR"
-  }
-}
-```
-
-**Related Endpoints:**
-
-- [`sync_entities.pull_entities`](#sync-entities-pull-entities)
-- [`sync_entities.push_entities`](#sync-entities-push-entities)
-- [`sync_entities.get_sync_status`](#sync-entities-get-sync-status)
-
-### POST /sync/entities/push
-
-<a id="sync-entities-push-entities"></a>
-
-**ID:** `sync_entities.push_entities`
-
-**Push entity changes to the server with automatic conflict resolution**
-
-Pushes entity changes to the server with automatic last-write-wins conflict resolution. Each entity is synced independently based on timestamps.
-
-**Conflict Resolution:**
-
-- Compares `clientUpdatedAt` with `serverUpdatedAt`
-- Client wins if newer: Server updates with client data
-- Server wins if newer or equal: Returns server version to client
-- Stale versions are rejected: Client must pull first
-- **NEVER prompts users** - All conflict resolution is automatic
-
-**Pending Operations:**
-
-- `pendingCreate: true` - Entity was created offline
-- `pendingDelete: true` - Entity was deleted offline
-
-**Soft Delete Handling:**
-
-- If client deletes while server has newer update: Server wins, entity is restored
-- If client updates while server has deleted: Server delete wins if newer
-
-**Entity ID Collision:**
-
-- Returns error if entity ID already exists
-- Suggests alternative entity ID for retry
-
-**Authentication:** Required (jwt) - Requires valid JWT token from login/signup/google_login
-
-**Tags:** `Synchronization`
-
-#### Query Parameters
-
-| Name         | Type                                                              | Required | Default | Description                                   |
-| ------------ | ----------------------------------------------------------------- | -------- | ------- | --------------------------------------------- |
-| `homeId`     | string                                                            | Yes      | -       | Home ID to push entities to                   |
-| `entityType` | enum (inventoryItems, todoItems, categories, locations, settings) | Yes      | -       | Type of entities being pushed                 |
-| `deviceId`   | string                                                            | Yes      | -       | Client device identifier for tracking changes |
-
-#### Request Body
-
-**Content-Type:** `application/json`
-
-Array of entities to sync with optional checkpoint info
-
-**Required:** Yes
-
-**Example:**
-
-```json
-{
-  "entities": [
-    {
-      "entityId": "inv_12345",
-      "entityType": "inventoryItems",
-      "homeId": "my-family-home",
-      "data": {
-        "id": "inv_12345",
-        "name": "Milk",
-        "status": "using",
-        "price": 3.99,
-        "amount": 1,
-        "category": "dairy",
-        "location": "refrigerator"
-      },
-      "version": 5,
-      "clientUpdatedAt": "2024-01-15T10:25:00.000Z",
-      "pendingCreate": false,
-      "pendingDelete": false
-    }
-  ],
-  "lastPulledAt": "2024-01-15T09:00:00.000Z",
-  "checkpoint": {
-    "lastPulledVersion": 95
-  }
-}
-```
-
-#### Response (200)
-
-Entities processed successfully
-
-**Example:**
-
-```json
-{
-  "success": true,
-  "results": [
-    {
-      "entityId": "inv_12345",
-      "status": "updated",
-      "winner": "client",
-      "serverVersion": 6,
-      "serverUpdatedAt": "2024-01-15T10:30:00.000Z"
-    },
-    {
-      "entityId": "inv_67890",
-      "status": "server_version",
-      "winner": "server",
-      "serverVersionData": {
-        "data": {
-          "id": "inv_67890",
-          "name": "Bread",
-          "status": "new"
-        },
-        "version": 10,
-        "updatedAt": "2024-01-15T10:35:00.000Z",
-        "updatedBy": {
-          "userId": "507f1f77bcf86cd799439011",
-          "email": "other@example.com",
-          "nickname": "Jane"
-        }
-      }
-    },
-    {
-      "entityId": "inv_new",
-      "status": "created",
-      "serverVersion": 1,
-      "serverUpdatedAt": "2024-01-15T10:30:00.000Z"
-    }
-  ],
-  "newEntitiesFromServer": [],
-  "deletedEntityIds": [],
-  "errors": [],
-  "checkpoint": {
-    "homeId": "my-family-home",
-    "entityType": "inventoryItems",
-    "lastSyncedAt": "2024-01-15T10:30:00.000Z",
-    "lastPushedVersion": 100
-  },
-  "serverTimestamp": "2024-01-15T10:30:00.000Z"
-}
-```
-
-#### Error Responses
-
-##### 400 - `INVALID_HOME_ID`
-
-homeId is required
-
-**Example:**
-
-```json
-{
-  "success": false,
-  "error": {
-    "message": "homeId is required",
-    "code": "INVALID_HOME_ID"
-  }
-}
-```
-
-##### 400 - `INVALID_ENTITY_TYPE`
-
-entityType is required
-
-**Example:**
-
-```json
-{
-  "success": false,
-  "error": {
-    "message": "entityType is required",
-    "code": "INVALID_ENTITY_TYPE"
-  }
-}
-```
-
-##### 400 - `INVALID_DEVICE_ID`
-
-deviceId is required
-
-**Example:**
-
-```json
-{
-  "success": false,
-  "error": {
-    "message": "deviceId is required",
-    "code": "INVALID_DEVICE_ID"
-  }
-}
-```
-
-##### 400 - `INVALID_DATA`
-
-entities array is required and must not be empty
-
-**Example:**
-
-```json
-{
-  "success": false,
-  "error": {
-    "message": "entities array is required and must not be empty",
-    "code": "INVALID_DATA"
-  }
+  "error": "name_too_long",
+  "message": "name must be 200 characters or less"
 }
 ```
 
 ##### 401 - `UNAUTHORIZED`
 
-Unauthorized \- invalid or expired token
+Unauthorized
+
+No authentication token provided
 
 **Example:**
 
 ```json
 {
-  "success": false,
-  "error": {
-    "message": "Unauthorized - invalid or expired token",
-    "code": "UNAUTHORIZED"
-  }
+  "message": "Unauthorized"
 }
 ```
 
 ##### 403 - `FORBIDDEN`
 
-You do not have permission to push this entity type
+Forbidden
+
+User is not a member of this home
 
 **Example:**
 
 ```json
 {
-  "success": false,
-  "error": {
-    "message": "You do not have permission to push this entity type",
-    "code": "FORBIDDEN"
-  }
+  "error": "forbidden",
+  "message": "Not a member of this home"
 }
 ```
 
@@ -4624,181 +5042,30 @@ You do not have permission to push this entity type
 
 Home not found
 
+The specified home does not exist
+
 **Example:**
 
 ```json
 {
-  "success": false,
-  "error": {
-    "message": "Home not found",
-    "code": "HOME_NOT_FOUND"
-  }
+  "error": "home_not_found",
+  "message": "Home not found"
 }
 ```
 
-##### 404 - `USER_NOT_FOUND`
+##### 409 - `LOCATION_ID_EXISTS`
 
-User not found
+Location ID already exists
 
-**Example:**
-
-```json
-{
-  "success": false,
-  "error": {
-    "message": "User not found",
-    "code": "USER_NOT_FOUND"
-  }
-}
-```
-
-##### 500 - `SERVER_ERROR`
-
-Internal server error
+A location with this ID already exists in this home
 
 **Example:**
 
 ```json
 {
-  "success": false,
-  "error": {
-    "message": "Internal server error",
-    "code": "SERVER_ERROR"
-  }
-}
-```
-
-**Related Endpoints:**
-
-- [`sync_entities.pull_entities`](#sync-entities-pull-entities)
-- [`sync_entities.batch_sync`](#sync-entities-batch-sync)
-- [`sync_entities.get_sync_status`](#sync-entities-get-sync-status)
-
-### DELETE /sync/entities/reset
-
-<a id="sync-entities-reset-sync"></a>
-
-**ID:** `sync_entities.reset_sync`
-
-**Clear sync checkpoints forcing full re\-sync**
-
-Clears sync checkpoints for a user/device/home/entityType combination, forcing a full re-sync on the next sync operation.
-
-**Use Cases:**
-
-- Client data corruption requiring full refresh
-- Sync state is out of sync
-- Troubleshooting sync issues
-- User wants to start fresh
-
-**Effect:**
-
-- Deletes sync checkpoints for specified criteria
-- Next pull/push will be treated as initial sync
-- No data is deleted from the server
-
-**Parameters:**
-
-- `homeId` (required): Home to reset
-- `entityType` (optional): Specific entity type, or all if omitted
-- `deviceId` (required): Device to reset for
-
-**Authentication:** Required (jwt) - Requires valid JWT token from login/signup/google_login
-
-**Tags:** `Synchronization`
-
-#### Query Parameters
-
-| Name         | Type                                                              | Required | Default | Description                                       |
-| ------------ | ----------------------------------------------------------------- | -------- | ------- | ------------------------------------------------- |
-| `homeId`     | string                                                            | Yes      | -       | Home ID to reset sync checkpoints for             |
-| `entityType` | enum (inventoryItems, todoItems, categories, locations, settings) | No       | -       | Specific entity type to reset, or all if omitted  |
-| `deviceId`   | string                                                            | Yes      | -       | Client device identifier to reset checkpoints for |
-
-#### Response (200)
-
-Sync checkpoints cleared successfully
-
-**Example:**
-
-```json
-{
-  "success": true,
-  "message": "Sync checkpoints cleared",
-  "resetEntityTypes": [
-    "inventoryItems",
-    "todoItems",
-    "categories",
-    "locations",
-    "settings"
-  ],
-  "deletedCount": 5
-}
-```
-
-#### Error Responses
-
-##### 400 - `INVALID_HOME_ID`
-
-homeId is required
-
-**Example:**
-
-```json
-{
-  "success": false,
-  "error": {
-    "message": "homeId is required",
-    "code": "INVALID_HOME_ID"
-  }
-}
-```
-
-##### 400 - `INVALID_DEVICE_ID`
-
-deviceId is required
-
-**Example:**
-
-```json
-{
-  "success": false,
-  "error": {
-    "message": "deviceId is required",
-    "code": "INVALID_DEVICE_ID"
-  }
-}
-```
-
-##### 401 - `UNAUTHORIZED`
-
-Unauthorized \- invalid or expired token
-
-**Example:**
-
-```json
-{
-  "success": false,
-  "error": {
-    "message": "Unauthorized - invalid or expired token",
-    "code": "UNAUTHORIZED"
-  }
-}
-```
-
-##### 403 - `FORBIDDEN`
-
-You are not a member of this home
-
-**Example:**
-
-```json
-{
-  "success": false,
-  "error": {
-    "message": "You are not a member of this home",
-    "code": "FORBIDDEN"
-  }
+  "error": "location_id_exists",
+  "message": "A location with this ID already exists in this home",
+  "suggestedLocationId": "kitchen-2"
 }
 ```
 
@@ -4806,171 +5073,129 @@ You are not a member of this home
 
 Internal server error
 
+An unexpected error occurred on server
+
 **Example:**
 
 ```json
 {
-  "success": false,
-  "error": {
-    "message": "Internal server error",
-    "code": "SERVER_ERROR"
-  }
+  "message": "Internal server error"
 }
 ```
 
 **Related Endpoints:**
 
-- [`sync_entities.pull_entities`](#sync-entities-pull-entities)
-- [`sync_entities.push_entities`](#sync-entities-push-entities)
-- [`sync_entities.get_sync_status`](#sync-entities-get-sync-status)
+- [`locations.list`](#locations-list)
+- [`locations.get`](#locations-get)
+- [`locations.update`](#locations-update)
+- [`locations.delete`](#locations-delete)
 
-### GET /sync/entities/status
+### GET /homes/:homeId/locations
 
-<a id="sync-entities-get-sync-status"></a>
+<a id="locations-list"></a>
 
-**ID:** `sync_entities.get_sync_status`
+**ID:** `locations.list`
 
-**Get sync status for entity types in a home**
+**List all locations for a home**
 
-Returns the sync status for entity types including last sync time, versions, and whether pull or push is needed.
+Retrieves a list of all locations for a home. User must be a member of home.
 
-**Status Information:**
+**Authentication:** Required (jwt)
 
-- `lastSyncedAt` - Timestamp of last successful sync
-- `lastPulledVersion` - Version number from last pull
-- `lastPushedVersion` - Version number from last push
-- `serverVersion` - Current version on server
-- `needsPull` - Whether server has newer data
-- `needsPush` - Whether client has unpushed changes
+**Tags:** `Locations`
 
-**Use Cases:**
+#### Path Parameters
 
-- Display sync status in UI
-- Determine if sync is needed
-- Show sync progress indicators
-
-**Authentication:** Required (jwt) - Requires valid JWT token from login/signup/google_login
-
-**Tags:** `Synchronization`
-
-#### Query Parameters
-
-| Name         | Type                                                              | Required | Default | Description                                      |
-| ------------ | ----------------------------------------------------------------- | -------- | ------- | ------------------------------------------------ |
-| `homeId`     | string                                                            | Yes      | -       | Home ID to check sync status for                 |
-| `entityType` | enum (inventoryItems, todoItems, categories, locations, settings) | No       | -       | Specific entity type to check, or all if omitted |
-| `deviceId`   | string                                                            | Yes      | -       | Client device identifier                         |
+| Name     | Type   | Required | Description                       |
+| -------- | ------ | -------- | --------------------------------- |
+| `homeId` | string | Yes      | The home ID to get locations from |
 
 #### Response (200)
 
-Sync status retrieved successfully
+List of locations retrieved successfully
 
 **Example:**
 
 ```json
 {
-  "success": true,
-  "status": {
-    "inventoryItems": {
-      "homeId": "my-family-home",
-      "entityType": "inventoryItems",
-      "lastSyncedAt": "2024-01-15T10:30:00.000Z",
-      "lastPulledVersion": 100,
-      "lastPushedVersion": 98,
-      "pendingLocalChanges": 5,
-      "serverVersion": 102,
-      "needsPull": true,
-      "needsPush": true
-    },
-    "todoItems": {
-      "homeId": "my-family-home",
-      "entityType": "todoItems",
-      "lastSyncedAt": "2024-01-15T09:00:00.000Z",
-      "lastPulledVersion": 50,
-      "lastPushedVersion": 50,
-      "pendingLocalChanges": 0,
-      "serverVersion": 50,
-      "needsPull": false,
-      "needsPush": false
-    },
-    "categories": {
-      "homeId": "my-family-home",
-      "entityType": "categories",
-      "lastSyncedAt": null,
-      "lastPulledVersion": 0,
-      "lastPushedVersion": 0,
-      "pendingLocalChanges": 0,
-      "serverVersion": 0,
-      "needsPull": false,
-      "needsPush": false
+  "locations": [
+    {
+      "locationId": "kitchen",
+      "homeId": "my-home",
+      "name": "Kitchen",
+      "description": "Main kitchen area",
+      "icon": "kitchen",
+      "color": "#FF5722",
+      "position": 0,
+      "createdBy": "507f1f77bcf86cd799439011",
+      "updatedBy": "507f1f77bcf86cd799439011",
+      "createdByDeviceId": null,
+      "updatedByDeviceId": null,
+      "createdAt": "2024-01-15T10:30:00.000Z",
+      "updatedAt": "2024-01-15T10:30:00.000Z"
     }
-  }
+  ]
 }
 ```
 
 #### Error Responses
 
-##### 400 - `INVALID_HOME_ID`
+##### 400 - `HOME_ID_REQUIRED`
 
 homeId is required
 
-**Example:**
-
-```json
-{
-  "success": false,
-  "error": {
-    "message": "homeId is required",
-    "code": "INVALID_HOME_ID"
-  }
-}
-```
-
-##### 400 - `INVALID_DEVICE_ID`
-
-deviceId is required
+The homeId path parameter must be provided
 
 **Example:**
 
 ```json
 {
-  "success": false,
-  "error": {
-    "message": "deviceId is required",
-    "code": "INVALID_DEVICE_ID"
-  }
+  "error": "homeId_required",
+  "message": "homeId is required"
 }
 ```
 
 ##### 401 - `UNAUTHORIZED`
 
-Unauthorized \- invalid or expired token
+Unauthorized
+
+No authentication token provided
 
 **Example:**
 
 ```json
 {
-  "success": false,
-  "error": {
-    "message": "Unauthorized - invalid or expired token",
-    "code": "UNAUTHORIZED"
-  }
+  "message": "Unauthorized"
 }
 ```
 
 ##### 403 - `FORBIDDEN`
 
-You are not a member of this home
+Forbidden
+
+User is not a member of this home
 
 **Example:**
 
 ```json
 {
-  "success": false,
-  "error": {
-    "message": "You are not a member of this home",
-    "code": "FORBIDDEN"
-  }
+  "error": "forbidden",
+  "message": "Not a member of this home"
+}
+```
+
+##### 404 - `HOME_NOT_FOUND`
+
+Home not found
+
+The specified home does not exist
+
+**Example:**
+
+```json
+{
+  "error": "home_not_found",
+  "message": "Home not found"
 }
 ```
 
@@ -4978,24 +5203,1378 @@ You are not a member of this home
 
 Internal server error
 
+An unexpected error occurred on server
+
 **Example:**
 
 ```json
 {
-  "success": false,
-  "error": {
-    "message": "Internal server error",
-    "code": "SERVER_ERROR"
-  }
+  "message": "Internal server error"
 }
 ```
 
 **Related Endpoints:**
 
-- [`sync_entities.pull_entities`](#sync-entities-pull-entities)
-- [`sync_entities.push_entities`](#sync-entities-push-entities)
-- [`sync_entities.batch_sync`](#sync-entities-batch-sync)
-- [`sync_entities.reset_sync`](#sync-entities-reset-sync)
+- [`locations.create`](#locations-create)
+- [`locations.get`](#locations-get)
+- [`locations.update`](#locations-update)
+- [`locations.delete`](#locations-delete)
+
+### DELETE /homes/:homeId/locations/:locationId
+
+<a id="locations-delete"></a>
+
+**ID:** `locations.delete`
+
+**Delete a location**
+
+Soft deletes a location by setting deletedAt and deletedBy fields. User must be a member of the home that contains the location. The location remains in the database but is excluded from queries.
+
+**Authentication:** Required (jwt)
+
+**Tags:** `Locations`
+
+#### Path Parameters
+
+| Name         | Type   | Required | Description                            |
+| ------------ | ------ | -------- | -------------------------------------- |
+| `homeId`     | string | Yes      | The home ID that contains the location |
+| `locationId` | string | Yes      | The unique identifier of the location  |
+
+#### Response (200)
+
+Location deleted successfully
+
+**Example:**
+
+```json
+{
+  "success": true,
+  "message": "Location deleted successfully",
+  "deletedAt": "2024-01-15T11:00:00.000Z"
+}
+```
+
+#### Error Responses
+
+##### 400 - `LOCATION_ID_REQUIRED`
+
+locationId is required
+
+The locationId path parameter must be provided
+
+**Example:**
+
+```json
+{
+  "error": "locationId_required",
+  "message": "locationId is required"
+}
+```
+
+##### 400 - `HOME_ID_REQUIRED`
+
+homeId is required
+
+The homeId path parameter must be provided
+
+**Example:**
+
+```json
+{
+  "error": "homeId_required",
+  "message": "homeId is required"
+}
+```
+
+##### 401 - `UNAUTHORIZED`
+
+Unauthorized
+
+No authentication token provided
+
+**Example:**
+
+```json
+{
+  "message": "Unauthorized"
+}
+```
+
+##### 403 - `FORBIDDEN`
+
+Forbidden
+
+User is not a member of this home
+
+**Example:**
+
+```json
+{
+  "error": "forbidden",
+  "message": "Not a member of this home"
+}
+```
+
+##### 404 - `HOME_NOT_FOUND`
+
+Home not found
+
+The specified home does not exist
+
+**Example:**
+
+```json
+{
+  "error": "home_not_found",
+  "message": "Home not found"
+}
+```
+
+##### 404 - `LOCATION_NOT_FOUND`
+
+Location not found
+
+No location exists with the provided locationId
+
+**Example:**
+
+```json
+{
+  "error": "location_not_found",
+  "message": "Location not found"
+}
+```
+
+##### 500 - `SERVER_ERROR`
+
+Internal server error
+
+An unexpected error occurred on server
+
+**Example:**
+
+```json
+{
+  "message": "Internal server error"
+}
+```
+
+**Related Endpoints:**
+
+- [`locations.create`](#locations-create)
+- [`locations.list`](#locations-list)
+- [`locations.get`](#locations-get)
+- [`locations.update`](#locations-update)
+
+### PATCH /homes/:homeId/locations/:locationId
+
+<a id="locations-update"></a>
+
+**ID:** `locations.update`
+
+**Update a location**
+
+Updates specific fields of an existing location. User must be a member of the home that contains the location. Only fields provided in request body will be updated.
+
+**Authentication:** Required (jwt)
+
+**Tags:** `Locations`
+
+#### Path Parameters
+
+| Name         | Type   | Required | Description                            |
+| ------------ | ------ | -------- | -------------------------------------- |
+| `homeId`     | string | Yes      | The home ID that contains the location |
+| `locationId` | string | Yes      | The unique identifier of the location  |
+
+#### Request Body
+
+**Content-Type:** `application/json`
+
+Location fields to update
+
+**Required:** Yes
+
+**Example:**
+
+```json
+{
+  "name": "Kitchen - Updated",
+  "description": "Updated kitchen description",
+  "color": "#FF5722"
+}
+```
+
+#### Response (200)
+
+Location updated successfully
+
+**Example:**
+
+```json
+{
+  "location": {
+    "locationId": "kitchen",
+    "homeId": "my-home",
+    "name": "Kitchen - Updated",
+    "description": "Updated kitchen description",
+    "icon": "kitchen",
+    "color": "#FF5722",
+    "position": 0,
+    "createdBy": "507f1f77bcf86cd799439011",
+    "updatedBy": "507f1f77bcf86cd799439011",
+    "createdByDeviceId": null,
+    "updatedByDeviceId": null,
+    "createdAt": "2024-01-15T10:30:00.000Z",
+    "updatedAt": "2024-01-15T11:00:00.000Z"
+  }
+}
+```
+
+#### Error Responses
+
+##### 400 - `LOCATION_ID_REQUIRED`
+
+locationId is required
+
+The locationId path parameter must be provided
+
+**Example:**
+
+```json
+{
+  "error": "locationId_required",
+  "message": "locationId is required"
+}
+```
+
+##### 400 - `INVALID_NAME`
+
+Invalid name
+
+Name cannot be empty
+
+**Example:**
+
+```json
+{
+  "error": "invalid_name",
+  "message": "name cannot be empty"
+}
+```
+
+##### 400 - `NAME_TOO_LONG`
+
+Name too long
+
+Name must be 200 characters or less
+
+**Example:**
+
+```json
+{
+  "error": "name_too_long",
+  "message": "name must be 200 characters or less"
+}
+```
+
+##### 400 - `DESCRIPTION_TOO_LONG`
+
+Description too long
+
+Description must be 1000 characters or less
+
+**Example:**
+
+```json
+{
+  "error": "description_too_long",
+  "message": "description must be 1000 characters or less"
+}
+```
+
+##### 400 - `INVALID_POSITION`
+
+Invalid position
+
+Position must be a non\-negative number
+
+**Example:**
+
+```json
+{
+  "error": "invalid_position",
+  "message": "position must be a non-negative number"
+}
+```
+
+##### 401 - `UNAUTHORIZED`
+
+Unauthorized
+
+No authentication token provided
+
+**Example:**
+
+```json
+{
+  "message": "Unauthorized"
+}
+```
+
+##### 403 - `FORBIDDEN`
+
+Forbidden
+
+User is not a member of this home
+
+**Example:**
+
+```json
+{
+  "error": "forbidden",
+  "message": "Not a member of this home"
+}
+```
+
+##### 404 - `HOME_NOT_FOUND`
+
+Home not found
+
+The specified home does not exist
+
+**Example:**
+
+```json
+{
+  "error": "home_not_found",
+  "message": "Home not found"
+}
+```
+
+##### 404 - `LOCATION_NOT_FOUND`
+
+Location not found
+
+No location exists with the provided locationId
+
+**Example:**
+
+```json
+{
+  "error": "location_not_found",
+  "message": "Location not found"
+}
+```
+
+##### 500 - `SERVER_ERROR`
+
+Internal server error
+
+An unexpected error occurred on server
+
+**Example:**
+
+```json
+{
+  "message": "Internal server error"
+}
+```
+
+**Related Endpoints:**
+
+- [`locations.create`](#locations-create)
+- [`locations.list`](#locations-list)
+- [`locations.get`](#locations-get)
+- [`locations.delete`](#locations-delete)
+
+### GET /homes/:homeId/locations/:locationId
+
+<a id="locations-get"></a>
+
+**ID:** `locations.get`
+
+**Get details of a specific location**
+
+Retrieves detailed information about a specific location. User must be a member of the home that contains the location.
+
+**Authentication:** Required (jwt)
+
+**Tags:** `Locations`
+
+#### Path Parameters
+
+| Name         | Type   | Required | Description                            |
+| ------------ | ------ | -------- | -------------------------------------- |
+| `homeId`     | string | Yes      | The home ID that contains the location |
+| `locationId` | string | Yes      | The unique identifier of the location  |
+
+#### Response (200)
+
+Location details retrieved successfully
+
+**Example:**
+
+```json
+{
+  "location": {
+    "locationId": "kitchen",
+    "homeId": "my-home",
+    "name": "Kitchen",
+    "description": "Main kitchen area",
+    "icon": "kitchen",
+    "color": "#FF5722",
+    "position": 0,
+    "createdBy": "507f1f77bcf86cd799439011",
+    "updatedBy": "507f1f77bcf86cd799439011",
+    "createdByDeviceId": null,
+    "updatedByDeviceId": null,
+    "createdAt": "2024-01-15T10:30:00.000Z",
+    "updatedAt": "2024-01-15T10:30:00.000Z"
+  }
+}
+```
+
+#### Error Responses
+
+##### 400 - `HOME_ID_REQUIRED`
+
+homeId is required
+
+The homeId path parameter must be provided
+
+**Example:**
+
+```json
+{
+  "error": "homeId_required",
+  "message": "homeId is required"
+}
+```
+
+##### 400 - `LOCATION_ID_REQUIRED`
+
+locationId is required
+
+The locationId path parameter must be provided
+
+**Example:**
+
+```json
+{
+  "error": "locationId_required",
+  "message": "locationId is required"
+}
+```
+
+##### 401 - `UNAUTHORIZED`
+
+Unauthorized
+
+No authentication token provided
+
+**Example:**
+
+```json
+{
+  "message": "Unauthorized"
+}
+```
+
+##### 403 - `FORBIDDEN`
+
+Forbidden
+
+User is not a member of this home
+
+**Example:**
+
+```json
+{
+  "error": "forbidden",
+  "message": "Not a member of this home"
+}
+```
+
+##### 404 - `HOME_NOT_FOUND`
+
+Home not found
+
+The specified home does not exist
+
+**Example:**
+
+```json
+{
+  "error": "home_not_found",
+  "message": "Home not found"
+}
+```
+
+##### 404 - `LOCATION_NOT_FOUND`
+
+Location not found
+
+No location exists with the provided locationId
+
+**Example:**
+
+```json
+{
+  "error": "location_not_found",
+  "message": "Location not found"
+}
+```
+
+##### 500 - `SERVER_ERROR`
+
+Internal server error
+
+An unexpected error occurred on server
+
+**Example:**
+
+```json
+{
+  "message": "Internal server error"
+}
+```
+
+**Related Endpoints:**
+
+- [`locations.create`](#locations-create)
+- [`locations.list`](#locations-list)
+- [`locations.update`](#locations-update)
+- [`locations.delete`](#locations-delete)
+
+---
+
+## Inventory Categories
+
+### DELETE /homes/:homeId/inventory-categories/:categoryId
+
+<a id="inventory-categories-delete"></a>
+
+**ID:** `inventory_categories.delete`
+
+**Delete an inventory category**
+
+Soft deletes an inventory category. The category is marked as deleted but remains in the database. User must be a member of the home.
+
+**Authentication:** Required (jwt)
+
+**Tags:** `Inventory Categories`
+
+#### Path Parameters
+
+| Name         | Type   | Required | Description                         |
+| ------------ | ------ | -------- | ----------------------------------- |
+| `homeId`     | string | Yes      | The home ID                         |
+| `categoryId` | string | Yes      | The inventory category ID to delete |
+
+#### Response (200)
+
+Inventory category deleted successfully
+
+**Example:**
+
+```json
+{
+  "message": "Inventory category deleted successfully",
+  "categoryId": "snacks"
+}
+```
+
+#### Error Responses
+
+##### 400 - `HOME_ID_REQUIRED`
+
+homeId is required
+
+The homeId path parameter must be provided
+
+**Example:**
+
+```json
+{
+  "error": "homeId_required",
+  "message": "homeId is required"
+}
+```
+
+##### 400 - `CATEGORY_ID_REQUIRED`
+
+categoryId is required
+
+The categoryId path parameter must be provided
+
+**Example:**
+
+```json
+{
+  "error": "categoryId_required",
+  "message": "categoryId is required"
+}
+```
+
+##### 401 - `UNAUTHORIZED`
+
+Unauthorized
+
+No authentication token provided
+
+**Example:**
+
+```json
+{
+  "message": "Unauthorized"
+}
+```
+
+##### 403 - `FORBIDDEN`
+
+Forbidden
+
+User is not a member of this home
+
+**Example:**
+
+```json
+{
+  "error": "forbidden",
+  "message": "Not a member of this home"
+}
+```
+
+##### 404 - `HOME_NOT_FOUND`
+
+Home not found
+
+The specified home does not exist
+
+**Example:**
+
+```json
+{
+  "error": "home_not_found",
+  "message": "Home not found"
+}
+```
+
+##### 404 - `CATEGORY_NOT_FOUND`
+
+Category not found
+
+The specified inventory category does not exist
+
+**Example:**
+
+```json
+{
+  "error": "category_not_found",
+  "message": "Inventory category not found"
+}
+```
+
+##### 500 - `SERVER_ERROR`
+
+Internal server error
+
+An unexpected error occurred on server
+
+**Example:**
+
+```json
+{
+  "message": "Internal server error"
+}
+```
+
+**Related Endpoints:**
+
+- [`inventory_categories.create`](#inventory-categories-create)
+- [`inventory_categories.list`](#inventory-categories-list)
+- [`inventory_categories.get`](#inventory-categories-get)
+- [`inventory_categories.update`](#inventory-categories-update)
+
+### GET /homes/:homeId/inventory-categories/:categoryId
+
+<a id="inventory-categories-get"></a>
+
+**ID:** `inventory_categories.get`
+
+**Get a specific inventory category**
+
+Retrieves a specific inventory category by categoryId. User must be a member of the home.
+
+**Authentication:** Required (jwt)
+
+**Tags:** `Inventory Categories`
+
+#### Path Parameters
+
+| Name         | Type   | Required | Description               |
+| ------------ | ------ | -------- | ------------------------- |
+| `homeId`     | string | Yes      | The home ID               |
+| `categoryId` | string | Yes      | The inventory category ID |
+
+#### Response (200)
+
+Inventory category retrieved successfully
+
+**Example:**
+
+```json
+{
+  "inventoryCategory": {
+    "categoryId": "produce",
+    "homeId": "my-home",
+    "name": "Produce",
+    "description": "Fresh fruits and vegetables",
+    "color": "#4CAF50",
+    "icon": "leaf",
+    "position": 0,
+    "createdBy": "507f1f77bcf86cd799439011",
+    "updatedBy": "507f1f77bcf86cd799439011",
+    "createdByDeviceId": null,
+    "updatedByDeviceId": null,
+    "createdAt": "2024-01-15T10:30:00.000Z",
+    "updatedAt": "2024-01-15T10:30:00.000Z"
+  }
+}
+```
+
+#### Error Responses
+
+##### 400 - `HOME_ID_REQUIRED`
+
+homeId is required
+
+The homeId path parameter must be provided
+
+**Example:**
+
+```json
+{
+  "error": "homeId_required",
+  "message": "homeId is required"
+}
+```
+
+##### 400 - `CATEGORY_ID_REQUIRED`
+
+categoryId is required
+
+The categoryId path parameter must be provided
+
+**Example:**
+
+```json
+{
+  "error": "categoryId_required",
+  "message": "categoryId is required"
+}
+```
+
+##### 401 - `UNAUTHORIZED`
+
+Unauthorized
+
+No authentication token provided
+
+**Example:**
+
+```json
+{
+  "message": "Unauthorized"
+}
+```
+
+##### 403 - `FORBIDDEN`
+
+Forbidden
+
+User is not a member of this home
+
+**Example:**
+
+```json
+{
+  "error": "forbidden",
+  "message": "Not a member of this home"
+}
+```
+
+##### 404 - `HOME_NOT_FOUND`
+
+Home not found
+
+The specified home does not exist
+
+**Example:**
+
+```json
+{
+  "error": "home_not_found",
+  "message": "Home not found"
+}
+```
+
+##### 404 - `CATEGORY_NOT_FOUND`
+
+Category not found
+
+The specified inventory category does not exist
+
+**Example:**
+
+```json
+{
+  "error": "category_not_found",
+  "message": "Inventory category not found"
+}
+```
+
+##### 500 - `SERVER_ERROR`
+
+Internal server error
+
+An unexpected error occurred on server
+
+**Example:**
+
+```json
+{
+  "message": "Internal server error"
+}
+```
+
+**Related Endpoints:**
+
+- [`inventory_categories.create`](#inventory-categories-create)
+- [`inventory_categories.list`](#inventory-categories-list)
+- [`inventory_categories.update`](#inventory-categories-update)
+- [`inventory_categories.delete`](#inventory-categories-delete)
+
+### PATCH /homes/:homeId/inventory-categories/:categoryId
+
+<a id="inventory-categories-update"></a>
+
+**ID:** `inventory_categories.update`
+
+**Update an inventory category**
+
+Updates an existing inventory category. All fields are optional. User must be a member of the home.
+
+**Authentication:** Required (jwt)
+
+**Tags:** `Inventory Categories`
+
+#### Path Parameters
+
+| Name         | Type   | Required | Description                         |
+| ------------ | ------ | -------- | ----------------------------------- |
+| `homeId`     | string | Yes      | The home ID                         |
+| `categoryId` | string | Yes      | The inventory category ID to update |
+
+#### Request Body
+
+**Content-Type:** `application/json`
+
+Inventory category update details
+
+**Required:** Yes
+
+**Example:**
+
+```json
+{
+  "name": "Snacks & Treats",
+  "description": "Chips, cookies, candy, and other treats",
+  "color": "#FF9800",
+  "icon": "cookie",
+  "position": 10
+}
+```
+
+#### Response (200)
+
+Inventory category updated successfully
+
+**Example:**
+
+```json
+{
+  "inventoryCategory": {
+    "categoryId": "snacks",
+    "homeId": "my-home",
+    "name": "Snacks & Treats",
+    "description": "Chips, cookies, candy, and other treats",
+    "color": "#FF9800",
+    "icon": "cookie",
+    "position": 10,
+    "createdBy": "507f1f77bcf86cd799439011",
+    "updatedBy": "507f1f77bcf86cd799439011",
+    "createdByDeviceId": null,
+    "updatedByDeviceId": null,
+    "createdAt": "2024-01-15T10:30:00.000Z",
+    "updatedAt": "2024-01-15T11:00:00.000Z"
+  }
+}
+```
+
+#### Error Responses
+
+##### 400 - `VALIDATION_ERROR`
+
+Validation error
+
+Invalid request parameters
+
+**Example:**
+
+```json
+{
+  "error": "name_too_long",
+  "message": "name must be 100 characters or less"
+}
+```
+
+##### 401 - `UNAUTHORIZED`
+
+Unauthorized
+
+No authentication token provided
+
+**Example:**
+
+```json
+{
+  "message": "Unauthorized"
+}
+```
+
+##### 403 - `FORBIDDEN`
+
+Forbidden
+
+User is not a member of this home
+
+**Example:**
+
+```json
+{
+  "error": "forbidden",
+  "message": "Not a member of this home"
+}
+```
+
+##### 404 - `HOME_NOT_FOUND`
+
+Home not found
+
+The specified home does not exist
+
+**Example:**
+
+```json
+{
+  "error": "home_not_found",
+  "message": "Home not found"
+}
+```
+
+##### 404 - `CATEGORY_NOT_FOUND`
+
+Category not found
+
+The specified inventory category does not exist
+
+**Example:**
+
+```json
+{
+  "error": "category_not_found",
+  "message": "Inventory category not found"
+}
+```
+
+##### 500 - `SERVER_ERROR`
+
+Internal server error
+
+An unexpected error occurred on server
+
+**Example:**
+
+```json
+{
+  "message": "Internal server error"
+}
+```
+
+**Related Endpoints:**
+
+- [`inventory_categories.create`](#inventory-categories-create)
+- [`inventory_categories.list`](#inventory-categories-list)
+- [`inventory_categories.get`](#inventory-categories-get)
+- [`inventory_categories.delete`](#inventory-categories-delete)
+
+### POST /homes/:homeId/inventory-categories
+
+<a id="inventory-categories-create"></a>
+
+**ID:** `inventory_categories.create`
+
+**Create a new inventory category**
+
+Creates a new inventory category in a home. The user must be a member of the home. Each inventory category has a unique categoryId within the home, a name, optional description, color, and icon.
+
+**Authentication:** Required (jwt)
+
+**Tags:** `Inventory Categories`
+
+#### Path Parameters
+
+| Name     | Type   | Required | Description                                     |
+| -------- | ------ | -------- | ----------------------------------------------- |
+| `homeId` | string | Yes      | The home ID to create the inventory category in |
+
+#### Request Body
+
+**Content-Type:** `application/json`
+
+Inventory category creation details
+
+**Required:** Yes
+
+**Example:**
+
+```json
+{
+  "categoryId": "snacks",
+  "name": "Snacks",
+  "description": "Chips, cookies, and other snacks",
+  "color": "#FF5733",
+  "icon": "cookie",
+  "position": 0
+}
+```
+
+#### Response (201)
+
+Inventory category created successfully
+
+**Example:**
+
+```json
+{
+  "inventoryCategory": {
+    "categoryId": "snacks",
+    "homeId": "my-home",
+    "name": "Snacks",
+    "description": "Chips, cookies, and other snacks",
+    "color": "#FF5733",
+    "icon": "cookie",
+    "position": 0,
+    "createdBy": "507f1f77bcf86cd799439011",
+    "updatedBy": "507f1f77bcf86cd799439011",
+    "createdByDeviceId": null,
+    "updatedByDeviceId": null,
+    "createdAt": "2024-01-15T10:30:00.000Z",
+    "updatedAt": "2024-01-15T10:30:00.000Z"
+  }
+}
+```
+
+#### Error Responses
+
+##### 400 - `VALIDATION_ERROR`
+
+Validation error
+
+Invalid request parameters
+
+**Example:**
+
+```json
+{
+  "error": "categoryId_required",
+  "message": "categoryId is required"
+}
+```
+
+##### 400 - `INVALID_CATEGORY_ID`
+
+Invalid categoryId format
+
+categoryId must be 4\-50 characters, alphanumeric with hyphens or underscores
+
+**Example:**
+
+```json
+{
+  "error": "invalid_category_id",
+  "message": "categoryId must be 4-50 characters, alphanumeric with hyphens or underscores"
+}
+```
+
+##### 400 - `NAME_REQUIRED`
+
+Name is required
+
+Name cannot be empty
+
+**Example:**
+
+```json
+{
+  "error": "name_required",
+  "message": "name is required"
+}
+```
+
+##### 400 - `NAME_TOO_LONG`
+
+Name too long
+
+Name must be 100 characters or less
+
+**Example:**
+
+```json
+{
+  "error": "name_too_long",
+  "message": "name must be 100 characters or less"
+}
+```
+
+##### 400 - `INVALID_COLOR`
+
+Invalid color format
+
+Color must be a valid hex color code
+
+**Example:**
+
+```json
+{
+  "error": "invalid_color",
+  "message": "color must be a valid hex color code (e.g., #FF5733)"
+}
+```
+
+##### 401 - `UNAUTHORIZED`
+
+Unauthorized
+
+No authentication token provided
+
+**Example:**
+
+```json
+{
+  "message": "Unauthorized"
+}
+```
+
+##### 403 - `FORBIDDEN`
+
+Forbidden
+
+User is not a member of this home
+
+**Example:**
+
+```json
+{
+  "error": "forbidden",
+  "message": "Not a member of this home"
+}
+```
+
+##### 404 - `HOME_NOT_FOUND`
+
+Home not found
+
+The specified home does not exist
+
+**Example:**
+
+```json
+{
+  "error": "home_not_found",
+  "message": "Home not found"
+}
+```
+
+##### 409 - `CATEGORY_ID_EXISTS`
+
+Category ID already exists
+
+An inventory category with this ID already exists in this home
+
+**Example:**
+
+```json
+{
+  "error": "category_id_exists",
+  "message": "An inventory category with this ID already exists in this home",
+  "suggestedCategoryId": "snacks-2"
+}
+```
+
+##### 500 - `SERVER_ERROR`
+
+Internal server error
+
+An unexpected error occurred on server
+
+**Example:**
+
+```json
+{
+  "message": "Internal server error"
+}
+```
+
+**Related Endpoints:**
+
+- [`inventory_categories.list`](#inventory-categories-list)
+- [`inventory_categories.get`](#inventory-categories-get)
+- [`inventory_categories.update`](#inventory-categories-update)
+- [`inventory_categories.delete`](#inventory-categories-delete)
+
+### GET /homes/:homeId/inventory-categories
+
+<a id="inventory-categories-list"></a>
+
+**ID:** `inventory_categories.list`
+
+**List all inventory categories for a home**
+
+Retrieves a list of all inventory categories for a home. User must be a member of the home. Categories are ordered by position.
+
+**Authentication:** Required (jwt)
+
+**Tags:** `Inventory Categories`
+
+#### Path Parameters
+
+| Name     | Type   | Required | Description                                  |
+| -------- | ------ | -------- | -------------------------------------------- |
+| `homeId` | string | Yes      | The home ID to get inventory categories from |
+
+#### Response (200)
+
+List of inventory categories retrieved successfully
+
+**Example:**
+
+```json
+{
+  "inventoryCategories": [
+    {
+      "categoryId": "produce",
+      "homeId": "my-home",
+      "name": "Produce",
+      "description": "Fresh fruits and vegetables",
+      "color": "#4CAF50",
+      "icon": "leaf",
+      "position": 0,
+      "createdBy": "507f1f77bcf86cd799439011",
+      "updatedBy": "507f1f77bcf86cd799439011",
+      "createdByDeviceId": null,
+      "updatedByDeviceId": null,
+      "createdAt": "2024-01-15T10:30:00.000Z",
+      "updatedAt": "2024-01-15T10:30:00.000Z"
+    }
+  ]
+}
+```
+
+#### Error Responses
+
+##### 400 - `HOME_ID_REQUIRED`
+
+homeId is required
+
+The homeId path parameter must be provided
+
+**Example:**
+
+```json
+{
+  "error": "homeId_required",
+  "message": "homeId is required"
+}
+```
+
+##### 401 - `UNAUTHORIZED`
+
+Unauthorized
+
+No authentication token provided
+
+**Example:**
+
+```json
+{
+  "message": "Unauthorized"
+}
+```
+
+##### 403 - `FORBIDDEN`
+
+Forbidden
+
+User is not a member of this home
+
+**Example:**
+
+```json
+{
+  "error": "forbidden",
+  "message": "Not a member of this home"
+}
+```
+
+##### 404 - `HOME_NOT_FOUND`
+
+Home not found
+
+The specified home does not exist
+
+**Example:**
+
+```json
+{
+  "error": "home_not_found",
+  "message": "Home not found"
+}
+```
+
+##### 500 - `SERVER_ERROR`
+
+Internal server error
+
+An unexpected error occurred on server
+
+**Example:**
+
+```json
+{
+  "message": "Internal server error"
+}
+```
+
+**Related Endpoints:**
+
+- [`inventory_categories.create`](#inventory-categories-create)
+- [`inventory_categories.get`](#inventory-categories-get)
+- [`inventory_categories.update`](#inventory-categories-update)
+- [`inventory_categories.delete`](#inventory-categories-delete)
 
 ---
 
@@ -5151,4 +6730,4 @@ The debug endpoint is disabled in production mode
 
 ---
 
-_Documentation generated from 35 endpoints_
+_Documentation generated from 45 endpoints_

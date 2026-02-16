@@ -8,6 +8,10 @@
  * - Edge cases and error handling
  */
 
+// Import SettingsService after mocks are set up
+import { settingsService } from './SettingsService';
+import { Settings } from '../types/settings';
+
 // Mock dependencies before importing SettingsService
 const mockFileSystemService = {
   readFile: jest.fn(),
@@ -27,10 +31,6 @@ jest.mock('../utils/Logger', () => ({
     verbose: jest.fn(),
   },
 }));
-
-// Import SettingsService after mocks are set up
-import { settingsService } from './SettingsService';
-import { Settings } from '../types/settings';
 
 describe('SettingsService', () => {
   const createMockSettings = (overrides?: Partial<Settings>): Settings => ({

@@ -1,7 +1,6 @@
 import React, { useRef, useCallback, useEffect, useState } from 'react';
 import { TextInput } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { locations } from '../data/locations';
 import type { InventoryItem, ItemBatch } from '../types/inventory';
 
 export interface ItemFormValues {
@@ -63,7 +62,7 @@ interface FormInitialValues {
 const DEFAULT_ICON: keyof typeof Ionicons.glyphMap = 'cube-outline';
 const DEFAULT_COLOR = '#95A5A6';
 const DEFAULT_STATUS = 'using';
-const DEFAULT_LOCATION = locations.length > 0 ? locations[0].id : '';
+const DEFAULT_LOCATION = '';
 
 /**
  * Custom hook for managing item form state using uncontrolled inputs.

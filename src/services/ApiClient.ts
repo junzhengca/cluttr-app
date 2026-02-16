@@ -9,35 +9,15 @@ import {
   AuthResponse,
   User,
   UploadImageResponse,
-  GetAccountPermissionsResponse,
   UpdateAccountSettingsResponse,
   ListMembersResponse,
-  RegenerateInvitationCodeResponse,
   RecognizeItemResponse,
   ErrorDetails,
   RetryAttempt,
   ValidateInvitationResponse,
-  ListAccessibleAccountsResponse,
   RemoveMemberResponse,
   GetInvitationCodeResponse,
   AcceptInvitationResponse,
-  SyncFileType,
-  PushFileRequest,
-  SyncStatusResponse,
-  PullFileResponse,
-  PushFileResponse,
-  DeleteFileDataResponse,
-  SyncEntityType,
-  BatchSyncRequest,
-  BatchSyncResponse,
-  SyncEntitiesStatusResponse,
-  PullEntitiesResponse,
-  PushEntitiesRequest,
-  PushEntitiesResponse,
-  ResetSyncResponse,
-  SyncHomesResponse,
-  PushHomesRequest,
-  PushHomesResponse,
   ListHomesResponse,
   CreateHomeRequest,
   CreateHomeResponse,
@@ -63,6 +43,30 @@ import {
   UpdateTodoCategoryResponse,
   GetTodoCategoryResponse,
   DeleteTodoCategoryResponse,
+  // Inventory Item CRUD Types
+  ListInventoryItemsResponse,
+  CreateInventoryItemRequest,
+  CreateInventoryItemResponse,
+  UpdateInventoryItemRequest,
+  UpdateInventoryItemResponse,
+  GetInventoryItemResponse,
+  DeleteInventoryItemResponse,
+  // Inventory Category CRUD Types
+  ListInventoryCategoriesResponse,
+  CreateInventoryCategoryRequest,
+  CreateInventoryCategoryResponse,
+  UpdateInventoryCategoryRequest,
+  UpdateInventoryCategoryResponse,
+  GetInventoryCategoryResponse,
+  DeleteInventoryCategoryResponse,
+  // Location CRUD Types
+  ListLocationsResponse,
+  CreateLocationRequest,
+  CreateLocationResponse,
+  UpdateLocationRequest,
+  UpdateLocationResponse,
+  GetLocationResponse,
+  DeleteLocationResponse,
 } from '../types/api';
 import { apiLogger } from '../utils/Logger';
 
@@ -729,208 +733,6 @@ class ApiClient {
   }
 
   // =============================================================================
-  // Sync Endpoints (Deprecated)
-  // =============================================================================
-
-  /**
-   * @deprecated Use listHomes() instead
-   * GET /api/homes/sync
-   * Sync homes list with server
-   * @param since Optional ISO 8601 timestamp for incremental sync
-   * @param includeDeleted Optional whether to include deleted home IDs
-   */
-  async syncHomes(since?: string, includeDeleted?: boolean): Promise<SyncHomesResponse> {
-    const queryParams = new URLSearchParams();
-    if (since) {
-      queryParams.append('since', since);
-    }
-    if (includeDeleted !== undefined) {
-      queryParams.append('includeDeleted', String(includeDeleted));
-    }
-    return this.request<SyncHomesResponse>(`/api/homes/sync?${queryParams.toString()}`, {
-      method: 'GET',
-      requiresAuth: true,
-    });
-  }
-
-  /**
-   * @deprecated Use createHome()/updateHome() instead
-   * POST /api/homes/sync
-   * Push local home changes to server
-   */
-  async pushHomes(request: PushHomesRequest): Promise<PushHomesResponse> {
-    return this.request<PushHomesResponse>('/api/homes/sync', {
-      method: 'POST',
-      body: request,
-      requiresAuth: true,
-    });
-  }
-
-  /**
-   * GET /api/sync/status
-   * Get sync status for all file types
-   */
-  async getSyncStatus(): Promise<SyncStatusResponse> {
-    return this.request<SyncStatusResponse>('/api/sync/status', {
-      method: 'GET',
-      requiresAuth: true,
-    });
-  }
-
-  /**
-   * GET /api/sync/:fileType/pull
-   * Pull sync data for a specific file type
-   * @param fileType Type of file to sync (categories, locations, inventoryItems, todoItems, settings)
-   * @param userId Optional target account ID for cross-account access
-   */
-  async pullFile<T = unknown>(fileType: SyncFileType, userId?: string): Promise<PullFileResponse<T>> {
-    const endpoint = userId ? `/api/sync/${fileType}/pull?userId=${userId}` : `/api/sync/${fileType}/pull`;
-    return this.request<PullFileResponse<T>>(endpoint, {
-      method: 'GET',
-      requiresAuth: true,
-    });
-  }
-
-  /**
-   * POST /api/sync/:fileType/push
-   * Push sync data for a specific file type
-   * @param fileType Type of file to sync (categories, locations, inventoryItems, todoItems, settings)
-   * @param request Sync data to upload
-   */
-  async pushFile(fileType: SyncFileType, request: PushFileRequest): Promise<PushFileResponse> {
-    return this.request<PushFileResponse>(`/api/sync/${fileType}/push`, {
-      method: 'POST',
-      body: request,
-      requiresAuth: true,
-    });
-  }
-
-  /**
-   * DELETE /api/sync/:fileType/data
-   * Delete sync data for a specific file type
-   * @param fileType Type of file to delete (categories, locations, inventoryItems, todoItems, settings)
-   * @param userId Optional target account ID for cross-account access
-   */
-  async deleteFileData(fileType: SyncFileType, userId?: string): Promise<DeleteFileDataResponse> {
-    const endpoint = userId ? `/api/sync/${fileType}/data?userId=${userId}` : `/api/sync/${fileType}/data`;
-    return this.request<DeleteFileDataResponse>(endpoint, {
-      method: 'DELETE',
-      requiresAuth: true,
-    });
-  }
-
-  // =============================================================================
-  // Sync Entities Endpoints
-  // =============================================================================
-
-  /**
-   * POST /api/sync/entities/batch
-   * Combined pull and push in a single request
-   */
-  async batchSync(request: BatchSyncRequest): Promise<BatchSyncResponse> {
-    return this.request<BatchSyncResponse>('/api/sync/entities/batch', {
-      method: 'POST',
-      body: request,
-      requiresAuth: true,
-    });
-  }
-
-  /**
-   * GET /api/sync/entities/status
-   * Get sync status for entity types in a home
-   * @param homeId Home ID to check sync status for
-   * @param deviceId Client device identifier
-   * @param entityType Optional specific entity type to check, or all if omitted
-   */
-  async getSyncEntitiesStatus(
-    homeId: string,
-    deviceId: string,
-    entityType?: SyncEntityType
-  ): Promise<SyncEntitiesStatusResponse> {
-    const queryParams = new URLSearchParams({ homeId, deviceId });
-    if (entityType) {
-      queryParams.append('entityType', entityType);
-    }
-    return this.request<SyncEntitiesStatusResponse>(`/api/sync/entities/status?${queryParams.toString()}`, {
-      method: 'GET',
-      requiresAuth: true,
-    });
-  }
-
-  /**
-   * GET /api/sync/entities/pull
-   * Pull entities for a home and entity type
-   * @param homeId Home ID to pull entities from
-   * @param entityType Type of entities to pull
-   * @param deviceId Client device identifier for checkpoint tracking
-   * @param since Optional ISO 8601 timestamp for incremental sync
-   * @param includeDeleted Optional whether to include soft-deleted entities
-   */
-  async pullEntities(
-    homeId: string,
-    entityType: SyncEntityType,
-    deviceId: string,
-    since?: string,
-    includeDeleted?: boolean
-  ): Promise<PullEntitiesResponse> {
-    const queryParams = new URLSearchParams({ homeId, entityType, deviceId });
-    if (since) {
-      queryParams.append('since', since);
-    }
-    if (includeDeleted !== undefined) {
-      queryParams.append('includeDeleted', String(includeDeleted));
-    }
-    return this.request<PullEntitiesResponse>(`/api/sync/entities/pull?${queryParams.toString()}`, {
-      method: 'GET',
-      requiresAuth: true,
-    });
-  }
-
-  /**
-   * POST /api/sync/entities/push
-   * Push entity changes to the server with automatic conflict resolution
-   * @param homeId Home ID to push entities to
-   * @param entityType Type of entities being pushed
-   * @param deviceId Client device identifier for tracking changes
-   * @param request Array of entities to sync with optional checkpoint info
-   */
-  async pushEntities(
-    homeId: string,
-    entityType: SyncEntityType,
-    deviceId: string,
-    request: PushEntitiesRequest
-  ): Promise<PushEntitiesResponse> {
-    const queryParams = new URLSearchParams({ homeId, entityType, deviceId });
-    return this.request<PushEntitiesResponse>(`/api/sync/entities/push?${queryParams.toString()}`, {
-      method: 'POST',
-      body: request,
-      requiresAuth: true,
-    });
-  }
-
-  /**
-   * DELETE /api/sync/entities/reset
-   * Clear sync checkpoints forcing full re-sync
-   * @param homeId Home ID to reset sync checkpoints for
-   * @param deviceId Client device identifier to reset checkpoints for
-   * @param entityType Optional specific entity type to reset, or all if omitted
-   */
-  async resetSync(
-    homeId: string,
-    deviceId: string,
-    entityType?: SyncEntityType
-  ): Promise<ResetSyncResponse> {
-    const queryParams = new URLSearchParams({ homeId, deviceId });
-    if (entityType) {
-      queryParams.append('entityType', entityType);
-    }
-    return this.request<ResetSyncResponse>(`/api/sync/entities/reset?${queryParams.toString()}`, {
-      method: 'DELETE',
-      requiresAuth: true,
-    });
-  }
-
-  // =============================================================================
   // Todo Item CRUD Endpoints
   // =============================================================================
 
@@ -1047,6 +849,189 @@ class ApiClient {
    */
   async deleteTodoCategory(homeId: string, categoryId: string): Promise<DeleteTodoCategoryResponse> {
     return this.request<DeleteTodoCategoryResponse>(`/api/homes/${homeId}/todo-categories/${categoryId}`, {
+      method: 'DELETE',
+      requiresAuth: true,
+    });
+  }
+
+  // =============================================================================
+  // Inventory Item CRUD Endpoints
+  // =============================================================================
+
+  /**
+   * GET /api/homes/:homeId/inventory
+   * List all inventory items for a home
+   */
+  async listInventoryItems(homeId: string): Promise<ListInventoryItemsResponse> {
+    return this.request<ListInventoryItemsResponse>(`/api/homes/${homeId}/inventory`, {
+      method: 'GET',
+      requiresAuth: true,
+    });
+  }
+
+  /**
+   * POST /api/homes/:homeId/inventory
+   * Create a new inventory item
+   */
+  async createInventoryItem(homeId: string, request: CreateInventoryItemRequest): Promise<CreateInventoryItemResponse> {
+    return this.request<CreateInventoryItemResponse>(`/api/homes/${homeId}/inventory`, {
+      method: 'POST',
+      body: request,
+      requiresAuth: true,
+    });
+  }
+
+  /**
+   * GET /api/homes/:homeId/inventory/:inventoryId
+   * Get details of a specific inventory item
+   */
+  async getInventoryItem(homeId: string, inventoryId: string): Promise<GetInventoryItemResponse> {
+    return this.request<GetInventoryItemResponse>(`/api/homes/${homeId}/inventory/${inventoryId}`, {
+      method: 'GET',
+      requiresAuth: true,
+    });
+  }
+
+  /**
+   * PATCH /api/homes/:homeId/inventory/:inventoryId
+   * Update an inventory item
+   */
+  async updateInventoryItem(homeId: string, inventoryId: string, request: UpdateInventoryItemRequest): Promise<UpdateInventoryItemResponse> {
+    return this.request<UpdateInventoryItemResponse>(`/api/homes/${homeId}/inventory/${inventoryId}`, {
+      method: 'PATCH',
+      body: request,
+      requiresAuth: true,
+    });
+  }
+
+  /**
+   * DELETE /api/homes/:homeId/inventory/:inventoryId
+   * Delete an inventory item
+   */
+  async deleteInventoryItem(homeId: string, inventoryId: string): Promise<DeleteInventoryItemResponse> {
+    return this.request<DeleteInventoryItemResponse>(`/api/homes/${homeId}/inventory/${inventoryId}`, {
+      method: 'DELETE',
+      requiresAuth: true,
+    });
+  }
+
+  // =============================================================================
+  // Inventory Category CRUD Endpoints
+  // =============================================================================
+
+  /**
+   * GET /api/homes/:homeId/inventory-categories
+   * List all inventory categories for a home
+   */
+  async listInventoryCategories(homeId: string): Promise<ListInventoryCategoriesResponse> {
+    return this.request<ListInventoryCategoriesResponse>(`/api/homes/${homeId}/inventory-categories`, {
+      method: 'GET',
+      requiresAuth: true,
+    });
+  }
+
+  /**
+   * POST /api/homes/:homeId/inventory-categories
+   * Create a new inventory category
+   */
+  async createInventoryCategory(homeId: string, request: CreateInventoryCategoryRequest): Promise<CreateInventoryCategoryResponse> {
+    return this.request<CreateInventoryCategoryResponse>(`/api/homes/${homeId}/inventory-categories`, {
+      method: 'POST',
+      body: request,
+      requiresAuth: true,
+    });
+  }
+
+  /**
+   * GET /api/homes/:homeId/inventory-categories/:categoryId
+   * Get details of a specific inventory category
+   */
+  async getInventoryCategory(homeId: string, categoryId: string): Promise<GetInventoryCategoryResponse> {
+    return this.request<GetInventoryCategoryResponse>(`/api/homes/${homeId}/inventory-categories/${categoryId}`, {
+      method: 'GET',
+      requiresAuth: true,
+    });
+  }
+
+  /**
+   * PATCH /api/homes/:homeId/inventory-categories/:categoryId
+   * Update an inventory category
+   */
+  async updateInventoryCategory(homeId: string, categoryId: string, request: UpdateInventoryCategoryRequest): Promise<UpdateInventoryCategoryResponse> {
+    return this.request<UpdateInventoryCategoryResponse>(`/api/homes/${homeId}/inventory-categories/${categoryId}`, {
+      method: 'PATCH',
+      body: request,
+      requiresAuth: true,
+    });
+  }
+
+  /**
+   * DELETE /api/homes/:homeId/inventory-categories/:categoryId
+   * Delete an inventory category
+   */
+  async deleteInventoryCategory(homeId: string, categoryId: string): Promise<DeleteInventoryCategoryResponse> {
+    return this.request<DeleteInventoryCategoryResponse>(`/api/homes/${homeId}/inventory-categories/${categoryId}`, {
+      method: 'DELETE',
+      requiresAuth: true,
+    });
+  }
+
+  // =============================================================================
+  // Location CRUD Endpoints
+  // =============================================================================
+
+  /**
+   * GET /api/homes/:homeId/locations
+   * List all locations for a home
+   */
+  async listLocations(homeId: string): Promise<ListLocationsResponse> {
+    return this.request<ListLocationsResponse>(`/api/homes/${homeId}/locations`, {
+      method: 'GET',
+      requiresAuth: true,
+    });
+  }
+
+  /**
+   * POST /api/homes/:homeId/locations
+   * Create a new location
+   */
+  async createLocation(homeId: string, request: CreateLocationRequest): Promise<CreateLocationResponse> {
+    return this.request<CreateLocationResponse>(`/api/homes/${homeId}/locations`, {
+      method: 'POST',
+      body: request,
+      requiresAuth: true,
+    });
+  }
+
+  /**
+   * GET /api/homes/:homeId/locations/:locationId
+   * Get details of a specific location
+   */
+  async getLocation(homeId: string, locationId: string): Promise<GetLocationResponse> {
+    return this.request<GetLocationResponse>(`/api/homes/${homeId}/locations/${locationId}`, {
+      method: 'GET',
+      requiresAuth: true,
+    });
+  }
+
+  /**
+   * PATCH /api/homes/:homeId/locations/:locationId
+   * Update a location
+   */
+  async updateLocation(homeId: string, locationId: string, request: UpdateLocationRequest): Promise<UpdateLocationResponse> {
+    return this.request<UpdateLocationResponse>(`/api/homes/${homeId}/locations/${locationId}`, {
+      method: 'PATCH',
+      body: request,
+      requiresAuth: true,
+    });
+  }
+
+  /**
+   * DELETE /api/homes/:homeId/locations/:locationId
+   * Delete a location
+   */
+  async deleteLocation(homeId: string, locationId: string): Promise<DeleteLocationResponse> {
+    return this.request<DeleteLocationResponse>(`/api/homes/${homeId}/locations/${locationId}`, {
       method: 'DELETE',
       requiresAuth: true,
     });

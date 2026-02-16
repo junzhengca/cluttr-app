@@ -11,7 +11,7 @@ import {
 } from '../slices/authSlice';
 import { loadItems } from './inventorySaga';
 import { loadTodos, loadTodoCategoriesAction } from './todoSaga';
-import { syncAllAction } from './syncSaga';
+import { loadCategories } from './inventoryCategorySaga';
 import { loadSettings } from './settingsSaga';
 import { ApiClient, apiClient, type ApiClient as ApiClientType } from '../../services/ApiClient';
 import { authService } from '../../services/AuthService';
@@ -87,7 +87,7 @@ function createAuthChannel(apiClient: ApiClientType): EventChannel<AuthChannelEv
 
 function* initializeApiClientSaga(action: { type: string; payload: string }) {
   try {
-    const apiBaseUrl = action.payload;
+    const _apiBaseUrl = action.payload;
     // The apiClient singleton is already initialized with the environment variable
     // We just need to configure it and set it in state
     const client = apiClient;
@@ -263,19 +263,17 @@ function* checkAuthSaga(): Generator {
         // Fetch homes from server using CRUD endpoint
         yield call([homeService, homeService.fetchHomes], apiClient);
 
-        // Sync content (everything except homes)
-        yield put(syncAllAction());
-
-        // After sync, ensure we have a default home if none exists
+        // Ensure we have a default home if none exists
         yield call(ensureDefaultHomeIfNeeded, apiClient);
 
         // Restore active home ID or select default
         yield call(restoreOrSelectActiveHome);
 
-        // Reload data with correct context
+        // Load data with correct context
         yield put(loadItems());
         yield put(loadTodos());
         yield put(loadTodoCategoriesAction());
+        yield put(loadCategories());
         yield put(loadSettings());
       }
     } catch (error) {
@@ -410,19 +408,17 @@ function* loginSaga(action: { type: string; payload: { email: string; password: 
     // Fetch homes from server using CRUD endpoint
     yield call([homeService, homeService.fetchHomes], apiClient);
 
-    // Sync content (everything except homes)
-    yield put(syncAllAction());
-
-    // After sync, ensure we have a default home if none exists
+    // Ensure we have a default home if none exists
     yield call(ensureDefaultHomeIfNeeded, apiClient);
 
     // Restore active home ID or select default
     yield call(restoreOrSelectActiveHome);
 
-    // Reload data with correct context
+    // Load data with correct context
     yield put(loadItems());
     yield put(loadTodos());
     yield put(loadTodoCategoriesAction());
+    yield put(loadCategories());
     yield put(loadSettings());
 
     yield put(setLoading(false));
@@ -501,19 +497,17 @@ function* signupSaga(action: { type: string; payload: { email: string; password:
     // Fetch homes from server using CRUD endpoint
     yield call([homeService, homeService.fetchHomes], apiClient);
 
-    // Sync content (everything except homes)
-    yield put(syncAllAction());
-
-    // After sync, ensure we have a default home if none exists
+    // Ensure we have a default home if none exists
     yield call(ensureDefaultHomeIfNeeded, apiClient);
 
     // Restore active home ID or select default
     yield call(restoreOrSelectActiveHome);
 
-    // Reload data with correct context
+    // Load data with correct context
     yield put(loadItems());
     yield put(loadTodos());
     yield put(loadTodoCategoriesAction());
+    yield put(loadCategories());
     yield put(loadSettings());
 
     // Show success toast
@@ -605,19 +599,17 @@ function* googleLoginSaga(action: { type: string; payload: { idToken: string; pl
     // Fetch homes from server using CRUD endpoint
     yield call([homeService, homeService.fetchHomes], apiClient);
 
-    // Sync content (everything except homes)
-    yield put(syncAllAction());
-
-    // After sync, ensure we have a default home if none exists
+    // Ensure we have a default home if none exists
     yield call(ensureDefaultHomeIfNeeded, apiClient);
 
     // Restore active home ID or select default
     yield call(restoreOrSelectActiveHome);
 
-    // Reload data with correct context
+    // Load data with correct context
     yield put(loadItems());
     yield put(loadTodos());
     yield put(loadTodoCategoriesAction());
+    yield put(loadCategories());
     yield put(loadSettings());
 
     yield put(setLoading(false));
@@ -695,6 +687,7 @@ function* handleActiveHomeIdChange(action: { type: string; payload: string | nul
     yield put(loadItems());
     yield put(loadTodos());
     yield put(loadTodoCategoriesAction());
+        yield put(loadCategories());
     yield put(loadSettings());
   } else {
     yield call([authService, 'removeActiveHomeId']);

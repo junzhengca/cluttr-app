@@ -20,14 +20,16 @@ store/
 │   ├── index.ts          # Root saga forking all domain sagas
 │   ├── authSaga.ts       # Auth flow with API client initialization
 │   ├── inventorySaga.ts   # CRUD with optimistic updates
+│   ├── inventoryCategorySaga.ts # CRUD for inventory categories
+│   ├── locationSaga.ts   # CRUD for locations
 │   ├── todoSaga.ts       # CRUD with optimistic updates
-│   ├── syncSaga.ts       # Sync service + event channel pattern
 │   └── settingsSaga.ts   # Settings load/update with i18n
 └── slices/
     ├── authSlice.ts       # Auth state + ApiClient instance (non-serializable)
     ├── inventorySlice.ts   # Inventory + memoized selectors
+    ├── inventoryCategorySlice.ts # Inventory categories state
+    ├── locationSlice.ts   # Locations state
     ├── todoSlice.ts       # Todos + memoized selectors
-    ├── syncSlice.ts       # Sync state + SyncService instance
     ├── settingsSlice.ts   # Settings + update result tracking
     ├── uiSlice.ts         # UI state (home category)
     └── refreshSlice.ts    # Refresh callback Set (non-serializable)
@@ -37,9 +39,8 @@ store/
 
 | Task          | Location                            | Notes                                                              |
 | ------------- | ----------------------------------- | ------------------------------------------------------------------ |
-| Domain hooks  | `hooks.ts`                          | useAuth, useSettings, useTodos, useSync, useInventory, useCategory |
+| Domain hooks  | `hooks.ts`                          | useAuth, useSettings, useTodos, useInventory, useCategory, useLocation |
 | API client    | Select via `state.auth.apiClient`   | Never new ApiClient() in components                                |
-| Sync service  | Select via `state.sync.syncService` | Lazy init in syncSaga                                              |
 | Saga watchers | `sagas/*.ts`                        | use `takeLatest`, access API client via `select()`                 |
 | Slice actions | `slices/*.ts`                       | set{Property} for updates, silent{Operation} for background        |
 
@@ -55,5 +56,5 @@ store/
 ## ANTI-PATTERNS (THIS PROJECT)
 
 - **NEVER** use React Context for domain state - use hooks from `store/hooks.ts`
-- **NEVER** store ApiClient/SyncService in Redux without serializableCheck exemption
+- **NEVER** store ApiClient in Redux without serializableCheck exemption
 - **NEVER** mix saga concerns - one operation per watcher pattern

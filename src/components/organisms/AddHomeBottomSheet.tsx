@@ -80,36 +80,6 @@ export const AddHomeBottomSheet: React.FC<AddHomeBottomSheetProps> = ({
         bottomSheetRef.current?.dismiss();
     }, [bottomSheetRef]);
 
-    const handleSubmit = async () => {
-        if (!name.trim()) return;
-
-        if (!isAuthenticated) {
-            uiLogger.error('Cannot create home: user not authenticated');
-            return;
-        }
-
-        const apiClient = getApiClient();
-        if (!apiClient) {
-            uiLogger.error('Cannot create home: API client not available');
-            return;
-        }
-
-        try {
-            await createHome(apiClient, name, address);
-
-            // Clear inputs and state
-            setName('');
-            setAddress('');
-            nameInputRef.current?.clear();
-            addressInputRef.current?.clear();
-
-            handleClose();
-            onHomeCreated?.();
-        } catch (error) {
-            uiLogger.error('Failed to create home', error);
-        }
-    };
-
     const renderBackdrop = useCallback(
         (props: BottomSheetBackdropProps) => (
             <BottomSheetBackdrop
@@ -125,22 +95,54 @@ export const AddHomeBottomSheet: React.FC<AddHomeBottomSheetProps> = ({
     const isLoading = loadingState.operation === 'create' && loadingState.isLoading;
     const error = loadingState.operation === 'create' ? loadingState.error : null;
 
-    const renderFooter = useCallback(() => (
-        <FooterContainer bottomInset={insets.bottom} showSafeArea={!isKeyboardVisible}>
-            {error && (
-                <ErrorBanner style={{ marginBottom: 8 }}>
-                    <ErrorText>{error}</ErrorText>
-                </ErrorBanner>
-            )}
-            <Button
-                label={t('home.create.submit')}
-                onPress={handleSubmit}
-                variant="primary"
-                disabled={!name.trim() || isLoading}
-                fullWidth
-            />
-        </FooterContainer>
-    ), [insets.bottom, isKeyboardVisible, handleSubmit, name, isLoading, error, t]);
+    const renderFooter = useCallback(() => {
+        const handleSubmit = async () => {
+            if (!name.trim()) return;
+
+            if (!isAuthenticated) {
+                uiLogger.error('Cannot create home: user not authenticated');
+                return;
+            }
+
+            const apiClient = getApiClient();
+            if (!apiClient) {
+                uiLogger.error('Cannot create home: API client not available');
+                return;
+            }
+
+            try {
+                await createHome(apiClient, name, address);
+
+                // Clear inputs and state
+                setName('');
+                setAddress('');
+                nameInputRef.current?.clear();
+                addressInputRef.current?.clear();
+
+                handleClose();
+                onHomeCreated?.();
+            } catch (error) {
+                uiLogger.error('Failed to create home', error);
+            }
+        };
+
+        return (
+            <FooterContainer bottomInset={insets.bottom} showSafeArea={!isKeyboardVisible}>
+                {error && (
+                    <ErrorBanner style={{ marginBottom: 8 }}>
+                        <ErrorText>{error}</ErrorText>
+                    </ErrorBanner>
+                )}
+                <Button
+                    label={t('home.create.submit')}
+                    onPress={handleSubmit}
+                    variant="primary"
+                    disabled={!name.trim() || isLoading}
+                    fullWidth
+                />
+            </FooterContainer>
+        );
+    }, [insets.bottom, isKeyboardVisible, isAuthenticated, getApiClient, createHome, name, address, error, isLoading, handleClose, onHomeCreated, nameInputRef, addressInputRef, t]);
 
     // Estimated height of footer: 16px (top) + 16px (bottom) + 50px (button) = ~82px + inset
     // When keyboard is visible, safe area is removed, so we just use base height

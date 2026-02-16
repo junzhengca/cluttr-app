@@ -267,7 +267,7 @@ export const TodoCard: React.FC<TodoCardProps> = ({
     setTimeout(() => {
       textInputRef.current?.focus();
     }, 0);
-  }, [todo.text, todo.completed]);
+  }, [todo.text, todo.completed, editable]);
 
   const handleNotePress = useCallback(() => {
     if (todo.completed || !editable) return; // Prevent editing completed or read-only todos
@@ -277,7 +277,7 @@ export const TodoCard: React.FC<TodoCardProps> = ({
     setTimeout(() => {
       noteInputRef.current?.focus();
     }, 0);
-  }, [todo.note, todo.completed]);
+  }, [todo.note, todo.completed, editable]);
 
   const handleTextChange = useCallback((text: string) => {
     textValueRef.current = text;

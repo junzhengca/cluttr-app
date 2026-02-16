@@ -1,20 +1,20 @@
 import { generateItemId } from '../utils/idGenerator';
 import { ApiClient } from './ApiClient';
 import {
-  TodoCategoryDto,
-  CreateTodoCategoryRequest,
-  UpdateTodoCategoryRequest,
-  DeleteTodoCategoryResponse,
-  ListTodoCategoriesResponse,
-  CreateTodoCategoryResponse,
-  UpdateTodoCategoryResponse,
+  InventoryCategoryDto,
+  CreateInventoryCategoryRequest,
+  UpdateInventoryCategoryRequest,
+  DeleteInventoryCategoryResponse,
+  ListInventoryCategoriesResponse,
+  CreateInventoryCategoryResponse,
+  UpdateInventoryCategoryResponse,
 } from '../types/api';
-import { TodoCategory } from '../types/inventory';
+import { InventoryCategory } from '../types/inventory';
 import { apiLogger } from '../utils/Logger';
 
 // Simple state for in-memory storage (no file persistence)
 interface CategoryState {
-  categories: TodoCategory[];
+  categories: InventoryCategory[];
 }
 
 interface CategoryLoadingState {
@@ -26,7 +26,7 @@ interface CategoryLoadingState {
 /**
  * Convert API DTO to domain model
  */
-function dtoToTodoCategory(dto: TodoCategoryDto): TodoCategory {
+function dtoToInventoryCategory(dto: InventoryCategoryDto): InventoryCategory {
   return {
     id: dto.categoryId,
     homeId: dto.homeId,
@@ -35,12 +35,13 @@ function dtoToTodoCategory(dto: TodoCategoryDto): TodoCategory {
     color: dto.color,
     icon: dto.icon,
     position: dto.position,
+    isCustom: dto.isCustom ?? true,
     createdAt: dto.createdAt,
     updatedAt: dto.updatedAt,
   };
 }
 
-class TodoCategoryService {
+class InventoryCategoryService {
   // Simple state instead of file storage
   private state: Map<string, CategoryState> = new Map(); // homeId -> state
   private listeners: Set<() => void> = new Set();
@@ -102,11 +103,11 @@ class TodoCategoryService {
   /**
    * Fetch categories from server for a home
    */
-  async fetchCategories(apiClient: ApiClient, homeId: string): Promise<TodoCategory[]> {
+  async fetchCategories(apiClient: ApiClient, homeId: string): Promise<InventoryCategory[]> {
     this.setLoading('list');
     try {
-      const response = await apiClient.listTodoCategories(homeId) as ListTodoCategoriesResponse;
-      const categories = response.todoCategories.map(dto => dtoToTodoCategory(dto));
+      const response = await apiClient.listInventoryCategories(homeId) as ListInventoryCategoriesResponse;
+      const categories = response.inventoryCategories.map(dto => dtoToInventoryCategory(dto));
 
       // Update state
       const state = this.getState(homeId);
@@ -117,7 +118,7 @@ class TodoCategoryService {
       return categories;
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to fetch categories';
-      apiLogger.error('Failed to fetch categories:', error);
+      apiLogger.error('Failed to fetch inventory categories:', error);
       this.setLoading(null, errorMessage);
       throw error;
     }
@@ -128,17 +129,23 @@ class TodoCategoryService {
    */
   async createCategory(apiClient: ApiClient, homeId: string, input: {
     name: string;
-  }): Promise<TodoCategory | null> {
+    description?: string;
+    color?: string;
+    icon?: string;
+  }): Promise<InventoryCategory | null> {
     this.setLoading('create');
     try {
       const newId = generateItemId();
-      const request: CreateTodoCategoryRequest = {
+      const request: CreateInventoryCategoryRequest = {
         categoryId: newId,
         name: input.name.trim(),
+        description: input.description?.trim(),
+        color: input.color,
+        icon: input.icon,
       };
 
-      const response = await apiClient.createTodoCategory(homeId, request) as CreateTodoCategoryResponse;
-      const newCategory = dtoToTodoCategory(response.todoCategory);
+      const response = await apiClient.createInventoryCategory(homeId, request) as CreateInventoryCategoryResponse;
+      const newCategory = dtoToInventoryCategory(response.inventoryCategory);
 
       // Add to state
       const state = this.getState(homeId);
@@ -149,7 +156,7 @@ class TodoCategoryService {
       return newCategory;
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to create category';
-      apiLogger.error('Failed to create category:', error);
+      apiLogger.error('Failed to create inventory category:', error);
       this.setLoading(null, errorMessage);
       throw error;
     }
@@ -160,15 +167,21 @@ class TodoCategoryService {
    */
   async updateCategory(apiClient: ApiClient, homeId: string, categoryId: string, updates: {
     name?: string;
-  }): Promise<TodoCategory | null> {
+    description?: string;
+    color?: string;
+    icon?: string;
+  }): Promise<InventoryCategory | null> {
     this.setLoading('update');
     try {
-      const request: UpdateTodoCategoryRequest = {
+      const request: UpdateInventoryCategoryRequest = {
         name: updates.name,
+        description: updates.description,
+        color: updates.color,
+        icon: updates.icon,
       };
 
-      const response = await apiClient.updateTodoCategory(homeId, categoryId, request) as UpdateTodoCategoryResponse;
-      const updatedCategory = dtoToTodoCategory(response.todoCategory);
+      const response = await apiClient.updateInventoryCategory(homeId, categoryId, request) as UpdateInventoryCategoryResponse;
+      const updatedCategory = dtoToInventoryCategory(response.inventoryCategory);
 
       // Update in state
       const state = this.getState(homeId);
@@ -182,7 +195,7 @@ class TodoCategoryService {
       return updatedCategory;
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to update category';
-      apiLogger.error('Failed to update category:', error);
+      apiLogger.error('Failed to update inventory category:', error);
       this.setLoading(null, errorMessage);
       throw error;
     }
@@ -194,7 +207,7 @@ class TodoCategoryService {
   async deleteCategory(apiClient: ApiClient, homeId: string, categoryId: string): Promise<boolean> {
     this.setLoading('delete');
     try {
-      await apiClient.deleteTodoCategory(homeId, categoryId) as DeleteTodoCategoryResponse;
+      await apiClient.deleteInventoryCategory(homeId, categoryId) as DeleteInventoryCategoryResponse;
 
       // Remove from state
       const state = this.getState(homeId);
@@ -205,7 +218,7 @@ class TodoCategoryService {
       return true;
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to delete category';
-      apiLogger.error('Failed to delete category:', error);
+      apiLogger.error('Failed to delete inventory category:', error);
       this.setLoading(null, errorMessage);
       throw error;
     }
@@ -214,7 +227,7 @@ class TodoCategoryService {
   /**
    * Get all categories for a home (from state)
    */
-  getAllCategories(homeId: string): TodoCategory[] {
+  getAllCategories(homeId: string): InventoryCategory[] {
     const state = this.getState(homeId);
     return [...state.categories];
   }
@@ -222,7 +235,7 @@ class TodoCategoryService {
   /**
    * Get a specific category by ID
    */
-  getCategoryById(homeId: string, categoryId: string): TodoCategory | null {
+  getCategoryById(homeId: string, categoryId: string): InventoryCategory | null {
     const state = this.getState(homeId);
     return state.categories.find(c => c.id === categoryId) || null;
   }
@@ -237,5 +250,5 @@ class TodoCategoryService {
   }
 }
 
-export const todoCategoryService = new TodoCategoryService();
-export type { TodoCategoryService };
+export const inventoryCategoryService = new InventoryCategoryService();
+export type { InventoryCategoryService };

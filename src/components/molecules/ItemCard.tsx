@@ -1,16 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import React, { useMemo } from 'react';
 import { View, Text } from 'react-native';
 import styled from 'styled-components/native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
-import { InventoryItem, Category } from '../../types/inventory';
-import { categoryService } from '../../services/CategoryService';
+import { InventoryItem } from '../../types/inventory';
+import { useInventoryCategories } from '../../store/hooks';
 import { formatLocation } from '../../utils/formatters';
 import { isExpiringSoon } from '../../utils/dateUtils';
 import { getTotalAmount, getEarliestExpiry } from '../../utils/batchUtils';
 import type { StyledProps } from '../../utils/styledComponents';
 import { BaseCard } from '../atoms';
-import { useHome } from '../../hooks/useHome';
 
 // ============================================================================
 // TYPES
@@ -162,26 +161,15 @@ const StatusBadgeText = styled(Text)`
 
 export const ItemCard: React.FC<ItemCardProps> = ({ item, onPress }) => {
   const { t } = useTranslation();
-  const { currentHomeId } = useHome();
-  const [category, setCategory] = useState<Category | null>(null);
+  const { categories } = useInventoryCategories();
 
-  // Load category data when component mounts or item/categoryId changes
-  useEffect(() => {
-    const loadCategory = async () => {
-      if (item.categoryId && currentHomeId) {
-        try {
-          const cat = await categoryService.getCategoryById(item.categoryId, currentHomeId);
-          setCategory(cat);
-        } catch {
-          setCategory(null);
-        }
-      } else {
-        setCategory(null);
-      }
-    };
-
-    loadCategory();
-  }, [item.categoryId, currentHomeId]);
+  // Find category by ID from Redux state
+  const category = useMemo(() => {
+    if (item.categoryId) {
+      return categories.find(c => c.id === item.categoryId) || null;
+    }
+    return null;
+  }, [item.categoryId, categories]);
 
   const handlePress = () => {
     if (onPress) {

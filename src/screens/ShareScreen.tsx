@@ -135,7 +135,7 @@ export const ShareScreen: React.FC = () => {
 
   const handleInvitePress = useCallback(() => {
     inviteMenuBottomSheetRef.current?.present();
-  }, [showToast, t]);
+  }, []);
 
   const getInvitationLink = useCallback(() => {
     const scheme = 'com.cluttrapp.cluttr'; // Matches app.json scheme

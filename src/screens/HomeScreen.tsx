@@ -52,7 +52,7 @@ import { useHome } from '../hooks/useHome';
 import { calculateBottomPadding } from '../utils/layout';
 import { useToast } from '../hooks/useToast';
 import { isExpiringSoon, countExpiringItems } from '../utils/dateUtils';
-import { getTotalAmount, getEarliestExpiry } from '../utils/batchUtils';
+import { getEarliestExpiry } from '../utils/batchUtils';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 

@@ -3,6 +3,8 @@ import authReducer from './slices/authSlice';
 import settingsReducer from './slices/settingsSlice';
 import todoReducer from './slices/todoSlice';
 import inventoryReducer from './slices/inventorySlice';
+import inventoryCategoryReducer from './slices/inventoryCategorySlice';
+import locationReducer from './slices/locationSlice';
 import uiReducer from './slices/uiSlice';
 import refreshReducer from './slices/refreshSlice';
 
@@ -12,6 +14,8 @@ export const rootReducer = combineReducers({
   settings: settingsReducer,
   todo: todoReducer,
   inventory: inventoryReducer,
+  inventoryCategory: inventoryCategoryReducer,
+  location: locationReducer,
   ui: uiReducer,
   refresh: refreshReducer,
 });

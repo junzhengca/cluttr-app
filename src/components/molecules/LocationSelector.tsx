@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { TouchableOpacity, ScrollView, View, Text } from 'react-native';
 import styled, { useTheme } from 'styled-components/native';
 import { useTranslation } from 'react-i18next';
@@ -7,8 +7,8 @@ import { Ionicons } from '@expo/vector-icons';
 import type {
     StyledProps,
 } from '../../utils/styledComponents';
-import { locations } from '../../data/locations';
 import type { Theme } from '../../theme/types';
+import { useLocations } from '../../store/hooks';
 
 const SelectorContainer = styled(View) <{ edgeToEdge?: boolean }>`
   flex-direction: column;
@@ -73,6 +73,12 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
 }) => {
     const { t } = useTranslation();
     const theme = useTheme() as Theme;
+    const { locations, refreshLocations } = useLocations();
+
+    // Load locations on mount
+    useEffect(() => {
+        refreshLocations();
+    }, [refreshLocations]);
 
     // Scroll content padding uses theme spacing for consistency
     const scrollContentStyle = {
@@ -119,7 +125,7 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
                                 color={theme.colors.primary}
                             />
                             <LocationLabel isSelected={isSelected}>
-                                {t(`locations.${location.id}`)}
+                                {location.name}
                             </LocationLabel>
                         </LocationButton>
                     );

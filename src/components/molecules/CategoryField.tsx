@@ -107,16 +107,16 @@ export const CategoryField: React.FC<CategoryFieldProps> = ({
         {category.icon && (
           <CategoryIcon color={theme.colors.primary}>
             <Ionicons
-              name={category.icon}
+              name={category.icon as keyof typeof Ionicons.glyphMap}
               size={24}
               color={theme.colors.primary}
             />
           </CategoryIcon>
         )}
         <CategoryLabel isSelected={selectedId === category.id}>
-          {category.isCustom
-            ? category.label
-            : t(`categories.${category.name}`)}
+          {category.label || (category.isCustom
+            ? category.name
+            : t(`categories.${category.name}`))}
         </CategoryLabel>
       </CategoryButton>
     );

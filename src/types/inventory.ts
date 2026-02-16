@@ -1,36 +1,30 @@
 import { Ionicons } from '@expo/vector-icons';
 
 /**
- * Base type for all syncable, home-scoped entities.
- * All entities that sync to server must extend this type.
+ * Base type for all home-scoped entities using direct CRUD endpoints.
  */
-export interface HomeScopedEntity {
+export interface HomeScopedCrudEntity {
   id: string;
   homeId: string;
-  createdAt?: string; // ISO date string
-  updatedAt?: string; // ISO date string
-  deletedAt?: string; // ISO date string - marks soft deletion
-
-  // Sync metadata
-  version: number;
-  clientUpdatedAt: string;
-  serverUpdatedAt?: string;
-  lastSyncedAt?: string;
-  pendingCreate?: boolean;
-  pendingUpdate?: boolean;
-  pendingDelete?: boolean;
+  createdAt: string; // ISO date string
+  updatedAt: string; // ISO date string
 }
 
-export interface Category extends HomeScopedEntity {
+export interface InventoryCategory extends HomeScopedCrudEntity {
   name: string;
-  label?: string; // Chinese label - making optional/deprecated as name will be used
-  isCustom: boolean; // Flag to distinguish system vs user-created categories
-  icon?: keyof typeof Ionicons.glyphMap;
+  label?: string; // Deprecated - use name instead (kept for backward compatibility)
+  description?: string;
+  isCustom?: boolean; // Flag to distinguish system vs user-created categories
+  icon?: string; // Icon name
   color?: string; // Hex color code for category display
+  position?: number; // Position for ordering
 }
 
-export interface Location extends HomeScopedEntity {
-  name: string; // Chinese label (will be i18n'd in future)
+// Backward compatibility alias
+export type Category = InventoryCategory;
+
+export interface Location extends HomeScopedCrudEntity {
+  name: string; // Location name
   icon?: keyof typeof Ionicons.glyphMap;
 }
 
@@ -46,7 +40,7 @@ export interface ItemBatch {
   createdAt: string;       // ISO date string
 }
 
-export interface InventoryItem extends HomeScopedEntity {
+export interface InventoryItem extends HomeScopedCrudEntity {
   name: string;
   location: string; // Location ID (e.g., "living-room")
   detailedLocation: string; // e.g., "梳妆台"
@@ -58,7 +52,7 @@ export interface InventoryItem extends HomeScopedEntity {
   categoryId?: string;
 }
 
-export interface TodoItem extends HomeScopedEntity {
+export interface TodoItem extends HomeScopedCrudEntity {
   text: string;
   completed: boolean;
   completedAt?: string | null; // ISO date string when completed
@@ -67,7 +61,7 @@ export interface TodoItem extends HomeScopedEntity {
   categoryId?: string; // Optional reference to TodoCategory
 }
 
-export interface TodoCategory extends HomeScopedEntity {
+export interface TodoCategory extends HomeScopedCrudEntity {
   name: string;
   description?: string;
   color?: string;

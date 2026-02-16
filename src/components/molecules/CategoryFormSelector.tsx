@@ -1,13 +1,8 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useEffect } from 'react';
 import { ScrollView, TouchableOpacity, View, Text } from 'react-native';
 import styled, { useTheme } from 'styled-components/native';
-import { Category } from '../../types/inventory';
-import { categoryService } from '../../services/CategoryService';
-import { useCategory, useAppSelector } from '../../store/hooks';
-import { useHome } from '../../hooks/useHome';
-import { selectCategoryRefreshTimestamp } from '../../store/slices/refreshSlice';
+import { useInventoryCategories } from '../../store/hooks';
 import type { StyledProps, StyledPropsWith } from '../../utils/styledComponents';
-import { uiLogger } from '../../utils/Logger';
 import type { Theme } from '../../theme/types';
 
 /**
@@ -66,10 +61,7 @@ export const CategoryFormSelector: React.FC<CategoryFormSelectorProps> = ({
     onSelect,
 }) => {
     const theme = useTheme() as Theme;
-    const [categories, setCategories] = useState<Category[]>([]);
-    const { registerRefreshCallback } = useCategory();
-    const { currentHomeId } = useHome();
-    const refreshTimestamp = useAppSelector(selectCategoryRefreshTimestamp);
+    const { categories } = useInventoryCategories();
 
     const horizontalPadding = theme.spacing.md;
 
@@ -79,34 +71,12 @@ export const CategoryFormSelector: React.FC<CategoryFormSelectorProps> = ({
         paddingRight: horizontalPadding,
     };
 
-    const loadCategories = useCallback(async () => {
-        try {
-            if (!currentHomeId) {
-                setCategories([]);
-                return;
-            }
-            const allCategories = await categoryService.getAllCategories(currentHomeId);
-            setCategories(allCategories);
-
-            // Auto-select first category if nothing is selected and categories exist
-            if (!selectedCategoryId && allCategories.length > 0) {
-                onSelect(allCategories[0].id);
-            }
-        } catch (error) {
-            uiLogger.error('Error loading categories', error);
-            setCategories([]);
+    // Auto-select first category if nothing is selected and categories exist
+    useEffect(() => {
+        if (!selectedCategoryId && categories.length > 0) {
+            onSelect(categories[0].id);
         }
-    }, [currentHomeId, selectedCategoryId, onSelect]);
-
-    // Load categories when home changes, refresh timestamp changes, or translations change
-    useEffect(() => {
-        loadCategories();
-    }, [loadCategories, refreshTimestamp]);
-
-    useEffect(() => {
-        const unregister = registerRefreshCallback(loadCategories);
-        return unregister;
-    }, [registerRefreshCallback, loadCategories]);
+    }, [categories, selectedCategoryId, onSelect]);
 
     if (categories.length === 0) {
         return null;
@@ -130,7 +100,7 @@ export const CategoryFormSelector: React.FC<CategoryFormSelectorProps> = ({
                         >
                             {category.color && <ColorDot color={category.color} />}
                             <CategoryText isSelected={isSelected}>
-                                {category.name}
+                                {category.label || category.name}
                             </CategoryText>
                         </CategoryButton>
                     );

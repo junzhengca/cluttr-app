@@ -11,7 +11,7 @@ import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system/legacy';
 import * as ImageManipulator from 'expo-image-manipulator';
 import i18n from '../i18n/i18n';
-import type { StyledProps, StyledPropsWith } from '../utils/styledComponents';
+import type { StyledProps } from '../utils/styledComponents';
 import { uiLogger } from '../utils/Logger';
 import {
   PageHeader,
@@ -27,7 +27,6 @@ import { Member } from '../types/api';
 import { useTheme } from '../theme/ThemeProvider';
 import { calculateBottomPadding } from '../utils/layout';
 import { formatDate } from '../utils/formatters';
-import { googleAuthService } from '../services/GoogleAuthService';
 
 const Container = styled(View)`
   flex: 1;
@@ -103,13 +102,6 @@ const InfoSection = styled(View)`
   margin-bottom: ${({ theme }: StyledProps) => theme.spacing.xl}px;
 `;
 
-const SectionTitle = styled(Text)`
-  font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.xl}px;
-  font-weight: ${({ theme }: StyledProps) => theme.typography.fontWeight.bold};
-  color: ${({ theme }: StyledProps) => theme.colors.text};
-  margin-bottom: ${({ theme }: StyledProps) => theme.spacing.md}px;
-`;
-
 const InfoRow = styled(View)`
   flex-direction: row;
   justify-content: space-between;
@@ -172,7 +164,7 @@ const AuthSubtitle = styled(Text)`
 `;
 
 export const ProfileScreen: React.FC = () => {
-  const { user, isAuthenticated, isLoading, error, logout, updateUser, googleLogin, getApiClient } = useAuth();
+  const { user, isAuthenticated, isLoading, error, logout, updateUser, getApiClient } = useAuth();
   const activeHomeId = useAppSelector((state) => state.auth.activeHomeId);
 
   const insets = useSafeAreaInsets();
@@ -180,7 +172,7 @@ export const ProfileScreen: React.FC = () => {
   const { t } = useTranslation();
   const theme = useTheme();
   const [isUploading, setIsUploading] = useState(false);
-  const [members, setMembers] = useState<Member[]>([]);
+  const [_members, setMembers] = useState<Member[]>([]);
   const loginBottomSheetRef = useRef<BottomSheetModal | null>(null);
   const signupBottomSheetRef = useRef<BottomSheetModal | null>(null);
   const editNicknameBottomSheetModalRef = useRef<BottomSheetModal | null>(null);
@@ -330,29 +322,6 @@ export const ProfileScreen: React.FC = () => {
   const handleSignupSuccess = useCallback(() => {
     // User will be automatically updated via auth state
   }, []);
-
-  const handleGoogleLogin = useCallback(async () => {
-    try {
-      const idToken = await googleAuthService.signInWithGoogle();
-      if (idToken) {
-        // Get platform (ios or android)
-        const platform = Platform.OS === 'ios' ? 'ios' : 'android';
-
-        // Call googleLogin hook which will dispatch the action
-        googleLogin(idToken, platform);
-
-        // Close bottom sheets if open
-        loginBottomSheetRef.current?.dismiss();
-        signupBottomSheetRef.current?.dismiss();
-      }
-    } catch (error) {
-      uiLogger.error('Google login error', error);
-      Alert.alert(
-        t('login.errors.googleLoginFailed.title') || 'Google Login Failed',
-        error instanceof Error ? error.message : t('login.errors.googleLoginFailed.message') || 'Failed to sign in with Google. Please try again.'
-      );
-    }
-  }, [t, googleLogin]);
 
   // Handle auth errors from Google login
   useEffect(() => {

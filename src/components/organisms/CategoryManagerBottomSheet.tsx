@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState, useEffect } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { Alert, View } from 'react-native';
 import styled from 'styled-components/native';
 import {
@@ -13,8 +13,7 @@ import { useTheme } from '../../theme/ThemeProvider';
 import type { StyledProps } from '../../utils/styledComponents';
 import type { Category } from '../../types/inventory';
 import { uiLogger } from '../../utils/Logger';
-import { useCategory } from '../../store/hooks';
-import { useHome } from '../../hooks/useHome';
+import { useInventoryCategories } from '../../store/hooks';
 import { useKeyboardVisibility } from '../../hooks';
 import { BottomSheetHeader, FormSection, MemoizedInput } from '../atoms';
 import { CategoryPreviewCard, IconSelector, BottomActionBar } from '../molecules';
@@ -55,10 +54,8 @@ interface CategoryFormData {
 }
 
 /**
- * Refactored CategoryManagerBottomSheet using custom hooks and reusable components.
- * Reduced from 530 lines to ~300 lines by extracting:
- * - Keyboard tracking to useKeyboardVisibility hook
- * - UI components to reusable ui/ directory
+ * CategoryManagerBottomSheet - Manage custom inventory categories
+ * Now uses Redux state and CRUD API endpoints instead of sync/file storage.
  */
 export const CategoryManagerBottomSheet: React.FC<
   CategoryManagerBottomSheetProps
@@ -66,12 +63,16 @@ export const CategoryManagerBottomSheet: React.FC<
   const theme = useTheme();
   const insets = useSafeAreaInsets();
   const { t } = useTranslation();
-  const { refreshCategories } = useCategory();
-  const { currentHomeId } = useHome();
+  const { categories: allCategories, createCategory, updateCategory, deleteCategory, loading } = useInventoryCategories();
   const { isKeyboardVisible, dismissKeyboard } = useKeyboardVisibility();
 
+  // Filter to show only custom categories
+  const categories = useMemo(
+    () => allCategories.filter((cat) => cat.isCustom !== false),
+    [allCategories]
+  );
+
   const [mode, setMode] = useState<FormMode>('list');
-  const [categories, setCategories] = useState<Category[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -85,26 +86,6 @@ export const CategoryManagerBottomSheet: React.FC<
   const snapPoints = useMemo(() => ['100%'], []);
   const keyboardBehavior = useMemo(() => 'extend' as const, []);
   const keyboardBlurBehavior = useMemo(() => 'restore' as const, []);
-
-  // Load categories on mount
-  const loadCategories = useCallback(async () => {
-    try {
-      const { categoryService } = await import('../../services/CategoryService');
-      if (!currentHomeId) {
-        setCategories([]);
-        return;
-      }
-      const allCategories = await categoryService.getAllCategories(currentHomeId);
-      const custom = allCategories.filter((cat) => cat.isCustom);
-      setCategories(custom);
-    } catch (error) {
-      uiLogger.error('Error loading categories', error);
-    }
-  }, [currentHomeId]);
-
-  useEffect(() => {
-    loadCategories();
-  }, [loadCategories]);
 
   const handleClose = useCallback(() => {
     dismissKeyboard();
@@ -130,7 +111,7 @@ export const CategoryManagerBottomSheet: React.FC<
     setFormData({
       name: category.name,
       label: category.label || '',
-      icon: category.icon || categoryIcons[0] || 'cube-outline',
+      icon: (category.icon as keyof typeof Ionicons.glyphMap) || categoryIcons[0] || 'cube-outline',
     });
     setEditingId(category.id);
     setMode('edit');
@@ -141,7 +122,7 @@ export const CategoryManagerBottomSheet: React.FC<
   }, [resetForm]);
 
   const handleSave = useCallback(async () => {
-    if (!formData.name.trim() || !formData.label.trim()) {
+    if (!formData.name.trim()) {
       Alert.alert(
         t('categoryManager.errors.title'),
         t('categoryManager.errors.enterName')
@@ -151,46 +132,17 @@ export const CategoryManagerBottomSheet: React.FC<
 
     setIsLoading(true);
     try {
-      const { categoryService } = await import('../../services/CategoryService');
-
-      let result: Category | null = null;
+      // Use name for both name and label (label is deprecated)
+      const displayName = formData.label.trim() || formData.name.trim();
 
       if (editingId) {
-        if (!currentHomeId) {
-          setIsLoading(false);
-          return;
-        }
-        result = await categoryService.updateCategory(editingId, {
-          name: formData.name.trim(),
-          label: formData.label.trim(),
-          icon: formData.icon,
-        }, currentHomeId);
+        updateCategory(editingId, displayName, formData.label.trim(), undefined, formData.icon);
       } else {
-        if (!currentHomeId) {
-          setIsLoading(false);
-          return;
-        }
-        result = await categoryService.createCategory({
-          name: formData.name.trim(),
-          label: formData.label.trim(),
-          icon: formData.icon,
-          isCustom: true,
-        }, currentHomeId);
+        createCategory(displayName, formData.label.trim(), undefined, formData.icon);
       }
 
-      if (result) {
-        await loadCategories();
-        resetForm();
-        refreshCategories();
-        onCategoriesChanged?.();
-      } else {
-        Alert.alert(
-          t('categoryManager.errors.title'),
-          editingId
-            ? t('categoryManager.errors.updateFailed')
-            : t('categoryManager.errors.createFailed')
-        );
-      }
+      resetForm();
+      onCategoriesChanged?.();
     } catch (error: unknown) {
       uiLogger.error('Error saving category', error);
       const errorMessage = error instanceof Error ? error.message : undefined;
@@ -207,8 +159,8 @@ export const CategoryManagerBottomSheet: React.FC<
   }, [
     formData,
     editingId,
-    loadCategories,
-    refreshCategories,
+    updateCategory,
+    createCategory,
     onCategoriesChanged,
     resetForm,
     t,
@@ -226,25 +178,8 @@ export const CategoryManagerBottomSheet: React.FC<
             style: 'destructive',
             onPress: async () => {
               try {
-                const { categoryService } =
-                  await import('../../services/CategoryService');
-
-                if (!currentHomeId) {
-                  uiLogger.error('Cannot delete category: No active home selected');
-                  return;
-                }
-
-                const success = await categoryService.deleteCategory(categoryId, currentHomeId);
-                if (success) {
-                  await loadCategories();
-                  refreshCategories();
-                  onCategoriesChanged?.();
-                } else {
-                  Alert.alert(
-                    t('categoryManager.errors.title'),
-                    t('categoryManager.errors.deleteFailed')
-                  );
-                }
+                deleteCategory(categoryId);
+                onCategoriesChanged?.();
               } catch (error: unknown) {
                 uiLogger.error('Error deleting category', error);
                 const errorMessage =
@@ -259,7 +194,7 @@ export const CategoryManagerBottomSheet: React.FC<
         ]
       );
     },
-    [loadCategories, refreshCategories, onCategoriesChanged, t]
+    [deleteCategory, onCategoriesChanged, t]
   );
 
   const renderBackdrop = useCallback(
@@ -302,7 +237,7 @@ export const CategoryManagerBottomSheet: React.FC<
                   color={theme.colors.surface}
                 />
               ),
-              disabled: isLoading,
+              disabled: isLoading || loading,
             },
           ]}
           safeArea={!isKeyboardVisible}
@@ -332,6 +267,7 @@ export const CategoryManagerBottomSheet: React.FC<
     handleSave,
     handleStartCreate,
     isLoading,
+    loading,
     theme,
     t,
     isKeyboardVisible,

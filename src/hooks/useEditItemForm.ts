@@ -1,7 +1,6 @@
 import { useRef, useCallback, useEffect, useState } from 'react';
 import { TextInput } from 'react-native';
 import type { InventoryItem } from '../types/inventory';
-import { locations } from '../data/locations';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -28,7 +27,7 @@ export interface UseEditItemFormOptions {
 // Defaults
 // ---------------------------------------------------------------------------
 
-const DEFAULT_LOCATION = locations.length > 0 ? locations[0].id : '';
+const DEFAULT_LOCATION = '';
 const DEFAULT_STATUS = 'using';
 const DEFAULT_WARNING_THRESHOLD = '';
 const DEFAULT_ICON = 'cube-outline';

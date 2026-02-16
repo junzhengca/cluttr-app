@@ -72,7 +72,7 @@ export const SettingsScreen: React.FC = () => {
   const { user, getApiClient } = useAuth();
   const toast = useToast();
 
-  const { currentHome, deleteHome, fetchHomes } = useHome();
+  const { currentHome, deleteHome, fetchHomes: _fetchHomes } = useHome();
   const editHomeSheetRef = useRef<BottomSheetModal>(null);
 
   const handleEditHomePress = useCallback(() => {
@@ -106,7 +106,7 @@ export const SettingsScreen: React.FC = () => {
         },
       ]
     );
-  }, [currentHome, deleteHome, t]);
+  }, [currentHome, deleteHome, getApiClient, toast, t]);
 
   const handleAvatarPress = () => {
     const rootNavigation = navigation.getParent();

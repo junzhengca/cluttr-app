@@ -7,7 +7,6 @@ import { authLogger } from '../utils/Logger';
 WebBrowser.maybeCompleteAuthSession();
 
 class GoogleAuthService {
-  public constructor() {}
 
   /**
    * Get the appropriate Google OAuth client ID based on the platform

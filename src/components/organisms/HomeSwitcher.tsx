@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useRef, useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { View, Text, TouchableOpacity, Modal, FlatList, TouchableWithoutFeedback, StyleSheet, ActivityIndicator } from 'react-native';
 import styled from 'styled-components/native';
@@ -130,11 +130,11 @@ export const HomeSwitcher: React.FC = () => {
   const [menuLayout, setMenuLayout] = useState<{ x: number, y: number, width: number, height: number, pageX: number, pageY: number } | null>(null);
   const animation = useSharedValue(0);
 
-  const SPRING_CONFIG = {
+  const SPRING_CONFIG = useMemo(() => ({
     damping: 25,
     stiffness: 300,
     mass: 0.8,
-  };
+  }), []);
 
   useEffect(() => {
     if (modalVisible) {
@@ -142,7 +142,7 @@ export const HomeSwitcher: React.FC = () => {
     } else {
       animation.value = withSpring(0, SPRING_CONFIG);
     }
-  }, [modalVisible]);
+  }, [modalVisible, SPRING_CONFIG, animation]);
 
   const handleOpenStart = () => {
     runOnUI(() => {

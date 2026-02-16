@@ -262,30 +262,20 @@ export const useSelectedCategory = () => {
 };
 
 // Category hook - replaces CategoryContext
+// Note: Categories are now managed via Redux state (useInventoryCategories hook)
+// This hook is kept for backward compatibility
 export const useCategory = () => {
   const dispatch = useAppDispatch();
 
   const refreshCategories = useCallback(() => {
-    dispatch({ type: 'refresh/triggerCategoryRefresh' });
+    dispatch({ type: 'inventoryCategory/SILENT_LOAD_CATEGORIES' });
   }, [dispatch]);
 
-  const registerRefreshCallback = useCallback(
-    (_callback: () => void) => {
-      const callbackId = Math.random().toString(36).substring(7);
-      dispatch({
-        type: 'refresh/registerCategoryCallback',
-        payload: callbackId,
-      });
-
-      return () => {
-        dispatch({
-          type: 'refresh/unregisterCategoryCallback',
-          payload: callbackId,
-        });
-      };
-    },
-    [dispatch]
-  );
+  // Refresh callbacks are no longer needed since Redux state is reactive
+  const registerRefreshCallback = useCallback(() => {
+    // No-op: Redux state updates automatically trigger re-renders
+    return () => {};
+  }, []);
 
   return {
     refreshCategories,
@@ -332,5 +322,105 @@ export const useInventory = () => {
     createItem,
     updateItem,
     deleteItem,
+  };
+};
+
+// Inventory Categories hook
+export const useInventoryCategories = () => {
+  const dispatch = useAppDispatch();
+  const activeHomeId = useAppSelector((state) => state.auth.activeHomeId);
+  const allCategories = useAppSelector((state) => state.inventoryCategory.categories);
+  const loading = useAppSelector((state) => state.inventoryCategory.loading);
+  const error = useAppSelector((state) => state.inventoryCategory.error);
+
+  const categories = useMemo(() => {
+    return allCategories.filter((c) => c.homeId === activeHomeId);
+  }, [allCategories, activeHomeId]);
+
+  const refreshCategories = useCallback(() => {
+    dispatch({ type: 'inventoryCategory/SILENT_LOAD_CATEGORIES' });
+  }, [dispatch]);
+
+  const createCategory = useCallback(
+    (name: string, description?: string, color?: string, icon?: string) => {
+      dispatch({ type: 'inventoryCategory/ADD_CATEGORY', payload: { name, description, color, icon } });
+    },
+    [dispatch]
+  );
+
+  const updateCategory = useCallback(
+    (id: string, name: string, description?: string, color?: string, icon?: string) => {
+      dispatch({ type: 'inventoryCategory/UPDATE_CATEGORY', payload: { id, name, description, color, icon } });
+    },
+    [dispatch]
+  );
+
+  const deleteCategory = useCallback(
+    (id: string) => {
+      dispatch({ type: 'inventoryCategory/DELETE_CATEGORY', payload: id });
+    },
+    [dispatch]
+  );
+
+  return {
+    categories,
+    loading,
+    error,
+    refreshCategories,
+    createCategory,
+    updateCategory,
+    deleteCategory,
+  };
+};
+
+// Locations hook - manages locations via CRUD API
+export const useLocations = () => {
+  const dispatch = useAppDispatch();
+  const activeHomeId = useAppSelector((state) => state.auth.activeHomeId);
+  const allLocations = useAppSelector((state) => state.location.locations);
+  const loading = useAppSelector((state) => state.location.loading);
+  const addingLocation = useAppSelector((state) => state.location.addingLocation);
+  const updatingLocationIds = useAppSelector((state) => state.location.updatingLocationIds);
+  const error = useAppSelector((state) => state.location.error);
+
+  const locations = useMemo(() => {
+    return allLocations.filter((l) => l.homeId === activeHomeId);
+  }, [allLocations, activeHomeId]);
+
+  const refreshLocations = useCallback(() => {
+    dispatch({ type: 'location/LOAD_LOCATIONS' });
+  }, [dispatch]);
+
+  const createLocation = useCallback(
+    (name: string, icon?: string) => {
+      dispatch({ type: 'location/ADD_LOCATION', payload: { name, icon } });
+    },
+    [dispatch]
+  );
+
+  const updateLocation = useCallback(
+    (id: string, name: string, icon?: string) => {
+      dispatch({ type: 'location/UPDATE_LOCATION', payload: { id, name, icon } });
+    },
+    [dispatch]
+  );
+
+  const deleteLocation = useCallback(
+    (id: string) => {
+      dispatch({ type: 'location/DELETE_LOCATION', payload: id });
+    },
+    [dispatch]
+  );
+
+  return {
+    locations,
+    loading,
+    addingLocation,
+    updatingLocationIds,
+    error,
+    refreshLocations,
+    createLocation,
+    updateLocation,
+    deleteLocation,
   };
 };

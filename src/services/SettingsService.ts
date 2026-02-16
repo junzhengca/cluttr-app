@@ -5,7 +5,6 @@ import { storageLogger } from '../utils/Logger';
 const SETTINGS_FILE = 'settings.json';
 
 class SettingsService {
-  public constructor() {}
 
   /**
    * Get current settings

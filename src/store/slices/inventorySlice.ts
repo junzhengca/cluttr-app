@@ -4,11 +4,15 @@ import { InventoryItem } from '../../types/inventory';
 interface InventoryState {
   items: InventoryItem[];
   loading: boolean;
+  error: string | null;
+  updatingItemIds: Set<string>; // Track items being updated for debounced API calls
 }
 
 const initialState: InventoryState = {
   items: [],
   loading: true,
+  error: null,
+  updatingItemIds: new Set(),
 };
 
 const inventorySlice = createSlice({
@@ -16,10 +20,6 @@ const inventorySlice = createSlice({
   initialState,
   reducers: {
     setItems: (state, action: PayloadAction<InventoryItem[]>) => {
-      state.items = action.payload;
-    },
-    silentSetItems: (state, action: PayloadAction<InventoryItem[]>) => {
-      // Silent update - only updates items, does not touch loading state
       state.items = action.payload;
     },
     addItem: (state, action: PayloadAction<InventoryItem>) => {
@@ -37,34 +37,28 @@ const inventorySlice = createSlice({
     setLoading: (state, action: PayloadAction<boolean>) => {
       state.loading = action.payload;
     },
-    upsertItems: (state, action: PayloadAction<InventoryItem[]>) => {
-      const itemsToUpsert = action.payload;
-      if (itemsToUpsert.length === 0) return;
-
-      const itemMap = new Map(state.items.map(item => [item.id, item]));
-      itemsToUpsert.forEach(item => {
-        itemMap.set(item.id, item);
-      });
-      state.items = Array.from(itemMap.values());
+    setError: (state, action: PayloadAction<string | null>) => {
+      state.error = action.payload;
     },
-    removeItems: (state, action: PayloadAction<string[]>) => {
-      const idsToRemove = new Set(action.payload);
-      if (idsToRemove.size === 0) return;
-      state.items = state.items.filter(item => !idsToRemove.has(item.id));
+    addUpdatingItemId: (state, action: PayloadAction<string>) => {
+      state.updatingItemIds.add(action.payload);
     },
-    addItems: (state, action: PayloadAction<InventoryItem[]>) => {
-      action.payload.forEach(item => {
-        const index = state.items.findIndex(i => i.id === item.id);
-        if (index === -1) {
-          state.items.push(item); // Only add if not exists
-        }
-      });
+    removeUpdatingItemId: (state, action: PayloadAction<string>) => {
+      state.updatingItemIds.delete(action.payload);
     },
   },
 });
 
-export const { setItems, silentSetItems, addItem, updateItem, removeItem, setLoading, upsertItems, removeItems, addItems } =
-  inventorySlice.actions;
+export const {
+  setItems,
+  addItem,
+  updateItem,
+  removeItem,
+  setLoading,
+  setError,
+  addUpdatingItemId,
+  removeUpdatingItemId,
+} = inventorySlice.actions;
 
 // Selectors
 const selectItems = (state: { inventory: InventoryState }) => state.inventory.items;
@@ -74,5 +68,11 @@ export const selectItemById = createSelector(
   (items, itemId) => items.find((item) => item.id === itemId) || null
 );
 
-export default inventorySlice.reducer;
+export const selectIsItemUpdating = createSelector(
+  [(_state: { inventory: InventoryState }, itemId: string) => itemId],
+  (_itemId) => {
+    return (state: { inventory: InventoryState }) => state.inventory.updatingItemIds.has(_itemId);
+  }
+);
 
+export default inventorySlice.reducer;

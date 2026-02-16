@@ -2,13 +2,9 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { ScrollView, TouchableOpacity, View, Text } from 'react-native';
 import styled, { useTheme } from 'styled-components/native';
 import { useTranslation } from 'react-i18next';
-import { Category } from '../../types/inventory';
-import { categoryService } from '../../services/CategoryService';
-import { useCategory, useAppSelector } from '../../store/hooks';
-import { useHome } from '../../hooks/useHome';
-import { selectCategoryRefreshTimestamp } from '../../store/slices/refreshSlice';
+import type { Category } from '../../types/inventory';
+import { useInventoryCategories } from '../../store/hooks';
 import type { StyledProps, StyledPropsWith } from '../../utils/styledComponents';
-import { uiLogger } from '../../utils/Logger';
 import type { Theme } from '../../theme/types';
 
 const Container = styled(View)``;
@@ -70,9 +66,7 @@ export const CategorySelector: React.FC<CategorySelectorProps> = ({
   const theme = useTheme() as Theme;
   const [selectedCategory, setSelectedCategory] = useState<string>(parentSelectedCategory || 'all');
   const [categories, setCategories] = useState<Category[]>([]);
-  const { registerRefreshCallback } = useCategory();
-  const { currentHomeId } = useHome();
-  const refreshTimestamp = useAppSelector(selectCategoryRefreshTimestamp);
+  const { categories: allCategories } = useInventoryCategories();
 
   // Scroll content padding uses theme spacing for consistency
   const scrollContentStyle = {
@@ -81,57 +75,29 @@ export const CategorySelector: React.FC<CategorySelectorProps> = ({
     paddingRight: theme.spacing.md,
   };
 
-  const loadCategories = useCallback(async () => {
+  const loadCategories = useCallback(() => {
     if (providedCategories) {
       setCategories(providedCategories);
       return;
     }
 
-    try {
-      if (!currentHomeId) {
-        setCategories([]);
-        return;
-      }
-      const allCategories = await categoryService.getAllCategories(currentHomeId);
-      // Add "all" category at the beginning
-      const allCategory: Category = {
-        id: 'all',
-        name: 'all',
-        label: t('categories.all'),
-        isCustom: false,
-        homeId: '',
-        version: 0,
-        clientUpdatedAt: '',
-      };
-      setCategories([allCategory, ...allCategories]);
-    } catch (error) {
-      uiLogger.error('Error loading categories', error);
-      // Categories will remain empty array if loading fails
-      // Only show "all" category as fallback
-      const allCategory: Category = {
-        id: 'all',
-        name: 'all',
-        label: t('categories.all'),
-        isCustom: false,
-        homeId: '',
-        version: 0,
-        clientUpdatedAt: '',
-      };
-      setCategories([allCategory]);
-    }
-  }, [providedCategories, t, currentHomeId]);
+    // Use categories from Redux state
+    const allCategory: Category = {
+      id: 'all',
+      name: 'all',
+      label: t('categories.all'),
+      isCustom: false,
+      homeId: '',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    setCategories([allCategory, ...allCategories]);
+  }, [providedCategories, t, allCategories]);
 
-  // Load categories when home changes, refresh timestamp changes, or translations change
+  // Load categories when categories from Redux change
   useEffect(() => {
     loadCategories();
-  }, [loadCategories, refreshTimestamp]);
-
-  useEffect(() => {
-    if (!providedCategories) {
-      const unregister = registerRefreshCallback(loadCategories);
-      return unregister;
-    }
-  }, [providedCategories, registerRefreshCallback, loadCategories]);
+  }, [loadCategories]);
 
   // Sync internal state with parent's selectedCategory prop
   useEffect(() => {
@@ -163,7 +129,9 @@ export const CategorySelector: React.FC<CategorySelectorProps> = ({
           >
             {category.color && <ColorDot color={category.color} />}
             <CategoryText isSelected={selectedCategory === category.id}>
-              {category.isCustom ? category.label : t(`categories.${category.name}`)}
+              {category.label || (category.id === 'all'
+                ? t('categories.all')
+                : category.name)}
             </CategoryText>
           </CategoryButton>
         ))}
