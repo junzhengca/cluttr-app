@@ -147,8 +147,6 @@
       "filtered": "尝试调整搜索条件或选择其他分类"
     },
     "actions": {
-      "plusOne": "数量 +1",
-      "minusOne": "数量 -1",
       "addToTodo": "添加到待办"
     }
   },

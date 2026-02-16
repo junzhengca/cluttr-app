@@ -413,32 +413,6 @@ export const HomeScreen: React.FC = () => {
                   renderItem={({ item }) => {
                     const menuItems = [
                       {
-                        id: 'plus',
-                        label: t('inventory.actions.plusOne'),
-                        icon: 'plus',
-                        onPress: () => {
-                          const batches = [...(item.batches || [])];
-                          if (batches.length > 0) {
-                            batches[0] = { ...batches[0], amount: batches[0].amount + 1 };
-                          } else {
-                            batches.push({ id: Date.now().toString(), amount: 1, createdAt: new Date().toISOString() });
-                          }
-                          updateInventoryItem(item.id, { batches });
-                        },
-                      },
-                      {
-                        id: 'minus',
-                        label: t('inventory.actions.minusOne'),
-                        icon: 'minus',
-                        onPress: () => {
-                          const batches = [...(item.batches || [])];
-                          if (batches.length > 0) {
-                            batches[0] = { ...batches[0], amount: Math.max(0, batches[0].amount - 1) };
-                          }
-                          updateInventoryItem(item.id, { batches });
-                        },
-                      },
-                      {
                         id: 'add-to-todo',
                         label: t('inventory.actions.addToTodo'),
                         icon: 'playlist-plus',

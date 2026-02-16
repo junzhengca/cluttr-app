@@ -150,8 +150,6 @@
             "filtered": "検索条件を変更するか、別のカテゴリーを選択してください"
         },
         "actions": {
-            "plusOne": "数量 +1",
-            "minusOne": "数量 -1",
             "addToTodo": "TODOリストに追加"
         }
     },
