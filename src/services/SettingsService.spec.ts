@@ -8,19 +8,9 @@
  * - Edge cases and error handling
  */
 
-// Import SettingsService after mocks are set up
 import { settingsService } from './SettingsService';
 import { Settings } from '../types/settings';
-
-// Mock dependencies before importing SettingsService
-const mockFileSystemService = {
-  readFile: jest.fn(),
-  writeFile: jest.fn(),
-};
-
-jest.mock('./FileSystemService', () => ({
-  fileSystemService: mockFileSystemService,
-}));
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Mock logger to avoid console output
 jest.mock('../utils/Logger', () => ({
@@ -52,17 +42,23 @@ describe('SettingsService', () => {
   // ===========================================================================
 
   describe('getSettings', () => {
-    it('should return settings when file exists', async () => {
+    it('should return settings when storage has data', async () => {
       const settings = createMockSettings();
-      mockFileSystemService.readFile.mockResolvedValue(settings);
+      (AsyncStorage.getItem as jest.Mock).mockResolvedValue(JSON.stringify(settings));
 
       const result = await settingsService.getSettings();
 
-      expect(result).toEqual(settings);
+      expect(result.theme).toBe(settings.theme);
+      expect(result.currency).toBe(settings.currency);
+      expect(result.language).toBe(settings.language);
+      expect(result.darkMode).toBe(settings.darkMode);
+      expect(result.createdAt).toBe(settings.createdAt);
+      expect(result.updatedAt).toBe(settings.updatedAt);
+      expect(AsyncStorage.getItem).toHaveBeenCalledWith('app_settings');
     });
 
-    it('should return default settings when file does not exist', async () => {
-      mockFileSystemService.readFile.mockResolvedValue(null);
+    it('should return default settings when storage is empty', async () => {
+      (AsyncStorage.getItem as jest.Mock).mockResolvedValue(null);
 
       const result = await settingsService.getSettings();
 
@@ -70,24 +66,35 @@ describe('SettingsService', () => {
       expect(result.currency).toBe('cny');
       expect(result.language).toBe('en');
       expect(result.darkMode).toBe(false);
+      expect(result.createdAt).toBeDefined();
+      expect(result.updatedAt).toBeDefined();
     });
 
-    it('should accept optional userId parameter', async () => {
-      const settings = createMockSettings();
-      mockFileSystemService.readFile.mockResolvedValue(settings);
+    it('should merge stored settings with defaults', async () => {
+      const partialSettings = { theme: 'ocean', currency: 'usd' };
+      (AsyncStorage.getItem as jest.Mock).mockResolvedValue(JSON.stringify(partialSettings));
 
-      await settingsService.getSettings('user-123');
+      const result = await settingsService.getSettings();
 
-      expect(mockFileSystemService.readFile).toHaveBeenCalledWith('settings.json', 'user-123');
+      expect(result.theme).toBe('ocean');
+      expect(result.currency).toBe('usd');
+      expect(result.language).toBe('en'); // Default
+      expect(result.darkMode).toBe(false); // Default
+      expect(result.createdAt).toBeDefined();
+      expect(result.updatedAt).toBeDefined();
     });
 
-    it('should work without userId parameter', async () => {
-      const settings = createMockSettings();
-      mockFileSystemService.readFile.mockResolvedValue(settings);
+    it('should return defaults on storage error', async () => {
+      (AsyncStorage.getItem as jest.Mock).mockRejectedValue(new Error('Storage error'));
 
-      await settingsService.getSettings();
+      const result = await settingsService.getSettings();
 
-      expect(mockFileSystemService.readFile).toHaveBeenCalledWith('settings.json', undefined);
+      expect(result.theme).toBe('forest');
+      expect(result.currency).toBe('cny');
+      expect(result.language).toBe('en');
+      expect(result.darkMode).toBe(false);
+      expect(result.createdAt).toBeDefined();
+      expect(result.updatedAt).toBeDefined();
     });
   });
 
@@ -98,8 +105,8 @@ describe('SettingsService', () => {
   describe('updateSettings', () => {
     it('should update existing settings', async () => {
       const currentSettings = createMockSettings();
-      mockFileSystemService.readFile.mockResolvedValue(currentSettings);
-      mockFileSystemService.writeFile.mockResolvedValue(true);
+      (AsyncStorage.getItem as jest.Mock).mockResolvedValue(JSON.stringify(currentSettings));
+      (AsyncStorage.setItem as jest.Mock).mockResolvedValue(undefined);
 
       const result = await settingsService.updateSettings({
         theme: 'ocean',
@@ -111,12 +118,14 @@ describe('SettingsService', () => {
       expect(result?.darkMode).toBe(true);
       expect(result?.currency).toBe('cny'); // Unchanged
       expect(result?.language).toBe('en'); // Unchanged
+      expect(result?.createdAt).toBe(currentSettings.createdAt); // Preserved
       expect(result?.updatedAt).toBeDefined();
+      expect(AsyncStorage.setItem).toHaveBeenCalled();
     });
 
     it('should create settings if none exist', async () => {
-      mockFileSystemService.readFile.mockResolvedValue(null);
-      mockFileSystemService.writeFile.mockResolvedValue(true);
+      (AsyncStorage.getItem as jest.Mock).mockResolvedValue(null);
+      (AsyncStorage.setItem as jest.Mock).mockResolvedValue(undefined);
 
       const result = await settingsService.updateSettings({
         language: 'zh-CN',
@@ -134,8 +143,8 @@ describe('SettingsService', () => {
       const currentSettings = createMockSettings({
         createdAt: '2020-01-01T00:00:00.000Z',
       });
-      mockFileSystemService.readFile.mockResolvedValue(currentSettings);
-      mockFileSystemService.writeFile.mockResolvedValue(true);
+      (AsyncStorage.getItem as jest.Mock).mockResolvedValue(JSON.stringify(currentSettings));
+      (AsyncStorage.setItem as jest.Mock).mockResolvedValue(undefined);
 
       const result = await settingsService.updateSettings({
         theme: 'ocean',
@@ -147,31 +156,19 @@ describe('SettingsService', () => {
     });
 
     it('should set createdAt and updatedAt for new settings', async () => {
-      mockFileSystemService.readFile.mockResolvedValue(null);
-      mockFileSystemService.writeFile.mockResolvedValue(true);
+      (AsyncStorage.getItem as jest.Mock).mockResolvedValue(null);
+      (AsyncStorage.setItem as jest.Mock).mockResolvedValue(undefined);
 
       const result = await settingsService.updateSettings({});
 
       expect(result).not.toBeNull();
       expect(result?.createdAt).toBeDefined();
       expect(result?.updatedAt).toBeDefined();
-      expect(result?.updatedAt).toBe(result?.createdAt);
-    });
-
-    it('should return null on write failure', async () => {
-      const currentSettings = createMockSettings();
-      mockFileSystemService.readFile.mockResolvedValue(currentSettings);
-      mockFileSystemService.writeFile.mockResolvedValue(false);
-
-      const result = await settingsService.updateSettings({
-        theme: 'ocean',
-      });
-
-      expect(result).toBeNull();
     });
 
     it('should return null on error', async () => {
-      mockFileSystemService.readFile.mockRejectedValue(new Error('Read error'));
+      (AsyncStorage.getItem as jest.Mock).mockResolvedValue(JSON.stringify(createMockSettings()));
+      (AsyncStorage.setItem as jest.Mock).mockRejectedValue(new Error('Write error'));
 
       const result = await settingsService.updateSettings({
         theme: 'ocean',
@@ -180,15 +177,17 @@ describe('SettingsService', () => {
       expect(result).toBeNull();
     });
 
-    it('should accept optional userId parameter', async () => {
+    it('should handle partial updates correctly', async () => {
       const currentSettings = createMockSettings();
-      mockFileSystemService.readFile.mockResolvedValue(currentSettings);
-      mockFileSystemService.writeFile.mockResolvedValue(true);
+      (AsyncStorage.getItem as jest.Mock).mockResolvedValue(JSON.stringify(currentSettings));
+      (AsyncStorage.setItem as jest.Mock).mockResolvedValue(undefined);
 
-      await settingsService.updateSettings({ theme: 'ocean' }, 'user-123');
+      const result = await settingsService.updateSettings({ darkMode: true });
 
-      expect(mockFileSystemService.readFile).toHaveBeenCalledWith('settings.json', 'user-123');
-      expect(mockFileSystemService.writeFile).toHaveBeenCalledWith('settings.json', expect.anything(), 'user-123');
+      expect(result?.darkMode).toBe(true);
+      expect(result?.theme).toBe('forest'); // Unchanged
+      expect(result?.currency).toBe('cny'); // Unchanged
+      expect(result?.language).toBe('en'); // Unchanged
     });
   });
 
@@ -198,7 +197,7 @@ describe('SettingsService', () => {
 
   describe('resetToDefaults', () => {
     it('should reset to default settings', async () => {
-      mockFileSystemService.writeFile.mockResolvedValue(true);
+      (AsyncStorage.setItem as jest.Mock).mockResolvedValue(undefined);
 
       const result = await settingsService.resetToDefaults();
 
@@ -210,7 +209,7 @@ describe('SettingsService', () => {
     });
 
     it('should set new timestamps', async () => {
-      mockFileSystemService.writeFile.mockResolvedValue(true);
+      (AsyncStorage.setItem as jest.Mock).mockResolvedValue(undefined);
 
       const result = await settingsService.resetToDefaults();
 
@@ -219,36 +218,20 @@ describe('SettingsService', () => {
       expect(result?.updatedAt).toBeDefined();
     });
 
-    it('should return null on write failure', async () => {
-      mockFileSystemService.writeFile.mockResolvedValue(false);
-
-      const result = await settingsService.resetToDefaults();
-
-      expect(result).toBeNull();
-    });
-
     it('should return null on error', async () => {
-      mockFileSystemService.writeFile.mockRejectedValue(new Error('Write error'));
+      (AsyncStorage.setItem as jest.Mock).mockRejectedValue(new Error('Write error'));
 
       const result = await settingsService.resetToDefaults();
 
       expect(result).toBeNull();
     });
 
-    it('should accept optional userId parameter', async () => {
-      mockFileSystemService.writeFile.mockResolvedValue(true);
-
-      await settingsService.resetToDefaults('user-123');
-
-      expect(mockFileSystemService.writeFile).toHaveBeenCalledWith('settings.json', expect.anything(), 'user-123');
-    });
-
-    it('should work without userId parameter', async () => {
-      mockFileSystemService.writeFile.mockResolvedValue(true);
+    it('should write to AsyncStorage with correct key', async () => {
+      (AsyncStorage.setItem as jest.Mock).mockResolvedValue(undefined);
 
       await settingsService.resetToDefaults();
 
-      expect(mockFileSystemService.writeFile).toHaveBeenCalledWith('settings.json', expect.anything(), undefined);
+      expect(AsyncStorage.setItem).toHaveBeenCalledWith('app_settings', expect.stringContaining('"theme":"forest"'));
     });
   });
 
@@ -259,8 +242,8 @@ describe('SettingsService', () => {
   describe('Edge Cases', () => {
     it('should handle empty updates', async () => {
       const currentSettings = createMockSettings();
-      mockFileSystemService.readFile.mockResolvedValue(currentSettings);
-      mockFileSystemService.writeFile.mockResolvedValue(true);
+      (AsyncStorage.getItem as jest.Mock).mockResolvedValue(JSON.stringify(currentSettings));
+      (AsyncStorage.setItem as jest.Mock).mockResolvedValue(undefined);
 
       const result = await settingsService.updateSettings({});
 
@@ -276,8 +259,8 @@ describe('SettingsService', () => {
 
     it('should handle all settings being updated', async () => {
       const currentSettings = createMockSettings();
-      mockFileSystemService.readFile.mockResolvedValue(currentSettings);
-      mockFileSystemService.writeFile.mockResolvedValue(true);
+      (AsyncStorage.getItem as jest.Mock).mockResolvedValue(JSON.stringify(currentSettings));
+      (AsyncStorage.setItem as jest.Mock).mockResolvedValue(undefined);
 
       const result = await settingsService.updateSettings({
         theme: 'ocean',
@@ -293,15 +276,16 @@ describe('SettingsService', () => {
       expect(result?.darkMode).toBe(true);
     });
 
-    it('should handle undefined userId gracefully', async () => {
-      const currentSettings = createMockSettings();
-      mockFileSystemService.readFile.mockResolvedValue(currentSettings);
-      mockFileSystemService.writeFile.mockResolvedValue(true);
+    it('should handle invalid JSON in storage gracefully', async () => {
+      (AsyncStorage.getItem as jest.Mock).mockResolvedValue('invalid json');
 
-      const result = await settingsService.updateSettings({}, undefined);
+      const result = await settingsService.getSettings();
 
-      expect(result).toBeDefined();
-      expect(mockFileSystemService.readFile).toHaveBeenCalledWith('settings.json', undefined);
+      // Should return defaults on parse error
+      expect(result.theme).toBe('forest');
+      expect(result.currency).toBe('cny');
+      expect(result.language).toBe('en');
+      expect(result.darkMode).toBe(false);
     });
   });
 });

@@ -1,25 +1,46 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Settings, defaultSettings } from '../types/settings';
-import { fileSystemService } from './FileSystemService';
 import { storageLogger } from '../utils/Logger';
 
-const SETTINGS_FILE = 'settings.json';
+const SETTINGS_KEY = 'app_settings';
 
 class SettingsService {
 
   /**
-   * Get current settings
+   * Get current settings (global, not home-scoped)
    */
-  async getSettings(userId?: string): Promise<Settings> {
-    const settings = await fileSystemService.readFile<Settings>(SETTINGS_FILE, userId);
-    return settings || defaultSettings as Settings;
+  async getSettings(): Promise<Settings> {
+    const now = new Date().toISOString();
+    try {
+      const settingsJson = await AsyncStorage.getItem(SETTINGS_KEY);
+      if (settingsJson) {
+        try {
+          const parsed = JSON.parse(settingsJson) as Partial<Settings>;
+          // Merge with defaults to ensure all fields exist
+          return {
+            ...defaultSettings,
+            ...parsed,
+            createdAt: parsed.createdAt || now,
+            updatedAt: parsed.updatedAt || now
+          } as Settings;
+        } catch {
+          // JSON parse error, fall through to defaults
+          storageLogger.warn('Failed to parse settings JSON, using defaults');
+        }
+      }
+    } catch (error) {
+      storageLogger.error('Error reading settings from AsyncStorage:', error);
+    }
+    // Return defaults if nothing stored or on error
+    return { ...defaultSettings, createdAt: now, updatedAt: now } as Settings;
   }
 
   /**
-   * Update settings (supports partial updates)
+   * Update settings (supports partial updates, global, not home-scoped)
    */
-  async updateSettings(updates: Partial<Settings>, userId?: string): Promise<Settings | null> {
+  async updateSettings(updates: Partial<Settings>): Promise<Settings | null> {
     try {
-      const currentSettings = await this.getSettings(userId);
+      const currentSettings = await this.getSettings();
       const now = new Date().toISOString();
       const newSettings: Settings = {
         ...currentSettings,
@@ -28,9 +49,8 @@ class SettingsService {
         createdAt: currentSettings.createdAt || now,
       };
 
-      const success = await fileSystemService.writeFile<Settings>(SETTINGS_FILE, newSettings, userId);
-
-      return success ? newSettings : null;
+      await AsyncStorage.setItem(SETTINGS_KEY, JSON.stringify(newSettings));
+      return newSettings;
     } catch (error) {
       storageLogger.error('Error updating settings:', error);
       return null;
@@ -40,7 +60,7 @@ class SettingsService {
   /**
    * Reset settings to defaults
    */
-  async resetToDefaults(userId?: string): Promise<Settings | null> {
+  async resetToDefaults(): Promise<Settings | null> {
     try {
       const now = new Date().toISOString();
       const resetSettings: Settings = {
@@ -48,9 +68,8 @@ class SettingsService {
         createdAt: now,
         updatedAt: now,
       };
-      const success = await fileSystemService.writeFile<Settings>(SETTINGS_FILE, resetSettings, userId);
-
-      return success ? resetSettings : null;
+      await AsyncStorage.setItem(SETTINGS_KEY, JSON.stringify(resetSettings));
+      return resetSettings;
     } catch (error) {
       storageLogger.error('Error resetting settings:', error);
       return null;

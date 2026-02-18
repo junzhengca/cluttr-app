@@ -27,8 +27,8 @@ jest.mock('expo-file-system', () => ({
 }));
 
 // Mock AsyncStorage
-jest.mock('@react-native-async-storage/async-storage', () => ({
-  default: {
+jest.mock('@react-native-async-storage/async-storage', () => {
+  const AsyncStorage = {
     getItem: jest.fn(),
     setItem: jest.fn(),
     removeItem: jest.fn(),
@@ -37,8 +37,12 @@ jest.mock('@react-native-async-storage/async-storage', () => ({
     multiRemove: jest.fn(),
     clear: jest.fn(),
     getAllKeys: jest.fn(),
-  },
-}));
+  };
+  return {
+    default: AsyncStorage,
+    ...AsyncStorage,
+  };
+});
 
 // Mock Expo SecureStore
 jest.mock('expo-secure-store', () => ({

@@ -370,7 +370,6 @@ export const SettingsScreen: React.FC = () => {
         showBackButton={false}
         showRightButtons={true}
         avatarUrl={user?.avatarUrl}
-        ownerAvatarUrl={currentHome?.role === 'member' ? currentHome?.owner?.avatarUrl : undefined}
         onAvatarPress={handleAvatarPress}
       />
       <Content

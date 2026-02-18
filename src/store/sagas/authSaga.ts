@@ -12,7 +12,6 @@ import {
 import { loadItems } from './inventorySaga';
 import { loadTodos, loadTodoCategoriesAction } from './todoSaga';
 import { loadCategories } from './inventoryCategorySaga';
-import { loadSettings } from './settingsSaga';
 import { ApiClient, apiClient, type ApiClient as ApiClientType } from '../../services/ApiClient';
 import { authService } from '../../services/AuthService';
 import { homeService } from '../../services/HomeService';
@@ -274,7 +273,6 @@ function* checkAuthSaga(): Generator {
         yield put(loadTodos());
         yield put(loadTodoCategoriesAction());
         yield put(loadCategories());
-        yield put(loadSettings());
       }
     } catch (error) {
       // Check if it's a 401 error
@@ -313,7 +311,6 @@ function* checkAuthSaga(): Generator {
           // Reload data with correct context (from local DB)
           yield put(loadItems());
           yield put(loadTodos());
-          yield put(loadSettings());
         } else {
           // No cached user, but we have a token that failed with non-401?
           // This is a tricky state. We probably shouldn't logout if it's a network error.
@@ -419,7 +416,6 @@ function* loginSaga(action: { type: string; payload: { email: string; password: 
     yield put(loadTodos());
     yield put(loadTodoCategoriesAction());
     yield put(loadCategories());
-    yield put(loadSettings());
 
     yield put(setLoading(false));
 
@@ -503,12 +499,11 @@ function* signupSaga(action: { type: string; payload: { email: string; password:
     // Restore active home ID or select default
     yield call(restoreOrSelectActiveHome);
 
-    // Load data with correct context
+    // Load data with correct context (settings will be loaded by _layout.tsx after auth completes)
     yield put(loadItems());
     yield put(loadTodos());
     yield put(loadTodoCategoriesAction());
     yield put(loadCategories());
-    yield put(loadSettings());
 
     // Show success toast
     const toast = getGlobalToast();
@@ -610,7 +605,6 @@ function* googleLoginSaga(action: { type: string; payload: { idToken: string; pl
     yield put(loadTodos());
     yield put(loadTodoCategoriesAction());
     yield put(loadCategories());
-    yield put(loadSettings());
 
     yield put(setLoading(false));
 
@@ -690,13 +684,12 @@ function* handleActiveHomeIdChange(action: { type: string; payload: string | nul
       // We call this to ensure HomeService's internal state matches Redux
       homeService.switchHome(action.payload);
 
-      // Reload data for the new home
+      // Reload data for the new home (settings are global, not home-scoped)
       authLogger.info('Reloading data for new home (user authenticated)', action.payload);
       yield put(loadItems());
       yield put(loadTodos());
       yield put(loadTodoCategoriesAction());
       yield put(loadCategories());
-      yield put(loadSettings());
     } else {
       authLogger.info('Skipping data reload during auth initialization, will load after auth completes');
     }

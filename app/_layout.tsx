@@ -111,7 +111,13 @@ function AppInner() {
         setHomeSynced(true);
     }, [dispatch, activeHomeId]);
 
-    // Load data after home is synced AND auth check completes
+    // Load settings immediately after home sync (settings are global, don't require auth)
+    useEffect(() => {
+        if (!homeSynced) return;
+        dispatch(loadSettings());
+    }, [dispatch, homeSynced]);
+
+    // Load user data after auth check completes
     // IMPORTANT: We must wait for isLoading to be false to ensure the access token
     // has been retrieved from secure storage and set in the API client.
     // We also need isAuthenticated to be true to ensure we only load for logged-in users.
@@ -120,9 +126,6 @@ function AppInner() {
         if (!homeSynced) return;
         if (isLoading) return;
         if (!isAuthenticated) return;
-
-        // Load settings
-        dispatch(loadSettings());
 
         // Load todos
         dispatch(loadTodos());
