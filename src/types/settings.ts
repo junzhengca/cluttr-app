@@ -9,8 +9,8 @@ export interface Settings {
 
 // Note: defaultSettings does not include timestamps as they are set on first use
 export const defaultSettings: Omit<Settings, 'createdAt' | 'updatedAt'> = {
-  theme: 'forest',
-  currency: 'cny',
+  theme: 'ocean',
+  currency: 'usd',
   language: 'en',
   darkMode: false,
 };

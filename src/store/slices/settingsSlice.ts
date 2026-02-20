@@ -9,8 +9,8 @@ interface SettingsState {
 
 const initialState: SettingsState = {
   settings: {
-    theme: 'forest',
-    currency: 'cny',
+    theme: 'ocean',
+    currency: 'usd',
     language: 'en',
     darkMode: false,
   },
