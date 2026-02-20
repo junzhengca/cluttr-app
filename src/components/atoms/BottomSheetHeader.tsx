@@ -38,7 +38,7 @@ const Subtitle = styled(Text)`
 export interface BottomSheetHeaderProps {
   title: string;
   subtitle: string;
-  onClose: () => void;
+  onClose?: () => void;
   closeIcon?: keyof typeof Ionicons.glyphMap;
 }
 
@@ -58,10 +58,12 @@ export const BottomSheetHeader: React.FC<BottomSheetHeaderProps> = ({
         <Title>{title}</Title>
         <Subtitle numberOfLines={1}>{subtitle}</Subtitle>
       </TitleContainer>
-      <GlassButton
-        onPress={onClose}
-        icon={closeIcon}
-      />
+      {onClose && (
+        <GlassButton
+          onPress={onClose}
+          icon={closeIcon}
+        />
+      )}
     </HeaderContainer >
   );
 };

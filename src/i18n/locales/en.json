@@ -64,6 +64,20 @@
     "empty": {
       "title": "No Items Yet",
       "description": "Start by adding your first item to manage your home assets!"
+    },
+    "noHome": {
+      "title": "No Home",
+      "description": "You have deleted your last home. Create a new home to continue using the app.",
+      "createButton": "Create New Home"
+    },
+    "createRequired": {
+      "title": "Create a Home",
+      "subtitle": "You need a home to use the app. Create your first home to get started.",
+      "nicknameLabel": "Home Name",
+      "nicknamePlaceholder": "e.g. My Home",
+      "addressLabel": "Address (Optional)",
+      "addressPlaceholder": "e.g. 123 Main St",
+      "submit": "Create Home"
     }
   },
   "search": {

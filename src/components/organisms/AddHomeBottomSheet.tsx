@@ -57,11 +57,17 @@ const FooterContainer = styled.View<{
 interface AddHomeBottomSheetProps {
     bottomSheetRef: React.RefObject<BottomSheetModal | null>;
     onHomeCreated?: () => void;
+    /**
+     * If true, shows a special UI for when user has no homes and must create one.
+     * This happens after deleting the last home.
+     */
+    isRequired?: boolean;
 }
 
 export const AddHomeBottomSheet: React.FC<AddHomeBottomSheetProps> = ({
     bottomSheetRef,
     onHomeCreated,
+    isRequired = false,
 }) => {
     const { t } = useTranslation();
     const theme = useTheme();
@@ -74,6 +80,15 @@ export const AddHomeBottomSheet: React.FC<AddHomeBottomSheetProps> = ({
 
     const nameInputRef = useRef<TextInput>(null);
     const addressInputRef = useRef<TextInput>(null);
+
+    // Use different translation keys based on whether this is required (no home) or optional
+    const titleKey = isRequired ? 'home.createRequired.title' : 'home.create.title';
+    const subtitleKey = isRequired ? 'home.createRequired.subtitle' : 'home.create.subtitle';
+    const nicknameLabelKey = isRequired ? 'home.createRequired.nicknameLabel' : 'home.create.nicknameLabel';
+    const nicknamePlaceholderKey = isRequired ? 'home.createRequired.nicknamePlaceholder' : 'home.create.nicknamePlaceholder';
+    const addressLabelKey = isRequired ? 'home.createRequired.addressLabel' : 'home.create.addressLabel';
+    const addressPlaceholderKey = isRequired ? 'home.createRequired.addressPlaceholder' : 'home.create.addressPlaceholder';
+    const submitKey = isRequired ? 'home.createRequired.submit' : 'home.create.submit';
 
     const handleClose = useCallback(() => {
         Keyboard.dismiss();
@@ -134,7 +149,7 @@ export const AddHomeBottomSheet: React.FC<AddHomeBottomSheetProps> = ({
                     </ErrorBanner>
                 )}
                 <Button
-                    label={t('home.create.submit')}
+                    label={t(submitKey)}
                     onPress={handleSubmit}
                     variant="primary"
                     disabled={!name.trim() || isLoading}
@@ -142,7 +157,7 @@ export const AddHomeBottomSheet: React.FC<AddHomeBottomSheetProps> = ({
                 />
             </FooterContainer>
         );
-    }, [insets.bottom, isKeyboardVisible, isAuthenticated, getApiClient, createHome, name, address, error, isLoading, handleClose, onHomeCreated, nameInputRef, addressInputRef, t]);
+    }, [insets.bottom, isKeyboardVisible, isAuthenticated, getApiClient, createHome, name, address, error, isLoading, handleClose, onHomeCreated, nameInputRef, addressInputRef, t, submitKey]);
 
     // Estimated height of footer: 16px (top) + 16px (bottom) + 50px (button) = ~82px + inset
     // When keyboard is visible, safe area is removed, so we just use base height
@@ -153,7 +168,7 @@ export const AddHomeBottomSheet: React.FC<AddHomeBottomSheetProps> = ({
             ref={bottomSheetRef}
             enableDynamicSizing={true}
             backdropComponent={renderBackdrop}
-            enablePanDownToClose
+            enablePanDownToClose={!isRequired}
             handleComponent={null}
             android_keyboardInputMode="adjustResize"
             backgroundStyle={{ backgroundColor: theme.colors.surface }}
@@ -163,28 +178,28 @@ export const AddHomeBottomSheet: React.FC<AddHomeBottomSheetProps> = ({
             <ContentContainer>
                 <BottomSheetView style={{ paddingBottom: footerHeight }}>
                     <BottomSheetHeader
-                        title={t('home.create.title')}
-                        subtitle={t('home.create.subtitle')}
-                        onClose={handleClose}
+                        title={t(titleKey)}
+                        subtitle={t(subtitleKey)}
+                        onClose={isRequired ? undefined : handleClose} // No close button if required
                     />
                     <FormContainer>
-                        <FormSection label={t('home.create.nicknameLabel')}>
+                        <FormSection label={t(nicknameLabelKey)}>
                             <UncontrolledInput
                                 ref={nameInputRef}
                                 defaultValue={name}
                                 onChangeText={setName}
                                 onBlur={() => { }}
-                                placeholder={t('home.create.nicknamePlaceholder')}
+                                placeholder={t(nicknamePlaceholderKey)}
                                 placeholderTextColor={theme.colors.textLight}
                             />
                         </FormSection>
-                        <FormSection label={t('home.create.addressLabel')}>
+                        <FormSection label={t(addressLabelKey)}>
                             <UncontrolledInput
                                 ref={addressInputRef}
                                 defaultValue={address}
                                 onChangeText={setAddress}
                                 onBlur={() => { }}
-                                placeholder={t('home.create.addressPlaceholder')}
+                                placeholder={t(addressPlaceholderKey)}
                                 placeholderTextColor={theme.colors.textLight}
                             />
                         </FormSection>

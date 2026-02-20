@@ -48,6 +48,20 @@
     "empty": {
       "title": "还没有物品",
       "description": "开始添加您的第一个物品来管理您的家庭资产吧！"
+    },
+    "noHome": {
+      "title": "没有小家",
+      "description": "您已删除了所有小家。请创建一个新的小家以继续使用应用。",
+      "createButton": "创建新小家"
+    },
+    "createRequired": {
+      "title": "创建一个小家",
+      "subtitle": "您需要创建一个小家才能使用应用。创建您的第一个小家开始使用。",
+      "nicknameLabel": "小家名称",
+      "nicknamePlaceholder": "例如：我的家",
+      "addressLabel": "地址（可选）",
+      "addressPlaceholder": "例如：主路123号",
+      "submit": "创建小家"
     }
   },
   "search": {

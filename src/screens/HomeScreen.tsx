@@ -53,6 +53,7 @@ import { calculateBottomPadding } from '../utils/layout';
 import { useToast } from '../hooks/useToast';
 import { isExpiringSoon, countExpiringItems } from '../utils/dateUtils';
 import { getEarliestExpiry } from '../utils/batchUtils';
+import { useTheme } from '../theme/ThemeProvider';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -88,6 +89,7 @@ const FilterTitle = styled(Text) <{ isFirst?: boolean }>`
 
 export const HomeScreen: React.FC = () => {
   const { t } = useTranslation();
+  const theme = useTheme();
   const [selectedLocationId, setSelectedLocationId] = useState<string | null>(
     null
   );
@@ -99,7 +101,7 @@ export const HomeScreen: React.FC = () => {
   const [isFilterVisible, setIsFilterVisible] = useState(false);
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<NavigationProp>();
-  const { items, loading: isLoading, loadItems, updateItem: updateInventoryItem } = useInventory();
+  const { items, loading: isLoading, loadItems } = useInventory();
   const { user, getApiClient } = useAuth();
   const { currentHome } = useHome();
   const loginBottomSheetRef = useRef<BottomSheetModal | null>(null);
@@ -344,6 +346,9 @@ export const HomeScreen: React.FC = () => {
   // Calculate bottom padding for scrollable content
   const bottomPadding = calculateBottomPadding(insets.bottom);
 
+  // Show no-home state when user has deleted their last home
+  const showNoHomeState = !currentHome;
+
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
       <Container>
@@ -354,8 +359,16 @@ export const HomeScreen: React.FC = () => {
           avatarUrl={user?.avatarUrl}
           onAvatarPress={handleAvatarPress}
         />
-        {/* Check if user has access to item library */}
-        {!canAccessInventory ? (
+        {/* Show no-home state when user has deleted their last home */}
+        {showNoHomeState ? (
+          <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: theme.spacing.md }}>
+            <EmptyState
+              icon="home-outline"
+              title={t('home.noHome.title')}
+              description={t('home.noHome.description')}
+            />
+          </View>
+        ) : !canAccessInventory ? (
           <EmptyState
             icon="lock-closed"
             title={t('accessControl.itemLibrary.title')}
@@ -476,7 +489,7 @@ export const HomeScreen: React.FC = () => {
           ref={editBottomSheetRef}
           bottomSheetRef={editBottomSheetModalRef}
         />
-        {canAccessInventory && (
+        {canAccessInventory && !showNoHomeState && (
           <FloatingActionButton
             onManualAdd={handleManualAdd}
             onAIAutomatic={handleAIAutomatic}

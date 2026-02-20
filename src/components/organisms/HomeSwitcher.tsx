@@ -131,6 +131,17 @@ export const HomeSwitcher: React.FC = () => {
   const [menuLayout, setMenuLayout] = useState<{ x: number, y: number, width: number, height: number, pageX: number, pageY: number } | null>(null);
   const animation = useSharedValue(0);
 
+  // Automatically open create home modal if user has no homes
+  useEffect(() => {
+    if (homes.length === 0 && addHomeSheetRef.current) {
+      // Small delay to ensure component is mounted
+      const timer = setTimeout(() => {
+        addHomeSheetRef.current?.present();
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [homes.length]);
+
   const SPRING_CONFIG = useMemo(() => ({
     damping: 25,
     stiffness: 300,
@@ -281,7 +292,7 @@ export const HomeSwitcher: React.FC = () => {
         </View>
       </Modal>
 
-      <AddHomeBottomSheet bottomSheetRef={addHomeSheetRef} />
+      <AddHomeBottomSheet bottomSheetRef={addHomeSheetRef} isRequired={homes.length === 0} />
     </>
   );
 };
