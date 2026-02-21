@@ -14,7 +14,7 @@ import type { StyledProps } from '../../utils/styledComponents';
 import { useTheme } from '../../theme/ThemeProvider';
 import { useKeyboardVisibility } from '../../hooks/useKeyboardVisibility';
 import { useUncontrolledItemForm, type UseUncontrolledItemFormOptions } from '../../hooks/useUncontrolledItemForm';
-import { BottomSheetHeader, Button } from '../atoms';
+import { BottomSheetHeader, GlassButton } from '../atoms';
 import { ItemFormFields } from './ItemFormFields';
 import { BatchFormFields } from './BatchFormFields';
 import { uiLogger } from '../../utils/Logger';
@@ -459,12 +459,14 @@ export const ItemFormBottomSheet = forwardRef<
         bottomInset={insets.bottom}
         showSafeArea={!isKeyboardVisible}
       >
-        <Button
-          label={t(`${mode}Item.submit`)}
+        <GlassButton
+          text={t(`${mode}Item.submit`)}
           onPress={handleSubmit}
-          variant="primary"
           icon={mode === 'create' ? 'add' : 'checkmark'}
+          tintColor={theme.colors.primary}
+          textColor={theme.colors.surface}
           disabled={!isFormValid || isLoading}
+          style={{ width: '100%' }}
         />
       </FooterContainer>
     ),
@@ -476,6 +478,7 @@ export const ItemFormBottomSheet = forwardRef<
       insets.bottom,
       mode,
       t,
+      theme,
     ]
   );
 

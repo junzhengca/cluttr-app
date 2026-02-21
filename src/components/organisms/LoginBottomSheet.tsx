@@ -3,14 +3,13 @@ import { TouchableOpacity, View, Text, Keyboard, TextInput } from 'react-native'
 import styled from 'styled-components/native';
 import { BottomSheetModal, BottomSheetBackdrop, BottomSheetView } from '@gorhom/bottom-sheet';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../theme/ThemeProvider';
 import type { StyledProps } from '../../utils/styledComponents';
 import { useAuth, useAppDispatch } from '../../store/hooks';
 import { useKeyboardVisibility } from '../../hooks/useKeyboardVisibility';
 import { setError } from '../../store/slices/authSlice';
-import { BottomSheetHeader, UncontrolledInput, FormSection, Button } from '../atoms';
+import { BottomSheetHeader, UncontrolledInput, FormSection, GlassButton } from '../atoms';
 
 interface FooterContainerProps {
   bottomInset: number;
@@ -160,13 +159,14 @@ export const LoginBottomSheet: React.FC<LoginBottomSheetProps> = ({
         bottomInset={insets.bottom}
         showSafeArea={!isKeyboardVisible}
       >
-        <Button
-          label={authLoading ? t('login.submitting') : t('login.submit')}
+        <GlassButton
+          text={authLoading ? t('login.submitting') : t('login.submit')}
           onPress={handleSubmit}
-          variant="primary"
-          icon={<Ionicons name="log-in" size={18} color={theme.colors.surface} />}
+          icon="log-in"
+          tintColor={theme.colors.primary}
+          textColor={theme.colors.surface}
           disabled={authLoading}
-          fullWidth={true}
+          style={{ width: '100%' }}
         />
       </FooterContainer>
     ),

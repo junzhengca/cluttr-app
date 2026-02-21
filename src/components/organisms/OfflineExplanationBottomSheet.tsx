@@ -4,7 +4,7 @@ import { BottomSheetModal, BottomSheetView } from '@gorhom/bottom-sheet';
 import styled, { useTheme } from 'styled-components/native';
 import { useTranslation } from 'react-i18next';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { Button } from '../atoms/Button';
+import { GlassButton } from '../atoms/GlassButton';
 import { StyledProps } from '../../utils/styledComponents';
 
 // Styled components
@@ -85,11 +85,12 @@ export const OfflineExplanationBottomSheet = forwardRef<BottomSheetModal, Offlin
                         </Description>
                     </ContentContainer>
 
-                    <Button
+                    <GlassButton
                         onPress={handleClose}
-                        variant="primary"
-                        label={t('common.gotIt', 'Got it')}
-                        fullWidth
+                        text={t('common.gotIt', 'Got it')}
+                        tintColor={theme.colors.primary}
+                        textColor={theme.colors.surface}
+                        style={{ width: '100%' }}
                     />
                 </Container>
             </BottomSheetModal>

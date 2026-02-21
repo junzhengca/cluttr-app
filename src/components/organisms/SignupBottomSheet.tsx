@@ -3,13 +3,12 @@ import { TouchableOpacity, View, Text, Keyboard, TextInput } from 'react-native'
 import styled from 'styled-components/native';
 import { BottomSheetModal, BottomSheetBackdrop, BottomSheetView } from '@gorhom/bottom-sheet';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../theme/ThemeProvider';
 import type { StyledProps } from '../../utils/styledComponents';
 import { useAuth } from '../../store/hooks';
 import { useKeyboardVisibility } from '../../hooks/useKeyboardVisibility';
-import { BottomSheetHeader, UncontrolledInput, FormSection, Button } from '../atoms';
+import { BottomSheetHeader, UncontrolledInput, FormSection, GlassButton } from '../atoms';
 
 interface FooterContainerProps {
   bottomInset: number;
@@ -165,13 +164,14 @@ export const SignupBottomSheet: React.FC<SignupBottomSheetProps> = ({
         bottomInset={insets.bottom}
         showSafeArea={!isKeyboardVisible}
       >
-        <Button
-          label={isLoading ? t('signup.submitting') : t('signup.submit')}
+        <GlassButton
+          text={isLoading ? t('signup.submitting') : t('signup.submit')}
           onPress={handleSubmit}
-          variant="primary"
-          icon={<Ionicons name="person-add" size={18} color={theme.colors.surface} />}
+          icon="person-add"
+          tintColor={theme.colors.primary}
+          textColor={theme.colors.surface}
           disabled={isLoading}
-          fullWidth={true}
+          style={{ width: '100%' }}
         />
       </FooterContainer>
     ),

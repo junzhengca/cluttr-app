@@ -7,7 +7,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../theme/ThemeProvider';
 import { useHome } from '../../hooks/useHome';
 import { useAuth } from '../../store/hooks';
-import { BottomSheetHeader, Button, FormSection, UncontrolledInput } from '../atoms';
+import { BottomSheetHeader, GlassButton, FormSection, UncontrolledInput } from '../atoms';
 import { StyledProps } from '../../utils/styledComponents';
 import { useKeyboardVisibility } from '../../hooks/useKeyboardVisibility';
 import { Home } from '../../types/home';
@@ -139,16 +139,17 @@ export const EditHomeBottomSheet: React.FC<EditHomeBottomSheetProps> = ({
                         <ErrorText>{error}</ErrorText>
                     </ErrorBanner>
                 )}
-                <Button
-                    label={t('home.edit.submit')}
+                <GlassButton
+                    text={t('home.edit.submit')}
                     onPress={handleSubmit}
-                    variant="primary"
+                    tintColor={theme.colors.primary}
+                    textColor={theme.colors.surface}
                     disabled={!name.trim() || isLoading}
-                    fullWidth
+                    style={{ width: '100%' }}
                 />
             </FooterContainer>
         );
-    }, [insets.bottom, isKeyboardVisible, isAuthenticated, getApiClient, updateHome, home, name, address, error, isLoading, handleClose, onHomeUpdated, t]);
+    }, [insets.bottom, isKeyboardVisible, isAuthenticated, getApiClient, updateHome, home, name, address, error, isLoading, handleClose, onHomeUpdated, t, theme]);
 
     const footerHeight = 82 + (isKeyboardVisible ? 0 : insets.bottom);
 

@@ -19,7 +19,7 @@ import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../theme/ThemeProvider';
 import type { StyledProps } from '../../utils/styledComponents';
 import { useAuth } from '../../store/hooks';
-import { BottomSheetHeader, FormSection, UncontrolledInput, Button } from '../atoms';
+import { BottomSheetHeader, FormSection, UncontrolledInput, GlassButton } from '../atoms';
 import { uiLogger } from '../../utils/Logger';
 
 const Backdrop = styled(BottomSheetBackdrop)`
@@ -257,12 +257,14 @@ export const EditNicknameBottomSheet = forwardRef<
             <HelperText>{t('editNickname.nicknameHelper')}</HelperText>
           </FormSection>
 
-          <Button
-            label={t('editNickname.submit')}
+          <GlassButton
+            text={t('editNickname.submit')}
             onPress={handleSubmit}
-            variant="primary"
             icon="checkmark"
+            tintColor={theme.colors.primary}
+            textColor={theme.colors.surface}
             disabled={isLoading || !isValid}
+            style={{ width: '100%' }}
           />
         </BottomSheetScrollView>
       </ContentContainer>

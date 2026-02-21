@@ -18,7 +18,7 @@ import { uiLogger } from '../../utils/Logger';
 import type { StyledProps } from '../../utils/styledComponents';
 import { useTheme } from '../../theme/ThemeProvider';
 import { useKeyboardVisibility } from '../../hooks/useKeyboardVisibility';
-import { BottomSheetHeader, Button } from '../atoms';
+import { BottomSheetHeader, GlassButton } from '../atoms';
 import { EditItemFormFields } from './EditItemFormFields';
 import { useEditItemForm } from '../../hooks/useEditItemForm';
 
@@ -382,16 +382,18 @@ export const EditItemBottomSheet = forwardRef<
         bottomInset={insets.bottom}
         showSafeArea={!isKeyboardVisible}
       >
-        <Button
-          label={t('editItem.submit')}
+        <GlassButton
+          text={t('editItem.submit')}
           onPress={handleSubmit}
-          variant="primary"
           icon="checkmark"
+          tintColor={theme.colors.primary}
+          textColor={theme.colors.surface}
           disabled={!isFormValid || isLoading}
+          style={{ width: '100%' }}
         />
       </FooterContainer>
     ),
-    [handleSubmit, isLoading, isFormValid, isKeyboardVisible, insets.bottom, t],
+    [handleSubmit, isLoading, isFormValid, isKeyboardVisible, insets.bottom, t, theme],
   );
 
   return (

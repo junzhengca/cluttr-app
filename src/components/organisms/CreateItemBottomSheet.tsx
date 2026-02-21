@@ -16,7 +16,7 @@ import { useTheme } from '../../theme/ThemeProvider';
 import { useKeyboardVisibility } from '../../hooks/useKeyboardVisibility';
 import { useCreateItemForm } from '../../hooks/useCreateItemForm';
 import { useAppDispatch } from '../../store/hooks';
-import { BottomSheetHeader, Button } from '../atoms';
+import { BottomSheetHeader, GlassButton } from '../atoms';
 import { CreateItemFormFields } from './CreateItemFormFields';
 import { uiLogger } from '../../utils/Logger';
 import { generateItemId } from '../../utils/idGenerator';
@@ -413,16 +413,18 @@ export const CreateItemBottomSheet: React.FC<CreateItemBottomSheetProps> = ({
         bottomInset={insets.bottom}
         showSafeArea={!isKeyboardVisible}
       >
-        <Button
-          label={t('createItem.submit')}
+        <GlassButton
+          text={t('createItem.submit')}
           onPress={handleSubmit}
-          variant="primary"
           icon="add"
+          tintColor={theme.colors.primary}
+          textColor={theme.colors.surface}
           disabled={!isFormValid || isLoading}
+          style={{ width: '100%' }}
         />
       </FooterContainer>
     ),
-    [handleSubmit, isLoading, isFormValid, isKeyboardVisible, insets.bottom, t],
+    [handleSubmit, isLoading, isFormValid, isKeyboardVisible, insets.bottom, t, theme],
   );
 
   // --- Render ------------------------------------------------------------

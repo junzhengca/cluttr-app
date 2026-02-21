@@ -228,7 +228,7 @@ export const ErrorBottomSheet: React.FC<ErrorBottomSheetProps> = ({
               : t('errorBottomSheet.buttons.copy'),
             onPress: handleCopyErrorLog,
             variant: 'filled',
-            icon: <Ionicons name="copy-outline" size={18} color={theme.colors.surface} />,
+            iconName: 'copy-outline',
           },
         ]}
         safeArea={true}

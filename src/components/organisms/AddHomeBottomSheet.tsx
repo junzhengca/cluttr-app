@@ -7,7 +7,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../theme/ThemeProvider';
 import { useHome } from '../../hooks/useHome';
 import { useAuth } from '../../store/hooks';
-import { BottomSheetHeader, Button, FormSection, UncontrolledInput } from '../atoms';
+import { BottomSheetHeader, GlassButton, FormSection, UncontrolledInput } from '../atoms';
 import { StyledProps } from '../../utils/styledComponents';
 import { useKeyboardVisibility } from '../../hooks/useKeyboardVisibility';
 import { uiLogger } from '../../utils/Logger';
@@ -148,16 +148,17 @@ export const AddHomeBottomSheet: React.FC<AddHomeBottomSheetProps> = ({
                         <ErrorText>{error}</ErrorText>
                     </ErrorBanner>
                 )}
-                <Button
-                    label={t(submitKey)}
+                <GlassButton
+                    text={t(submitKey)}
                     onPress={handleSubmit}
-                    variant="primary"
+                    tintColor={theme.colors.primary}
+                    textColor={theme.colors.surface}
                     disabled={!name.trim() || isLoading}
-                    fullWidth
+                    style={{ width: '100%' }}
                 />
             </FooterContainer>
         );
-    }, [insets.bottom, isKeyboardVisible, isAuthenticated, getApiClient, createHome, name, address, error, isLoading, handleClose, onHomeCreated, nameInputRef, addressInputRef, t, submitKey]);
+    }, [insets.bottom, isKeyboardVisible, isAuthenticated, getApiClient, createHome, name, address, error, isLoading, handleClose, onHomeCreated, nameInputRef, addressInputRef, t, submitKey, theme]);
 
     // Estimated height of footer: 16px (top) + 16px (bottom) + 50px (button) = ~82px + inset
     // When keyboard is visible, safe area is removed, so we just use base height

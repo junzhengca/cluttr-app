@@ -6,7 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../theme/ThemeProvider';
 import { ValidateInvitationResponse } from '../../types/api';
-import { Button, BottomSheetHeader } from '../atoms';
+import { GlassButton, BottomSheetHeader } from '../atoms';
 import { useAppSelector } from '../../store/hooks';
 import { useToast } from '../../hooks/useToast';
 import type { StyledProps } from '../../utils/styledComponents';
@@ -247,10 +247,12 @@ export const InvitationBottomSheet: React.FC<InvitationBottomSheetProps> = ({
                         ) : error ? (
                             <>
                                 <ErrorText>{error}</ErrorText>
-                                <Button
-                                    label={t('common.close')}
+                                <GlassButton
+                                    text={t('common.close')}
                                     onPress={handleClose}
-                                    variant="secondary"
+                                    tintColor={theme.colors.borderLight}
+                                    textColor={theme.colors.text}
+                                    style={{ width: '100%' }}
                                 />
                             </>
                         ) : invitationData && invitationData.home ? (
@@ -310,11 +312,13 @@ export const InvitationBottomSheet: React.FC<InvitationBottomSheetProps> = ({
                                     </ScopeRow>
                                 </ScopeSection>
 
-                                <Button
-                                    label={t('share.invite.accept')}
+                                <GlassButton
+                                    text={t('share.invite.accept')}
                                     onPress={handleAccept}
-                                    variant="primary"
+                                    tintColor={theme.colors.primary}
+                                    textColor={theme.colors.surface}
                                     disabled={loading || isOwnHome}
+                                    style={{ width: '100%' }}
                                 />
                             </View>
                         ) : null}

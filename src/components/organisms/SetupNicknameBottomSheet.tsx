@@ -17,7 +17,7 @@ import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../theme/ThemeProvider';
 import type { StyledProps } from '../../utils/styledComponents';
 import { useAuth, useAppDispatch } from '../../store/hooks';
-import { BottomSheetHeader, FormSection, UncontrolledInput, Button } from '../atoms';
+import { BottomSheetHeader, FormSection, UncontrolledInput, GlassButton } from '../atoms';
 import { setShowNicknameSetup } from '../../store/slices/authSlice';
 import { uiLogger } from '../../utils/Logger';
 
@@ -216,12 +216,14 @@ export const SetupNicknameBottomSheet: React.FC<
             <HelperText>{t('setupNickname.nicknameHelper')}</HelperText>
           </FormSection>
 
-          <Button
-            label={t('setupNickname.submit')}
+          <GlassButton
+            text={t('setupNickname.submit')}
             onPress={handleSubmit}
-            variant="primary"
             icon="home"
+            tintColor={theme.colors.primary}
+            textColor={theme.colors.surface}
             disabled={isLoading}
+            style={{ width: '100%' }}
           />
 
           <LogoutLink onPress={handleLogout}>

@@ -230,13 +230,7 @@ export const CategoryManagerBottomSheet: React.FC<
               label: t('categoryManager.buttons.save'),
               onPress: handleSave,
               variant: 'filled',
-              icon: (
-                <Ionicons
-                  name="checkmark"
-                  size={18}
-                  color={theme.colors.surface}
-                />
-              ),
+              iconName: 'checkmark',
               disabled: isLoading || loading,
             },
           ]}
@@ -252,9 +246,7 @@ export const CategoryManagerBottomSheet: React.FC<
             label: t('categoryManager.buttons.create'),
             onPress: handleStartCreate,
             variant: 'filled',
-            icon: (
-              <Ionicons name="add" size={18} color={theme.colors.surface} />
-            ),
+            iconName: 'add',
           },
         ]}
         safeArea={!isKeyboardVisible}

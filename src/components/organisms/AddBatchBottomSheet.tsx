@@ -15,7 +15,7 @@ import { useTheme } from '../../theme/ThemeProvider';
 import { useKeyboardVisibility } from '../../hooks/useKeyboardVisibility';
 import { useAddBatchForm } from '../../hooks/useAddBatchForm';
 import { useAppDispatch } from '../../store/hooks';
-import { BottomSheetHeader, Button, FormSection, UncontrolledInput } from '../atoms';
+import { BottomSheetHeader, GlassButton, FormSection, UncontrolledInput } from '../atoms';
 import { BatchDetailsFormSection, DatePicker } from '../molecules';
 import { uiLogger } from '../../utils/Logger';
 import { generateItemId } from '../../utils/idGenerator';
@@ -299,16 +299,18 @@ export const AddBatchBottomSheet: React.FC<AddBatchBottomSheetProps> = ({
                 bottomInset={insets.bottom}
                 showSafeArea={!isKeyboardVisible}
             >
-                <Button
-                    label={t('common.save')}
+                <GlassButton
+                    text={t('common.save')}
                     onPress={handleSubmit}
-                    variant="primary"
                     icon="checkmark"
+                    tintColor={theme.colors.primary}
+                    textColor={theme.colors.surface}
                     disabled={!isFormValid || isLoading}
+                    style={{ width: '100%' }}
                 />
             </FooterContainer>
         ),
-        [handleSubmit, isLoading, isFormValid, isKeyboardVisible, insets.bottom, t],
+        [handleSubmit, isLoading, isFormValid, isKeyboardVisible, insets.bottom, t, theme],
     );
 
     // --- Render ------------------------------------------------------------

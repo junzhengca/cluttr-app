@@ -388,13 +388,13 @@ export const ItemDetailsScreen: React.FC = () => {
             label: t('itemDetails.actions.delete'),
             onPress: handleDelete,
             variant: 'danger',
-            icon: <Ionicons name="trash-outline" size={18} color={theme.colors.error} />,
+            iconName: 'trash-outline',
           },
           {
             label: t('itemDetails.actions.modify'),
             onPress: handleModify,
             variant: 'filled',
-            icon: <Ionicons name="create-outline" size={18} color={theme.colors.primary} />,
+            iconName: 'create-outline',
           },
         ]}
       />
