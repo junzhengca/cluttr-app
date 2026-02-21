@@ -15,7 +15,6 @@ import {
   ThemeChooser,
   CurrencySelector,
   LanguageSelector,
-  SettingsToggleItem,
   SettingsTextButton,
   EditHomeBottomSheet,
   HomeSwitcher,

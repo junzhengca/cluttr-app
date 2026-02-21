@@ -1,7 +1,6 @@
 import React from 'react';
 import { TouchableOpacity, ScrollView, View, Text } from 'react-native';
 import styled, { useTheme } from 'styled-components/native';
-import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import type { StyledProps, StyledPropsWith } from '../../utils/styledComponents';
 import type { Theme } from '../../theme/types';

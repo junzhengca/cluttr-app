@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { View, Text, Pressable, ViewStyle, Alert } from 'react-native';
+import { View, ViewStyle, Alert } from 'react-native';
 import styled from 'styled-components/native';
 import { useTranslation } from 'react-i18next';
 import Animated, {
@@ -18,29 +18,29 @@ import type { StyledProps } from '../../utils/styledComponents';
 import { Ionicons } from '@expo/vector-icons';
 
 const PickerTrigger = styled(Animated.View) <{ isCompact?: boolean }>`
-  height: ${({ isCompact }) => (isCompact ? '100%' : '48px')};
-  background-color: ${({ theme, isCompact }: StyledProps & { isCompact?: boolean }) =>
-        isCompact ? 'transparent' : theme.colors.surface};
-  border-width: ${({ isCompact }) => (isCompact ? '0px' : '1px')};
-  border-color: ${({ theme }: StyledProps) => theme.colors.border};
-  border-radius: ${({ theme }: StyledProps) => theme.borderRadius.lg}px;
-  padding-horizontal: ${({ theme, isCompact }: StyledProps & { isCompact?: boolean }) =>
-        isCompact ? theme.spacing.sm : theme.spacing.md}px;
+  height: ${(props: { isCompact?: boolean }) => (props.isCompact ? '100%' : '48px')};
+  background-color: ${(props: StyledProps & { isCompact?: boolean }) =>
+        props.isCompact ? 'transparent' : props.theme.colors.surface};
+  border-width: ${(props: { isCompact?: boolean }) => (props.isCompact ? '0px' : '1px')};
+  border-color: ${(props: StyledProps) => props.theme.colors.border};
+  border-radius: ${(props: StyledProps) => props.theme.borderRadius.lg}px;
+  padding-horizontal: ${(props: StyledProps & { isCompact?: boolean }) =>
+        props.isCompact ? props.theme.spacing.sm : props.theme.spacing.md}px;
   flex-direction: row;
   align-items: center;
   justify-content: center;
 `;
 
 const ValueText = styled.Text<{ isCompact?: boolean }>`
-  font-size: ${({ theme, isCompact }: StyledProps & { isCompact?: boolean }) =>
-        isCompact ? theme.typography.fontSize.sm : theme.typography.fontSize.md}px;
-  color: ${({ theme }: StyledProps) => theme.colors.text};
-  font-weight: ${({ theme }: StyledProps) => theme.typography.fontWeight.bold};
+  font-size: ${(props: StyledProps & { isCompact?: boolean }) =>
+        props.isCompact ? props.theme.typography.fontSize.sm : props.theme.typography.fontSize.md}px;
+  color: ${(props: StyledProps) => props.theme.colors.text};
+  font-weight: ${(props: StyledProps) => props.theme.typography.fontWeight.bold};
 `;
 
 const PlaceholderText = styled.Text`
-  font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.md}px;
-  color: ${({ theme }: StyledProps) => theme.colors.textLight};
+  font-size: ${(props: StyledProps) => props.theme.typography.fontSize.md}px;
+  color: ${(props: StyledProps) => props.theme.colors.textLight};
 `;
 
 const IconWrapper = styled.View`
@@ -111,7 +111,8 @@ export const UnitPicker: React.FC<UnitPickerProps> = ({
         }
     };
 
-    const onShowPicker = (layout: any) => {
+    const onShowPicker = (layout: ReturnType<typeof measure>) => {
+        if (!layout) return;
         const hasPreset = units.some(u => u.value === value && u.id !== 'custom');
         const isCustom = value && !hasPreset && value !== '';
 

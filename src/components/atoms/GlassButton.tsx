@@ -25,19 +25,19 @@ const ContentContainer = styled(TouchableOpacity) <{ hasText: boolean }>`
   flex-direction: row;
   align-items: center;
   justify-content: center;
-  padding-horizontal: ${({ theme, hasText }: StyledProps & { hasText: boolean }) =>
-        hasText ? theme.spacing.md : 0}px;
+  padding-horizontal: ${(props: StyledProps & { hasText: boolean }) =>
+        props.hasText ? props.theme.spacing.md : 0}px;
   height: 40px;
   min-width: 40px;
-  opacity: ${({ disabled }) => (disabled ? 0.5 : 1)};
+  opacity: ${(props) => (props.disabled ? 0.5 : 1)};
 `;
 
 const ButtonText = styled(Text) <{ tintColor?: string }>`
-  font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.md}px;
-  font-weight: ${({ theme }: StyledProps) => theme.typography.fontWeight.medium};
-  color: ${({ theme, tintColor }: StyledProps & { tintColor?: string }) =>
-        tintColor || theme.colors.text};
-  margin-left: ${({ theme }: StyledProps) => theme.spacing.xs}px;
+  font-size: ${(props: StyledProps) => props.theme.typography.fontSize.md}px;
+  font-weight: ${(props: StyledProps) => props.theme.typography.fontWeight.medium};
+  color: ${(props: StyledProps & { tintColor?: string }) =>
+        props.tintColor || props.theme.colors.text};
+  margin-left: ${(props: StyledProps) => props.theme.spacing.xs}px;
 `;
 
 export const GlassButton: React.FC<GlassButtonProps> = ({

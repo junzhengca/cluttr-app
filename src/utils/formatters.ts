@@ -2,8 +2,7 @@
  * Date formatting utilities
  */
 
-import { getLocationDisplayNameForId } from './locationI18n';
-import type { LocationTranslateFn } from './locationI18n';
+import { getLocationDisplayNameForId, type LocationTranslateFn } from './locationI18n';
 
 /**
  * Format location text with optional detailed location

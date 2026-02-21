@@ -260,7 +260,6 @@ export const CategoryManagerBottomSheet: React.FC<
     handleStartCreate,
     isLoading,
     loading,
-    theme,
     t,
     isKeyboardVisible,
   ]);

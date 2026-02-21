@@ -314,7 +314,7 @@ export const NotesScreen: React.FC = () => {
       duration: 300,
       useNativeDriver: false,
     }).start();
-  }, [mode]);
+  }, [mode, bannerProgress]);
 
   // Animate notes field show/hide
   // Using non-native driver for both to avoid conflicts when mixing with height

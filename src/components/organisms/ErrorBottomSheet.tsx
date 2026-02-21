@@ -235,7 +235,7 @@ export const ErrorBottomSheet: React.FC<ErrorBottomSheetProps> = ({
         inBottomSheet={true}
       />
     ),
-    [handleClose, handleCopyErrorLog, copied, theme, t]
+    [handleClose, handleCopyErrorLog, copied, t]
   );
 
   if (!errorDetails) {

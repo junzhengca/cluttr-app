@@ -42,13 +42,6 @@ const AvatarContainer = styled(View)`
   position: relative;
 `;
 
-const AvatarImage = styled.Image`
-  width: 80px;
-  height: 80px;
-  border-radius: 40px;
-  background-color: ${({ theme }: StyledProps) => theme.colors.borderLight};
-`;
-
 const EnvelopeIcon = styled(View)`
   position: absolute;
   bottom: -4px;
