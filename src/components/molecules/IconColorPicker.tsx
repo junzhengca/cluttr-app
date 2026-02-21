@@ -43,7 +43,7 @@ const Backdrop = styled(BottomSheetBackdrop)`
 
 const ContentContainer = styled.View`
   flex: 1;
-  background-color: ${({ theme }: StyledProps) => theme.colors.surface};
+  background-color: ${({ theme }: StyledProps) => theme.colors.background};
   border-top-left-radius: ${({ theme }: StyledProps) => theme.borderRadius.xl}px;
   border-top-right-radius: ${({ theme }: StyledProps) => theme.borderRadius.xl}px;
   overflow: hidden;
@@ -61,7 +61,7 @@ const SectionLabel = styled.Text`
 `;
 
 const FooterContainer = styled.View<{ bottomInset: number }>`
-  background-color: ${({ theme }: StyledProps) => theme.colors.surface};
+  background-color: ${({ theme }: StyledProps) => theme.colors.background};
   padding-horizontal: ${({ theme }: StyledProps) => theme.spacing.lg}px;
   padding-top: ${({ theme }: StyledProps) => theme.spacing.md}px;
   padding-bottom: ${({ bottomInset, theme }: { bottomInset: number } & StyledProps) => bottomInset + theme.spacing.md}px;

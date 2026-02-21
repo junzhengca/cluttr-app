@@ -14,7 +14,7 @@ All bottom sheets should use the `BottomSheetModal` component from `@gorhom/bott
   enablePanDownToClose={true}
   android_keyboardInputMode="adjustResize" // Critical for Android keyboard handling
   backdropComponent={renderBackdrop}
-  backgroundStyle={{ backgroundColor: theme.colors.surface }}
+  backgroundStyle={{ backgroundColor: theme.colors.background }}
   footerComponent={renderFooter}       // Fixed bottom action bar
   onDismiss={() => Keyboard.dismiss()}
 >
@@ -52,7 +52,7 @@ const FooterContainer = styled.View<{
   bottomInset: number;
   showSafeArea: boolean;
 }>`
-  background-color: ${({ theme }) => theme.colors.surface};
+  background-color: ${({ theme }) => theme.colors.background};
   // ... shadow and fixed padding ...
   
   // Conditional bottom padding

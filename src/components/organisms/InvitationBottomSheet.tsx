@@ -53,7 +53,7 @@ const EnvelopeIcon = styled(View)`
   position: absolute;
   bottom: -4px;
   right: -4px;
-  background-color: ${({ theme }: StyledProps) => theme.colors.surface};
+  background-color: ${({ theme }: StyledProps) => theme.colors.background};
   border-radius: 20px;
   padding: 4px;
   border-width: 2px;
@@ -228,7 +228,7 @@ export const InvitationBottomSheet: React.FC<InvitationBottomSheetProps> = ({
             onDismiss={onDismiss}
             handleComponent={null}
             backgroundStyle={{
-                backgroundColor: theme.colors.surface,
+                backgroundColor: theme.colors.background,
             }}
         >
             <ContentContainer>

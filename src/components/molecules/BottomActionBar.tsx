@@ -24,7 +24,8 @@ const BottomBarContainer = styled(View)<{ bottomInset: number; showSafeArea: boo
   ${({ inBottomSheet }: { inBottomSheet: boolean }) => !inBottomSheet ? 'bottom: 0;' : ''}
   ${({ inBottomSheet }: { inBottomSheet: boolean }) => !inBottomSheet ? 'left: 0;' : ''}
   ${({ inBottomSheet }: { inBottomSheet: boolean }) => !inBottomSheet ? 'right: 0;' : ''}
-  background-color: ${({ theme }: StyledProps) => theme.colors.surface};
+  background-color: ${({ theme, inBottomSheet }: StyledProps & { inBottomSheet: boolean }) =>
+    inBottomSheet ? theme.colors.background : theme.colors.surface};
   padding-horizontal: ${({ theme }: StyledProps) => theme.spacing.lg}px;
   padding-vertical: ${({ theme }: StyledProps) => theme.spacing.md}px;
   padding-bottom: ${({ bottomInset, showSafeArea }: { bottomInset: number; showSafeArea: boolean }) => showSafeArea ? bottomInset + 12 : 12}px;

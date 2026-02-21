@@ -66,7 +66,7 @@ export const OfflineExplanationBottomSheet = forwardRef<BottomSheetModal, Offlin
                 ref={bottomSheetRef}
                 snapPoints={snapPoints}
                 enablePanDownToClose
-                backgroundStyle={{ backgroundColor: theme.colors.surface }}
+                backgroundStyle={{ backgroundColor: theme.colors.background }}
                 handleIndicatorStyle={{ backgroundColor: theme.colors.textSecondary }}
             >
                 <Container>

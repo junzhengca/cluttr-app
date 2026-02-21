@@ -26,7 +26,7 @@ const Backdrop = styled(BottomSheetBackdrop)`
 const ContentContainer = styled.View`
   flex: 1;
   position: relative;
-  background-color: ${({ theme }: StyledProps) => theme.colors.surface};
+  background-color: ${({ theme }: StyledProps) => theme.colors.background};
 `;
 
 const EmptyState = styled.View`
@@ -278,6 +278,7 @@ export const CategoryManagerBottomSheet: React.FC<
       ref={bottomSheetRef}
       snapPoints={snapPoints}
       backdropComponent={renderBackdrop}
+      backgroundStyle={{ backgroundColor: theme.colors.background }}
       enablePanDownToClose
       enableContentPanningGesture={false}
       keyboardBehavior={keyboardBehavior}

@@ -14,7 +14,7 @@ const HeaderContainer = styled(View)`
   padding-top: ${({ theme }: StyledProps) => theme.spacing.xl}px;
   padding-bottom: ${({ theme }: StyledProps) => theme.spacing.lg}px;
   padding-horizontal: ${({ theme }: StyledProps) => theme.spacing.md}px;
-  background-color: ${({ theme }: StyledProps) => theme.colors.surface};
+  background-color: ${({ theme }: StyledProps) => theme.colors.background};
 `;
 
 

@@ -41,7 +41,7 @@ const FooterContainer = styled.View<{
   bottomInset: number;
   showSafeArea: boolean;
 }>`
-  background-color: ${({ theme }: StyledProps) => theme.colors.surface};
+  background-color: ${({ theme }: StyledProps) => theme.colors.background};
   padding-horizontal: ${({ theme }: StyledProps) => theme.spacing.lg}px;
   padding-top: ${({ theme }: StyledProps) => theme.spacing.md}px;
   padding-bottom: ${({
@@ -444,7 +444,7 @@ export const CreateItemBottomSheet: React.FC<CreateItemBottomSheetProps> = ({
       footerComponent={renderFooter}
       enableDynamicSizing={false}
       onChange={handleSheetChange}
-      backgroundStyle={{ backgroundColor: theme.colors.surface }}
+      backgroundStyle={{ backgroundColor: theme.colors.background }}
     >
       <ContentContainer>
         <BottomSheetHeader

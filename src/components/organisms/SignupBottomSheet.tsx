@@ -25,7 +25,7 @@ const ContentContainer = styled.View`
 `;
 
 const FooterContainer = styled(View) <FooterContainerProps>`
-  background-color: ${({ theme }: StyledProps) => theme.colors.surface};
+  background-color: ${({ theme }: StyledProps) => theme.colors.background};
   padding: ${({ theme }: StyledProps) => theme.spacing.md}px;
   padding-top: ${({ theme }: StyledProps) => theme.spacing.md}px;
   padding-bottom: ${({ bottomInset, showSafeArea, theme }: FooterContainerProps) =>
@@ -191,7 +191,7 @@ export const SignupBottomSheet: React.FC<SignupBottomSheetProps> = ({
       backdropComponent={renderBackdrop}
       android_keyboardInputMode="adjustResize"
       footerComponent={renderFooter}
-      backgroundStyle={{ backgroundColor: theme.colors.surface }}
+      backgroundStyle={{ backgroundColor: theme.colors.background }}
     >
       <ContentContainer>
         <BottomSheetView style={{ paddingBottom: footerHeight }}>

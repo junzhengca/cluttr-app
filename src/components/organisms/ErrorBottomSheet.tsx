@@ -46,7 +46,7 @@ const CloseButton = styled(TouchableOpacity)`
 
 const ContentContainer = styled(View)`
   flex: 1;
-  background-color: ${({ theme }: StyledProps) => theme.colors.surface};
+  background-color: ${({ theme }: StyledProps) => theme.colors.background};
 `;
 
 const ErrorSection = styled(View)`
@@ -247,6 +247,7 @@ export const ErrorBottomSheet: React.FC<ErrorBottomSheetProps> = ({
       ref={bottomSheetRef}
       index={0}
       snapPoints={snapPoints}
+      backgroundStyle={{ backgroundColor: theme.colors.background }}
       enablePanDownToClose={true}
       enableContentPanningGesture={false}
       enableHandlePanningGesture={false}

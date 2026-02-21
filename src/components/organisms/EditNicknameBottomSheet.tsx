@@ -28,7 +28,7 @@ const Backdrop = styled(BottomSheetBackdrop)`
 
 const ContentContainer = styled.View`
   flex: 1;
-  background-color: ${({ theme }: StyledProps) => theme.colors.surface};
+  background-color: ${({ theme }: StyledProps) => theme.colors.background};
   border-top-left-radius: ${({ theme }: StyledProps) => theme.borderRadius.xl}px;
   border-top-right-radius: ${({ theme }: StyledProps) => theme.borderRadius.xl}px;
   overflow: hidden;

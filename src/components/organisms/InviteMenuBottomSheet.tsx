@@ -22,7 +22,7 @@ const OptionContainer = styled(TouchableOpacity)`
   flex-direction: row;
   align-items: center;
   padding: ${({ theme }: StyledProps) => theme.spacing.md}px;
-  background-color: ${({ theme }: StyledProps) => theme.colors.surface};
+  background-color: ${({ theme }: StyledProps) => theme.colors.background};
   border-radius: ${({ theme }: StyledProps) => theme.borderRadius.xl}px;
   margin-bottom: ${({ theme }: StyledProps) => theme.spacing.md}px;
 `;
@@ -137,7 +137,7 @@ export const InviteMenuBottomSheet: React.FC<InviteMenuBottomSheetProps> = ({
       topInset={insets.top}
       index={0}
       enableDynamicSizing={false}
-      backgroundStyle={{ backgroundColor: theme.colors.surface }}
+      backgroundStyle={{ backgroundColor: theme.colors.background }}
     >
       <ContentContainer>
         <BottomSheetHeader
