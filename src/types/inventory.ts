@@ -23,6 +23,7 @@ export interface InventoryCategory extends HomeScopedCrudEntity {
 // Backward compatibility alias
 export type Category = InventoryCategory;
 
+/** Location has no position; order comes from the server. */
 export interface Location extends HomeScopedCrudEntity {
   name: string; // Location name
   icon?: keyof typeof Ionicons.glyphMap;

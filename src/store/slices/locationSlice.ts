@@ -1,4 +1,4 @@
-import { createSlice, PayloadAction, createSelector } from '@reduxjs/toolkit';
+import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { Location } from '../../types/inventory';
 
 interface LocationState {
@@ -29,7 +29,7 @@ const locationSlice = createSlice({
       state.locations = action.payload;
     },
     addLocation: (state, action: PayloadAction<Location>) => {
-      state.locations.unshift(action.payload);
+      state.locations.push(action.payload);
     },
     updateLocation: (state, action: PayloadAction<Location>) => {
       const index = state.locations.findIndex(
@@ -118,10 +118,5 @@ export {
   selectUpdatingLocationIds,
   selectError,
 };
-
-// Sort locations by name alphabetically
-export const selectLocationsSorted = createSelector([selectLocations], (locations) =>
-  [...locations].sort((a, b) => a.name.localeCompare(b.name))
-);
 
 export default locationSlice.reducer;

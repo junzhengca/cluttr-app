@@ -151,10 +151,9 @@ class LocationService {
       )) as CreateLocationResponse;
       const newLocation = dtoToLocation(response.location);
 
-      // Add to state
+      // Add to state (append so new location appears last)
       const state = this.getState(homeId);
-      // Create a new array to avoid issues with frozen arrays
-      state.locations = [newLocation, ...state.locations];
+      state.locations = [...state.locations, newLocation];
 
       this.setLoading(null);
       this.notifyListeners();

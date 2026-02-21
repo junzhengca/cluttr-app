@@ -58,6 +58,20 @@ const LocationLabel = styled(Text) <{ isSelected: boolean }>`
   text-align: center;
 `;
 
+const CreateLocationButton = styled(TouchableOpacity)`
+  align-items: center;
+  justify-content: center;
+  border-radius: 24px;
+  width: 80px;
+  background-color: transparent;
+  margin-right: ${({ theme }: StyledProps) => theme.spacing.md}px;
+  border-width: 1px;
+  border-style: dotted;
+  border-color: ${({ theme }: StyledProps) => theme.colors.textSecondary};
+  align-self: stretch;
+`;
+
+
 export interface LocationSelectorProps {
     selectedLocationId: string | null;
     onSelect: (locationId: string | null) => void;
@@ -143,30 +157,21 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
                     );
                 })}
                 {/* Add New Location Option */}
-                <LocationButton
-                    isSelected={false}
+                <CreateLocationButton
                     onPress={() => bottomSheetRef.current?.present()}
                     activeOpacity={0.7}
                 >
                     <Ionicons
                         name="add"
-                        size={24}
-                        color={theme.colors.primary}
+                        size={28}
+                        color={theme.colors.textSecondary}
                     />
-                    <LocationLabel
-                        isSelected={false}
-                        numberOfLines={1}
-                        ellipsizeMode="tail"
-                    >
-                        {t('location.create.add')}
-                    </LocationLabel>
-                </LocationButton>
+                </CreateLocationButton>
             </LocationScrollView>
 
-            {/* Create Location Modal */}
+            {/* Create Location Modal - do not change selection when a new location is created */}
             <CreateLocationBottomSheet
                 bottomSheetRef={bottomSheetRef}
-                onLocationCreated={(id) => onSelect(id)}
             />
         </SelectorContainer>
     );

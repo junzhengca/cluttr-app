@@ -381,7 +381,7 @@ export const useInventoryCategories = () => {
   };
 };
 
-// Locations hook - manages locations via CRUD API
+// Locations hook - manages locations via CRUD API. Order follows server response.
 export const useLocations = () => {
   const dispatch = useAppDispatch();
   const activeHomeId = useAppSelector((state) => state.auth.activeHomeId);
