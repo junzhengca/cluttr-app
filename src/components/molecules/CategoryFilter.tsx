@@ -9,6 +9,9 @@ import type {
 import { useCategories } from '../../hooks/useCategories';
 import { getInventoryCategoryDisplayName } from '../../utils/inventoryCategoryI18n';
 import type { Theme } from '../../theme/types';
+import { BottomSheetModal } from '@gorhom/bottom-sheet';
+import { Ionicons } from '@expo/vector-icons';
+import { CreateCategoryBottomSheet } from '../organisms/CreateCategoryBottomSheet';
 
 const FilterContainer = styled(View)`
   margin-bottom: 0px;
@@ -58,6 +61,20 @@ const CountText = styled(Text) <{ isSelected: boolean }>`
   opacity: 0.7;
 `;
 
+const CreateCategoryButton = styled(TouchableOpacity)`
+  align-items: center;
+  justify-content: center;
+  flex-direction: row;
+  padding-horizontal: ${({ theme }: StyledProps) => theme.spacing.md}px;
+  padding-vertical: ${({ theme }: StyledProps) => theme.spacing.sm}px;
+  border-radius: ${({ theme }: StyledProps) => theme.borderRadius.full}px;
+  background-color: transparent;
+  margin-right: ${({ theme }: StyledProps) => theme.spacing.sm}px;
+  border-width: 1.5px;
+  border-style: dotted;
+  border-color: ${({ theme }: StyledProps) => theme.colors.textSecondary};
+`;
+
 export interface CategoryFilterProps {
     selectedCategoryId: string | null;
     onSelect: (categoryId: string | null) => void;
@@ -72,6 +89,7 @@ export const CategoryFilter: React.FC<CategoryFilterProps> = ({
     const { t } = useTranslation();
     const theme = useTheme() as Theme;
     const { categories, loading } = useCategories();
+    const bottomSheetRef = React.useRef<BottomSheetModal>(null);
 
     const totalCount = Object.values(counts).reduce((sum, count) => sum + count, 0);
 
@@ -122,7 +140,24 @@ export const CategoryFilter: React.FC<CategoryFilterProps> = ({
                         </CategoryButton>
                     );
                 })}
+
+                <CreateCategoryButton
+                    onPress={() => {
+                        bottomSheetRef.current?.present();
+                    }}
+                    activeOpacity={0.7}
+                >
+                    <Ionicons
+                        name="add"
+                        size={20}
+                        color={theme.colors.textSecondary}
+                    />
+                </CreateCategoryButton>
             </CategoryScrollView>
+
+            <CreateCategoryBottomSheet
+                bottomSheetRef={bottomSheetRef}
+            />
         </FilterContainer>
     );
 };

@@ -104,7 +104,20 @@
     "entertainment": "Entertainment",
     "apparel": "Apparel",
     "home": "Home",
-    "other": "Other"
+    "other": "Other",
+    "create": {
+      "title": "Create Category",
+      "subtitle": "Add a new category for your items",
+      "nameLabel": "Category Name",
+      "namePlaceholder": "e.g., Office Supplies",
+      "colorLabel": "Select Color",
+      "submit": "Create Category",
+      "errors": {
+        "title": "Error",
+        "enterName": "Please enter a category name",
+        "createFailed": "Failed to create category, please try again"
+      }
+    }
   },
   "todoCategories": {
     "all": "All",

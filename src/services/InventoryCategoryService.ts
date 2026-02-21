@@ -149,7 +149,7 @@ class InventoryCategoryService {
 
       // Add to state
       const state = this.getState(homeId);
-      state.categories.push(newCategory);
+      state.categories = [...state.categories, newCategory];
 
       this.setLoading(null);
       this.notifyListeners();
@@ -185,10 +185,7 @@ class InventoryCategoryService {
 
       // Update in state
       const state = this.getState(homeId);
-      const index = state.categories.findIndex(c => c.id === categoryId);
-      if (index >= 0) {
-        state.categories[index] = updatedCategory;
-      }
+      state.categories = state.categories.map(c => c.id === categoryId ? updatedCategory : c);
 
       this.setLoading(null);
       this.notifyListeners();

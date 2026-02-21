@@ -52,19 +52,41 @@ const CategoryText = styled(Text) <{ isSelected: boolean }>`
     isSelected ? theme.colors.surface : theme.colors.textSecondary};
 `;
 
+const CreateCategoryButton = styled(TouchableOpacity)`
+  align-items: center;
+  justify-content: center;
+  flex-direction: row;
+  padding-horizontal: 16px;
+  padding-vertical: 6px;
+  border-radius: 18px;
+  background-color: transparent;
+  margin-right: ${({ theme }: StyledProps) => theme.spacing.md}px;
+  border-width: 1.5px;
+  border-style: dotted;
+  border-color: ${({ theme }: StyledProps) => theme.colors.textSecondary};
+  align-self: stretch;
+`;
+
 export interface CategorySelectorProps {
   categories?: Category[];
   selectedCategory?: string;
   onCategoryChange?: (categoryId: string) => void;
+  onOpeningNestedModal?: (isOpening: boolean) => void;
 }
+
+import { BottomSheetModal } from '@gorhom/bottom-sheet';
+import { Ionicons } from '@expo/vector-icons';
+import { CreateCategoryBottomSheet } from '../organisms/CreateCategoryBottomSheet';
 
 export const CategorySelector: React.FC<CategorySelectorProps> = ({
   categories: providedCategories,
   selectedCategory: parentSelectedCategory,
   onCategoryChange,
+  onOpeningNestedModal,
 }) => {
   const { t } = useTranslation();
   const theme = useTheme() as Theme;
+  const bottomSheetRef = React.useRef<BottomSheetModal>(null);
   const [selectedCategory, setSelectedCategory] = useState<string>(parentSelectedCategory || 'all');
   const [categories, setCategories] = useState<Category[]>([]);
   const { categories: allCategories } = useInventoryCategories();
@@ -141,7 +163,26 @@ export const CategorySelector: React.FC<CategorySelectorProps> = ({
             </CategoryText>
           </CategoryButton>
         ))}
+
+        <CreateCategoryButton
+          onPress={() => {
+            onOpeningNestedModal?.(true);
+            bottomSheetRef.current?.present();
+          }}
+          activeOpacity={0.7}
+        >
+          <Ionicons
+            name="add"
+            size={20}
+            color={theme.colors.textSecondary}
+          />
+        </CreateCategoryButton>
       </ScrollContainer>
+
+      <CreateCategoryBottomSheet
+        bottomSheetRef={bottomSheetRef}
+        onClose={() => onOpeningNestedModal?.(false)}
+      />
     </Container>
   );
 };
