@@ -116,6 +116,7 @@ export const CollapsibleFilterPanel: React.FC<CollapsibleFilterPanelProps> = ({
           icon={isExpanded ? "funnel" : "funnel-outline"}
           text={t('common.filter')}
           tintColor={isExpanded ? theme.colors.primary : undefined}
+          textColor={isExpanded ? '#FFFFFF' : undefined}
         />
       </Header>
 
