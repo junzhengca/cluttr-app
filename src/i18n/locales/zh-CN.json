@@ -136,7 +136,22 @@
     "garage": "车库",
     "basement": "地下室",
     "laundry-room": "洗衣房",
-    "other": "其他"
+    "other": "其他",
+    "create": {
+      "title": "新建位置",
+      "subtitle": "为您的物品添加一个新位置",
+      "nameLabel": "位置名称",
+      "namePlaceholder": "例如：玄关鞋柜",
+      "iconLabel": "选择图标",
+      "submit": "创建位置",
+      "add": "新建"
+    },
+    "errors": {
+      "title": "错误",
+      "enterName": "请输入位置名称",
+      "createFailed": "创建失败，请重试",
+      "updateFailed": "更新失败，请重试"
+    }
   },
   "statuses": {
     "using": "使用中",

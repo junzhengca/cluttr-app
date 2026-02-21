@@ -83,6 +83,7 @@ export interface UncontrolledInputProps {
   multiline?: boolean;
   numberOfLines?: number;
   editable?: boolean;
+  autoFocus?: boolean;
 }
 
 /**
@@ -123,6 +124,7 @@ export const UncontrolledInput = memo(
         multiline = false,
         numberOfLines,
         editable = true,
+        autoFocus = false,
       },
       ref
     ) => {
@@ -160,6 +162,7 @@ export const UncontrolledInput = memo(
               multiline={multiline}
               numberOfLines={numberOfLines}
               editable={editable}
+              autoFocus={autoFocus}
               textAlignVertical={multiline ? 'top' : 'center'}
             />
             {error && (

@@ -3,6 +3,7 @@ import { TouchableOpacity, ScrollView, View, Text } from 'react-native';
 import styled, { useTheme } from 'styled-components/native';
 import { useTranslation } from 'react-i18next';
 import { Ionicons } from '@expo/vector-icons';
+import { BottomSheetModal } from '@gorhom/bottom-sheet';
 
 import type {
     StyledProps,
@@ -10,6 +11,7 @@ import type {
 import type { Theme } from '../../theme/types';
 import { useLocations } from '../../store/hooks';
 import { getLocationDisplayName } from '../../utils/locationI18n';
+import { CreateLocationBottomSheet } from '../organisms/CreateLocationBottomSheet';
 
 const SelectorContainer = styled(View) <{ edgeToEdge?: boolean }>`
   flex-direction: column;
@@ -75,6 +77,7 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
     const { t } = useTranslation();
     const theme = useTheme() as Theme;
     const { locations, refreshLocations } = useLocations();
+    const bottomSheetRef = React.useRef<BottomSheetModal>(null);
 
     // Load locations on mount
     useEffect(() => {
@@ -139,7 +142,32 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
                         </LocationButton>
                     );
                 })}
+                {/* Add New Location Option */}
+                <LocationButton
+                    isSelected={false}
+                    onPress={() => bottomSheetRef.current?.present()}
+                    activeOpacity={0.7}
+                >
+                    <Ionicons
+                        name="add"
+                        size={24}
+                        color={theme.colors.primary}
+                    />
+                    <LocationLabel
+                        isSelected={false}
+                        numberOfLines={1}
+                        ellipsizeMode="tail"
+                    >
+                        {t('location.create.add')}
+                    </LocationLabel>
+                </LocationButton>
             </LocationScrollView>
+
+            {/* Create Location Modal */}
+            <CreateLocationBottomSheet
+                bottomSheetRef={bottomSheetRef}
+                onLocationCreated={(id) => onSelect(id)}
+            />
         </SelectorContainer>
     );
 };

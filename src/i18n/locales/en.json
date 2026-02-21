@@ -152,7 +152,22 @@
     "garage": "Garage",
     "basement": "Basement",
     "laundry-room": "Laundry Room",
-    "other": "Other"
+    "other": "Other",
+    "create": {
+      "title": "Create Location",
+      "subtitle": "Add a brand new place for your items",
+      "nameLabel": "Location Name",
+      "namePlaceholder": "e.g., Shoe Cabinet",
+      "iconLabel": "Select Icon",
+      "submit": "Create Location",
+      "add": "Add New"
+    },
+    "errors": {
+      "title": "Error",
+      "enterName": "Please enter a location name",
+      "createFailed": "Failed to create location, please try again",
+      "updateFailed": "Failed to update location, please try again"
+    }
   },
   "statuses": {
     "using": "Using",

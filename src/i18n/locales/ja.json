@@ -126,7 +126,22 @@
         "garage": "ガレージ",
         "basement": "地下室",
         "laundry-room": "ランドリールーム",
-        "other": "その他"
+        "other": "その他",
+        "create": {
+            "title": "場所を作成",
+            "subtitle": "アイテムの新しい場所を追加する",
+            "nameLabel": "場所の名前",
+            "namePlaceholder": "例: 靴箱",
+            "iconLabel": "アイコンを選択",
+            "submit": "作成する",
+            "add": "新しく追加"
+        },
+        "errors": {
+            "title": "エラー",
+            "enterName": "場所の名前を入力してください",
+            "createFailed": "作成に失敗しました。もう一度お試しください",
+            "updateFailed": "更新に失敗しました。もう一度お試しください"
+        }
     },
     "statuses": {
         "using": "使用中",
