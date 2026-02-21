@@ -93,6 +93,7 @@ export const CategoryFilter: React.FC<CategoryFilterProps> = ({
                     onPress={() => onSelect(null)}
                     activeOpacity={0.7}
                 >
+                    <ColorDot color={selectedCategoryId === null ? 'transparent' : theme.colors.textSecondary} style={{ borderWidth: 1, borderColor: selectedCategoryId === null ? theme.colors.surface : theme.colors.border }} />
                     <CategoryText isSelected={selectedCategoryId === null}>
                         {t('categories.all')}
                     </CategoryText>
@@ -111,7 +112,7 @@ export const CategoryFilter: React.FC<CategoryFilterProps> = ({
                             onPress={() => onSelect(category.id)}
                             activeOpacity={0.7}
                         >
-                            {category.color && <ColorDot color={category.color} />}
+                            <ColorDot color={category.color || theme.colors.secondary} />
                             <CategoryText isSelected={isSelected}>
                                 {getInventoryCategoryDisplayName(category, t)}
                             </CategoryText>

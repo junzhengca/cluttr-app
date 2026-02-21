@@ -101,7 +101,7 @@ export const CategoryFormSelector: React.FC<CategoryFormSelectorProps> = ({
                             onPress={() => onSelect(category.id)}
                             activeOpacity={0.8}
                         >
-                            {category.color && <ColorDot color={category.color} />}
+                            <ColorDot color={category.color || theme.colors.secondary} />
                             <CategoryText isSelected={isSelected}>
                                 {category.label || getInventoryCategoryDisplayName(category, t)}
                             </CategoryText>

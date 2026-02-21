@@ -88,19 +88,33 @@ const BadgesAndQuantityRow = styled(View)`
   align-items: center;
 `;
 
-const Badge = styled(View) <{ color?: string }>`
-  background-color: ${({ color, theme }: StyledProps & { color?: string }) => color || theme.colors.primary};
+const Badge = styled(View) <{ color?: string, isSelected?: boolean }>`
+  background-color: ${({ isSelected, theme }: StyledProps & { isSelected?: boolean }) =>
+    isSelected ? theme.colors.primary : theme.colors.surface};
+  border-width: 1px;
+  border-color: ${({ isSelected, theme }: StyledProps & { isSelected?: boolean }) =>
+    isSelected ? theme.colors.primary : theme.colors.border};
   padding-horizontal: 12px;
   padding-vertical: 4px;
   border-radius: 12px;
+  flex-direction: row;
   justify-content: center;
   align-items: center;
 `;
 
-const BadgeText = styled(Text)`
-  color: white;
+const BadgeText = styled(Text) <{ isSelected?: boolean }>`
+  color: ${({ theme, isSelected }: StyledProps & { isSelected?: boolean }) =>
+    isSelected ? 'white' : theme.colors.textSecondary};
   font-size: 12px;
   font-weight: 600;
+`;
+
+const ColorDot = styled(View) <{ color: string }>`
+  width: 8px;
+  height: 8px;
+  border-radius: 4px;
+  background-color: ${({ color }: { color: string }) => color};
+  margin-right: 6px;
 `;
 
 const TotalAmountRow = styled(View)`
@@ -342,13 +356,14 @@ export const ItemDetailsScreen: React.FC = () => {
             <BadgesAndQuantityRow>
               <BadgesContainer>
                 {locationName ? (
-                  <Badge color={theme.colors.primary}>
-                    <BadgeText>{t('common.location')}: {locationName}</BadgeText>
+                  <Badge isSelected={false}>
+                    <BadgeText isSelected={false}>{t('common.location')}: {locationName}</BadgeText>
                   </Badge>
                 ) : null}
                 {categoryName ? (
-                  <Badge color={categoryColor || theme.colors.secondary}>
-                    <BadgeText>{t('common.category')}: {categoryName}</BadgeText>
+                  <Badge isSelected={false}>
+                    <ColorDot color={categoryColor || theme.colors.secondary} />
+                    <BadgeText isSelected={false}>{t('common.category')}: {categoryName}</BadgeText>
                   </Badge>
                 ) : null}
               </BadgesContainer>

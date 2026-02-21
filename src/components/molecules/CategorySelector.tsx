@@ -128,7 +128,12 @@ export const CategorySelector: React.FC<CategorySelectorProps> = ({
             onPress={() => handleCategoryPress(category.id)}
             activeOpacity={0.8}
           >
-            {category.color && <ColorDot color={category.color} />}
+            <ColorDot
+              color={category.id === 'all'
+                ? (selectedCategory === 'all' ? 'transparent' : theme.colors.textSecondary)
+                : (category.color || theme.colors.secondary)}
+              style={category.id === 'all' ? { borderWidth: 1, borderColor: selectedCategory === 'all' ? theme.colors.surface : theme.colors.border } : {}}
+            />
             <CategoryText isSelected={selectedCategory === category.id}>
               {category.label || (category.id === 'all'
                 ? t('categories.all')
