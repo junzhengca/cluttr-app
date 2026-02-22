@@ -356,13 +356,13 @@ export const ItemDetailsScreen: React.FC = () => {
               <BadgesContainer>
                 {locationName ? (
                   <Badge isSelected={false}>
-                    <BadgeText isSelected={false}>{t('common.location')}: {locationName}</BadgeText>
+                    <BadgeText isSelected={false}>{locationName}</BadgeText>
                   </Badge>
                 ) : null}
                 {categoryName ? (
                   <Badge isSelected={false}>
                     <ColorDot color={categoryColor || theme.colors.secondary} />
-                    <BadgeText isSelected={false}>{t('common.category')}: {categoryName}</BadgeText>
+                    <BadgeText isSelected={false}>{categoryName}</BadgeText>
                   </Badge>
                 ) : null}
               </BadgesContainer>

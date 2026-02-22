@@ -32,7 +32,7 @@ function dtoToInventoryItem(dto: InventoryItemDto): InventoryItem {
     id: dto.inventoryId,
     homeId: dto.homeId,
     name: dto.name,
-    location: dto.location || '',
+    location: dto.locationId || '',
     detailedLocation: dto.detailedLocation || '',
     status: dto.status,
     icon: (dto.icon as keyof typeof Ionicons.glyphMap) || 'cube',
@@ -146,7 +146,7 @@ class InventoryService {
       const request: CreateInventoryItemRequest = {
         inventoryId: newId,
         name: input.name,
-        location: input.location,
+        locationId: input.location,
         detailedLocation: input.detailedLocation,
         status: input.status,
         icon: input.icon,
@@ -191,7 +191,7 @@ class InventoryService {
     try {
       const request: UpdateInventoryItemRequest = {
         name: updates.name,
-        location: updates.location,
+        locationId: updates.location,
         detailedLocation: updates.detailedLocation,
         status: updates.status,
         icon: updates.icon,

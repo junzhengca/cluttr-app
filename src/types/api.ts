@@ -480,7 +480,7 @@ export interface InventoryItemDto {
   inventoryId: string;
   homeId: string;
   name: string;
-  location?: string;
+  locationId?: string;
   detailedLocation?: string;
   status: string;
   icon?: string;
@@ -515,7 +515,7 @@ export interface ListInventoryItemsResponse {
 export interface CreateInventoryItemRequest {
   inventoryId?: string;
   name: string;
-  location?: string;
+  locationId?: string;
   detailedLocation?: string;
   status?: string;
   icon?: string;
@@ -531,7 +531,7 @@ export interface CreateInventoryItemResponse {
 
 export interface UpdateInventoryItemRequest {
   name?: string;
-  location?: string;
+  locationId?: string;
   detailedLocation?: string;
   status?: string;
   icon?: string;
