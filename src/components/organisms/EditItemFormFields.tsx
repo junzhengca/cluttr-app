@@ -4,8 +4,7 @@ import styled from 'styled-components/native';
 import { useTheme } from '../../theme/ThemeProvider';
 import type { StyledProps } from '../../utils/styledComponents';
 import { FormSection, UncontrolledInput } from '../atoms';
-import { LocationSelector, CategorySelector, StatusFormSelector, CollapsibleSection, IconColorPicker } from '../molecules';
-import { Ionicons } from '@expo/vector-icons';
+import { LocationSelector, CategorySelector, StatusFormSelector, CollapsibleSection } from '../molecules';
 
 // ---------------------------------------------------------------------------
 // Styled helpers
@@ -16,11 +15,7 @@ const FormContainer = styled.View`
   gap: ${({ theme }: StyledProps) => theme.spacing.sm}px;
 `;
 
-const NameRow = styled.View`
-  flex-direction: row;
-  gap: ${({ theme }: StyledProps) => theme.spacing.md}px;
-  align-items: center;
-`;
+
 
 // ---------------------------------------------------------------------------
 // Types
@@ -31,8 +26,7 @@ export interface EditItemFormFieldsProps {
     selectedLocation: string;
     selectedCategoryId: string | null;
     selectedStatusId: string;
-    selectedIcon: string;
-    selectedColor: string;
+
     formKey: number;
     // Input refs
     nameInputRef: React.RefObject<TextInput | null>;
@@ -46,8 +40,7 @@ export interface EditItemFormFieldsProps {
     onLocationSelect: (location: string) => void;
     onCategorySelect: (categoryId: string | null) => void;
     onStatusSelect: (statusId: string) => void;
-    onIconSelect: (icon: string) => void;
-    onColorSelect: (color: string) => void;
+
     // Handlers — text inputs
     onNameChangeText: (text: string) => void;
     onNameBlur: () => void;
@@ -97,8 +90,7 @@ export const EditItemFormFields: React.FC<EditItemFormFieldsProps> = ({
     selectedLocation,
     selectedCategoryId,
     selectedStatusId,
-    selectedIcon,
-    selectedColor,
+
     formKey,
     nameInputRef,
     detailedLocationInputRef,
@@ -109,8 +101,7 @@ export const EditItemFormFields: React.FC<EditItemFormFieldsProps> = ({
     onLocationSelect,
     onCategorySelect,
     onStatusSelect,
-    onIconSelect,
-    onColorSelect,
+
     onNameChangeText,
     onNameBlur,
     onDetailedLocationChange,
@@ -124,26 +115,16 @@ export const EditItemFormFields: React.FC<EditItemFormFieldsProps> = ({
 
     return (
         <FormContainer key={formKey}>
-            {/* Row 1 — Name & Icon */}
+            {/* Row 1 — Name */}
             <FormSection label={translations.fields.name}>
-                <NameRow>
-                    <IconColorPicker
-                        icon={selectedIcon as keyof typeof Ionicons.glyphMap}
-                        color={selectedColor}
-                        onIconSelect={onIconSelect}
-                        onColorSelect={onColorSelect}
-                        onOpeningNestedModal={onOpeningNestedModal}
-                    />
-                    <UncontrolledInput
-                        ref={nameInputRef}
-                        defaultValue={defaultName}
-                        onChangeText={onNameChangeText}
-                        onBlur={onNameBlur}
-                        placeholder={translations.placeholders.name}
-                        placeholderTextColor={theme.colors.textLight}
-                        style={{ flex: 1 }}
-                    />
-                </NameRow>
+                <UncontrolledInput
+                    ref={nameInputRef}
+                    defaultValue={defaultName}
+                    onChangeText={onNameChangeText}
+                    onBlur={onNameBlur}
+                    placeholder={translations.placeholders.name}
+                    placeholderTextColor={theme.colors.textLight}
+                />
             </FormSection>
 
             {/* Row 2 — Location */}

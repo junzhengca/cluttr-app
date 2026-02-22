@@ -14,8 +14,6 @@ export interface EditItemFormValues {
     detailedLocation: string;
     status: string;
     warningThreshold: string;
-    icon: string;
-    iconColor: string;
 }
 
 export interface UseEditItemFormOptions {
@@ -30,8 +28,6 @@ export interface UseEditItemFormOptions {
 const DEFAULT_LOCATION = '';
 const DEFAULT_STATUS = 'using';
 const DEFAULT_WARNING_THRESHOLD = '';
-const DEFAULT_ICON = 'cube-outline';
-const DEFAULT_COLOR = '#95A5A6';
 
 // ---------------------------------------------------------------------------
 // Hook
@@ -77,8 +73,6 @@ export const useEditItemForm = (options: UseEditItemFormOptions = {}) => {
         detailedLocation: '',
         status: DEFAULT_STATUS,
         warningThreshold: DEFAULT_WARNING_THRESHOLD,
-        icon: DEFAULT_ICON,
-        iconColor: DEFAULT_COLOR,
     });
 
     // --- State -------------------------------------------------------------
@@ -90,8 +84,6 @@ export const useEditItemForm = (options: UseEditItemFormOptions = {}) => {
     const [selectedLocation, setSelectedLocation] = useState(DEFAULT_LOCATION);
     const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
     const [selectedStatusId, setSelectedStatusId] = useState(DEFAULT_STATUS);
-    const [selectedIcon, setSelectedIcon] = useState(DEFAULT_ICON);
-    const [selectedColor, setSelectedColor] = useState(DEFAULT_COLOR);
     const [formKey, setFormKey] = useState(0);
 
     // --- Validation --------------------------------------------------------
@@ -117,8 +109,6 @@ export const useEditItemForm = (options: UseEditItemFormOptions = {}) => {
             const detailedLocation = initialData.detailedLocation ?? '';
             const status = initialData.status ?? DEFAULT_STATUS;
             const warningThreshold = initialData.warningThreshold?.toString() ?? DEFAULT_WARNING_THRESHOLD;
-            const icon = initialData.icon ?? DEFAULT_ICON;
-            const iconColor = initialData.iconColor ?? DEFAULT_COLOR;
 
             initialValuesRef.current = {
                 name,
@@ -127,8 +117,6 @@ export const useEditItemForm = (options: UseEditItemFormOptions = {}) => {
                 detailedLocation,
                 status,
                 warningThreshold,
-                icon,
-                iconColor,
             };
 
             // Update refs and state
@@ -143,8 +131,6 @@ export const useEditItemForm = (options: UseEditItemFormOptions = {}) => {
             setSelectedLocation(location);
             setSelectedCategoryId(categoryId);
             setSelectedStatusId(status);
-            setSelectedIcon(icon);
-            setSelectedColor(iconColor);
 
             setFormKey((prev) => prev + 1);
         }
@@ -188,10 +174,8 @@ export const useEditItemForm = (options: UseEditItemFormOptions = {}) => {
             detailedLocation: detailedLocationValueRef.current,
             status: selectedStatusId,
             warningThreshold: warningThresholdValueRef.current,
-            icon: selectedIcon,
-            iconColor: selectedColor,
         }),
-        [selectedLocation, selectedCategoryId, selectedStatusId, selectedIcon, selectedColor],
+        [selectedLocation, selectedCategoryId, selectedStatusId],
     );
 
     const isFormDirty = useCallback((): boolean => {
@@ -202,11 +186,9 @@ export const useEditItemForm = (options: UseEditItemFormOptions = {}) => {
             selectedCategoryId !== initial.categoryId ||
             detailedLocationValueRef.current !== initial.detailedLocation ||
             selectedStatusId !== initial.status ||
-            warningThresholdValueRef.current !== initial.warningThreshold ||
-            selectedIcon !== initial.icon ||
-            selectedColor !== initial.iconColor
+            warningThresholdValueRef.current !== initial.warningThreshold
         );
-    }, [selectedLocation, selectedCategoryId, selectedStatusId, selectedIcon, selectedColor]);
+    }, [selectedLocation, selectedCategoryId, selectedStatusId]);
 
     const resetForm = useCallback(() => {
         if (initialData) {
@@ -217,8 +199,6 @@ export const useEditItemForm = (options: UseEditItemFormOptions = {}) => {
             const detailedLocation = initialData.detailedLocation ?? '';
             const status = initialData.status ?? DEFAULT_STATUS;
             const warningThreshold = initialData.warningThreshold?.toString() ?? DEFAULT_WARNING_THRESHOLD;
-            const icon = initialData.icon ?? DEFAULT_ICON;
-            const iconColor = initialData.iconColor ?? DEFAULT_COLOR;
 
             initialValuesRef.current = {
                 name,
@@ -227,8 +207,6 @@ export const useEditItemForm = (options: UseEditItemFormOptions = {}) => {
                 detailedLocation,
                 status,
                 warningThreshold,
-                icon,
-                iconColor,
             };
 
             nameValueRef.current = name;
@@ -242,8 +220,6 @@ export const useEditItemForm = (options: UseEditItemFormOptions = {}) => {
             setSelectedLocation(location);
             setSelectedCategoryId(categoryId);
             setSelectedStatusId(status);
-            setSelectedIcon(icon);
-            setSelectedColor(iconColor);
         } else {
             // Reset to defaults
             initialValuesRef.current = {
@@ -253,8 +229,6 @@ export const useEditItemForm = (options: UseEditItemFormOptions = {}) => {
                 detailedLocation: '',
                 status: DEFAULT_STATUS,
                 warningThreshold: DEFAULT_WARNING_THRESHOLD,
-                icon: DEFAULT_ICON,
-                iconColor: DEFAULT_COLOR,
             };
 
             nameValueRef.current = '';
@@ -268,8 +242,6 @@ export const useEditItemForm = (options: UseEditItemFormOptions = {}) => {
             setSelectedLocation(DEFAULT_LOCATION);
             setSelectedCategoryId(null);
             setSelectedStatusId(DEFAULT_STATUS);
-            setSelectedIcon(DEFAULT_ICON);
-            setSelectedColor(DEFAULT_COLOR);
         }
         setFormKey((prev) => prev + 1);
     }, [initialData]);
@@ -289,15 +261,11 @@ export const useEditItemForm = (options: UseEditItemFormOptions = {}) => {
         selectedLocation,
         selectedCategoryId,
         selectedStatusId,
-        selectedIcon,
-        selectedColor,
         formKey,
         // Setters
         setSelectedLocation,
         setSelectedCategoryId,
         setSelectedStatusId,
-        setSelectedIcon,
-        setSelectedColor,
         // Methods
         getIsFormValid,
         getFormValues,

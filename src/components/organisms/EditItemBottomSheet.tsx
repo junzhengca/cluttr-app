@@ -118,14 +118,12 @@ export const EditItemBottomSheet = forwardRef<
     selectedLocation,
     selectedCategoryId,
     selectedStatusId,
-    selectedIcon,
-    selectedColor,
+
     formKey,
     setSelectedLocation,
     setSelectedCategoryId,
     setSelectedStatusId,
-    setSelectedIcon,
-    setSelectedColor,
+
     getFormValues,
     isFormDirty,
     resetForm,
@@ -321,8 +319,6 @@ export const EditItemBottomSheet = forwardRef<
         status: formValues.status,
         categoryId: formValues.categoryId,
         warningThreshold: isNaN(parsedWarningThreshold) ? 0 : parsedWarningThreshold,
-        icon: formValues.icon,
-        iconColor: formValues.iconColor,
       };
 
       dispatch({ type: 'inventory/UPDATE_ITEM', payload: { id: itemId, updates: updateValues } });
@@ -440,8 +436,7 @@ export const EditItemBottomSheet = forwardRef<
             selectedLocation={selectedLocation}
             selectedCategoryId={selectedCategoryId}
             selectedStatusId={selectedStatusId}
-            selectedIcon={selectedIcon}
-            selectedColor={selectedColor}
+
             formKey={formKey}
             nameInputRef={nameInputRef}
             detailedLocationInputRef={detailedLocationInputRef}
@@ -452,8 +447,7 @@ export const EditItemBottomSheet = forwardRef<
             onLocationSelect={setSelectedLocation}
             onCategorySelect={setSelectedCategoryId}
             onStatusSelect={setSelectedStatusId}
-            onIconSelect={setSelectedIcon}
-            onColorSelect={setSelectedColor}
+
             onNameChangeText={handleNameChangeText}
             onNameBlur={handleNameBlur}
             onDetailedLocationChange={handleDetailedLocationChange}
