@@ -6,6 +6,7 @@ import * as SystemUI from 'expo-system-ui';
 import { Stack } from 'expo-router';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import * as SplashScreen from 'expo-splash-screen';
 import { BottomSheetModalProvider, BottomSheetModal } from '@gorhom/bottom-sheet';
 import { I18nextProvider } from 'react-i18next';
 import { Provider } from 'react-redux';
@@ -31,6 +32,11 @@ const appLogger = logger.scoped('general');
 
 // TODO: Configure your API base URL here or use environment variables
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL || 'https://cluttr-server-v2-production.up.railway.app';
+
+// Keep the splash screen visible while we fetch resources
+SplashScreen.preventAutoHideAsync().catch(() => {
+    // Ignore error if splash screen was already hidden
+});
 
 // Inner component to handle initialization
 function AppInner() {
@@ -98,13 +104,14 @@ function AppInner() {
         };
     }, []);
 
-    // Initialize Redux sagas on mount
+    // Initialize API client and auth on mount
     useEffect(() => {
-        // Initialize API client and auth
         dispatch(initializeApiClient(API_BASE_URL));
+    }, [dispatch]);
 
-        // Sync HomeService's initial home selection to Redux
-        // This must happen before loading data so sagas have activeHomeId
+    // Sync HomeService's initial home selection to Redux
+    // This must happen before loading data so sagas have activeHomeId
+    useEffect(() => {
         const currentHome = homeService.getCurrentHome();
         if (currentHome && !activeHomeId) {
             dispatch(setActiveHomeId(currentHome.id));
@@ -143,6 +150,21 @@ function AppInner() {
         }
     }, [darkMode]);
 
+    // Track initialization to hide splash screen
+    useEffect(() => {
+        if (!isLoading) {
+            // Give React Navigation a tiny moment to mount the layout
+            const hideTimer = setTimeout(async () => {
+                try {
+                    await SplashScreen.hideAsync();
+                } catch (e) {
+                    appLogger.warn('Error hiding splash screen', e);
+                }
+            }, 50);
+            return () => clearTimeout(hideTimer);
+        }
+    }, [isLoading]);
+
     const handleErrorDismiss = () => {
         setErrorDetails(null);
     };
@@ -166,17 +188,7 @@ function AppInner() {
         offlineExplanationBottomSheetRef.current?.present();
     }, []);
 
-    // Show loading screen while auth and initial data is loading
-    if (isLoading) {
-        return (
-            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: darkMode ? '#000000' : '#ffffff' }}>
-                <StatusBar style={darkMode ? 'light' : 'dark'} />
-                <ActivityIndicator size="large" color={darkMode ? '#ffffff' : '#000000'} />
-            </View>
-        );
-    }
-
-    if (!isAuthenticated) {
+    if (!isAuthenticated && !isLoading) {
         return (
             <>
                 <AuthNavigator />
@@ -189,6 +201,8 @@ function AppInner() {
             </>
         );
     }
+
+    if (!isAuthenticated) return null; // Avoid flashing login while loading
 
     return (
         <>

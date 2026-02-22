@@ -242,7 +242,37 @@ function* checkAuthSaga(): Generator {
     // Set access token in API client
     apiClient.setAuthToken(tokens.accessToken);
 
-    // Verify auth by calling /me endpoint
+    // OPTIMISTIC UI: Check for cached user to bypass login immediately
+    const savedUser: User | null = (yield call([authService, 'getUser'])) as User | null;
+
+    let hasBypassedLogin = false;
+
+    if (savedUser) {
+      authLogger.info('Found cached user, bypassing login screen immediately');
+      yield put(setUser(savedUser));
+      yield put(setAuthenticated(true));
+
+      // Check if nickname is missing
+      if (!savedUser.nickname || savedUser.nickname.trim() === '') {
+        yield put(setShowNicknameSetup(true));
+      } else {
+        yield put(setShowNicknameSetup(false));
+      }
+
+      // Prepare local context quickly
+      yield call(ensureDefaultHomeIfNeeded, apiClient);
+      yield call(restoreOrSelectActiveHome);
+
+      // Load data with correct context (from local DB)
+      yield put(loadItems());
+      yield put(loadTodos());
+
+      // Unblock the UI immediately
+      yield put(setLoading(false));
+      hasBypassedLogin = true;
+    }
+
+    // Verify auth by calling /me endpoint in background (or foreground if no cached user)
     try {
       const currentUser: User = (yield call(apiClient.getCurrentUser.bind(apiClient))) as User;
 
@@ -284,13 +314,13 @@ function* checkAuthSaga(): Generator {
       const errorStatus = (error as Error & { status?: number })?.status;
 
       if (errorStatus === 401) {
-        // If /me returns 401, user is not authenticated
+        // If /me returns 401, user is not authenticated or token expired
         const errorMessage = error instanceof Error ? error.message : 'Unknown error';
         authLogger.error(`Auth verification failed (401): ${errorMessage}`, error);
         yield call(clearAuthAndLogout);
-      } else {
+      } else if (!hasBypassedLogin) {
         // For other errors (network, 500, etc.), try to use cached user
-        // This effectively enables offline mode if we have a token
+        // This effectively enables offline mode if we have a token but haven't bypassed login yet
         authLogger.warn('Failed to verify auth with server, checking local cache', error);
 
         const savedUser: User | null = (yield call([authService, 'getUser'])) as User | null;
@@ -324,13 +354,19 @@ function* checkAuthSaga(): Generator {
           authLogger.error('No cached user data available and server request failed');
           yield call(clearAuthAndLogout);
         }
+      } else {
+        authLogger.warn('Failed to verify auth with server in background, keeping cached session active', error);
       }
     }
   } catch (error) {
     authLogger.error('Error checking auth', error);
     yield call(clearAuthAndLogout);
   } finally {
-    yield put(setLoading(false));
+    // Only set loading to false here if we haven't already bypassed login
+    const isLoading: boolean = (yield select((state: RootState) => state.auth.isLoading)) as boolean;
+    if (isLoading) {
+      yield put(setLoading(false));
+    }
   }
 }
 
