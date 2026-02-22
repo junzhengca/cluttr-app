@@ -65,7 +65,8 @@ const Title = styled(Text)`
   font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.xxl}px;
   font-weight: ${({ theme }: StyledProps) => theme.typography.fontWeight.bold};
   color: ${({ theme }: StyledProps) => theme.colors.text};
-  line-height: 28px;
+  line-height: 32px;
+  letter-spacing: -0.5px;
 `;
 
 const Subtitle = styled(Text)`
@@ -74,6 +75,7 @@ const Subtitle = styled(Text)`
     theme.typography.fontWeight.medium};
   color: ${({ theme }: StyledProps) => theme.colors.textSecondary};
   margin-top: 2px;
+  opacity: 0.8;
 `;
 
 const RightSection = styled(View)`

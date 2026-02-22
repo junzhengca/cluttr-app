@@ -33,17 +33,17 @@ const HeaderRow = styled(View)`
 
 // Remaining Days Badge
 const ExpiryBadge = styled(View) <{ isExpired?: boolean; isNear?: boolean }>`
-  width: 52px;
-  height: 52px;
+  width: 50px;
+  height: 50px;
   background-color: ${({ theme, isExpired, isNear }: StyledProps & { isExpired?: boolean; isNear?: boolean }) => {
         if (isExpired) return theme.colors.errorLight || '#FFEBEE';
-        if (isNear) return '#FFF9E6'; // Cream background from image
-        return '#F0F2F5'; // Light grey/blue for no expiry
+        if (isNear) return '#FFF9E6';
+        return theme.colors.borderLight;
     }};
   border-radius: 12px;
   align-items: center;
   justify-content: center;
-  margin-right: 12px;
+  margin-right: 16px;
 `;
 
 const ExpiryText = styled(Text) <{ isExpired?: boolean; isNear?: boolean }>`
@@ -59,8 +59,8 @@ const ExpiryText = styled(Text) <{ isExpired?: boolean; isNear?: boolean }>`
 `;
 
 const QuantityText = styled(Text)`
-  font-size: 14px;
-  font-weight: 400;
+  font-size: 15px;
+  font-weight: 600;
   color: ${({ theme }: StyledProps) => theme.colors.text};
   margin-right: 12px;
 `;
@@ -82,7 +82,7 @@ const DetailsRow = styled(View)`
   flex-direction: row;
   align-items: center;
   flex-wrap: wrap;
-  gap: 12px;
+  gap: 8px;
 `;
 
 const DetailText = styled(Text)`

@@ -58,21 +58,30 @@ const EmptyBatchText = styled(Text)`
   font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.sm}px;
   color: ${({ theme }: StyledProps) => theme.colors.textLight};
   text-align: center;
-  padding: ${({ theme }: StyledProps) => theme.spacing.md}px;
+  padding: ${({ theme }: StyledProps) => theme.spacing.xl}px;
+  font-style: italic;
 `;
 
 const HeaderCard = styled(View)`
   background-color: ${({ theme }: StyledProps) => theme.colors.surface};
-  border-radius: ${({ theme }: StyledProps) => theme.borderRadius.lg}px;
+  border-radius: ${({ theme }: StyledProps) => theme.borderRadius.xl}px;
   padding: ${({ theme }: StyledProps) => theme.spacing.md}px;
   margin-bottom: ${({ theme }: StyledProps) => theme.spacing.md}px;
+  border-width: 1px;
+  border-color: ${({ theme }: StyledProps) => theme.colors.borderLight};
+  shadow-color: #000;
+  shadow-offset: 0px 2px;
+  shadow-opacity: 0.03;
+  shadow-radius: 8px;
+  elevation: 2;
 `;
 
 const ItemName = styled(Text)`
-  font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.lg}px;
+  font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.xl}px;
   font-weight: ${({ theme }: StyledProps) => theme.typography.fontWeight.bold};
   color: ${({ theme }: StyledProps) => theme.colors.text};
   margin-bottom: ${({ theme }: StyledProps) => theme.spacing.sm}px;
+  letter-spacing: -0.2px;
 `;
 
 const BadgesContainer = styled(View)`
@@ -89,13 +98,10 @@ const BadgesAndQuantityRow = styled(View)`
 
 const Badge = styled(View) <{ color?: string, isSelected?: boolean }>`
   background-color: ${({ isSelected, theme }: StyledProps & { isSelected?: boolean }) =>
-    isSelected ? theme.colors.primary : theme.colors.surface};
-  border-width: 1px;
-  border-color: ${({ isSelected, theme }: StyledProps & { isSelected?: boolean }) =>
-    isSelected ? theme.colors.primary : theme.colors.border};
-  padding-horizontal: 12px;
-  padding-vertical: 4px;
-  border-radius: 12px;
+    isSelected ? theme.colors.primary : theme.colors.borderLight};
+  padding-horizontal: 10px;
+  padding-vertical: 5px;
+  border-radius: 8px;
   flex-direction: row;
   justify-content: center;
   align-items: center;
@@ -104,7 +110,7 @@ const Badge = styled(View) <{ color?: string, isSelected?: boolean }>`
 const BadgeText = styled(Text) <{ isSelected?: boolean }>`
   color: ${({ theme, isSelected }: StyledProps & { isSelected?: boolean }) =>
     isSelected ? 'white' : theme.colors.textSecondary};
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 600;
 `;
 
@@ -122,27 +128,32 @@ const TotalAmountRow = styled(View)`
 `;
 
 const TotalAmountLabel = styled(Text)`
-  font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.sm}px;
-  color: ${({ theme }: StyledProps) => theme.colors.textSecondary};
+  font-size: 10px;
+  font-weight: 600;
+  color: ${({ theme }: StyledProps) => theme.colors.textLight};
   margin-right: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 `;
 
 const TotalAmountValue = styled(Text)`
   font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.md}px;
-  font-weight: ${({ theme }: StyledProps) => theme.typography.fontWeight.medium};
+  font-weight: ${({ theme }: StyledProps) => theme.typography.fontWeight.bold};
   color: ${({ theme }: StyledProps) => theme.colors.text};
 `;
 
 
 const Section = styled(View)`
+  margin-top: ${({ theme }: StyledProps) => theme.spacing.sm}px;
   margin-bottom: ${({ theme }: StyledProps) => theme.spacing.md}px;
 `;
 
 const SectionTitle = styled(Text)`
-  font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.lg}px;
-  font-weight: ${({ theme }: StyledProps) => theme.typography.fontWeight.bold};
+  font-size: 15px;
+  font-weight: 700;
   color: ${({ theme }: StyledProps) => theme.colors.text};
-  margin-bottom: ${({ theme }: StyledProps) => theme.spacing.md}px;
+  margin-bottom: 12px;
+  margin-left: 4px;
 `;
 
 const LoadingContainer = styled(View)`
