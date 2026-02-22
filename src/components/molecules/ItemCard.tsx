@@ -118,18 +118,18 @@ const WarningTag = styled.View<{ $variant: WarningTagVariant }>`
   padding-horizontal: 6px;
   padding-vertical: 2px;
   border-radius: 10px;
-  background-color: ({ $variant }: { $variant: WarningTagVariant }) =>
-    $variant === 'restock' ? '#FFF3E0' : '#FFEBEE';
+  background-color: ${({ $variant }: { $variant: WarningTagVariant }) =>
+    $variant === 'restock' ? '#FFF3E0' : '#FFEBEE'};
   border-width: 1px;
-  border-color: ({ $variant }: { $variant: WarningTagVariant }) =>
-    $variant === 'restock' ? '#FFB74D' : '#EF5350';
+  border-color: ${({ $variant }: { $variant: WarningTagVariant }) =>
+    $variant === 'restock' ? '#FFB74D' : '#EF5350'};
 `;
 
 const WarningTagText = styled(Text) <{ $variant: WarningTagVariant }>`
   font-size: 10px;
   font-weight: ${({ theme }: StyledProps) => theme.typography.fontWeight.medium};
-  color: ({ $variant }: { $variant: WarningTagVariant }) =>
-    $variant === 'restock' ? '#E65100' : '#C62828';
+  color: ${({ $variant }: { $variant: WarningTagVariant }) =>
+    $variant === 'restock' ? '#E65100' : '#C62828'};
   line-height: 14px;
 `;
 
@@ -181,7 +181,7 @@ export const ItemCard: React.FC<ItemCardProps> = ({ item, onPress }) => {
   // Build metadata text: category name + location name
   const locationText = formatLocation(item.location, item.detailedLocation, t);
   const categoryName = category
-    ? (category.label || getInventoryCategoryDisplayName(category, t))
+    ? getInventoryCategoryDisplayName(category, t)
     : null;
 
   const metadataParts = [categoryName, locationText].filter(Boolean);
