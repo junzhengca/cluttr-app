@@ -370,7 +370,7 @@ export const HomeScreen: React.FC = () => {
             title={t('accessControl.itemLibrary.title')}
             description={t('accessControl.itemLibrary.description')}
           />
-        ) : isLoading ? (
+        ) : isLoading && items.length === 0 ? (
           <LoadingContainer>
             <ActivityIndicator size="large" />
           </LoadingContainer>
@@ -381,6 +381,7 @@ export const HomeScreen: React.FC = () => {
               count={filteredItems.length}
               isExpanded={isFilterVisible}
               onToggle={() => setIsFilterVisible(!isFilterVisible)}
+              isLoading={isLoading}
             >
               <FilterTitle isFirst>{t('common.status')}</FilterTitle>
               <StatusFilter

@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { View, TouchableOpacity, Text } from 'react-native';
+import { View, TouchableOpacity, Text, ActivityIndicator } from 'react-native';
 import styled from 'styled-components/native';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, {
@@ -55,6 +55,7 @@ interface CollapsibleFilterPanelProps {
   children: React.ReactNode;
   isExpanded: boolean;
   onToggle: () => void;
+  isLoading?: boolean;
 }
 
 const ContentContainer = styled(View)`
@@ -80,6 +81,7 @@ export const CollapsibleFilterPanel: React.FC<CollapsibleFilterPanelProps> = ({
   children,
   isExpanded,
   onToggle,
+  isLoading,
 }) => {
   const { t } = useTranslation();
   const theme = useTheme();
@@ -105,6 +107,11 @@ export const CollapsibleFilterPanel: React.FC<CollapsibleFilterPanelProps> = ({
       <Header>
         <TitleContainer>
           <Title>{title}</Title>
+          {isLoading && (
+            <View style={{ marginLeft: theme.spacing.sm }}>
+              <ActivityIndicator size="small" color={theme.colors.primary} />
+            </View>
+          )}
           {count !== undefined && (
             <CountBadge>
               <CountText>{count}</CountText>
