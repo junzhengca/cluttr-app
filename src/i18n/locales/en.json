@@ -478,7 +478,8 @@
       "inboundDate": "Inbound: ",
       "expiryDate": "Expire: ",
       "noExpiry": "No\nExpiry",
-      "addBatch": "Add Batch"
+      "addBatch": "Add Batch",
+      "editBatch": "Edit Batch"
     }
   },
   "categoryManager": {

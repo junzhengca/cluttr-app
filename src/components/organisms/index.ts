@@ -18,6 +18,9 @@ export type { CreateItemBottomSheetProps } from './CreateItemBottomSheet';
 export { AddBatchBottomSheet } from './AddBatchBottomSheet';
 export type { AddBatchBottomSheetProps } from './AddBatchBottomSheet';
 
+export { EditBatchBottomSheet } from './EditBatchBottomSheet';
+export type { EditBatchBottomSheetProps, EditBatchBottomSheetRef } from './EditBatchBottomSheet';
+
 export { EditItemBottomSheet } from './EditItemBottomSheet';
 export type {
   EditItemBottomSheetProps,

@@ -462,7 +462,8 @@
       "inboundDate": "入库：",
       "expiryDate": "到期：",
       "noExpiry": "不限\n期",
-      "addBatch": "添加批次"
+      "addBatch": "添加批次",
+      "editBatch": "编辑批次"
     }
   },
   "categoryManager": {

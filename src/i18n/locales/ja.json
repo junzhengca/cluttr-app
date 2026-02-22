@@ -430,7 +430,8 @@
             "inboundDate": "入荷日: ",
             "expiryDate": "期限: ",
             "noExpiry": "期限\nなし",
-            "addBatch": "バッチを追加"
+            "addBatch": "バッチを追加",
+            "editBatch": "バッチを編集"
         }
     },
     "categoryManager": {

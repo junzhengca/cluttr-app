@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Alert, ActivityIndicator, ScrollView, View, Text } from 'react-native';
 import styled from 'styled-components/native';
 import { useRoute, useNavigation } from '@react-navigation/native';
@@ -7,8 +7,9 @@ import { BottomSheetModal } from '@gorhom/bottom-sheet';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../theme/ThemeProvider';
-import { useInventory, useSettings, useAppSelector, useInventoryCategories, useLocations } from '../store/hooks';
+import { useInventory, useSettings, useAppSelector, useInventoryCategories, useLocations, useAppDispatch } from '../store/hooks';
 import { selectItemById } from '../store/slices/inventorySlice';
+import { updateItemAction } from '../store/sagas/inventorySaga';
 import { RootStackParamList } from '../navigation/types';
 import { InventoryItem } from '../types/inventory';
 import { inventoryService } from '../services/InventoryService';
@@ -21,6 +22,9 @@ import {
   BatchItemCard,
   Button,
   AddBatchBottomSheet,
+  ContextMenu,
+  EditBatchBottomSheet,
+  type EditBatchBottomSheetRef,
 } from '../components';
 import { useItemActions } from '../hooks/useItemActions';
 import { useHome } from '../hooks/useHome';
@@ -202,6 +206,9 @@ export const ItemDetailsScreen: React.FC = () => {
   const bottomSheetModalRef = useRef<BottomSheetModal>(null);
   const addBatchBottomSheetRef = useRef<BottomSheetModal>(null);
   const editBottomSheetRef = useRef<EditItemBottomSheetRef>(null);
+  const editBatchBottomSheetRef = useRef<EditBatchBottomSheetRef>(null);
+  const editBatchBottomSheetModalRef = useRef<BottomSheetModal>(null);
+  const dispatch = useAppDispatch();
 
   const currencySymbol = getCurrencySymbol(settings.currency);
 
@@ -304,6 +311,29 @@ export const ItemDetailsScreen: React.FC = () => {
     // Item will be updated in Redux
   };
 
+  const handleBatchUpdated = () => {
+    // Item will be updated in Redux
+  };
+
+  const handleDeleteBatch = useCallback((batchId: string) => {
+    Alert.alert(
+      t('itemDetails.batch.deleteTitle', { defaultValue: 'Delete Batch' }),
+      t('itemDetails.batch.deleteConfirmation', { defaultValue: 'Are you sure you want to delete this batch?' }),
+      [
+        { text: t('common.cancel'), style: 'cancel' },
+        {
+          text: t('common.delete'),
+          style: 'destructive',
+          onPress: () => {
+            if (!item) return;
+            const updatedBatches = (item.batches || []).filter(b => b.id !== batchId);
+            dispatch(updateItemAction(item.id, { batches: updatedBatches }));
+          }
+        }
+      ]
+    );
+  }, [item, dispatch, t]);
+
   const totalAmount = item ? getTotalAmount(item.batches || []) : 0;
 
   // Calculate bottom padding for action bar
@@ -401,13 +431,40 @@ export const ItemDetailsScreen: React.FC = () => {
               />
             </View>
             {(item.batches || []).length > 0 ? (
-              (item.batches || []).map((batch, index) => (
-                <BatchItemCard
-                  key={batch.id || index}
-                  batch={batch}
-                  currencySymbol={currencySymbol}
-                />
-              ))
+              (item.batches || []).map((batch, index) => {
+                const batchMenuOptions = [
+                  {
+                    id: 'edit',
+                    label: t('itemDetails.actions.modify'),
+                    icon: 'pencil-outline',
+                    onPress: () => {
+                      if (batch.id) {
+                        editBatchBottomSheetRef.current?.present(item.id, batch.id);
+                      }
+                    },
+                  },
+                  {
+                    id: 'delete',
+                    label: t('itemDetails.actions.delete'),
+                    icon: 'trash-can-outline',
+                    onPress: () => {
+                      if (batch.id) {
+                        handleDeleteBatch(batch.id);
+                      }
+                    },
+                    isDestructive: true,
+                  },
+                ];
+
+                return (
+                  <ContextMenu key={batch.id || index} items={batchMenuOptions}>
+                    <BatchItemCard
+                      batch={batch}
+                      currencySymbol={currencySymbol}
+                    />
+                  </ContextMenu>
+                );
+              })
             ) : (
               <EmptyBatchText>{t('itemDetails.noBatches')}</EmptyBatchText>
             )}
@@ -444,6 +501,14 @@ export const ItemDetailsScreen: React.FC = () => {
           bottomSheetRef={addBatchBottomSheetRef}
           item={item}
           onBatchAdded={handleBatchAdded}
+        />
+      )}
+
+      {item && (
+        <EditBatchBottomSheet
+          ref={editBatchBottomSheetRef}
+          bottomSheetRef={editBatchBottomSheetModalRef}
+          onBatchUpdated={handleBatchUpdated}
         />
       )}
     </Container>
