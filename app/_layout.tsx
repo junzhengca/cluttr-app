@@ -109,38 +109,16 @@ function AppInner() {
         dispatch(initializeApiClient(API_BASE_URL));
     }, [dispatch]);
 
-    // Sync HomeService's initial home selection to Redux
-    // This must happen before loading data so sagas have activeHomeId
+    // Indicate that home service init has completed and we can proceed
     useEffect(() => {
-        const currentHome = homeService.getCurrentHome();
-        if (currentHome && !activeHomeId) {
-            dispatch(setActiveHomeId(currentHome.id));
-        }
         setHomeSynced(true);
-    }, [dispatch, activeHomeId]);
+    }, []);
 
     // Load settings immediately after home sync (settings are global, don't require auth)
     useEffect(() => {
         if (!homeSynced) return;
         dispatch(loadSettings());
     }, [dispatch, homeSynced]);
-
-    // Load user data after auth check completes
-    // IMPORTANT: We must wait for isLoading to be false to ensure the access token
-    // has been retrieved from secure storage and set in the API client.
-    // We also need isAuthenticated to be true to ensure we only load for logged-in users.
-    // Otherwise, API calls will be made without authentication headers.
-    useEffect(() => {
-        if (!homeSynced) return;
-        if (isLoading) return;
-        if (!isAuthenticated) return;
-
-        // Load todos
-        dispatch(loadTodos());
-
-        // Load inventory items
-        dispatch(loadItems());
-    }, [dispatch, homeSynced, isLoading, isAuthenticated]);
 
     // Sync system appearance to prevent flashing
     useEffect(() => {

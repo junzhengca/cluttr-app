@@ -114,10 +114,6 @@ export const HomeScreen: React.FC = () => {
   const { addTodo } = useTodos();
   const { showToast } = useToast();
 
-  useEffect(() => {
-    loadItems();
-  }, [loadItems]);
-
   // Calculate counts for locations and statuses
   const locationCounts = useMemo(() => {
     const counts: Record<string, number> = {};

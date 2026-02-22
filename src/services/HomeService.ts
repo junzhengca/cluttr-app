@@ -71,11 +71,6 @@ class HomeService {
         }
 
         this.homes = homesData.homes;
-
-        // Set initial home (first one) if not already set
-        if (!this.currentHomeId && this.homes.length > 0) {
-            this.currentHomeId = this.homes[0].id;
-        }
     }
 
     /**
@@ -161,11 +156,6 @@ class HomeService {
 
             // Persist merged list
             await this.persist();
-
-            // Ensure we have an active home
-            if (!this.currentHomeId && this.homes.length > 0) {
-                this.currentHomeId = this.homes[0].id;
-            }
 
             this.setLoading(null);
             this.notifyListeners();

@@ -136,7 +136,7 @@ const AnimatedIconContainer = Animated.createAnimatedComponent(IconContainer);
 const AnimatedBannerTitle = Animated.createAnimatedComponent(BannerTitle);
 const AnimatedBannerSubtitle = Animated.createAnimatedComponent(BannerSubtitle);
 
-const AddButton = styled(TouchableOpacity)<{ disabled?: boolean }>`
+const AddButton = styled(TouchableOpacity) <{ disabled?: boolean }>`
   background-color: ${({ theme, disabled }: StyledPropsWith<{ disabled?: boolean }>) =>
     disabled ? theme.colors.borderLight : theme.colors.primary};
   border-radius: ${({ theme }: StyledProps) => theme.borderRadius.md}px;
@@ -302,10 +302,6 @@ export const NotesScreen: React.FC = () => {
 
     return result;
   }, [mode, pendingTodos, categories]);
-
-  useEffect(() => {
-    refreshTodos();
-  }, [refreshTodos]);
 
   // Animate banner when switching between planning and shopping
   useEffect(() => {

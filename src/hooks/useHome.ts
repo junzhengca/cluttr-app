@@ -105,14 +105,7 @@ export const useHome = () => {
         await homeService.init();
         // Initialize homes from service after init
         setHomes(homeService.getHomes());
-        // Set initial home if not set in Redux
-        if (!activeHomeId) {
-            const currentHome = homeService.getCurrentHome();
-            if (currentHome) {
-                dispatch(setActiveHomeId(currentHome.id));
-            }
-        }
-    }, [activeHomeId, dispatch]);
+    }, []);
 
     return {
         homes,
