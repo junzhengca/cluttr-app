@@ -22,10 +22,8 @@ import i18n from '../src/i18n/i18n';
 import { store } from '../src/store';
 import { initializeApiClient, setGlobalErrorHandler } from '../src/store/sagas/authSaga';
 import { loadSettings } from '../src/store/sagas/settingsSaga';
-import { loadTodos } from '../src/store/sagas/todoSaga';
-import { loadItems } from '../src/store/sagas/inventorySaga';
 import { useAppDispatch, useAppSelector } from '../src/store/hooks';
-import { setShowNicknameSetup, setActiveHomeId } from '../src/store/slices/authSlice';
+import { setShowNicknameSetup } from '../src/store/slices/authSlice';
 import { logger } from '../src/utils/Logger';
 
 const appLogger = logger.scoped('general');
@@ -52,7 +50,6 @@ function AppInner() {
     const isAuthenticated = useAppSelector((state) => state.auth.isAuthenticated);
     const isLoading = useAppSelector((state) => state.auth.isLoading);
     const darkMode = useAppSelector((state) => state.settings.settings?.darkMode);
-    const activeHomeId = useAppSelector((state) => state.auth.activeHomeId);
 
     // Deep Link Handling for Invitations
     useEffect(() => {

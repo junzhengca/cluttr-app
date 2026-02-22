@@ -7,6 +7,11 @@ import { useInventoryCategories } from '../../store/hooks';
 import { getInventoryCategoryDisplayName, DEFAULT_INVENTORY_CATEGORY_IDS } from '../../utils/inventoryCategoryI18n';
 import type { StyledProps, StyledPropsWith } from '../../utils/styledComponents';
 import type { Theme } from '../../theme/types';
+import { BottomSheetModal } from '@gorhom/bottom-sheet';
+import { Ionicons } from '@expo/vector-icons';
+import { CreateCategoryBottomSheet } from '../organisms/CreateCategoryBottomSheet';
+import { ContextMenu } from '../organisms/ContextMenu/ContextMenu';
+
 
 const Container = styled(View) <{ edgeToEdge?: boolean; horizontalPadding: number }>`
   ${({ edgeToEdge, horizontalPadding }: { edgeToEdge?: boolean; horizontalPadding: number }) =>
@@ -83,10 +88,6 @@ export interface CategorySelectorProps {
   edgeToEdge?: boolean;
 }
 
-import { BottomSheetModal } from '@gorhom/bottom-sheet';
-import { Ionicons } from '@expo/vector-icons';
-import { CreateCategoryBottomSheet } from '../organisms/CreateCategoryBottomSheet';
-import { ContextMenu } from '../organisms/ContextMenu/ContextMenu';
 
 export const CategorySelector: React.FC<CategorySelectorProps> = ({
   categories: providedCategories,

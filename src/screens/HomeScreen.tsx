@@ -1,7 +1,6 @@
 import React, {
   useState,
   useMemo,
-  useEffect,
   useRef,
   useCallback,
 } from 'react';
@@ -101,7 +100,7 @@ export const HomeScreen: React.FC = () => {
   const [isFilterVisible, setIsFilterVisible] = useState(false);
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<NavigationProp>();
-  const { items, loading: isLoading, loadItems } = useInventory();
+  const { items, loading: isLoading } = useInventory();
   const { user, getApiClient } = useAuth();
   const { currentHome } = useHome();
   const loginBottomSheetRef = useRef<BottomSheetModal | null>(null);

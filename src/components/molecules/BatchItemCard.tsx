@@ -15,57 +15,67 @@ interface BatchItemCardProps {
 
 const ContentWrapper = styled(View)`
   width: 100%;
+  flex-direction: row;
+  align-items: center;
+`;
+
+const RightContainer = styled(View)`
+  flex: 1;
+  justify-content: center;
 `;
 
 const HeaderRow = styled(View)`
   flex-direction: row;
   align-items: center;
-  margin-bottom: ${({ theme }: StyledProps) => theme.spacing.sm}px;
+  margin-bottom: 4px;
   justify-content: flex-start;
 `;
 
 // Remaining Days Badge
 const ExpiryBadge = styled(View) <{ isExpired?: boolean; isNear?: boolean }>`
+  width: 48px;
+  height: 48px;
   background-color: ${({ theme, isExpired, isNear }: StyledProps & { isExpired?: boolean; isNear?: boolean }) => {
         if (isExpired) return theme.colors.errorLight || '#FFEBEE';
         if (isNear) return '#FFF9C4'; // Light yellow
-        return theme.colors.successLight || '#E8F5E9';
+        return '#F2F0F9'; // Light purple background as per image
     }};
-  padding-horizontal: 8px;
-  padding-vertical: 4px;
-  border-radius: 8px;
+  border-radius: 12px;
+  align-items: center;
+  justify-content: center;
   margin-right: 12px;
 `;
 
 const ExpiryText = styled(Text) <{ isExpired?: boolean; isNear?: boolean }>`
-  font-size: 12px;
-  font-weight: bold;
+  font-size: 13px;
+  font-weight: 700;
+  text-align: center;
+  line-height: 18px;
   color: ${({ theme, isExpired, isNear }: StyledProps & { isExpired?: boolean; isNear?: boolean }) => {
         if (isExpired) return theme.colors.error;
         if (isNear) return '#F57F17'; // Darker yellow/orange
-        return theme.colors.success;
+        return '#5B517E'; // Deep purple text as per image
     }};
 `;
 
 const QuantityText = styled(Text)`
-  font-size: 16px;
-  font-weight: bold;
+  font-size: 18px;
+  font-weight: 800;
   color: ${({ theme }: StyledProps) => theme.colors.text};
   margin-right: 12px;
 `;
 
 const VendorBadge = styled(View)`
-  background-color: ${({ theme }: StyledProps) => theme.colors.background};
+  background-color: ${({ theme }: StyledProps) => theme.colors.background || '#F4F6F8'};
   padding-horizontal: 8px;
-  padding-vertical: 2px;
-  border-radius: 4px;
-  border-width: 1px;
-  border-color: ${({ theme }: StyledProps) => theme.colors.borderLight};
+  padding-vertical: 4px;
+  border-radius: 6px;
 `;
 
 const VendorText = styled(Text)`
-  font-size: 12px;
-  color: ${({ theme }: StyledProps) => theme.colors.textSecondary};
+  font-size: 13px;
+  font-weight: 600;
+  color: ${({ theme }: StyledProps) => theme.colors.textSecondary || '#6B7280'};
 `;
 
 const DetailsRow = styled(View)`
@@ -76,8 +86,9 @@ const DetailsRow = styled(View)`
 `;
 
 const DetailText = styled(Text)`
-  font-size: 12px;
-  color: ${({ theme }: StyledProps) => theme.colors.textLight};
+  font-size: 13px;
+  font-weight: 600;
+  color: ${({ theme }: StyledProps) => theme.colors.textLight || '#9CA3AF'};
 `;
 
 export const BatchItemCard: React.FC<BatchItemCardProps> = ({ batch, currencySymbol }) => {
@@ -116,10 +127,7 @@ export const BatchItemCard: React.FC<BatchItemCardProps> = ({ batch, currencySym
             isNear = true;
         } else {
             text = t('itemDetails.batch.remainingDays', { days: expiryStatus.days });
-            // Consider "near" if less than 7 days, for example. 
-            // Or just always yellow as per screenshot seems to imply standard state?
-            // Screenshot has "Remains 3 days" in yellow.
-            if (expiryStatus.days <= 7) isNear = true;
+            if (expiryStatus.days <= 3) isNear = true; // Changed to 3 days to match standard purple styling for 7 days
         }
 
         return (
@@ -130,37 +138,39 @@ export const BatchItemCard: React.FC<BatchItemCardProps> = ({ batch, currencySym
     };
 
     return (
-        <BaseCard compact style={{ marginBottom: 8 }}>
+        <BaseCard compact style={{ marginBottom: 12, paddingVertical: 12 }}>
             <ContentWrapper>
-                <HeaderRow>
-                    {renderExpiryBadge()}
-                    <QuantityText>
-                        x{batch.amount}{batch.unit}
-                    </QuantityText>
-                    {batch.vendor && (
-                        <VendorBadge>
-                            <VendorText>{batch.vendor}</VendorText>
-                        </VendorBadge>
-                    )}
-                </HeaderRow>
+                {renderExpiryBadge()}
+                <RightContainer>
+                    <HeaderRow>
+                        <QuantityText>
+                            x{batch.amount}{batch.unit}
+                        </QuantityText>
+                        {batch.vendor && (
+                            <VendorBadge>
+                                <VendorText>{batch.vendor}</VendorText>
+                            </VendorBadge>
+                        )}
+                    </HeaderRow>
 
-                <DetailsRow>
-                    {batch.purchaseDate && (
-                        <DetailText>
-                            {t('itemDetails.batch.inboundDate')}{batch.purchaseDate.split('T')[0]}
-                        </DetailText>
-                    )}
-                    {batch.expiryDate && (
-                        <DetailText>
-                            {t('itemDetails.batch.expiryDate')}{batch.expiryDate.split('T')[0]}
-                        </DetailText>
-                    )}
-                    {batch.price != null && batch.price > 0 && (
-                        <DetailText>
-                            {formatPrice(batch.price, currencySymbol)}
-                        </DetailText>
-                    )}
-                </DetailsRow>
+                    <DetailsRow>
+                        {batch.purchaseDate && (
+                            <DetailText>
+                                {t('itemDetails.batch.inboundDate')}{batch.purchaseDate.split('T')[0]}
+                            </DetailText>
+                        )}
+                        {batch.expiryDate && (
+                            <DetailText>
+                                {t('itemDetails.batch.expiryDate')}{batch.expiryDate.split('T')[0]}
+                            </DetailText>
+                        )}
+                        {batch.price != null && batch.price > 0 && (
+                            <DetailText>
+                                {t('itemDetails.batch.unitPrice')}{formatPrice(batch.price, currencySymbol)}
+                            </DetailText>
+                        )}
+                    </DetailsRow>
+                </RightContainer>
             </ContentWrapper>
         </BaseCard>
     );

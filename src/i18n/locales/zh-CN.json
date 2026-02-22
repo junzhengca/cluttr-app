@@ -454,13 +454,13 @@
     "needsRestocking": "需补货",
     "expiring": "临期",
     "batch": {
-      "remainingDays": "剩 {{days}} 天",
-      "daysOverdue": "逾期 {{days}} 天",
-      "today": "今天",
-      "expired": "已过期",
+      "remainingDays": "剩\n{{days}}天",
+      "daysOverdue": "逾期\n{{days}}天",
+      "today": "今天\n到期",
+      "expired": "已\n过期",
       "unitPrice": "单价",
-      "inboundDate": "入库 : ",
-      "expiryDate": "到期 : ",
+      "inboundDate": "入库：",
+      "expiryDate": "到期：",
       "addBatch": "添加批次"
     }
   },

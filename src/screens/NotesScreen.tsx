@@ -230,7 +230,6 @@ export const NotesScreen: React.FC = () => {
     loading,
     addingTodo,
     updatingTodoIds,
-    refreshTodos,
     addTodo,
     toggleTodoCompletion,
     removeTodo,

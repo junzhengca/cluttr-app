@@ -1,11 +1,11 @@
 import React from 'react';
 import { TouchableOpacity, ScrollView, View, Text } from 'react-native';
-import styled from 'styled-components/native';
+import styled, { useTheme } from 'styled-components/native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { categoryColors } from '../../data/categoryColors';
 import type { StyledProps, StyledPropsWith } from '../../utils/styledComponents';
-import { useTheme } from 'styled-components/native';
+import type { Theme } from '../../theme/types';
 
 const Container = styled(View) <{ edgeToEdge?: boolean }>`
   /* No margin-bottom - parent FormSection handles spacing */
@@ -57,7 +57,7 @@ export const ColorPalette: React.FC<ColorPaletteProps> = ({
   edgeToEdge = false,
 }) => {
   const { t } = useTranslation();
-  const theme = useTheme() as any; // Using any here to type correctly for styled components if needed, or get from ThemeProvider
+  const theme = useTheme() as Theme;
   const scrollViewRef = React.useRef<ScrollView>(null);
 
   // Need to track if we've done the initial scroll

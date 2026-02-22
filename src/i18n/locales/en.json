@@ -470,13 +470,13 @@
     "needsRestocking": "Restock",
     "expiring": "Expiring",
     "batch": {
-      "remainingDays": "Left {{days}} days",
-      "daysOverdue": "Overdue {{days}} days",
-      "today": "Today",
+      "remainingDays": "Left\n{{days}}d",
+      "daysOverdue": "Overdue\n{{days}}d",
+      "today": "Today\nDue",
       "expired": "Expired",
-      "unitPrice": "Unit Price : ",
-      "inboundDate": "Inbound : ",
-      "expiryDate": "Expire : ",
+      "unitPrice": "Unit Price: ",
+      "inboundDate": "Inbound: ",
+      "expiryDate": "Expire: ",
       "addBatch": "Add Batch"
     }
   },

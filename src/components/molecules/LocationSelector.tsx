@@ -9,6 +9,7 @@ import type {
     StyledProps,
 } from '../../utils/styledComponents';
 import type { Theme } from '../../theme/types';
+import type { Location } from '../../types/inventory';
 import { useLocations } from '../../store/hooks';
 import { getLocationDisplayName, DEFAULT_LOCATION_IDS } from '../../utils/locationI18n';
 import { CreateLocationBottomSheet } from '../organisms/CreateLocationBottomSheet';
@@ -99,7 +100,7 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
         refreshLocations();
     }, [refreshLocations]);
 
-    const handleEditLocation = (location: any) => {
+    const handleEditLocation = (location: Location) => {
         Keyboard.dismiss();
         onOpeningNestedModal?.(true);
         setLocationToEdit({
@@ -110,7 +111,7 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
         bottomSheetRef.current?.present();
     };
 
-    const confirmDeleteLocation = (location: any) => {
+    const confirmDeleteLocation = (location: Location) => {
         Alert.alert(
             t('locations.delete.title'),
             t('locations.delete.message'),

@@ -420,7 +420,17 @@
             "modify": "変更"
         },
         "needsRestocking": "在庫補充",
-        "expiring": "臨期"
+        "expiring": "臨期",
+        "batch": {
+            "remainingDays": "残り\n{{days}}日",
+            "daysOverdue": "超過\n{{days}}日",
+            "today": "今日\n期限",
+            "expired": "期限\n切れ",
+            "unitPrice": "単価: ",
+            "inboundDate": "入荷日: ",
+            "expiryDate": "期限: ",
+            "addBatch": "バッチを追加"
+        }
     },
     "categoryManager": {
         "title": "カテゴリー管理",
