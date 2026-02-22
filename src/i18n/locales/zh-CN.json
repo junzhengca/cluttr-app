@@ -461,6 +461,7 @@
       "unitPrice": "单价",
       "inboundDate": "入库：",
       "expiryDate": "到期：",
+      "noExpiry": "不限\n期",
       "addBatch": "添加批次"
     }
   },

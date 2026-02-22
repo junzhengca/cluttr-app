@@ -33,12 +33,12 @@ const HeaderRow = styled(View)`
 
 // Remaining Days Badge
 const ExpiryBadge = styled(View) <{ isExpired?: boolean; isNear?: boolean }>`
-  width: 48px;
-  height: 48px;
+  width: 52px;
+  height: 52px;
   background-color: ${({ theme, isExpired, isNear }: StyledProps & { isExpired?: boolean; isNear?: boolean }) => {
         if (isExpired) return theme.colors.errorLight || '#FFEBEE';
-        if (isNear) return '#FFF9C4'; // Light yellow
-        return '#F2F0F9'; // Light purple background as per image
+        if (isNear) return '#FFF9E6'; // Cream background from image
+        return '#F0F2F5'; // Light grey/blue for no expiry
     }};
   border-radius: 12px;
   align-items: center;
@@ -47,20 +47,20 @@ const ExpiryBadge = styled(View) <{ isExpired?: boolean; isNear?: boolean }>`
 `;
 
 const ExpiryText = styled(Text) <{ isExpired?: boolean; isNear?: boolean }>`
-  font-size: 13px;
-  font-weight: 700;
+  font-size: 12px;
+  font-weight: 400;
   text-align: center;
-  line-height: 18px;
+  line-height: 16px;
   color: ${({ theme, isExpired, isNear }: StyledProps & { isExpired?: boolean; isNear?: boolean }) => {
         if (isExpired) return theme.colors.error;
-        if (isNear) return '#F57F17'; // Darker yellow/orange
-        return '#5B517E'; // Deep purple text as per image
+        if (isNear) return '#C17D32'; // Brownish orange from image
+        return '#64748B'; // Slate grey for no expiry
     }};
 `;
 
 const QuantityText = styled(Text)`
-  font-size: 18px;
-  font-weight: 800;
+  font-size: 14px;
+  font-weight: 400;
   color: ${({ theme }: StyledProps) => theme.colors.text};
   margin-right: 12px;
 `;
@@ -74,7 +74,7 @@ const VendorBadge = styled(View)`
 
 const VendorText = styled(Text)`
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 400;
   color: ${({ theme }: StyledProps) => theme.colors.textSecondary || '#6B7280'};
 `;
 
@@ -87,7 +87,7 @@ const DetailsRow = styled(View)`
 
 const DetailText = styled(Text)`
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 400;
   color: ${({ theme }: StyledProps) => theme.colors.textLight || '#9CA3AF'};
 `;
 
@@ -95,7 +95,7 @@ export const BatchItemCard: React.FC<BatchItemCardProps> = ({ batch, currencySym
     const { t } = useTranslation();
 
     const getExpiryStatus = (expiryDate?: string) => {
-        if (!expiryDate) return null;
+        if (!expiryDate) return { type: 'none', days: 0 };
 
         const today = new Date();
         today.setHours(0, 0, 0, 0);
@@ -113,8 +113,6 @@ export const BatchItemCard: React.FC<BatchItemCardProps> = ({ batch, currencySym
     const expiryStatus = getExpiryStatus(batch.expiryDate);
 
     const renderExpiryBadge = () => {
-        if (!expiryStatus) return null;
-
         let text = '';
         let isExpired = false;
         let isNear = false;
@@ -125,9 +123,11 @@ export const BatchItemCard: React.FC<BatchItemCardProps> = ({ batch, currencySym
         } else if (expiryStatus.type === 'today') {
             text = t('itemDetails.batch.today');
             isNear = true;
-        } else {
+        } else if (expiryStatus.type === 'remaining') {
             text = t('itemDetails.batch.remainingDays', { days: expiryStatus.days });
-            if (expiryStatus.days <= 3) isNear = true; // Changed to 3 days to match standard purple styling for 7 days
+            if (expiryStatus.days <= 7) isNear = true;
+        } else {
+            text = t('itemDetails.batch.noExpiry');
         }
 
         return (
@@ -159,16 +159,12 @@ export const BatchItemCard: React.FC<BatchItemCardProps> = ({ batch, currencySym
                                 {t('itemDetails.batch.inboundDate')}{batch.purchaseDate.split('T')[0]}
                             </DetailText>
                         )}
-                        {batch.expiryDate && (
-                            <DetailText>
-                                {t('itemDetails.batch.expiryDate')}{batch.expiryDate.split('T')[0]}
-                            </DetailText>
-                        )}
-                        {batch.price != null && batch.price > 0 && (
-                            <DetailText>
-                                {t('itemDetails.batch.unitPrice')}{formatPrice(batch.price, currencySymbol)}
-                            </DetailText>
-                        )}
+                        <DetailText>
+                            {t('itemDetails.batch.expiryDate')}{batch.expiryDate ? batch.expiryDate.split('T')[0] : '-'}
+                        </DetailText>
+                        <DetailText>
+                            {t('itemDetails.batch.unitPrice')}{batch.price != null && batch.price > 0 ? formatPrice(batch.price, currencySymbol) : '-'}
+                        </DetailText>
                     </DetailsRow>
                 </RightContainer>
             </ContentWrapper>

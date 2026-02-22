@@ -429,6 +429,7 @@
             "unitPrice": "単価: ",
             "inboundDate": "入荷日: ",
             "expiryDate": "期限: ",
+            "noExpiry": "期限\nなし",
             "addBatch": "バッチを追加"
         }
     },
