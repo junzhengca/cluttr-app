@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Keyboard, Alert } from 'react-native';
-import styled from 'styled-components/native';
+import styled, { ThemeProvider as StyledThemeProvider } from 'styled-components/native';
 import {
   BottomSheetModal,
   BottomSheetBackdrop,
@@ -12,7 +12,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import type { InventoryItem, ItemBatch } from '../../types/inventory';
 import type { StyledProps } from '../../utils/styledComponents';
-import { useTheme } from '../../theme/ThemeProvider';
+import { ThemeContext, useTheme } from '../../theme/ThemeProvider';
 import { useKeyboardVisibility } from '../../hooks/useKeyboardVisibility';
 import { useCreateItemForm } from '../../hooks/useCreateItemForm';
 import { useAppDispatch } from '../../store/hooks';
@@ -173,6 +173,7 @@ export const CreateItemBottomSheet: React.FC<CreateItemBottomSheetProps> = ({
     handleWarningThresholdChange,
     handleWarningThresholdBlur,
     setSelectedStatusId,
+    isPiggyMode,
   } = useCreateItemForm({
     initialLocation: resolvedInitialLocation,
     initialCategoryId: initialData?.categoryId ?? null,
@@ -399,6 +400,24 @@ export const CreateItemBottomSheet: React.FC<CreateItemBottomSheetProps> = ({
     [t],
   );
 
+  // --- Theme overrides ---------------------------------------------------
+
+  const activeTheme = useMemo(() => {
+    if (!isPiggyMode) return theme;
+    return {
+      ...theme,
+      colors: {
+        ...theme.colors,
+        primary: '#FF69B4', // Hot pink
+        primaryDark: '#C71585', // Medium violet red
+        primaryLight: '#FFB6C1', // Light pink
+        primaryLightest: '#FFC0CB', // Pink
+        primaryExtraLight: '#FFE4E1', // Misty rose
+        background: '#FFF0F5', // Lavender blush 
+      },
+    };
+  }, [theme, isPiggyMode]);
+
   // --- Bottom sheet config (memoised) ------------------------------------
 
   const snapPoints = useMemo(() => ['100%'], []);
@@ -422,14 +441,14 @@ export const CreateItemBottomSheet: React.FC<CreateItemBottomSheetProps> = ({
           text={t('createItem.submit')}
           onPress={handleSubmit}
           icon="add"
-          tintColor={theme.colors.primary}
-          textColor={theme.colors.surface}
+          tintColor={activeTheme.colors.primary}
+          textColor={activeTheme.colors.surface}
           disabled={!isFormValid || isLoading}
           style={{ width: '100%' }}
         />
       </FooterContainer>
     ),
-    [handleSubmit, isLoading, isFormValid, isKeyboardVisible, insets.bottom, t, theme],
+    [handleSubmit, isLoading, isFormValid, isKeyboardVisible, insets.bottom, t, activeTheme],
   );
 
   // --- Render ------------------------------------------------------------
@@ -451,69 +470,73 @@ export const CreateItemBottomSheet: React.FC<CreateItemBottomSheetProps> = ({
       footerComponent={renderFooter}
       enableDynamicSizing={false}
       onChange={handleSheetChange}
-      backgroundStyle={{ backgroundColor: theme.colors.background }}
+      backgroundStyle={{ backgroundColor: activeTheme.colors.background }}
     >
-      <ContentContainer>
-        <BottomSheetHeader
-          title={t('createItem.title')}
-          subtitle={t('createItem.subtitle')}
-          onClose={handleClose}
-        />
-        <BottomSheetScrollView
-          style={{ flex: 1 }}
-          contentContainerStyle={{
-            paddingHorizontal: theme.spacing.md,
-            paddingBottom: theme.spacing.lg,
-          }}
-          showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled"
-          enableOnPanDownToDismiss={false}
-        >
-          <CreateItemFormFields
-            selectedLocation={selectedLocation}
-            selectedCategoryId={selectedCategoryId}
-            formKey={formKey}
-            nameInputRef={nameInputRef}
-            priceInputRef={priceInputRef}
-            amountInputRef={amountInputRef}
-            unitInputRef={unitInputRef}
-            vendorInputRef={vendorInputRef}
-            defaultName={defaultName}
-            defaultPrice={defaultPrice}
-            defaultAmount={defaultAmount}
-            defaultUnit={defaultUnit}
-            defaultVendor={defaultVendor}
-            onLocationSelect={setSelectedLocation}
-            onCategorySelect={setSelectedCategoryId}
-            onNameChangeText={handleNameChangeText}
-            onNameBlur={handleNameBlur}
-            onPriceChange={handlePriceChange}
-            onPriceBlur={handlePriceBlur}
-            onAmountChange={handleAmountChange}
-            onAmountBlur={handleAmountBlur}
-            onUnitChange={handleUnitChange}
-            onUnitBlur={handleUnitBlur}
-            onVendorChange={handleVendorChange}
-            onVendorBlur={handleVendorBlur}
-            expiryDate={expiryDate}
-            onExpiryDateChange={setExpiryDate}
-            translations={translations}
-            detailedLocationInputRef={detailedLocationInputRef}
-            warningThresholdInputRef={warningThresholdInputRef}
-            defaultDetailedLocation={defaultDetailedLocation}
-            defaultWarningThreshold={defaultWarningThreshold}
-            selectedStatusId={selectedStatusId}
-            onDetailedLocationChange={handleDetailedLocationChange}
-            onDetailedLocationBlur={handleDetailedLocationBlur}
-            onWarningThresholdChange={handleWarningThresholdChange}
-            onWarningThresholdBlur={handleWarningThresholdBlur}
-            onStatusSelect={setSelectedStatusId}
-            onOpeningNestedModal={(isOpening) => {
-              isOpeningNestedModalRef.current = isOpening;
-            }}
-          />
-        </BottomSheetScrollView>
-      </ContentContainer>
+      <ThemeContext.Provider value={{ theme: activeTheme }}>
+        <StyledThemeProvider theme={activeTheme}>
+          <ContentContainer>
+            <BottomSheetHeader
+              title={isPiggyMode ? `${t('createItem.title')} 🐷` : t('createItem.title')}
+              subtitle={isPiggyMode ? `${t('createItem.subtitle')} 🐽` : t('createItem.subtitle')}
+              onClose={handleClose}
+            />
+            <BottomSheetScrollView
+              style={{ flex: 1 }}
+              contentContainerStyle={{
+                paddingHorizontal: activeTheme.spacing.md,
+                paddingBottom: activeTheme.spacing.lg,
+              }}
+              showsVerticalScrollIndicator={false}
+              keyboardShouldPersistTaps="handled"
+              enableOnPanDownToDismiss={false}
+            >
+              <CreateItemFormFields
+                selectedLocation={selectedLocation}
+                selectedCategoryId={selectedCategoryId}
+                formKey={formKey}
+                nameInputRef={nameInputRef}
+                priceInputRef={priceInputRef}
+                amountInputRef={amountInputRef}
+                unitInputRef={unitInputRef}
+                vendorInputRef={vendorInputRef}
+                defaultName={defaultName}
+                defaultPrice={defaultPrice}
+                defaultAmount={defaultAmount}
+                defaultUnit={defaultUnit}
+                defaultVendor={defaultVendor}
+                onLocationSelect={setSelectedLocation}
+                onCategorySelect={setSelectedCategoryId}
+                onNameChangeText={handleNameChangeText}
+                onNameBlur={handleNameBlur}
+                onPriceChange={handlePriceChange}
+                onPriceBlur={handlePriceBlur}
+                onAmountChange={handleAmountChange}
+                onAmountBlur={handleAmountBlur}
+                onUnitChange={handleUnitChange}
+                onUnitBlur={handleUnitBlur}
+                onVendorChange={handleVendorChange}
+                onVendorBlur={handleVendorBlur}
+                expiryDate={expiryDate}
+                onExpiryDateChange={setExpiryDate}
+                translations={translations}
+                detailedLocationInputRef={detailedLocationInputRef}
+                warningThresholdInputRef={warningThresholdInputRef}
+                defaultDetailedLocation={defaultDetailedLocation}
+                defaultWarningThreshold={defaultWarningThreshold}
+                selectedStatusId={selectedStatusId}
+                onDetailedLocationChange={handleDetailedLocationChange}
+                onDetailedLocationBlur={handleDetailedLocationBlur}
+                onWarningThresholdChange={handleWarningThresholdChange}
+                onWarningThresholdBlur={handleWarningThresholdBlur}
+                onStatusSelect={setSelectedStatusId}
+                onOpeningNestedModal={(isOpening) => {
+                  isOpeningNestedModalRef.current = isOpening;
+                }}
+              />
+            </BottomSheetScrollView>
+          </ContentContainer>
+        </StyledThemeProvider>
+      </ThemeContext.Provider>
     </BottomSheetModal>
   );
 };

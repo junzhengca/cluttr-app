@@ -141,6 +141,9 @@ export const useCreateItemForm = (options: UseCreateItemFormOptions = {}) => {
     const [selectedStatusId, setSelectedStatusId] = useState(DEFAULT_STATUS);
     const [formKey, setFormKey] = useState(0);
 
+    // --- Easter Egg State --------------------------------------------------
+    const [isPiggyMode, setIsPiggyMode] = useState(false);
+
     // --- Validation --------------------------------------------------------
 
     const getIsFormValid = useCallback(() => {
@@ -172,6 +175,7 @@ export const useCreateItemForm = (options: UseCreateItemFormOptions = {}) => {
             if (wasValid !== isValid) {
                 onFormValidChange?.(isValid);
             }
+            setIsPiggyMode(/(pig|猪)/i.test(text));
         },
         [getIsFormValid, onFormValidChange],
     );
@@ -281,6 +285,7 @@ export const useCreateItemForm = (options: UseCreateItemFormOptions = {}) => {
         setSelectedCategoryId(initialCategoryId);
         setExpiryDate(null);
         setSelectedStatusId(DEFAULT_STATUS);
+        setIsPiggyMode(false);
         setFormKey((prev) => prev + 1);
     }, [initialLocation, initialCategoryId]);
 
@@ -309,6 +314,7 @@ export const useCreateItemForm = (options: UseCreateItemFormOptions = {}) => {
         expiryDate,
         selectedStatusId,
         formKey,
+        isPiggyMode,
         // Setters
         setSelectedLocation,
         setSelectedCategoryId,
