@@ -260,13 +260,10 @@ export const SignupScreen: React.FC = () => {
 
                             <ButtonContainer>
                                 <GlassButton
-                                    text={
-                                        isLoading
-                                            ? t('signup.submitting')
-                                            : t('signup.submit')
-                                    }
+                                    text={t('signup.submit')}
                                     onPress={handleSubmit}
                                     icon="arrow-forward"
+                                    loading={isLoading}
                                     disabled={isLoading}
                                     tintColor={theme.colors.primary}
                                     textColor={theme.colors.surface}

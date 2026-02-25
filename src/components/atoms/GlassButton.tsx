@@ -63,28 +63,42 @@ export const GlassButton: React.FC<GlassButtonProps> = ({
             >
                 <ContentContainer
                     onPress={onPress}
-                    disabled={disabled}
+                    disabled={disabled || loading}
                     hasText={!!text}
                     activeOpacity={0.7}
                 >
-                    {loading ? (
-                        <ActivityIndicator size="small" color={iconColor} />
-                    ) : (
-                        <>
-                            {icon && (
-                                <Ionicons
-                                    name={icon}
-                                    size={20}
-                                    color={iconColor}
-                                    style={text ? { marginRight: 4 } : {}}
-                                />
-                            )}
-                            {text && (
-                                <ButtonText tintColor={textColor}>
-                                    {text}
-                                </ButtonText>
-                            )}
-                        </>
+                    <View style={{
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        opacity: loading ? 0 : 1,
+                    }}>
+                        {icon && (
+                            <Ionicons
+                                name={icon}
+                                size={20}
+                                color={iconColor}
+                                style={text ? { marginRight: 4 } : {}}
+                            />
+                        )}
+                        {text && (
+                            <ButtonText tintColor={textColor}>
+                                {text}
+                            </ButtonText>
+                        )}
+                    </View>
+                    {loading && (
+                        <View style={{
+                            position: 'absolute',
+                            left: 0,
+                            right: 0,
+                            top: 0,
+                            bottom: 0,
+                            justifyContent: 'center',
+                            alignItems: 'center',
+                        }}>
+                            <ActivityIndicator size="small" color={iconColor} />
+                        </View>
                     )}
                 </ContentContainer>
             </StyledGlassView>

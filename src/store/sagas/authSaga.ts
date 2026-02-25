@@ -40,6 +40,8 @@ const UPDATE_USER = 'auth/UPDATE_USER';
 const INITIALIZE_API_CLIENT = 'auth/INITIALIZE_API_CLIENT';
 const AUTH_ERROR = 'auth/AUTH_ERROR';
 const ACCESS_DENIED = 'auth/ACCESS_DENIED';
+const PASSWORD_RESET_REQUEST = 'auth/PASSWORD_RESET_REQUEST';
+const PASSWORD_RESET_VERIFY = 'auth/PASSWORD_RESET_VERIFY';
 
 // Action creators
 export const checkAuth = () => ({ type: CHECK_AUTH });
@@ -68,6 +70,16 @@ export const initializeApiClient = (apiBaseUrl: string) => ({
 export const authError = (endpoint?: string) => ({ type: AUTH_ERROR, payload: endpoint });
 export const accessDenied = (resourceId?: string) => ({ type: ACCESS_DENIED, payload: resourceId });
 
+export const passwordResetRequestAction = (email: string) => ({
+  type: PASSWORD_RESET_REQUEST,
+  payload: email,
+});
+
+export const passwordResetVerifyAction = (email: string, code: string, newPassword: string) => ({
+  type: PASSWORD_RESET_VERIFY,
+  payload: { email, code, newPassword },
+});
+
 type AuthChannelEvent = { type: string; payload?: string };
 
 function createAuthChannel(apiClient: ApiClientType): EventChannel<AuthChannelEvent> {
@@ -87,6 +99,46 @@ function createAuthChannel(apiClient: ApiClientType): EventChannel<AuthChannelEv
       apiClient.setOnAccessDenied(() => { });
     };
   });
+}
+
+function* passwordResetRequestSaga(action: { type: string; payload: string }) {
+  const email = action.payload;
+  const apiClient: ApiClient = (yield select((state: RootState) => state.auth.apiClient)) as ApiClient;
+
+  yield put(setLoading(true));
+  yield put(setError(null));
+
+  try {
+    yield call([apiClient, 'passwordResetRequest'], email);
+    yield put(setLoading(false));
+  } catch (error) {
+    authLogger.error('Password reset request error', error);
+    const errorMessage = error instanceof Error ? error.message : 'Failed to request password reset';
+    yield put(setError(errorMessage));
+    yield put(setLoading(false));
+  }
+}
+
+function* passwordResetVerifySaga(action: { type: string; payload: { email: string; code: string; newPassword: string } }) {
+  const { email, code, newPassword } = action.payload;
+  const apiClient: ApiClient = (yield select((state: RootState) => state.auth.apiClient)) as ApiClient;
+
+  yield put(setLoading(true));
+  yield put(setError(null));
+
+  try {
+    yield call([apiClient, 'passwordResetVerify'], { email, code, newPassword });
+    yield put(setLoading(false));
+    const toast = getGlobalToast();
+    if (toast) {
+      toast(i18n.t('login.passwordResetSuccess'), 'success');
+    }
+  } catch (error) {
+    authLogger.error('Password reset verify error', error);
+    const errorMessage = error instanceof Error ? error.message : 'Failed to reset password';
+    yield put(setError(errorMessage));
+    yield put(setLoading(false));
+  }
 }
 
 function* initializeApiClientSaga(action: { type: string; payload: string }) {
@@ -858,6 +910,50 @@ function* handleActiveHomeIdChange(action: { type: string; payload: string | nul
   }
 }
 
+function* handlePasswordResetRequestSaga(action: { type: string; payload: string }) {
+  const email = action.payload;
+  const apiClient: ApiClient = (yield select((state: RootState) => state.auth.apiClient)) as ApiClient;
+
+  try {
+    yield put(setLoading(true));
+    yield put(setError(null));
+    yield call(apiClient.passwordResetRequest.bind(apiClient), email);
+    yield put(setLoading(false));
+
+    const toast = getGlobalToast();
+    if (toast) {
+      toast(i18n.t('login.passwordReset.errors.requestSuccess') || 'Reset code sent!', 'success');
+    }
+  } catch (error) {
+    authLogger.error('Password reset request error', error);
+    const errorMessage = error instanceof Error ? error.message : 'Failed to request reset code';
+    yield put(setError(errorMessage));
+    yield put(setLoading(false));
+  }
+}
+
+function* handlePasswordResetVerifySaga(action: { type: string; payload: { email: string; code: string; newPassword: string } }) {
+  const { email, code, newPassword } = action.payload;
+  const apiClient: ApiClient = (yield select((state: RootState) => state.auth.apiClient)) as ApiClient;
+
+  try {
+    yield put(setLoading(true));
+    yield put(setError(null));
+    yield call(apiClient.passwordResetVerify.bind(apiClient), { email, code, newPassword });
+    yield put(setLoading(false));
+
+    const toast = getGlobalToast();
+    if (toast) {
+      toast(i18n.t('login.passwordReset.successTitle'), 'success');
+    }
+  } catch (error) {
+    authLogger.error('Password reset verify error', error);
+    const errorMessage = error instanceof Error ? error.message : 'Failed to reset password';
+    yield put(setError(errorMessage));
+    yield put(setLoading(false));
+  }
+}
+
 // Watchers
 export function* authSaga() {
   yield takeLatest(INITIALIZE_API_CLIENT, initializeApiClientSaga);
@@ -871,4 +967,6 @@ export function* authSaga() {
   yield takeLatest(LOGOUT, logoutSaga);
   yield takeLatest(UPDATE_USER, updateUserSaga);
   yield takeLatest(setActiveHomeId.type, handleActiveHomeIdChange);
+  yield takeLatest(PASSWORD_RESET_REQUEST, handlePasswordResetRequestSaga);
+  yield takeLatest(PASSWORD_RESET_VERIFY, handlePasswordResetVerifySaga);
 }

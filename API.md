@@ -4,7 +4,7 @@
 
 Home Inventory Sync Server API
 
-**Generated:** 2026-02-16T04:38:08.029Z
+**Generated:** 2026-02-24T23:13:06.486Z
 
 ## Table of Contents
 
@@ -24,7 +24,13 @@ Home Inventory Sync Server API
   - [POST Authenticate with Google OAuth](#auth-google-login)
   - [POST Authenticate with email and password](#auth-login)
   - [PATCH Update current user profile](#auth-update-user)
+  - [POST Request password reset code](#auth-password-reset-request)
   - [GET Get current authenticated user](#auth-get-current-user)
+  - [POST Resend email verification code](#auth-resend-verification)
+  - [POST Verify password reset code and reset password](#auth-password-reset-verify)
+  - [POST Request email verification code](#auth-request-verification)
+  - [GET Get email verification status](#auth-verification-status)
+  - [POST Verify email with code](#auth-verify-email)
   - [POST Create a new user account](#auth-signup)
 - [Images](#images)
   - [POST Upload an image to B2 storage](#images-upload-image)
@@ -2160,6 +2166,104 @@ An unexpected error occurred on the server
 - [`auth.get_current_user`](#auth-get-current-user)
 - [`auth.login`](#auth-login)
 
+### POST /auth/password-reset/request
+
+<a id="auth-password-reset-request"></a>
+
+**ID:** `auth.password_reset_request`
+
+**Request password reset code**
+
+Sends a 6-digit password reset code to the specified email address. The code expires after 5 minutes. This endpoint does not require authentication. All users can request a password reset, including OAuth users who may want to set a password for email/password login.
+
+**Rate Limits:**
+- Maximum 3 requests per hour per email address
+
+**Security Note:** This endpoint returns the same response regardless of whether the email exists in the system, preventing email enumeration attacks.
+
+**Authentication:** Not required
+
+**Tags:** `Authentication`, `Password Reset`
+
+#### Request Body
+
+**Content-Type:** `application/json`
+
+Email address to send password reset code
+
+**Required:** Yes
+
+**Example:**
+
+```json
+{
+  "email": "user@example.com"
+}
+```
+
+#### Response (202)
+
+Password reset code sent successfully \(or email not found\)
+
+**Example:**
+
+```json
+{
+  "message": "If an account exists with this email, a password reset code has been sent",
+  "expiresIn": 300
+}
+```
+
+#### Error Responses
+
+##### 400 - `VALIDATION_ERROR`
+
+Invalid email format
+
+The provided email address is not valid
+
+**Example:**
+
+```json
+{
+  "message": "Invalid email format"
+}
+```
+
+##### 429 - `RATE_LIMIT_EXCEEDED`
+
+Too many requests
+
+Too many password reset requests\. Please try again later \(max 3 per hour\)
+
+**Example:**
+
+```json
+{
+  "message": "Too many password reset requests. Please try again later."
+}
+```
+
+##### 500 - `SERVER_ERROR`
+
+Failed to send password reset email
+
+An error occurred while sending the email
+
+**Example:**
+
+```json
+{
+  "message": "Failed to send password reset email"
+}
+```
+
+**Related Endpoints:**
+
+- [`auth.password_reset_verify`](#auth-password-reset-verify)
+- [`auth.signup`](#auth-signup)
+- [`auth.login`](#auth-login)
+
 ### GET /auth/me
 
 <a id="auth-get-current-user"></a>
@@ -2241,6 +2345,647 @@ An unexpected error occurred on the server
 - [`auth.update_user`](#auth-update-user)
 - [`auth.login`](#auth-login)
 - [`auth.signup`](#auth-signup)
+
+### POST /auth/verification/resend
+
+<a id="auth-resend-verification"></a>
+
+**ID:** `auth.resend_verification`
+
+**Resend email verification code**
+
+Resends a verification code to the user's email. Can be used with authentication (uses the authenticated user's email) or without authentication (requires email in request body).
+
+**Rate Limits:**
+- Maximum 3 requests per hour per email address
+
+**Note:** This endpoint returns the same response regardless of whether the email exists in the system, preventing email enumeration attacks.
+
+**Authentication:** Not required
+
+**Tags:** `Authentication`, `Email Verification`
+
+#### Request Body
+
+**Content-Type:** `application/json`
+
+Email address (optional if authenticated)
+
+**Required:** No
+
+**Example:**
+
+```json
+{
+  "email": "user@example.com"
+}
+```
+
+#### Response (202)
+
+Verification code resent successfully
+
+**Example:**
+
+```json
+{
+  "message": "Verification code sent to your email",
+  "expiresIn": 900
+}
+```
+
+#### Error Responses
+
+##### 400 - `VALIDATION_ERROR`
+
+Invalid email format
+
+The provided email address is not valid
+
+**Example:**
+
+```json
+{
+  "message": "Invalid email format"
+}
+```
+
+##### 400 - `ALREADY_VERIFIED`
+
+Email already verified
+
+The email is already verified
+
+**Example:**
+
+```json
+{
+  "message": "Email is already verified"
+}
+```
+
+##### 401 - `UNAUTHORIZED`
+
+Unauthorized
+
+Invalid or missing authentication when using authenticated mode
+
+**Example:**
+
+```json
+{
+  "message": "Unauthorized"
+}
+```
+
+##### 404 - `USER_NOT_FOUND`
+
+User not found
+
+No user found with this email \(when authenticated\)
+
+**Example:**
+
+```json
+{
+  "message": "User not found"
+}
+```
+
+##### 429 - `RATE_LIMIT_EXCEEDED`
+
+Too many requests
+
+Too many verification requests\. Please try again later \(max 3 per hour\)
+
+**Example:**
+
+```json
+{
+  "message": "Too many verification requests. Please try again later."
+}
+```
+
+##### 500 - `SERVER_ERROR`
+
+Failed to send verification email
+
+An error occurred while sending the email
+
+**Example:**
+
+```json
+{
+  "message": "Failed to send verification email"
+}
+```
+
+**Related Endpoints:**
+
+- [`auth.request_verification`](#auth-request-verification)
+- [`auth.verify_email`](#auth-verify-email)
+- [`auth.verification_status`](#auth-verification-status)
+
+### POST /auth/password-reset/verify
+
+<a id="auth-password-reset-verify"></a>
+
+**ID:** `auth.password_reset_verify`
+
+**Verify password reset code and reset password**
+
+Verifies a 6-digit password reset code and updates the user password. The code must have been previously requested via the password reset request endpoint. Codes expire after 5 minutes and have a maximum of 5 verification attempts.
+
+**Rate Limits:**
+- Maximum 5 verification attempts per code
+- Maximum 5 attempts per 15 minutes per email address
+
+**Password Requirements:**
+- Minimum 6 characters
+
+**Security Notes:**
+- Uses constant-time comparison to prevent timing attacks
+- Code is deleted after successful reset or after max attempts exceeded
+- OAuth users (Google/Apple) can also set a password to enable email/password login
+
+**Authentication:** Not required
+
+**Tags:** `Authentication`, `Password Reset`
+
+#### Request Body
+
+**Content-Type:** `application/json`
+
+Password reset verification details
+
+**Required:** Yes
+
+**Example:**
+
+```json
+{
+  "email": "user@example.com",
+  "code": "123456",
+  "newPassword": "newSecurePassword123"
+}
+```
+
+#### Response (200)
+
+Password reset successfully
+
+**Example:**
+
+```json
+{
+  "message": "Password reset successfully"
+}
+```
+
+#### Error Responses
+
+##### 400 - `VALIDATION_ERROR`
+
+Invalid email format
+
+The provided email address is not valid
+
+**Example:**
+
+```json
+{
+  "message": "Invalid email format"
+}
+```
+
+##### 400 - `VALIDATION_ERROR`
+
+Invalid code format
+
+The code must be exactly 6 digits
+
+**Example:**
+
+```json
+{
+  "message": "Invalid code format"
+}
+```
+
+##### 400 - `VALIDATION_ERROR`
+
+Password must be at least 6 characters
+
+The new password does not meet minimum length requirements
+
+**Example:**
+
+```json
+{
+  "message": "Password must be at least 6 characters"
+}
+```
+
+##### 400 - `INVALID_CODE`
+
+Invalid password reset code
+
+The provided code is incorrect
+
+**Example:**
+
+```json
+{
+  "message": "Invalid password reset code",
+  "remainingAttempts": 4
+}
+```
+
+##### 400 - `CODE_EXPIRED`
+
+Password reset code has expired
+
+The code has exceeded the 5\-minute expiry time
+
+**Example:**
+
+```json
+{
+  "message": "Password reset code has expired or is invalid"
+}
+```
+
+##### 404 - `USER_NOT_FOUND`
+
+User not found
+
+No user exists with the provided email address
+
+**Example:**
+
+```json
+{
+  "message": "User not found"
+}
+```
+
+##### 429 - `TOO_MANY_ATTEMPTS`
+
+Too many incorrect attempts
+
+Maximum verification attempts exceeded \(5\)\. Please request a new code\.
+
+**Example:**
+
+```json
+{
+  "message": "Too many incorrect attempts"
+}
+```
+
+**Related Endpoints:**
+
+- [`auth.password_reset_request`](#auth-password-reset-request)
+- [`auth.login`](#auth-login)
+- [`auth.signup`](#auth-signup)
+
+### POST /auth/verification/request
+
+<a id="auth-request-verification"></a>
+
+**ID:** `auth.request_verification`
+
+**Request email verification code**
+
+Sends a 6-digit verification code to the specified email address. The code expires after 15 minutes. This endpoint does not require authentication and can be used before or after account registration.
+
+**Rate Limits:**
+- Maximum 3 requests per hour per email address
+
+**Note:** This endpoint returns the same response regardless of whether the email exists in the system, preventing email enumeration attacks.
+
+**Authentication:** Not required
+
+**Tags:** `Authentication`, `Email Verification`
+
+#### Request Body
+
+**Content-Type:** `application/json`
+
+Email address to send verification code
+
+**Required:** Yes
+
+**Example:**
+
+```json
+{
+  "email": "user@example.com"
+}
+```
+
+#### Response (202)
+
+Verification code sent successfully
+
+**Example:**
+
+```json
+{
+  "message": "Verification code sent to your email",
+  "expiresIn": 900
+}
+```
+
+#### Error Responses
+
+##### 400 - `VALIDATION_ERROR`
+
+Invalid email format
+
+The provided email address is not valid
+
+**Example:**
+
+```json
+{
+  "message": "Invalid email format"
+}
+```
+
+##### 429 - `RATE_LIMIT_EXCEEDED`
+
+Too many requests
+
+Too many verification requests\. Please try again later \(max 3 per hour\)
+
+**Example:**
+
+```json
+{
+  "message": "Too many verification requests. Please try again later."
+}
+```
+
+##### 500 - `SERVER_ERROR`
+
+Failed to send verification email
+
+An error occurred while sending the email
+
+**Example:**
+
+```json
+{
+  "message": "Failed to send verification email"
+}
+```
+
+**Related Endpoints:**
+
+- [`auth.verify_email`](#auth-verify-email)
+- [`auth.resend_verification`](#auth-resend-verification)
+- [`auth.verification_status`](#auth-verification-status)
+
+### GET /auth/verification/status
+
+<a id="auth-verification-status"></a>
+
+**ID:** `auth.verification_status`
+
+**Get email verification status**
+
+Returns the email verification status of the authenticated user. This endpoint requires authentication and returns information about whether the user's email has been verified and when.
+
+**Authentication:** Required (jwt)
+
+**Tags:** `Authentication`, `Email Verification`
+
+#### Response (200)
+
+Verification status retrieved successfully
+
+**Example:**
+
+```json
+{
+  "email": "user@example.com",
+  "emailVerified": true,
+  "emailVerifiedAt": "2025-02-22T10:15:00.000Z",
+  "canRequestNewCode": false
+}
+```
+
+#### Error Responses
+
+##### 401 - `UNAUTHORIZED`
+
+Unauthorized
+
+Missing or invalid authentication token
+
+**Example:**
+
+```json
+{
+  "message": "Unauthorized"
+}
+```
+
+##### 404 - `USER_NOT_FOUND`
+
+User not found
+
+No user found with the authenticated user ID
+
+**Example:**
+
+```json
+{
+  "message": "User not found"
+}
+```
+
+##### 500 - `SERVER_ERROR`
+
+Internal server error
+
+An unexpected error occurred on the server
+
+**Example:**
+
+```json
+{
+  "message": "Internal server error"
+}
+```
+
+**Related Endpoints:**
+
+- [`auth.request_verification`](#auth-request-verification)
+- [`auth.verify_email`](#auth-verify-email)
+- [`auth.resend_verification`](#auth-resend-verification)
+
+### POST /auth/verification/verify
+
+<a id="auth-verify-email"></a>
+
+**ID:** `auth.verify_email`
+
+**Verify email with code**
+
+Verifies the 6-digit code sent to the user's email and marks the email as verified. Upon successful verification, returns a JWT access token and user data.
+
+**Rate Limits:**
+- Maximum 5 verification attempts per code
+
+If the maximum attempts are exceeded, the code is invalidated and a new code must be requested.
+
+**Authentication:** Not required
+
+**Tags:** `Authentication`, `Email Verification`
+
+#### Request Body
+
+**Content-Type:** `application/json`
+
+Email and verification code
+
+**Required:** Yes
+
+**Example:**
+
+```json
+{
+  "email": "user@example.com",
+  "code": "123456"
+}
+```
+
+#### Response (200)
+
+Email verified successfully
+
+**Example:**
+
+```json
+{
+  "message": "Email verified successfully",
+  "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI1MGYxZjc3YmNmODZjZDc5OTQzOTAxMSIsImVtYWlsIjoidXNlckBleGFtcGxlLmNvbSIsImlhdCI6MTYxNjIzOTAyMiwiZXhwIjoxNjE2MzI1NDIyfQ.signature",
+  "user": {
+    "id": "507f1f77bcf86cd799439011",
+    "email": "user@example.com",
+    "emailVerified": true
+  }
+}
+```
+
+#### Error Responses
+
+##### 400 - `VALIDATION_ERROR`
+
+Invalid input
+
+Invalid email or code format
+
+**Example:**
+
+```json
+{
+  "message": "Invalid code format"
+}
+```
+
+##### 400 - `CODE_EXPIRED`
+
+Code expired
+
+The verification code has expired
+
+**Example:**
+
+```json
+{
+  "message": "Verification code has expired"
+}
+```
+
+##### 400 - `CODE_INVALID`
+
+Invalid verification code
+
+The provided code is incorrect
+
+**Example:**
+
+```json
+{
+  "message": "Invalid verification code",
+  "remainingAttempts": 4
+}
+```
+
+##### 404 - `USER_NOT_FOUND`
+
+User not found
+
+No user found with this email
+
+**Example:**
+
+```json
+{
+  "message": "User not found"
+}
+```
+
+##### 409 - `ALREADY_VERIFIED`
+
+Email already verified
+
+The email is already verified
+
+**Example:**
+
+```json
+{
+  "message": "Email is already verified"
+}
+```
+
+##### 429 - `MAX_ATTEMPTS_EXCEEDED`
+
+Too many attempts
+
+Too many incorrect attempts\. Please request a new code \(max 5 per code\)
+
+**Example:**
+
+```json
+{
+  "message": "Too many incorrect attempts"
+}
+```
+
+##### 500 - `SERVER_ERROR`
+
+Internal server error
+
+An unexpected error occurred on the server
+
+**Example:**
+
+```json
+{
+  "message": "Internal server error"
+}
+```
+
+**Related Endpoints:**
+
+- [`auth.request_verification`](#auth-request-verification)
+- [`auth.resend_verification`](#auth-resend-verification)
+- [`auth.verification_status`](#auth-verification-status)
 
 ### POST /auth/signup
 
@@ -4896,7 +5641,7 @@ An unexpected error occurred on the server
 
 **Create a new location**
 
-Creates a new location in a home. The user must be a member of home. Each location has a unique locationId within the home, name, description, icon, color, and position.
+Creates a new location in a home. The user must be a member of home. Each location has a unique locationId within the home, name, description, icon, and color.
 
 **Authentication:** Required (jwt)
 
@@ -4924,8 +5669,7 @@ Location creation details
   "name": "Kitchen",
   "description": "Main kitchen area",
   "icon": "kitchen",
-  "color": "#FF5722",
-  "position": 0
+  "color": "#FF5722"
 }
 ```
 
@@ -4944,7 +5688,6 @@ Location created successfully
     "description": "Main kitchen area",
     "icon": "kitchen",
     "color": "#FF5722",
-    "position": 0,
     "createdBy": "507f1f77bcf86cd799439011",
     "updatedBy": "507f1f77bcf86cd799439011",
     "createdByDeviceId": null,
@@ -5106,7 +5849,7 @@ An unexpected error occurred on server
 
 **List all locations for a home**
 
-Retrieves a list of all locations for a home. User must be a member of home.
+Retrieves a list of all locations for a home, sorted by creation date (oldest first). User must be a member of home.
 
 **Authentication:** Required (jwt)
 
@@ -5134,7 +5877,6 @@ List of locations retrieved successfully
       "description": "Main kitchen area",
       "icon": "kitchen",
       "color": "#FF5722",
-      "position": 0,
       "createdBy": "507f1f77bcf86cd799439011",
       "updatedBy": "507f1f77bcf86cd799439011",
       "createdByDeviceId": null,
@@ -5429,7 +6171,6 @@ Location updated successfully
     "description": "Updated kitchen description",
     "icon": "kitchen",
     "color": "#FF5722",
-    "position": 0,
     "createdBy": "507f1f77bcf86cd799439011",
     "updatedBy": "507f1f77bcf86cd799439011",
     "createdByDeviceId": null,
@@ -5499,21 +6240,6 @@ Description must be 1000 characters or less
 {
   "error": "description_too_long",
   "message": "description must be 1000 characters or less"
-}
-```
-
-##### 400 - `INVALID_POSITION`
-
-Invalid position
-
-Position must be a non\-negative number
-
-**Example:**
-
-```json
-{
-  "error": "invalid_position",
-  "message": "position must be a non-negative number"
 }
 ```
 
@@ -5633,7 +6359,6 @@ Location details retrieved successfully
     "description": "Main kitchen area",
     "icon": "kitchen",
     "color": "#FF5722",
-    "position": 0,
     "createdBy": "507f1f77bcf86cd799439011",
     "updatedBy": "507f1f77bcf86cd799439011",
     "createdByDeviceId": null,
@@ -5943,7 +6668,6 @@ Inventory category retrieved successfully
     "description": "Fresh fruits and vegetables",
     "color": "#4CAF50",
     "icon": "leaf",
-    "position": 0,
     "createdBy": "507f1f77bcf86cd799439011",
     "updatedBy": "507f1f77bcf86cd799439011",
     "createdByDeviceId": null,
@@ -6102,8 +6826,7 @@ Inventory category update details
   "name": "Snacks & Treats",
   "description": "Chips, cookies, candy, and other treats",
   "color": "#FF9800",
-  "icon": "cookie",
-  "position": 10
+  "icon": "cookie"
 }
 ```
 
@@ -6122,7 +6845,6 @@ Inventory category updated successfully
     "description": "Chips, cookies, candy, and other treats",
     "color": "#FF9800",
     "icon": "cookie",
-    "position": 10,
     "createdBy": "507f1f77bcf86cd799439011",
     "updatedBy": "507f1f77bcf86cd799439011",
     "createdByDeviceId": null,
@@ -6266,8 +6988,7 @@ Inventory category creation details
   "name": "Snacks",
   "description": "Chips, cookies, and other snacks",
   "color": "#FF5733",
-  "icon": "cookie",
-  "position": 0
+  "icon": "cookie"
 }
 ```
 
@@ -6286,7 +7007,6 @@ Inventory category created successfully
     "description": "Chips, cookies, and other snacks",
     "color": "#FF5733",
     "icon": "cookie",
-    "position": 0,
     "createdBy": "507f1f77bcf86cd799439011",
     "updatedBy": "507f1f77bcf86cd799439011",
     "createdByDeviceId": null,
@@ -6463,7 +7183,7 @@ An unexpected error occurred on server
 
 **List all inventory categories for a home**
 
-Retrieves a list of all inventory categories for a home. User must be a member of the home. Categories are ordered by position.
+Retrieves a list of all inventory categories for a home. User must be a member of the home. Categories are ordered by creation time.
 
 **Authentication:** Required (jwt)
 
@@ -6491,7 +7211,6 @@ List of inventory categories retrieved successfully
       "description": "Fresh fruits and vegetables",
       "color": "#4CAF50",
       "icon": "leaf",
-      "position": 0,
       "createdBy": "507f1f77bcf86cd799439011",
       "updatedBy": "507f1f77bcf86cd799439011",
       "createdByDeviceId": null,
@@ -6742,4 +7461,4 @@ The debug endpoint is disabled in production mode
 
 ---
 
-*Documentation generated from 45 endpoints*
+*Documentation generated from 51 endpoints*

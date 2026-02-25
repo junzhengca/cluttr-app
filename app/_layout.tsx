@@ -163,7 +163,7 @@ function AppInner() {
         offlineExplanationBottomSheetRef.current?.present();
     }, []);
 
-    if (!isAuthenticated && !isLoading) {
+    if (!isAuthenticated) {
         return (
             <>
                 <AuthNavigator />
@@ -176,8 +176,6 @@ function AppInner() {
             </>
         );
     }
-
-    if (!isAuthenticated) return null; // Avoid flashing login while loading
 
     return (
         <>

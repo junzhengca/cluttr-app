@@ -165,9 +165,10 @@ export const SignupBottomSheet: React.FC<SignupBottomSheetProps> = ({
         showSafeArea={!isKeyboardVisible}
       >
         <GlassButton
-          text={isLoading ? t('signup.submitting') : t('signup.submit')}
+          text={isLoading ? t('common.saving') : t('signup.submit')}
           onPress={handleSubmit}
           icon="person-add"
+          loading={isLoading}
           tintColor={theme.colors.primary}
           textColor={theme.colors.surface}
           disabled={isLoading}

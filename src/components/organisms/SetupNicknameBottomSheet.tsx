@@ -130,7 +130,7 @@ export const SetupNicknameBottomSheet: React.FC<
       const updatedUser = await apiClient.updateNickname(currentNickname);
 
       // Update user state
-      await updateUser(updatedUser);
+      await updateUser(updatedUser.nickname || '');
 
       // Clear the showNicknameSetup flag
       dispatch(setShowNicknameSetup(false));
@@ -217,9 +217,10 @@ export const SetupNicknameBottomSheet: React.FC<
           </FormSection>
 
           <GlassButton
-            text={t('setupNickname.submit')}
+            text={isLoading ? t('common.saving') : t('setupNickname.submit')}
             onPress={handleSubmit}
             icon="home"
+            loading={isLoading}
             tintColor={theme.colors.primary}
             textColor={theme.colors.surface}
             disabled={isLoading}

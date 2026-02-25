@@ -12,6 +12,7 @@
     "location": "Location",
     "category": "Category",
     "save": "Save",
+    "saving": "Saving...",
     "error": "Error",
     "delete": "Delete"
   },
@@ -595,6 +596,28 @@
         "title": "Invalid Google Account",
         "message": "Invalid Google account. Please try again."
       }
+    },
+    "passwordReset": {
+      "title": "Reset Password",
+      "subtitle": "Enter your email to receive a reset code",
+      "emailLabel": "Email Address",
+      "emailPlaceholder": "Enter your email",
+      "submitRequest": "Send Reset Code",
+      "verifyTitle": "Verify Code",
+      "verifySubtitle": "Enter the 6-digit code sent to {{email}}",
+      "codeLabel": "Reset Code",
+      "codePlaceholder": "123456",
+      "passwordLabel": "New Password",
+      "passwordPlaceholder": "Enter new password",
+      "submitVerify": "Reset Password",
+      "successTitle": "Password Reset",
+      "successMessage": "Your password has been successfully reset. You can now log in with your new password.",
+      "errors": {
+        "invalidCode": "Invalid or expired reset code",
+        "requestFailed": "Failed to request reset code. Please try again.",
+        "requestSuccess": "Reset code sent to your email!",
+        "verifyFailed": "Failed to reset password. Please try again."
+      }
     }
   },
   "signup": {
@@ -624,7 +647,7 @@
       "emptyFields": "Please fill in all fields",
       "passwordMismatch": "Passwords do not match",
       "passwordTooShort": "Password must be at least 6 characters",
-      "failed": "Signup failed. Please try again."
+      "failed": "Sign up failed. Please try again."
     }
   },
   "errorBottomSheet": {

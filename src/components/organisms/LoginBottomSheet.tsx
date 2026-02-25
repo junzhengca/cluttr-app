@@ -160,9 +160,10 @@ export const LoginBottomSheet: React.FC<LoginBottomSheetProps> = ({
         showSafeArea={!isKeyboardVisible}
       >
         <GlassButton
-          text={authLoading ? t('login.submitting') : t('login.submit')}
+          text={authLoading ? t('common.saving') : t('login.submit')}
           onPress={handleSubmit}
           icon="log-in"
+          loading={authLoading}
           tintColor={theme.colors.primary}
           textColor={theme.colors.surface}
           disabled={authLoading}

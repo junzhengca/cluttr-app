@@ -306,11 +306,12 @@ export const InvitationBottomSheet: React.FC<InvitationBottomSheetProps> = ({
                                 </ScopeSection>
 
                                 <GlassButton
-                                    text={t('share.invite.accept')}
+                                    text={loading ? t('common.saving') : t('share.invite.accept')}
                                     onPress={handleAccept}
                                     tintColor={theme.colors.primary}
                                     textColor={theme.colors.surface}
                                     disabled={loading || isOwnHome}
+                                    loading={loading}
                                     style={{ width: '100%' }}
                                 />
                             </View>

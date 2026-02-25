@@ -438,9 +438,10 @@ export const CreateItemBottomSheet: React.FC<CreateItemBottomSheetProps> = ({
         showSafeArea={!isKeyboardVisible}
       >
         <GlassButton
-          text={t('createItem.submit')}
+          text={isLoading ? t('common.saving') : t('createItem.submit')}
           onPress={handleSubmit}
           icon="add"
+          loading={isLoading}
           tintColor={activeTheme.colors.primary}
           textColor={activeTheme.colors.surface}
           disabled={!isFormValid || isLoading}

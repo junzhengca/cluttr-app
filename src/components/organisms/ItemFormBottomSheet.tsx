@@ -453,9 +453,10 @@ export const ItemFormBottomSheet = forwardRef<
         showSafeArea={!isKeyboardVisible}
       >
         <GlassButton
-          text={t(`${mode}Item.submit`)}
+          text={isLoading ? t('common.saving') : t(`${mode}Item.submit`)}
           onPress={handleSubmit}
           icon={mode === 'create' ? 'add' : 'checkmark'}
+          loading={isLoading}
           tintColor={theme.colors.primary}
           textColor={theme.colors.surface}
           disabled={!isFormValid || isLoading}

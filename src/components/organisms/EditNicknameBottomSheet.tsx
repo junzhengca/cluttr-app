@@ -165,7 +165,7 @@ export const EditNicknameBottomSheet = forwardRef<
       const updatedUser = await apiClient.updateNickname(currentNickname);
 
       // Update user state
-      await updateUser(updatedUser);
+      await updateUser(updatedUser.nickname || '');
 
       // Close and call callback
       handleClose();
@@ -258,9 +258,10 @@ export const EditNicknameBottomSheet = forwardRef<
           </FormSection>
 
           <GlassButton
-            text={t('editNickname.submit')}
+            text={isLoading ? t('common.saving') : t('editNickname.submit')}
             onPress={handleSubmit}
             icon="checkmark"
+            loading={isLoading}
             tintColor={theme.colors.primary}
             textColor={theme.colors.surface}
             disabled={isLoading || !isValid}

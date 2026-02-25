@@ -68,6 +68,10 @@ import {
   UpdateLocationResponse,
   GetLocationResponse,
   DeleteLocationResponse,
+  PasswordResetRequest,
+  PasswordResetRequestResponse,
+  PasswordResetVerifyRequest,
+  PasswordResetVerifyResponse,
 } from '../types/api';
 import { apiLogger } from '../utils/Logger';
 
@@ -534,6 +538,31 @@ class ApiClient {
    */
   async updateNickname(nickname: string): Promise<User> {
     return this.updateUser({ nickname });
+  }
+
+  /**
+   * POST /api/auth/password-reset/request
+   * Request password reset code
+   */
+  async passwordResetRequest(email: string): Promise<PasswordResetRequestResponse> {
+    const request: PasswordResetRequest = { email };
+    return this.request<PasswordResetRequestResponse>('/api/auth/password-reset/request', {
+      method: 'POST',
+      body: request,
+      requiresAuth: false,
+    });
+  }
+
+  /**
+   * POST /api/auth/password-reset/verify
+   * Verify password reset code and reset password
+   */
+  async passwordResetVerify(request: PasswordResetVerifyRequest): Promise<PasswordResetVerifyResponse> {
+    return this.request<PasswordResetVerifyResponse>('/api/auth/password-reset/verify', {
+      method: 'POST',
+      body: request,
+      requiresAuth: false,
+    });
   }
 
   // =============================================================================

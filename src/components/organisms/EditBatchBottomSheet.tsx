@@ -361,9 +361,10 @@ export const EditBatchBottomSheet = forwardRef<
                 showSafeArea={!isKeyboardVisible}
             >
                 <GlassButton
-                    text={t('common.save')}
+                    text={isLoading ? t('common.saving') : t('common.save')}
                     onPress={handleSubmit}
                     icon="checkmark"
+                    loading={isLoading}
                     tintColor={theme.colors.primary}
                     textColor={theme.colors.surface}
                     disabled={!isFormValid || isLoading}

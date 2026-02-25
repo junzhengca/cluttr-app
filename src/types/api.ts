@@ -59,6 +59,16 @@ export interface UpdateUserRequest {
   newPassword?: string;
 }
 
+export interface PasswordResetRequest {
+  email: string;
+}
+
+export interface PasswordResetVerifyRequest {
+  email: string;
+  code: string;
+  newPassword: string;
+}
+
 // =============================================================================
 // Server Data Types (typed shapes of entity.data in sync responses)
 // =============================================================================
@@ -117,6 +127,15 @@ export type RecognizeItemResponse = InventoryItem;
 export interface AuthResponse {
   accessToken: string;
   user?: User;
+}
+
+export interface PasswordResetRequestResponse {
+  message: string;
+  expiresIn: number;
+}
+
+export interface PasswordResetVerifyResponse {
+  message: string;
 }
 
 export interface User {

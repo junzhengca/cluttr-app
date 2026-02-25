@@ -140,11 +140,12 @@ export const EditHomeBottomSheet: React.FC<EditHomeBottomSheetProps> = ({
                     </ErrorBanner>
                 )}
                 <GlassButton
-                    text={t('home.edit.submit')}
+                    text={isLoading ? t('common.saving') : t('home.edit.submit')}
                     onPress={handleSubmit}
                     tintColor={theme.colors.primary}
                     textColor={theme.colors.surface}
                     disabled={!name.trim() || isLoading}
+                    loading={isLoading}
                     style={{ width: '100%' }}
                 />
             </FooterContainer>

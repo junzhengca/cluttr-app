@@ -9,6 +9,12 @@ import {
   selectUpdatingTodoIds,
   selectError,
 } from './slices/todoSlice';
+import {
+  checkAuth,
+  updateUser,
+  passwordResetRequestAction,
+  passwordResetVerifyAction,
+} from './sagas/authSaga';
 import { clearUpdateResult } from './slices/settingsSlice';
 import { User } from '../types/api';
 import { Settings } from '../types/settings';
@@ -58,24 +64,25 @@ export const useAuth = () => {
     [dispatch]
   );
 
-  const logout = useCallback(() => {
-    dispatch({ type: 'auth/LOGOUT' });
+  const checkAuthSync = useCallback(() => {
+    dispatch(checkAuth());
   }, [dispatch]);
 
-  const checkAuth = useCallback(() => {
-    dispatch({ type: 'auth/CHECK_AUTH' });
+  const updateUserData = useCallback((nickname: string) => {
+    dispatch(updateUser({ nickname } as any));
   }, [dispatch]);
-
-  const updateUser = useCallback(
-    (userData: User) => {
-      dispatch({ type: 'auth/UPDATE_USER', payload: userData });
-    },
-    [dispatch]
-  );
 
   const getApiClient = useCallback(() => {
     return apiClient;
   }, [apiClient]);
+
+  const requestPasswordReset = useCallback((email: string) => {
+    dispatch(passwordResetRequestAction(email));
+  }, [dispatch]);
+
+  const verifyPasswordReset = useCallback((email: string, code: string, newPassword: string) => {
+    dispatch(passwordResetVerifyAction(email, code, newPassword));
+  }, [dispatch]);
 
   return {
     user,
@@ -86,10 +93,14 @@ export const useAuth = () => {
     signup,
     googleLogin,
     appleLogin,
-    logout,
-    checkAuth,
-    updateUser,
+    logout: useCallback(() => {
+      dispatch({ type: 'auth/LOGOUT' });
+    }, [dispatch]),
+    checkAuth: checkAuthSync,
+    updateUser: updateUserData,
     getApiClient,
+    requestPasswordReset,
+    verifyPasswordReset,
   };
 };
 
@@ -282,7 +293,7 @@ export const useCategory = () => {
   // Refresh callbacks are no longer needed since Redux state is reactive
   const registerRefreshCallback = useCallback(() => {
     // No-op: Redux state updates automatically trigger re-renders
-    return () => {};
+    return () => { };
   }, []);
 
   return {

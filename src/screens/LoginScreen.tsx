@@ -229,16 +229,16 @@ export const LoginScreen: React.FC = () => {
         } catch (error) {
             // Check if this is a cancellation error - handle gracefully without logging or alerting
             const errorMessage = error instanceof Error ? error.message : String(error);
-            const isCancellation = 
+            const isCancellation =
                 errorMessage.toLowerCase().includes('cancel') ||
                 errorMessage.toLowerCase().includes('cancelled') ||
                 errorMessage.toLowerCase().includes('user canceled');
-            
+
             if (isCancellation) {
                 // User cancelled - silently return without logging or showing alert
                 return;
             }
-            
+
             // For actual errors, log and show alert
             uiLogger.error('Google login error', error);
             Alert.alert(
@@ -261,17 +261,17 @@ export const LoginScreen: React.FC = () => {
         } catch (error) {
             // Check if this is a cancellation error - handle gracefully without logging or alerting
             const errorMessage = error instanceof Error ? error.message : String(error);
-            const isCancellation = 
+            const isCancellation =
                 errorMessage.toLowerCase().includes('cancel') ||
                 errorMessage.toLowerCase().includes('cancelled') ||
                 errorMessage.toLowerCase().includes('err_request_canceled') ||
                 errorMessage.toLowerCase().includes('user canceled');
-            
+
             if (isCancellation) {
                 // User cancelled - silently return without logging or showing alert
                 return;
             }
-            
+
             // For actual errors, log and show alert
             uiLogger.error('Apple login error', error);
             Alert.alert(
@@ -375,16 +375,17 @@ export const LoginScreen: React.FC = () => {
                             </InputSpacing>
 
                             <ForgotPasswordRow>
-                                <TouchableOpacity>
+                                <TouchableOpacity onPress={() => navigation.navigate('ForgotPassword', {})}>
                                     <ForgotPasswordText>{t('login.forgotPassword')}</ForgotPasswordText>
                                 </TouchableOpacity>
                             </ForgotPasswordRow>
 
                             <ButtonContainer>
                                 <GlassButton
-                                    text={authLoading ? t('login.submitting') : t('login.submit')}
+                                    text={t('login.submit')}
                                     onPress={handleSubmit}
                                     icon="arrow-forward"
+                                    loading={authLoading}
                                     tintColor={theme.colors.primary}
                                     textColor={theme.colors.surface}
                                     disabled={authLoading}

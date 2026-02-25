@@ -11,6 +11,8 @@
         "status": "状態",
         "location": "場所",
         "category": "カテゴリー",
+        "save": "保存",
+        "saving": "保存中...",
         "delete": "削除"
     },
     "navigation": {
@@ -547,6 +549,27 @@
                 "title": "無効なGoogleアカウント",
                 "message": "無効なGoogleアカウントです。もう一度お試しください。"
             }
+        },
+        "passwordReset": {
+            "title": "パスワードをリセット",
+            "subtitle": "リセットコードを受け取るためにメールアドレスを入力してください",
+            "emailLabel": "メールアドレス",
+            "emailPlaceholder": "メールアドレスを入力",
+            "submitRequest": "リセットコードを送信",
+            "verifyTitle": "コードを確認",
+            "verifySubtitle": "{{email}}に送信された6桁のコードを入力してください",
+            "codeLabel": "リセットコード",
+            "codePlaceholder": "123456",
+            "passwordLabel": "新しいパスワード",
+            "passwordPlaceholder": "新しいパスワードを入力",
+            "submitVerify": "パスワードをリセット",
+            "successTitle": "パスワードをリセットしました",
+            "successMessage": "パスワードが正常にリセットされました。新しいパスワードでログインできます。",
+            "errors": {
+                "invalidCode": "無効または期限切れのリセットコードです",
+                "requestFailed": "リセットコードの要求に失敗しました。もう一度お試しください。",
+                "verifyFailed": "パスワードのリセットに失敗しました。もう一度お試しください。"
+            }
         }
     },
     "signup": {
@@ -577,6 +600,27 @@
             "passwordMismatch": "パスワードが一致しません",
             "passwordTooShort": "パスワードは6文字以上である必要があります",
             "failed": "サインアップに失敗しました。もう一度お試しください。"
+        },
+        "passwordReset": {
+            "title": "パスワードをリセット",
+            "subtitle": "リセットコードを受け取るためにメールアドレスを入力してください",
+            "emailLabel": "メールアドレス",
+            "emailPlaceholder": "メールアドレスを入力",
+            "submitRequest": "リセットコードを送信",
+            "verifyTitle": "コードを確認",
+            "verifySubtitle": "{{email}}に送信された6桁のコードを入力してください",
+            "codeLabel": "リセットコード",
+            "codePlaceholder": "123456",
+            "passwordLabel": "新しいパスワード",
+            "passwordPlaceholder": "新しいパスワードを入力",
+            "submitVerify": "パスワードをリセット",
+            "successTitle": "パスワードをリセットしました",
+            "successMessage": "パスワードが正常にリセットされました。新しいパスワードでログインできます。",
+            "errors": {
+                "invalidCode": "無効または期限切れのリセットコードです",
+                "requestFailed": "リセットコードの要求に失敗しました。もう一度お試しください。",
+                "verifyFailed": "パスワードのリセットに失敗しました。もう一度お試しください。"
+            }
         }
     },
     "errorBottomSheet": {
