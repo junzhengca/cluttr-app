@@ -25,6 +25,20 @@ import { loadSettings } from '../src/store/sagas/settingsSaga';
 import { useAppDispatch, useAppSelector } from '../src/store/hooks';
 import { setShowNicknameSetup } from '../src/store/slices/authSlice';
 import { logger } from '../src/utils/Logger';
+import {
+    setBackgroundMessageHandler,
+    requestNotificationPermission,
+    getFCMToken,
+    onForegroundMessage,
+    onNotificationOpenedApp,
+    getInitialNotification,
+    onTokenRefresh,
+} from '../src/services/FirebaseService';
+
+// Register background message handler before the app renders
+setBackgroundMessageHandler(async (_message) => {
+    // Background messages are handled silently; FCM shows the notification automatically
+});
 
 const appLogger = logger.scoped('general');
 
@@ -162,6 +176,47 @@ function AppInner() {
     const handleOfflineBadgePress = useCallback(() => {
         offlineExplanationBottomSheetRef.current?.present();
     }, []);
+
+    // Push notification setup (runs once user is authenticated)
+    useEffect(() => {
+        if (!isAuthenticated) return;
+
+        let unsubscribeForeground: (() => void) | undefined;
+        let unsubscribeOpenedApp: (() => void) | undefined;
+        let unsubscribeTokenRefresh: (() => void) | undefined;
+
+        const setupPushNotifications = async () => {
+            const granted = await requestNotificationPermission();
+            if (!granted) return;
+
+            await getFCMToken();
+
+            unsubscribeForeground = onForegroundMessage((message) => {
+                appLogger.info('Foreground FCM message received', message.messageId);
+            });
+
+            unsubscribeOpenedApp = onNotificationOpenedApp((message) => {
+                appLogger.info('App opened from background notification', message.messageId);
+            });
+
+            unsubscribeTokenRefresh = onTokenRefresh((token) => {
+                appLogger.info('FCM token refreshed', token);
+            });
+
+            const initialNotification = await getInitialNotification();
+            if (initialNotification) {
+                appLogger.info('App opened from quit-state notification', initialNotification.messageId);
+            }
+        };
+
+        setupPushNotifications();
+
+        return () => {
+            unsubscribeForeground?.();
+            unsubscribeOpenedApp?.();
+            unsubscribeTokenRefresh?.();
+        };
+    }, [isAuthenticated]);
 
     if (!isAuthenticated) {
         return (

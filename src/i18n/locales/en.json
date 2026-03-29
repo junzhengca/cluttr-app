@@ -612,10 +612,13 @@
       "submitVerify": "Reset Password",
       "successTitle": "Password Reset",
       "successMessage": "Your password has been successfully reset. You can now log in with your new password.",
+      "emailSentTitle": "Check your email",
+      "emailSentMessage": "We sent a password reset link to {{email}}. Click the link in the email to set a new password.",
+      "backToLogin": "Back to Login",
       "errors": {
         "invalidCode": "Invalid or expired reset code",
-        "requestFailed": "Failed to request reset code. Please try again.",
-        "requestSuccess": "Reset code sent to your email!",
+        "requestFailed": "Failed to send reset email. Please try again.",
+        "requestSuccess": "Password reset email sent!",
         "verifyFailed": "Failed to reset password. Please try again."
       }
     }

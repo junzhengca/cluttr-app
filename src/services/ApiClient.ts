@@ -1,13 +1,9 @@
+import auth from '@react-native-firebase/auth';
 import {
-  LoginRequest,
-  SignupRequest,
-  GoogleAuthRequest,
-  AppleAuthRequest,
   UploadImageRequest,
   UpdateAccountSettingsRequest,
   RecognizeItemRequest,
   UpdateUserRequest,
-  AuthResponse,
   User,
   UploadImageResponse,
   UpdateAccountSettingsResponse,
@@ -68,10 +64,6 @@ import {
   UpdateLocationResponse,
   GetLocationResponse,
   DeleteLocationResponse,
-  PasswordResetRequest,
-  PasswordResetRequestResponse,
-  PasswordResetVerifyRequest,
-  PasswordResetVerifyResponse,
 } from '../types/api';
 import { apiLogger } from '../utils/Logger';
 
@@ -84,7 +76,6 @@ interface RequestOptions {
 class ApiClient {
   private activeUserId: string | null = null;
   private baseUrl: string;
-  private authToken: string | null = null;
   private onAuthError?: (endpoint: string) => void;
   private onAccessDenied?: (resourceId?: string) => void;
   private onError?: (errorDetails: ErrorDetails) => void;
@@ -102,21 +93,6 @@ class ApiClient {
    */
   setActiveUserId(userId: string | null): void {
     this.activeUserId = userId;
-  }
-
-  /**
-   * Set the authentication token for subsequent requests
-   */
-  setAuthToken(token: string | null): void {
-    // Trim whitespace from token to prevent auth errors
-    this.authToken = token ? token.trim() : null;
-  }
-
-  /**
-   * Get the current authentication token
-   */
-  getAuthToken(): string | null {
-    return this.authToken;
   }
 
   /**
@@ -215,15 +191,20 @@ class ApiClient {
       'Content-Type': 'application/json',
     };
 
-    // Add Bearer token if auth is required and token is available
-    if (options.requiresAuth && this.authToken) {
-      requestHeaders.Authorization = `Bearer ${this.authToken}`;
+    // Fetch a fresh Firebase ID token for each authenticated request.
+    // Firebase handles token refresh automatically (tokens expire after 1 hour).
+    if (options.requiresAuth) {
+      const firebaseUser = auth().currentUser;
+      if (firebaseUser) {
+        const idToken = await firebaseUser.getIdToken();
+        requestHeaders.Authorization = `Bearer ${idToken}`;
+      }
     }
 
     // Create log headers (redacted) for error reporting
     const logHeaders = { ...requestHeaders };
     if (logHeaders.Authorization) {
-      logHeaders.Authorization = `Bearer [REDACTED - ${this.authToken?.length || 0} chars]`;
+      logHeaders.Authorization = `Bearer [REDACTED]`;
     }
 
     const fetchOptions: {
@@ -438,60 +419,9 @@ class ApiClient {
   // =============================================================================
 
   /**
-   * POST /api/auth/login
-   * Authenticate with email and password
-   */
-  async login(email: string, password: string): Promise<AuthResponse> {
-    const request: LoginRequest = { email, password };
-    return this.request<AuthResponse>('/api/auth/login', {
-      method: 'POST',
-      body: request,
-      requiresAuth: false,
-    });
-  }
-
-  /**
-   * POST /api/auth/signup
-   * Create a new user account
-   */
-  async signup(email: string, password: string): Promise<AuthResponse> {
-    const request: SignupRequest = { email, password };
-    return this.request<AuthResponse>('/api/auth/signup', {
-      method: 'POST',
-      body: request,
-      requiresAuth: false,
-    });
-  }
-
-  /**
-   * POST /api/auth/google
-   * Authenticate with Google OAuth
-   */
-  async googleAuth(idToken: string, platform: 'ios' | 'android'): Promise<AuthResponse> {
-    const request: GoogleAuthRequest = { idToken, platform };
-    return this.request<AuthResponse>('/api/auth/google', {
-      method: 'POST',
-      body: request,
-      requiresAuth: false,
-    });
-  }
-
-  /**
-   * POST /api/auth/apple
-   * Authenticate with Apple Sign In
-   */
-  async appleAuth(idToken: string, platform: 'ios' | 'android'): Promise<AuthResponse> {
-    const request: AppleAuthRequest = { idToken, platform };
-    return this.request<AuthResponse>('/api/auth/apple', {
-      method: 'POST',
-      body: request,
-      requiresAuth: false,
-    });
-  }
-
-  /**
    * GET /api/auth/me
-   * Get current authenticated user
+   * Get current authenticated user.
+   * The Bearer token is a Firebase ID token fetched automatically.
    */
   async getCurrentUser(): Promise<User> {
     return this.request<User>('/api/auth/me', {
@@ -513,56 +443,12 @@ class ApiClient {
     });
   }
 
-  /**
-   * Update user password
-   * @deprecated Use updateUser() instead
-   */
-  async updatePassword(
-    currentPassword: string,
-    newPassword: string
-  ): Promise<User> {
-    return this.updateUser({ currentPassword, newPassword });
-  }
-
-  /**
-   * Update user avatar URL
-   * @deprecated Use updateUser() instead
-   */
-  async updateAvatarUrl(avatarUrl: string): Promise<User> {
-    return this.updateUser({ avatarUrl });
-  }
-
-  /**
-   * Update user nickname
-   * @deprecated Use updateUser() instead
-   */
   async updateNickname(nickname: string): Promise<User> {
     return this.updateUser({ nickname });
   }
 
-  /**
-   * POST /api/auth/password-reset/request
-   * Request password reset code
-   */
-  async passwordResetRequest(email: string): Promise<PasswordResetRequestResponse> {
-    const request: PasswordResetRequest = { email };
-    return this.request<PasswordResetRequestResponse>('/api/auth/password-reset/request', {
-      method: 'POST',
-      body: request,
-      requiresAuth: false,
-    });
-  }
-
-  /**
-   * POST /api/auth/password-reset/verify
-   * Verify password reset code and reset password
-   */
-  async passwordResetVerify(request: PasswordResetVerifyRequest): Promise<PasswordResetVerifyResponse> {
-    return this.request<PasswordResetVerifyResponse>('/api/auth/password-reset/verify', {
-      method: 'POST',
-      body: request,
-      requiresAuth: false,
-    });
+  async updateAvatarUrl(avatarUrl: string): Promise<User> {
+    return this.updateUser({ avatarUrl });
   }
 
   // =============================================================================

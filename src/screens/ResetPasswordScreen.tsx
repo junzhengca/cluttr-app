@@ -111,7 +111,10 @@ export const ResetPasswordScreen: React.FC = () => {
     const { email } = route.params;
     const { settings } = useSettings();
     const isDark = settings?.darkMode;
-    const { verifyPasswordReset, isLoading, error } = useAuth();
+    // verifyPasswordReset is no longer available – Firebase handles password
+    // reset via email link. This screen is kept for navigation compatibility
+    // but is no longer reachable from the ForgotPassword flow.
+    const { isLoading, error } = useAuth();
 
     const [code, setCode] = useState('');
     const [newPassword, setNewPassword] = useState('');
@@ -144,8 +147,11 @@ export const ResetPasswordScreen: React.FC = () => {
         }
 
         setIsSubmitting(true);
-        verifyPasswordReset(email, code.trim(), newPassword);
-    }, [email, code, newPassword, isLoading, verifyPasswordReset, t]);
+        // No-op: Firebase password resets are handled via email link, not OTP.
+        // This handler is kept to avoid breaking the UI while the screen is
+        // removed from the navigation flow.
+        setIsSubmitting(false);
+    }, [code, newPassword, isLoading, t]);
 
     return (
         <Container>

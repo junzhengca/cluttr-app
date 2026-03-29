@@ -5,7 +5,6 @@ import {
     ScrollView,
     KeyboardAvoidingView,
     Platform,
-    Alert,
     TouchableOpacity,
     TextInput,
     Image,
@@ -19,12 +18,9 @@ import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 import type { StyledProps } from '../utils/styledComponents';
-import { uiLogger } from '../utils/Logger';
 import { AuthTextInput, GlassButton } from '../components';
 import { useAuth, useSettings, useAppDispatch } from '../store/hooks';
 import { setError } from '../store/slices/authSlice';
-import { googleAuthService } from '../services/GoogleAuthService';
-import { appleAuthService } from '../services/AppleAuthService';
 import { useTheme } from '../theme/ThemeProvider';
 import type { AuthStackParamList } from '../navigation/AuthNavigator';
 
@@ -218,102 +214,13 @@ export const LoginScreen: React.FC = () => {
         }
     }, [loginAttempted, authLoading, authError]);
 
-    const handleGoogleLogin = useCallback(async () => {
-        try {
-            const idToken = await googleAuthService.signInWithGoogle();
-            if (idToken) {
-                const platform = Platform.OS === 'ios' ? 'ios' : 'android';
-                googleLogin(idToken, platform);
-            }
-            // If idToken is null, user cancelled - silently return without error
-        } catch (error) {
-            // Check if this is a cancellation error - handle gracefully without logging or alerting
-            const errorMessage = error instanceof Error ? error.message : String(error);
-            const isCancellation =
-                errorMessage.toLowerCase().includes('cancel') ||
-                errorMessage.toLowerCase().includes('cancelled') ||
-                errorMessage.toLowerCase().includes('user canceled');
+    const handleGoogleLogin = useCallback(() => {
+        googleLogin();
+    }, [googleLogin]);
 
-            if (isCancellation) {
-                // User cancelled - silently return without logging or showing alert
-                return;
-            }
-
-            // For actual errors, log and show alert
-            uiLogger.error('Google login error', error);
-            Alert.alert(
-                t('login.errors.googleLoginFailed.title') || 'Google Login Failed',
-                error instanceof Error
-                    ? error.message
-                    : t('login.errors.googleLoginFailed.message') || 'Failed to sign in with Google.',
-            );
-        }
-    }, [t, googleLogin]);
-
-    const handleAppleLogin = useCallback(async () => {
-        try {
-            const idToken = await appleAuthService.signInWithApple();
-            if (idToken) {
-                const platform = Platform.OS === 'ios' ? 'ios' : 'android';
-                appleLogin(idToken, platform);
-            }
-            // If idToken is null, user cancelled - silently return without error
-        } catch (error) {
-            // Check if this is a cancellation error - handle gracefully without logging or alerting
-            const errorMessage = error instanceof Error ? error.message : String(error);
-            const isCancellation =
-                errorMessage.toLowerCase().includes('cancel') ||
-                errorMessage.toLowerCase().includes('cancelled') ||
-                errorMessage.toLowerCase().includes('err_request_canceled') ||
-                errorMessage.toLowerCase().includes('user canceled');
-
-            if (isCancellation) {
-                // User cancelled - silently return without logging or showing alert
-                return;
-            }
-
-            // For actual errors, log and show alert
-            uiLogger.error('Apple login error', error);
-            Alert.alert(
-                t('login.errors.appleLoginFailed.title') || 'Apple Login Failed',
-                error instanceof Error
-                    ? error.message
-                    : t('login.errors.appleLoginFailed.message') || 'Failed to sign in with Apple.',
-            );
-        }
-    }, [t, appleLogin]);
-
-    // Handle auth errors from Google and Apple login
-    useEffect(() => {
-        if (authError && !authLoading) {
-            let errorMessage = authError;
-            let errorTitle = t('login.errors.googleLoginFailed.title') || 'Login Failed';
-
-            if (authError.includes('Email already registered with email/password')) {
-                errorMessage =
-                    t('login.errors.emailAlreadyRegistered.message') ||
-                    'Email already registered with email/password.';
-                errorTitle =
-                    t('login.errors.emailAlreadyRegistered.title') || 'Account Already Exists';
-            } else if (authError.includes('Invalid Google account')) {
-                errorMessage =
-                    t('login.errors.invalidGoogleAccount.message') || 'Invalid Google account.';
-                errorTitle = t('login.errors.googleLoginFailed.title') || 'Google Login Failed';
-            } else if (authError.includes('Invalid Apple account')) {
-                errorMessage =
-                    t('login.errors.invalidAppleAccount.message') || 'Invalid Apple account.';
-                errorTitle = t('login.errors.appleLoginFailed.title') || 'Apple Login Failed';
-            }
-
-            if (
-                authError.includes('Google') ||
-                authError.includes('Apple') ||
-                authError.includes('Email already registered')
-            ) {
-                Alert.alert(errorTitle, errorMessage);
-            }
-        }
-    }, [authError, authLoading, t]);
+    const handleAppleLogin = useCallback(() => {
+        appleLogin();
+    }, [appleLogin]);
 
     const displayError = localError || authError;
 

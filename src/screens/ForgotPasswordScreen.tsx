@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
     View,
     Text,
@@ -86,6 +86,19 @@ const ButtonContainer = styled(View)`
   margin-bottom: ${({ theme }: StyledProps) => theme.spacing.lg}px;
 `;
 
+const SuccessContainer = styled(View)`
+  align-items: center;
+  padding-horizontal: ${({ theme }: StyledProps) => theme.spacing.xl}px;
+`;
+
+const SuccessText = styled(Text)`
+  font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.md}px;
+  color: ${({ theme }: StyledProps) => theme.colors.textSecondary};
+  text-align: center;
+  margin-top: ${({ theme }: StyledProps) => theme.spacing.md}px;
+  line-height: 22px;
+`;
+
 const GhostButton = styled(TouchableOpacity)`
   margin-top: ${({ theme }: StyledProps) => theme.spacing.sm}px;
   padding-vertical: ${({ theme }: StyledProps) => theme.spacing.md}px;
@@ -110,26 +123,63 @@ export const ForgotPasswordScreen: React.FC = () => {
     const { requestPasswordReset, isLoading, error } = useAuth();
 
     const [email, setEmail] = useState('');
-    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [emailSent, setEmailSent] = useState(false);
 
-    useEffect(() => {
-        if (isSubmitting && !isLoading) {
-            setIsSubmitting(false);
-            if (!error) {
-                // Navigate to ResetPasswordScreen on success
-                navigation.navigate('ResetPassword', { email: email.trim() });
-            }
-        }
-    }, [isSubmitting, isLoading, error, navigation, email]);
+    const handleSubmit = useCallback(async () => {
+        if (!email.trim() || isLoading) return;
 
-    const handleSubmit = useCallback(() => {
-        if (!email.trim() || isLoading) {
-            return;
-        }
-
-        setIsSubmitting(true);
         requestPasswordReset(email.trim());
+        // Firebase password reset emails are delivered nearly instantly.
+        // Show the success state optimistically; errors will surface via the
+        // error field from the Redux store.
+        setEmailSent(true);
     }, [email, isLoading, requestPasswordReset]);
+
+    if (emailSent && !error) {
+        return (
+            <Container>
+                <StatusBar style={isDark ? 'light' : 'dark'} />
+                <ScrollContent
+                    contentContainerStyle={{
+                        flexGrow: 1,
+                        justifyContent: 'center',
+                        paddingTop: insets.top + 20,
+                        paddingBottom: insets.bottom + 20,
+                    }}
+                >
+                    <Content>
+                        <LogoContainer>
+                            <MascotPlaceholder>
+                                <Image
+                                    source={require('../../assets/logo-transparent.png')}
+                                    style={{ width: 80, height: 80 }}
+                                    resizeMode="contain"
+                                />
+                            </MascotPlaceholder>
+                            <TitleText>
+                                {t('login.passwordReset.emailSentTitle') || 'Check your email'}
+                            </TitleText>
+                        </LogoContainer>
+
+                        <SuccessContainer>
+                            <SuccessText>
+                                {t('login.passwordReset.emailSentMessage', { email: email.trim() }) ||
+                                    `We sent a password reset link to ${email.trim()}. Click the link in the email to set a new password.`}
+                            </SuccessText>
+                        </SuccessContainer>
+
+                        <FormContainer>
+                            <GhostButton onPress={() => navigation.navigate('Login')}>
+                                <GhostButtonText>
+                                    {t('login.passwordReset.backToLogin') || 'Back to Login'}
+                                </GhostButtonText>
+                            </GhostButton>
+                        </FormContainer>
+                    </Content>
+                </ScrollContent>
+            </Container>
+        );
+    }
 
     return (
         <Container>
@@ -165,7 +215,10 @@ export const ForgotPasswordScreen: React.FC = () => {
                                     icon="mail-outline"
                                     placeholder={t('login.passwordReset.emailPlaceholder')}
                                     value={email}
-                                    onChangeText={setEmail}
+                                    onChangeText={(text) => {
+                                        setEmail(text);
+                                        if (emailSent) setEmailSent(false);
+                                    }}
                                     keyboardType="email-address"
                                     autoCapitalize="none"
                                     onSubmitEditing={handleSubmit}

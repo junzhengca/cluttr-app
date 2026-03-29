@@ -151,7 +151,7 @@ export const SignupScreen: React.FC = () => {
     const navigation = useNavigation<NativeStackNavigationProp<AuthStackParamList>>();
     const { settings } = useSettings();
     const isDark = settings?.darkMode;
-    const { signup } = useAuth();
+    const { signup, googleLogin, appleLogin } = useAuth();
 
     const [nickname, setNickname] = useState('');
     const [email, setEmail] = useState('');
@@ -284,10 +284,10 @@ export const SignupScreen: React.FC = () => {
                             </DividerRow>
 
                             <SocialRow>
-                                <SocialButton onPress={() => { }}>
+                                <SocialButton onPress={() => googleLogin()}>
                                     <Ionicons name="logo-google" size={22} color={theme.colors.text} />
                                 </SocialButton>
-                                <SocialButton onPress={() => { }}>
+                                <SocialButton onPress={() => appleLogin()}>
                                     <Ionicons name="logo-apple" size={22} color={theme.colors.text} />
                                 </SocialButton>
                             </SocialRow>

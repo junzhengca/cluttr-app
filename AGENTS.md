@@ -8,6 +8,42 @@
 
 Cluttr: React Native home inventory app with Expo, Redux Toolkit + Saga for state management, bottom-sheet modals with IME-safe uncontrolled inputs for Chinese text.
 
+## FIREBASE
+
+### IaC Requirement
+
+**Any change that enables, disables, or reconfigures a Firebase service MUST be accompanied by an update to the configuration files listed below.** These files serve as the Infrastructure-as-Code (IaC) source of truth so that Firebase project state can be reproduced from the repository.
+
+| File | Purpose |
+|------|---------|
+| `firebase.json` | Declares enabled services, Auth providers, Firestore rules/indexes, Storage rules |
+| `.firebaserc` | Maps environment aliases (`default`, `staging`, `production`) to Firebase project IDs |
+
+### Auth Providers
+
+Currently enabled (see `firebase.json`):
+
+| Provider | Notes |
+|----------|-------|
+| Email / Password | Standard sign-in; password-reset emails sent by Firebase |
+| Google | Uses `@react-native-google-signin/google-signin` on the client; requires `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID` in `.env` |
+| Apple | iOS 13+ only; uses `expo-apple-authentication` + Firebase Apple credential |
+
+To add a new provider:
+1. Enable it in Firebase Console → Authentication → Sign-in method.
+2. Add the provider entry under `auth.providers` in `firebase.json`.
+3. Implement the sign-in flow in `src/services/FirebaseAuthService.ts`.
+
+### Backend Integration
+
+The backend **must** verify Firebase ID tokens (not its own JWTs). Every authenticated API request from the app now sends a Firebase ID token as the `Authorization: Bearer <token>` header. The backend should:
+
+1. Use the Firebase Admin SDK to verify the token.
+2. Identify users by their Firebase UID (`uid` claim).
+3. Auto-create a user record on first sign-in for social login providers.
+
+The `/api/auth/login`, `/api/auth/signup`, `/api/auth/google`, and `/api/auth/apple` backend endpoints are no longer called by the client. These are legacy and should be removed.
+
 ## STRUCTURE
 
 ```
@@ -37,6 +73,7 @@ Cluttr: React Native home inventory app with Expo, Redux Toolkit + Saga for stat
 | Sync logic          | `src/services/SyncService.ts`                                                        | File I/O, queue management, conflict resolution  |
 | Form patterns       | `src/components/CreateItemBottomSheet.tsx`, `src/components/EditItemBottomSheet.tsx` | IME-safe uncontrolled inputs                     |
 | Styling             | `src/theme/ThemeProvider.tsx`, `src/utils/styledComponents.ts`                       | Theme via `useTheme()`, styled via `StyledProps` |
+| Firebase logic      | `src/services/FirebaseAuthService.ts`                                                | Auth specific logic                              |
 
 ## CONVENTIONS
 
@@ -48,12 +85,14 @@ Cluttr: React Native home inventory app with Expo, Redux Toolkit + Saga for stat
 - **Saga pattern**: Domain sagas in `src/store/sagas/`, watchers use `takeLatest`, access API client via `select()`
 - **Selector pattern**: Memoized with `createSelector` (inventorySlice, todoSlice)
 - **OAuth client IDs**: Use iOS/Android client IDs (NOT Web) with custom scheme `com.cluttrapp.cluttr://`
+- **Firebase keys**: Never commit `GoogleService-Info.plist` or `google-services.json` (gitignored).
+- **Firebase SDK**: Version-locked (currently `^23.x.x` for `@react-native-firebase/*`).
 
 ## ANTI-PATTERNS (THIS PROJECT)
 
 - **NEVER** manually initialize ApiClient in components - use `useAuth().getApiClient()`
 - **NEVER** use controlled inputs (`value` prop) in bottom sheet modals - breaks IME composition
-- **NEVER** use Web OAuth client IDs - only iOS (`EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID`) and Android (`EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID`)
+- **NEVER** use Web OAuth client IDs for authentication - only iOS (`EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID`) and Android (`EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID`). *Note: `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID` is used for Firebase Auth configuration only.*
 - **NEVER** use `console.log()` - use Logger from `src/utils/Logger.ts`
 - **NEVER** suppress type errors with `as any` or `@ts-ignore`
 - **ALWAYS** run `npm run lint` after edits (enforced by `.cursor/rules/eslint-ensure.mdc`)
@@ -75,6 +114,12 @@ npm start              # Expo dev server
 npm run ios            # iOS simulator
 npm run android          # Android emulator
 npm run web            # Web version
+
+# Firebase deployment
+firebase deploy --only auth      # Auth configuration
+firebase deploy --only firestore # Firestore rules + indexes
+firebase deploy --only storage   # Storage rules
+firebase deploy                  # All services
 
 # Code quality
 npm run format          # Format code

@@ -262,8 +262,8 @@ export const ProfileScreen: React.FC = () => {
       // Update avatar URL
       const updatedUser = await apiClient.updateAvatarUrl(uploadResponse.url);
 
-      // Update user state
-      await updateUser(updatedUser);
+      // Update user state (nickname is the field tracked in Redux)
+      await updateUser(updatedUser.nickname || '');
 
       Alert.alert(
         t('profile.avatar.uploadSuccess.title'),
@@ -499,7 +499,7 @@ export const ProfileScreen: React.FC = () => {
           const apiClient = getApiClient();
           if (apiClient) {
             const updatedUser = await apiClient.getCurrentUser();
-            await updateUser(updatedUser);
+            await updateUser(updatedUser.nickname || '');
           }
         }}
       />

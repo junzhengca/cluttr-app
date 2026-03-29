@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "582446711871",
+    "project_id": "cluttr-app-f3c18",
+    "storage_bucket": "cluttr-app-f3c18.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:582446711871:android:3d08fac937e1fc3857648a",
+        "android_client_info": {
+          "package_name": "com.cluttrapp.cluttr"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBGDYek0jOhazZYmC-tPQWrvF9cleXDRvU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

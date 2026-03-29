@@ -10,184 +10,149 @@ A React Native application for managing home inventory built with Expo.
 - For iOS builds: Xcode and iOS development tools
 - For Android builds: Android Studio and Android SDK
 
+## Firebase Configuration
+
+Authentication (email/password, Google, Apple), Crashlytics, Analytics, and push notifications are all powered by Firebase. The project's Firebase configuration is tracked as code in [`firebase.json`](firebase.json) and [`.firebaserc`](.firebaserc).
+
+### Prerequisites
+
+Install the Firebase CLI and log in:
+
+```bash
+npm install -g firebase-tools
+firebase login
+```
+
+Verify the active project matches `.firebaserc`:
+
+```bash
+firebase projects:list
+firebase use default   # selects the project alias defined in .firebaserc
+```
+
+### Applying Firebase Configuration
+
+The `firebase.json` file declares which services are active and where their rules/indexes live. Use the commands below to push configuration changes to Firebase.
+
+#### Deploy everything at once
+
+```bash
+firebase deploy
+```
+
+#### Deploy individual services
+
+```bash
+# Authentication configuration only
+firebase deploy --only auth
+
+# Firestore security rules + indexes
+firebase deploy --only firestore
+
+# Cloud Storage security rules
+firebase deploy --only storage
+
+# Firebase Hosting (if used)
+firebase deploy --only hosting
+```
+
+#### Preview changes before deploying
+
+```bash
+# Dry-run for Firestore rules
+firebase firestore:rules --validate
+
+# Emulate locally before pushing
+firebase emulators:start
+```
+
+### Enabling Auth Providers (one-time setup)
+
+The providers listed in `firebase.json` must also be **manually enabled** in the Firebase Console the first time you set up the project — the CLI does not enable providers from config alone.
+
+1. Open [Firebase Console](https://console.firebase.google.com/) → your project → **Authentication** → **Sign-in method**
+2. Enable the following providers:
+
+| Provider | Notes |
+|----------|-------|
+| **Email/Password** | Enable; password-reset emails are sent by Firebase automatically |
+| **Google** | Enable; copy the **Web client ID** (shown after enabling) — needed for `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID` |
+| **Apple** | Enable; requires an Apple Developer account with Sign in with Apple configured |
+
+> Any future provider additions must also be reflected in `firebase.json`. See [`agents.md`](agents.md) for the full IaC convention.
+
+### Native Firebase Config Files
+
+Firebase SDKs require platform-specific config files that are **not** committed to the repository:
+
+| Platform | File | Where to get it |
+|----------|------|-----------------|
+| iOS | `GoogleService-Info.plist` | Firebase Console → Project settings → iOS app → Download config |
+| Android | `google-services.json` | Firebase Console → Project settings → Android app → Download config |
+
+Place both files in the project root. They are referenced by `app.json` and are already listed in `.gitignore`.
+
+---
+
 ## Environment Variables
 
-The following environment variables are required for the application to function properly:
+The following environment variables are required. Create a `.env` file in the project root (it is git-ignored).
 
-### Google OAuth
+```env
+# Backend API
+EXPO_PUBLIC_API_BASE_URL=https://your-api-url.example.com
 
-The app uses **iOS and Android OAuth client IDs** (not Web client IDs) with custom URI schemes for reliable authentication.
+# Google Sign-In (Firebase)
+# Web/Server client ID — found in Firebase Console → Authentication →
+# Sign-in method → Google → Web client ID
+EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID=<your-web-client-id>.apps.googleusercontent.com
 
-**Required Environment Variables:**
-- `EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID` - Google OAuth 2.0 iOS Client ID
-- `EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID` - Google OAuth 2.0 Android Client ID
-
-#### Setting up Google OAuth
-
-**Step 1: Create OAuth Client IDs in Google Cloud Console**
-
-1. Go to [Google Cloud Console](https://console.cloud.google.com/)
-2. Create a new project or select an existing one
-3. Enable the **Google Identity API**:
-   - Navigate to "APIs & Services" → "Library"
-   - Search for "Google Identity API" and enable it
-
-4. **Create iOS OAuth Client ID:**
-   - Navigate to "APIs & Services" → "Credentials"
-   - Click "Create Credentials" → "OAuth client ID"
-   - Select **"iOS"** as the application type
-   - Enter your iOS bundle identifier: `com.cluttrapp.cluttr`
-   - Click "Create"
-   - Copy the **Client ID** and set it as `EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID` in your environment
-
-5. **Create Android OAuth Client ID:**
-   - Still in "Credentials", click "Create Credentials" → "OAuth client ID" again
-   - Select **"Android"** as the application type
-   - Enter your Android package name: `com.cluttrapp.cluttr`
-   - For "SHA-1 certificate fingerprint", you'll need to get this from your keystore:
-     - For development: Run `keytool -list -v -keystore ~/.android/debug.keystore -alias androiddebugkey -storepass android -keypass android`
-     - For production: Use your production keystore's SHA-1
-   - Click "Create"
-   - Copy the **Client ID** and set it as `EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID` in your environment
-
-**Step 2: Configure Redirect URI**
-
-The app uses a custom URI scheme for OAuth redirects: `com.cluttrapp.cluttr://`
-
-1. **For iOS Client ID:**
-   - In Google Cloud Console, edit your iOS OAuth client
-   - Under "Authorized redirect URIs", add: `com.cluttrapp.cluttr://`
-   - Click "Save"
-
-2. **For Android Client ID:**
-   - In Google Cloud Console, edit your Android OAuth client
-   - Under "Authorized redirect URIs", add: `com.cluttrapp.cluttr://`
-   - Click "Save"
-
-**Step 3: Verify app.json Configuration**
-
-Ensure your `app.json` has the scheme configured (it should already be set):
-
-```json
-{
-  "expo": {
-    "scheme": "com.cluttrapp.cluttr",
-    "ios": {
-      "bundleIdentifier": "com.cluttrapp.cluttr"
-    },
-    "android": {
-      "package": "com.cluttrapp.cluttr"
-    }
-  }
-}
+# Logging (optional)
+EXPO_PUBLIC_LOG_LEVEL=info
+EXPO_PUBLIC_LOG_CATEGORIES=*
+EXPO_PUBLIC_LOG_TIMESTAMPS=true
+EXPO_PUBLIC_LOG_EMOJIS=true
 ```
 
-**Important Notes:**
-- **Use iOS/Android client IDs, NOT Web client IDs** - Web client IDs don't support custom scheme URIs
-- The redirect URI is `com.cluttrapp.cluttr://` (from the `scheme` in `app.json`)
-- Both iOS and Android client IDs must have the same redirect URI configured
-- The app automatically selects the correct client ID based on the platform (iOS or Android)
-- Make sure your bundle identifier (iOS) and package name (Android) match what you configured in Google Cloud Console
+> **Note:** The old `EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID` and `EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID` variables are no longer used. Google Sign-In is now handled by `@react-native-google-signin/google-signin` via Firebase, which reads platform credentials directly from `GoogleService-Info.plist` / `google-services.json`.
 
-**Troubleshooting:**
+### Google Sign-In Setup
 
-1. **"Custom scheme URIs are not allowed for 'WEB' client type"**
-   - You're using a Web client ID instead of iOS/Android client IDs
-   - Create separate iOS and Android OAuth clients in Google Cloud Console
+The app uses **Firebase Google Sign-In** via `@react-native-google-signin/google-signin`. The SDK reads iOS/Android credentials directly from the native Firebase config files — no separate OAuth client IDs are needed in `.env`. The only required variable is the **Web client ID**, which Firebase uses for server-side token verification.
 
-2. **"Something went wrong trying to finish signing in"**
-   - Check that the redirect URI `com.cluttrapp.cluttr://` is added to both iOS and Android OAuth clients
-   - Verify the bundle identifier/package name matches in both `app.json` and Google Cloud Console
-   - Check console logs for `[GoogleAuth]` messages to see what's happening
+**Steps:**
 
-3. **OAuth flow doesn't redirect back to app**
-   - Ensure the `scheme` is set in `app.json`
-   - Rebuild the app after changing the scheme: `npx expo prebuild --clean`
-   - For development builds, make sure you're using a development build (not Expo Go)
+1. Enable Google as a sign-in provider in [Firebase Console](https://console.firebase.google.com/) → Authentication → Sign-in method → Google
+2. After enabling, Firebase shows a **Web client ID** — copy it into `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID` in `.env`
+3. Ensure `GoogleService-Info.plist` (iOS) and `google-services.json` (Android) are present in the project root
 
-4. **Android SHA-1 Certificate**
-   - For development: Use the debug keystore SHA-1
-   - For production: Use your production keystore SHA-1
-   - You can add multiple SHA-1 fingerprints to the same Android OAuth client
+**Android additional step — SHA-1 fingerprint:**
 
-You can set environment variables by creating a `.env` file in the project root, or by setting them in your shell environment before running the app.
+The Android OAuth client in Firebase must be linked to your app's signing certificate. Add your SHA-1 fingerprint in Firebase Console → Project settings → Android app → Add fingerprint.
 
-### Apple Sign In
-
-The app supports **Apple Sign In** for iOS devices (iOS 13+). Apple Sign In uses native iOS authentication and doesn't require separate client IDs like Google OAuth.
-
-**Required Environment Variables:**
-- None required for frontend (Apple Sign In uses the app's bundle identifier automatically)
-
-**Setting up Apple Sign In:**
-
-**Step 1: Enable Sign in with Apple Capability in Xcode**
-
-1. Open your project in Xcode (or run `npx expo prebuild` to generate native projects)
-2. Select your iOS target
-3. Go to "Signing & Capabilities" tab
-4. Click "+ Capability"
-5. Add "Sign in with Apple" capability
-6. Ensure your bundle identifier matches: `com.cluttrapp.cluttr`
-
-**Step 2: Configure Sign in with Apple in Apple Developer Console**
-
-1. Go to [Apple Developer Console](https://developer.apple.com/account/)
-2. Navigate to "Certificates, Identifiers & Profiles"
-3. Select "Identifiers" → "App IDs"
-4. Find your app identifier (`com.cluttrapp.cluttr`) or create it if it doesn't exist
-5. Edit the app identifier and enable "Sign in with Apple" capability
-6. Save the changes
-
-**Step 3: Configure Backend Environment Variable**
-
-The backend needs your app's bundle identifier to verify Apple ID tokens:
-
-1. Set `APPLE_CLIENT_ID` or `APPLE_BUNDLE_ID` environment variable in your backend `.env` file:
-   ```env
-   APPLE_CLIENT_ID=com.cluttrapp.cluttr
-   ```
-   Or:
-   ```env
-   APPLE_BUNDLE_ID=com.cluttrapp.cluttr
-   ```
-
-**Step 4: Verify app.json Configuration**
-
-Ensure your `app.json` has the correct bundle identifier:
-
-```json
-{
-  "expo": {
-    "ios": {
-      "bundleIdentifier": "com.cluttrapp.cluttr"
-    }
-  }
-}
+```bash
+# Debug keystore (development)
+keytool -list -v -keystore ~/.android/debug.keystore \
+  -alias androiddebugkey -storepass android -keypass android
 ```
 
-**Important Notes:**
-- Apple Sign In is **only available on iOS devices** (iOS 13+)
-- The app will show an error message on Android devices indicating Apple Sign In is iOS-only
-- Apple may not provide email on subsequent sign-ins (only on first authorization)
-- The backend handles users by Apple ID (`appleId`) when email is not available
-- No additional client IDs or redirect URIs are needed (unlike Google OAuth)
+For production, use your release keystore's SHA-1 or the SHA-1 shown in EAS Build.
 
-**Troubleshooting:**
+### Apple Sign-In Setup
 
-1. **"Apple Sign In is not available on this device"**
-   - Ensure you're testing on a real iOS device (not simulator) or iOS 13+ simulator
-   - Verify the device has an Apple ID signed in
-   - Check that "Sign in with Apple" capability is enabled in Xcode
+Apple Sign-In is iOS 13+ only and is handled through Firebase.
 
-2. **"Sign in with Apple capability not found"**
-   - Run `npx expo prebuild` to generate native iOS project
-   - Manually add the capability in Xcode under "Signing & Capabilities"
+**Steps:**
 
-3. **Backend token verification fails**
-   - Verify `APPLE_CLIENT_ID` or `APPLE_BUNDLE_ID` is set in backend environment
-   - Ensure the bundle identifier matches exactly: `com.cluttrapp.cluttr`
-   - Check backend logs for token verification errors
+1. Enable Apple as a sign-in provider in [Firebase Console](https://console.firebase.google.com/) → Authentication → Sign-in method → Apple
+2. In [Apple Developer Console](https://developer.apple.com/account/) → Identifiers → select `com.cluttrapp.cluttr` → enable **Sign in with Apple**
+3. Add the **Sign in with Apple** capability to your Xcode project:
+   - Run `npx expo prebuild` to generate native projects
+   - In Xcode: select target → Signing & Capabilities → + Capability → Sign in with Apple
+
+> No extra environment variables are needed for Apple Sign-In. Firebase handles token verification using the bundle identifier `com.cluttrapp.cluttr`.
+
+**Backend note:** The backend must verify Firebase ID tokens (not Apple identity tokens directly). See [`agents.md`](agents.md) for the full backend integration requirements.
 
 ## Installation
 

@@ -1,0 +1,24 @@
+{
+  "auth": {
+    "enabled": true,
+    "providers": {
+      "email": {
+        "enabled": true,
+        "emailLinkSignin": false,
+        "passwordResetEmail": {
+          "enabled": true
+        }
+      },
+      "google": {
+        "enabled": true
+      },
+      "apple": {
+        "enabled": true
+      }
+    }
+  },
+  "firestore": {
+    "rules": "firestore.rules",
+    "indexes": "firestore.indexes.json"
+  }
+}

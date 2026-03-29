@@ -1,35 +1,37 @@
 import { call, put, takeLatest, select, fork, take } from 'redux-saga/effects';
 import { eventChannel, EventChannel } from 'redux-saga';
 import {
-  setUser,
-  setAuthenticated,
-  setLoading,
-  setError,
-  setApiClient,
-  setShowNicknameSetup,
-  setActiveHomeId,
+    setUser,
+    setAuthenticated,
+    setLoading,
+    setError,
+    setApiClient,
+    setShowNicknameSetup,
+    setActiveHomeId,
 } from '../slices/authSlice';
 import { loadItems } from './inventorySaga';
 import { loadTodos, loadTodoCategoriesAction } from './todoSaga';
 import { loadCategories } from './inventoryCategorySaga';
-import { ApiClient, apiClient, type ApiClient as ApiClientType } from '../../services/ApiClient';
+import { apiClient, type ApiClient } from '../../services/ApiClient';
 import { authService } from '../../services/AuthService';
+import { firebaseAuthService } from '../../services/FirebaseAuthService';
 import { homeService } from '../../services/HomeService';
 import { User, ErrorDetails } from '../../types/api';
 import type { RootState } from '../types';
 import { getGlobalToast } from '../../components/organisms/ToastProvider';
 import i18n from '../../i18n/i18n';
 import { authLogger } from '../../utils/Logger';
+import type { FirebaseAuthTypes } from '@react-native-firebase/auth';
 
-// Global error handler - will be set by App.tsx
+// Global error handler - set by App.tsx
 let globalErrorHandler: ((errorDetails: ErrorDetails) => void) | null = null;
 
-// Function to set global error handler (called from App.tsx)
 export const setGlobalErrorHandler = (handler: (errorDetails: ErrorDetails) => void) => {
-  globalErrorHandler = handler;
+    globalErrorHandler = handler;
 };
 
-// Action types
+// ─── Action Types ─────────────────────────────────────────────────────────────
+
 const CHECK_AUTH = 'auth/CHECK_AUTH';
 const LOGIN = 'auth/LOGIN';
 const SIGNUP = 'auth/SIGNUP';
@@ -41,932 +43,541 @@ const INITIALIZE_API_CLIENT = 'auth/INITIALIZE_API_CLIENT';
 const AUTH_ERROR = 'auth/AUTH_ERROR';
 const ACCESS_DENIED = 'auth/ACCESS_DENIED';
 const PASSWORD_RESET_REQUEST = 'auth/PASSWORD_RESET_REQUEST';
-const PASSWORD_RESET_VERIFY = 'auth/PASSWORD_RESET_VERIFY';
 
-// Action creators
+// ─── Action Creators ──────────────────────────────────────────────────────────
+
 export const checkAuth = () => ({ type: CHECK_AUTH });
 export const login = (email: string, password: string) => ({
-  type: LOGIN,
-  payload: { email, password },
+    type: LOGIN,
+    payload: { email, password },
 });
 export const signup = (email: string, password: string) => ({
-  type: SIGNUP,
-  payload: { email, password },
+    type: SIGNUP,
+    payload: { email, password },
 });
-export const googleLogin = (idToken: string, platform: string) => ({
-  type: GOOGLE_LOGIN,
-  payload: { idToken, platform },
-});
-export const appleLogin = (idToken: string, platform: string) => ({
-  type: APPLE_LOGIN,
-  payload: { idToken, platform },
-});
+/** Dispatched with no payload – Firebase sign-in is handled inside the saga. */
+export const googleLogin = () => ({ type: GOOGLE_LOGIN });
+/** Dispatched with no payload – Firebase sign-in is handled inside the saga. */
+export const appleLogin = () => ({ type: APPLE_LOGIN });
 export const logout = () => ({ type: LOGOUT });
 export const updateUser = (userData: User) => ({ type: UPDATE_USER, payload: userData });
 export const initializeApiClient = (apiBaseUrl: string) => ({
-  type: INITIALIZE_API_CLIENT,
-  payload: apiBaseUrl,
+    type: INITIALIZE_API_CLIENT,
+    payload: apiBaseUrl,
 });
 export const authError = (endpoint?: string) => ({ type: AUTH_ERROR, payload: endpoint });
-export const accessDenied = (resourceId?: string) => ({ type: ACCESS_DENIED, payload: resourceId });
-
+export const accessDenied = (resourceId?: string) => ({
+    type: ACCESS_DENIED,
+    payload: resourceId,
+});
 export const passwordResetRequestAction = (email: string) => ({
-  type: PASSWORD_RESET_REQUEST,
-  payload: email,
+    type: PASSWORD_RESET_REQUEST,
+    payload: email,
 });
 
-export const passwordResetVerifyAction = (email: string, code: string, newPassword: string) => ({
-  type: PASSWORD_RESET_VERIFY,
-  payload: { email, code, newPassword },
-});
+// ─── API-Client Event Channel ─────────────────────────────────────────────────
 
 type AuthChannelEvent = { type: string; payload?: string };
 
-function createAuthChannel(apiClient: ApiClientType): EventChannel<AuthChannelEvent> {
-  return eventChannel((emit) => {
-    const onAuthError = (endpoint: string) => {
-      emit(authError(endpoint));
-    };
-    const onAccessDenied = (resourceId?: string) => {
-      emit(accessDenied(resourceId));
-    };
+function createAuthChannel(client: ApiClient): EventChannel<AuthChannelEvent> {
+    return eventChannel((emit) => {
+        const onAuthError = (endpoint: string) => emit(authError(endpoint));
+        const onAccessDenied = (resourceId?: string) => emit(accessDenied(resourceId));
 
-    apiClient.setOnAuthError(onAuthError);
-    apiClient.setOnAccessDenied(onAccessDenied);
+        client.setOnAuthError(onAuthError);
+        client.setOnAccessDenied(onAccessDenied);
 
-    return () => {
-      apiClient.setOnAuthError(() => { });
-      apiClient.setOnAccessDenied(() => { });
-    };
-  });
-}
-
-function* passwordResetRequestSaga(action: { type: string; payload: string }) {
-  const email = action.payload;
-  const apiClient: ApiClient = (yield select((state: RootState) => state.auth.apiClient)) as ApiClient;
-
-  yield put(setLoading(true));
-  yield put(setError(null));
-
-  try {
-    yield call([apiClient, 'passwordResetRequest'], email);
-    yield put(setLoading(false));
-  } catch (error) {
-    authLogger.error('Password reset request error', error);
-    const errorMessage = error instanceof Error ? error.message : 'Failed to request password reset';
-    yield put(setError(errorMessage));
-    yield put(setLoading(false));
-  }
-}
-
-function* passwordResetVerifySaga(action: { type: string; payload: { email: string; code: string; newPassword: string } }) {
-  const { email, code, newPassword } = action.payload;
-  const apiClient: ApiClient = (yield select((state: RootState) => state.auth.apiClient)) as ApiClient;
-
-  yield put(setLoading(true));
-  yield put(setError(null));
-
-  try {
-    yield call([apiClient, 'passwordResetVerify'], { email, code, newPassword });
-    yield put(setLoading(false));
-    const toast = getGlobalToast();
-    if (toast) {
-      toast(i18n.t('login.passwordResetSuccess'), 'success');
-    }
-  } catch (error) {
-    authLogger.error('Password reset verify error', error);
-    const errorMessage = error instanceof Error ? error.message : 'Failed to reset password';
-    yield put(setError(errorMessage));
-    yield put(setLoading(false));
-  }
-}
-
-function* initializeApiClientSaga(action: { type: string; payload: string }) {
-  try {
-    const _apiBaseUrl = action.payload;
-    // The apiClient singleton is already initialized with the environment variable
-    // We just need to configure it and set it in state
-    const client = apiClient;
-
-    // Set up error callback for API errors (when all retries are exhausted)
-    client.setOnError((errorDetails: ErrorDetails) => {
-      authLogger.info('API error callback triggered, showing error bottom sheet');
-      if (globalErrorHandler) {
-        globalErrorHandler(errorDetails);
-      } else {
-        authLogger.warn('Global error handler not set, cannot show error bottom sheet');
-      }
+        return () => {
+            client.setOnAuthError(() => {});
+            client.setOnAccessDenied(() => {});
+        };
     });
-
-    // Create event channel for auth events (401, 403)
-    const authChannel: EventChannel<AuthChannelEvent> = yield call(createAuthChannel, client);
-    yield fork(function* () {
-      while (true) {
-        const action: AuthChannelEvent = (yield take(authChannel)) as AuthChannelEvent;
-        yield put(action);
-      }
-    });
-
-    // Set initial active home ID from state
-    // We don't set activeUserId on apiClient because activeHomeId is a context, not a user impersonation.
-    // Inventory and Todo sagas handle scoping explicitly.
-    void (yield select((state: RootState) => state.auth.activeHomeId));
-
-    yield put(setApiClient(client));
-
-    // Start auth check after API client is ready
-    yield put(checkAuth());
-  } catch (error) {
-    authLogger.error('Error initializing API client', error);
-    yield put(setLoading(false));
-  }
 }
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function* clearAuthAndLogout() {
-  authLogger.info('Clearing auth data');
-  yield call([authService, 'clearAllAuthData']);
+    authLogger.info('Clearing auth data');
 
-  // Clear the apiClient's auth token to prevent stale authenticated requests
-  const client: ApiClientType | null = yield select((state: RootState) => state.auth.apiClient);
-  if (client) {
-    client.setAuthToken('');
-  }
+    // Sign out from Firebase (also signs out from Google if applicable)
+    try {
+        yield call([firebaseAuthService, 'signOut']);
+    } catch (error) {
+        authLogger.warn('Firebase sign-out error during clearAuthAndLogout', error);
+    }
 
-  yield put(setUser(null));
-  yield put(setAuthenticated(false));
-  yield put(setActiveHomeId(null));
+    yield put(setUser(null));
+    yield put(setAuthenticated(false));
+    yield put(setActiveHomeId(null));
 
-  // Clear all user data (items, todos, categories, homes) on logout
-  // Only settings should persist
-  yield call([authService, 'clearAllUserData']);
+    yield call([authService, 'clearAllUserData']);
 }
 
-function* handleAuthError(action: { type: string; payload?: string }) {
-  const endpoint = action.payload;
+function* restoreOrSelectActiveHome() {
+    let activeHomeId: string | null = (yield call([
+        authService,
+        'getActiveHomeId',
+    ])) as string | null;
+    const allHomes = homeService.getHomes();
 
-  // Only invalidate auth when /me endpoint returns 401
-  // Other 401s (e.g. expired sharing tokens) should not log the user out
-  if (endpoint !== '/api/auth/me') {
-    authLogger.info(`401 on non-/me endpoint, ignoring: ${endpoint}`);
-    return;
-  }
+    if (activeHomeId && !allHomes.find((h) => h.id === activeHomeId)) {
+        authLogger.warn(`Persisted activeHomeId ${activeHomeId} not found in homes list.`);
+        activeHomeId = null;
+    }
 
-  yield call(clearAuthAndLogout);
+    if (!activeHomeId && allHomes.length > 0) {
+        activeHomeId = allHomes[0].id;
+        authLogger.info(`No valid active home persisted, defaulting to first home: ${activeHomeId}`);
+    }
+
+    if (activeHomeId) {
+        authLogger.info('Setting active home ID', activeHomeId);
+        yield put(setActiveHomeId(activeHomeId));
+        return activeHomeId;
+    }
+
+    return null;
 }
 
-function* handleAccessDenied(action: { type: string; payload?: string }) {
-  const deniedUserId = action.payload;
-  authLogger.info('Access denied for user', deniedUserId);
+function* ensureDefaultHomeIfNeeded(client: ApiClient): Generator {
+    try {
+        yield call([homeService, homeService.ensureDefaultHome], client);
+    } catch (error) {
+        authLogger.error('Error ensuring default home', error);
+    }
+}
 
-  if (!deniedUserId) return;
+/** Shared post-auth setup: fetch user from /me, load homes and data. */
+function* postAuthSetup(client: ApiClient): Generator {
+    const userData: User = (yield call(client.getCurrentUser.bind(client))) as User;
 
-  // If current active home is the denied one, switch to personal or null
-  const activeHomeId: string | null = (yield select((state: RootState) => state.auth.activeHomeId)) as string | null;
-  if (activeHomeId === deniedUserId) {
-    authLogger.warn('Active home access denied, switching to default');
-    // Try to restore a valid home (this will likely pick the default one if the current one is invalid/denied)
+    if (userData) {
+        yield call([authService, 'saveUser'], userData);
+        yield put(setUser(userData));
+        yield put(
+            setShowNicknameSetup(!userData.nickname || userData.nickname.trim() === ''),
+        );
+    }
+
+    yield put(setAuthenticated(true));
+    yield put(setError(null));
+
+    yield call([homeService, homeService.fetchHomes], client);
+    yield call(ensureDefaultHomeIfNeeded, client);
     yield call(restoreOrSelectActiveHome);
 
-    // If restoreOrSelectActiveHome didn't change it (e.g. it picked the same one?), we might need to force it.
-    // But restoreOrSelectActiveHome only picks from homeService.getHomes(). 
-    // If access is denied, maybe we should remove it from homeService?
-    // That's a separate concern (sync/cleanup). For now, just ensuring SOME home is selected.
+    yield put(loadItems());
+    yield put(loadTodos());
+    yield put(loadTodoCategoriesAction());
+    yield put(loadCategories());
+}
 
-    const toast = getGlobalToast();
-    if (toast) {
-      toast('Access to this home has been revoked', 'error');
+// ─── Sagas ────────────────────────────────────────────────────────────────────
+
+function* initializeApiClientSaga(_action: { type: string; payload: string }) {
+    try {
+        const client = apiClient;
+
+        client.setOnError((errorDetails: ErrorDetails) => {
+            authLogger.info('API error callback triggered, showing error bottom sheet');
+            if (globalErrorHandler) {
+                globalErrorHandler(errorDetails);
+            } else {
+                authLogger.warn('Global error handler not set');
+            }
+        });
+
+        const authChannel: EventChannel<AuthChannelEvent> = yield call(
+            createAuthChannel,
+            client,
+        );
+        yield fork(function* () {
+            while (true) {
+                const event: AuthChannelEvent = (yield take(authChannel)) as AuthChannelEvent;
+                yield put(event);
+            }
+        });
+
+        yield put(setApiClient(client));
+        yield put(checkAuth());
+    } catch (error) {
+        authLogger.error('Error initializing API client', error);
+        yield put(setLoading(false));
     }
-  }
-}
-
-// Helper to restore or select a default active home
-function* restoreOrSelectActiveHome() {
-  let activeHomeId: string | null = (yield call([authService, 'getActiveHomeId'])) as string | null;
-  const allHomes = homeService.getHomes();
-
-  // Validate the persisted ID
-  if (activeHomeId && !allHomes.find(h => h.id === activeHomeId)) {
-    authLogger.warn(`Persisted activeHomeId ${activeHomeId} not found in homes list.`);
-    activeHomeId = null;
-  }
-
-  // Default if null
-  if (!activeHomeId && allHomes.length > 0) {
-    activeHomeId = allHomes[0].id;
-    authLogger.info(`No valid active home persisted, defaulting to first home: ${activeHomeId}`);
-  }
-
-  if (activeHomeId) {
-    authLogger.info('Setting active home ID', activeHomeId);
-    yield put(setActiveHomeId(activeHomeId));
-    return activeHomeId;
-  }
-
-  return null;
-}
-
-// Helper to ensure a default home exists after login/sync
-function* ensureDefaultHomeIfNeeded(apiClient: ApiClient): Generator {
-  try {
-    yield call([homeService, homeService.ensureDefaultHome], apiClient);
-  } catch (error) {
-    authLogger.error('Error ensuring default home', error);
-  }
 }
 
 function* checkAuthSaga(): Generator {
-  const apiClient: ApiClient = (yield select((state: RootState) => state.auth.apiClient)) as ApiClient;
-  if (!apiClient) {
-    yield put(setLoading(false));
-    return;
-  }
+    const client: ApiClient = (yield select(
+        (state: RootState) => state.auth.apiClient,
+    )) as ApiClient;
 
-  try {
-    const tokens: { accessToken: string } | null = (yield call([authService, 'getAuthTokens'])) as { accessToken: string } | null;
-
-    if (!tokens || !tokens.accessToken) {
-      // No tokens found - user must login (no guest mode)
-      authLogger.info('No access token found, user must login');
-      yield put(setLoading(false));
-      return;
+    if (!client) {
+        yield put(setLoading(false));
+        return;
     }
 
-    // Set access token in API client
-    apiClient.setAuthToken(tokens.accessToken);
-
-    // OPTIMISTIC UI: Check for cached user to bypass login immediately
-    const savedUser: User | null = (yield call([authService, 'getUser'])) as User | null;
-
-    let hasBypassedLogin = false;
-
-    if (savedUser) {
-      authLogger.info('Found cached user, bypassing login screen immediately');
-      yield put(setUser(savedUser));
-      yield put(setAuthenticated(true));
-
-      // Check if nickname is missing
-      if (!savedUser.nickname || savedUser.nickname.trim() === '') {
-        yield put(setShowNicknameSetup(true));
-      } else {
-        yield put(setShowNicknameSetup(false));
-      }
-
-      // Prepare local context quickly
-      yield call(ensureDefaultHomeIfNeeded, apiClient);
-      yield call(restoreOrSelectActiveHome);
-
-      // Load data with correct context (from local DB)
-      yield put(loadItems());
-      yield put(loadTodos());
-
-      // Unblock the UI immediately
-      yield put(setLoading(false));
-      hasBypassedLogin = true;
-    }
-
-    // Verify auth by calling /me endpoint in background (or foreground if no cached user)
     try {
-      const currentUser: User = (yield call(apiClient.getCurrentUser.bind(apiClient))) as User;
+        // Wait for Firebase to resolve its persisted auth state
+        const firebaseUser: FirebaseAuthTypes.User | null = (yield call([
+            firebaseAuthService,
+            'waitForAuthState',
+        ])) as FirebaseAuthTypes.User | null;
 
-      authLogger.info('/me endpoint response', {
-        hasAvatar: !!currentUser?.avatarUrl,
-        avatarUrl: currentUser?.avatarUrl,
-      });
-
-      // Update user if we got new data
-      if (currentUser) {
-        yield call([authService, 'saveUser'], currentUser);
-        yield put(setUser(currentUser));
-        yield put(setAuthenticated(true));
-
-        // Check if nickname is missing
-        if (!currentUser.nickname || currentUser.nickname.trim() === '') {
-          yield put(setShowNicknameSetup(true));
-        } else {
-          yield put(setShowNicknameSetup(false));
+        if (!firebaseUser) {
+            authLogger.info('No Firebase user found – user must log in');
+            yield put(setLoading(false));
+            return;
         }
 
-        // Fetch homes from server using CRUD endpoint
-        yield call([homeService, homeService.fetchHomes], apiClient);
+        authLogger.info('Firebase user found, restoring session', { uid: firebaseUser.uid });
 
-        // Ensure we have a default home if none exists
-        yield call(ensureDefaultHomeIfNeeded, apiClient);
-
-        // Restore active home ID or select default
-        yield call(restoreOrSelectActiveHome);
-
-        // Load data with correct context
-        yield put(loadItems());
-        yield put(loadTodos());
-        yield put(loadTodoCategoriesAction());
-        yield put(loadCategories());
-      }
-    } catch (error) {
-      // Check if it's a 401 error
-      const errorStatus = (error as Error & { status?: number })?.status;
-
-      if (errorStatus === 401) {
-        // If /me returns 401, user is not authenticated or token expired
-        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-        authLogger.error(`Auth verification failed (401): ${errorMessage}`, error);
-        yield call(clearAuthAndLogout);
-      } else if (!hasBypassedLogin) {
-        // For other errors (network, 500, etc.), try to use cached user
-        // This effectively enables offline mode if we have a token but haven't bypassed login yet
-        authLogger.warn('Failed to verify auth with server, checking local cache', error);
-
+        // Optimistic UI: show cached user immediately
         const savedUser: User | null = (yield call([authService, 'getUser'])) as User | null;
+        let hasBypassedLogin = false;
 
         if (savedUser) {
-          authLogger.info('Using cached user data for offline/error mode');
-          yield put(setUser(savedUser));
-          yield put(setAuthenticated(true));
-
-          // Check if nickname is missing
-          if (!savedUser.nickname || savedUser.nickname.trim() === '') {
-            yield put(setShowNicknameSetup(true));
-          } else {
-            yield put(setShowNicknameSetup(false));
-          }
-
-          // Ensure we have a home (offline mode) - pass apiClient for potential API calls
-          yield call(ensureDefaultHomeIfNeeded, apiClient);
-
-          // Restore active home ID or select default
-          yield call(restoreOrSelectActiveHome);
-
-          // Reload data with correct context (from local DB)
-          yield put(loadItems());
-          yield put(loadTodos());
-        } else {
-          // No cached user, but we have a token that failed with non-401?
-          // This is a tricky state. We probably shouldn't logout if it's a network error.
-          // But if we can't load a user, we can't really "authenticate" the app UI.
-          // For now, if we have no user data, we must logout.
-          authLogger.error('No cached user data available and server request failed');
-          yield call(clearAuthAndLogout);
+            authLogger.info('Found cached user, bypassing login screen immediately');
+            yield put(setUser(savedUser));
+            yield put(setAuthenticated(true));
+            yield put(
+                setShowNicknameSetup(!savedUser.nickname || savedUser.nickname.trim() === ''),
+            );
+            yield call(ensureDefaultHomeIfNeeded, client);
+            yield call(restoreOrSelectActiveHome);
+            yield put(loadItems());
+            yield put(loadTodos());
+            yield put(setLoading(false));
+            hasBypassedLogin = true;
         }
-      } else {
-        authLogger.warn('Failed to verify auth with server in background, keeping cached session active', error);
-      }
+
+        // Verify session against backend in background (or foreground if no cache)
+        try {
+            yield call(postAuthSetup, client);
+        } catch (error) {
+            const errorStatus = (error as Error & { status?: number })?.status;
+
+            if (errorStatus === 401) {
+                authLogger.error('Backend rejected Firebase token (401) – signing out', error);
+                yield call(clearAuthAndLogout);
+            } else if (!hasBypassedLogin) {
+                authLogger.warn('Backend unreachable, attempting offline mode', error);
+                if (savedUser) {
+                    yield put(setUser(savedUser));
+                    yield put(setAuthenticated(true));
+                    yield put(
+                        setShowNicknameSetup(
+                            !savedUser.nickname || savedUser.nickname.trim() === '',
+                        ),
+                    );
+                    yield call(ensureDefaultHomeIfNeeded, client);
+                    yield call(restoreOrSelectActiveHome);
+                    yield put(loadItems());
+                    yield put(loadTodos());
+                } else {
+                    authLogger.error('No cached user and backend unreachable – signing out');
+                    yield call(clearAuthAndLogout);
+                }
+            } else {
+                authLogger.warn('Background auth verification failed – keeping cached session', error);
+            }
+        }
+    } catch (error) {
+        authLogger.error('Error checking auth', error);
+        yield call(clearAuthAndLogout);
+    } finally {
+        const isLoading: boolean = (yield select(
+            (state: RootState) => state.auth.isLoading,
+        )) as boolean;
+        if (isLoading) {
+            yield put(setLoading(false));
+        }
     }
-  } catch (error) {
-    authLogger.error('Error checking auth', error);
-    yield call(clearAuthAndLogout);
-  } finally {
-    // Only set loading to false here if we haven't already bypassed login
-    const isLoading: boolean = (yield select((state: RootState) => state.auth.isLoading)) as boolean;
-    if (isLoading) {
-      yield put(setLoading(false));
-    }
-  }
 }
 
-function* loginSaga(action: { type: string; payload: { email: string; password: string } }): Generator {
-  const { email, password } = action.payload;
-  const apiClient: ApiClient = (yield select((state: RootState) => state.auth.apiClient)) as ApiClient;
+function* loginSaga(action: {
+    type: string;
+    payload: { email: string; password: string };
+}): Generator {
+    const { email, password } = action.payload;
+    const client: ApiClient = (yield select(
+        (state: RootState) => state.auth.apiClient,
+    )) as ApiClient;
 
-  // Clear any previous errors and set loading
-  yield put(setError(null));
-  yield put(setLoading(true));
+    yield put(setError(null));
+    yield put(setLoading(true));
 
-  if (!apiClient) {
-    const errorMessage = 'API client not initialized';
-    yield put(setError(errorMessage));
-    yield put(setLoading(false));
-    return;
-  }
-
-  try {
-    const response = (yield call(apiClient.login.bind(apiClient), email, password)) as { accessToken: string } | null;
-
-    // Validate token before saving
-    if (!response?.accessToken) {
-      authLogger.error('Invalid login response', response);
-      const errorMessage = 'Invalid login response: missing accessToken';
-      yield put(setError(errorMessage));
-      yield put(setLoading(false));
-      return;
+    if (!client) {
+        yield put(setError('API client not initialized'));
+        yield put(setLoading(false));
+        return;
     }
 
-    // Save token
-    const saved = (yield call([authService, 'saveAuthTokens'], response.accessToken)) as boolean;
-    if (!saved) {
-      const errorMessage = 'Failed to save authentication token';
-      yield put(setError(errorMessage));
-      yield put(setLoading(false));
-      return;
+    try {
+        yield call(
+            [firebaseAuthService, 'signInWithEmailAndPassword'],
+            email,
+            password,
+        );
+
+        yield call(postAuthSetup, client);
+        yield put(setLoading(false));
+
+        const toast = getGlobalToast();
+        if (toast) toast(i18n.t('toast.loginSuccess'), 'success');
+
+        authLogger.info('Login successful');
+    } catch (error) {
+        authLogger.error('Login error', error);
+        const errorMessage =
+            error instanceof Error ? error.message : 'Login failed. Please try again.';
+        yield put(setError(errorMessage));
+        yield put(setLoading(false));
     }
-
-    // Verify token was saved
-    const savedTokens = (yield call([authService, 'getAuthTokens'])) as { accessToken: string } | null;
-    if (!savedTokens || !savedTokens.accessToken) {
-      const errorMessage = 'Failed to save authentication token';
-      yield put(setError(errorMessage));
-      yield put(setLoading(false));
-      return;
-    }
-
-    // Set token in API client
-    apiClient.setAuthToken(response.accessToken);
-
-    // Always get full user info from /me endpoint to ensure we have complete data including avatar
-    const userData: User = (yield call(apiClient.getCurrentUser.bind(apiClient))) as User;
-
-    authLogger.info('User data from /me endpoint', {
-      hasAvatar: !!userData?.avatarUrl,
-      avatarUrl: userData?.avatarUrl,
-      email: userData?.email,
-    });
-
-    // Save user
-    if (userData) {
-      yield call([authService, 'saveUser'], userData);
-      yield put(setUser(userData));
-
-      // Check if nickname is missing
-      if (!userData.nickname || userData.nickname.trim() === '') {
-        yield put(setShowNicknameSetup(true));
-      } else {
-        yield put(setShowNicknameSetup(false));
-      }
-    }
-
-    yield put(setAuthenticated(true));
-    yield put(setError(null)); // Clear error on success
-
-    // Fetch homes from server using CRUD endpoint
-    yield call([homeService, homeService.fetchHomes], apiClient);
-
-    // Ensure we have a default home if none exists
-    yield call(ensureDefaultHomeIfNeeded, apiClient);
-
-    // Restore active home ID or select default
-    yield call(restoreOrSelectActiveHome);
-
-    // Load data with correct context
-    yield put(loadItems());
-    yield put(loadTodos());
-    yield put(loadTodoCategoriesAction());
-    yield put(loadCategories());
-
-    yield put(setLoading(false));
-
-    // Show success toast
-    const toast = getGlobalToast();
-    if (toast) {
-      toast(i18n.t('toast.loginSuccess'), 'success');
-    }
-
-    authLogger.info('Login successful');
-  } catch (error) {
-    authLogger.error('Login error', error);
-    const errorMessage = error instanceof Error ? error.message : 'Login failed. Please try again.';
-    yield put(setError(errorMessage));
-    yield put(setLoading(false));
-  }
 }
 
-function* signupSaga(action: { type: string; payload: { email: string; password: string } }): Generator {
-  const { email, password } = action.payload;
-  const apiClient: ApiClient = (yield select((state: RootState) => state.auth.apiClient)) as ApiClient;
+function* signupSaga(action: {
+    type: string;
+    payload: { email: string; password: string };
+}): Generator {
+    const { email, password } = action.payload;
+    const client: ApiClient = (yield select(
+        (state: RootState) => state.auth.apiClient,
+    )) as ApiClient;
 
-  if (!apiClient) {
-    throw new Error('API client not initialized');
-  }
+    if (!client) throw new Error('API client not initialized');
 
-  try {
-    const response = (yield call(apiClient.signup.bind(apiClient), email, password)) as { accessToken: string } | null;
+    try {
+        yield call(
+            [firebaseAuthService, 'createUserWithEmailAndPassword'],
+            email,
+            password,
+        );
 
-    // Validate token before saving
-    if (!response?.accessToken) {
-      authLogger.error('Invalid signup response', response);
-      throw new Error('Invalid signup response: missing accessToken');
+        yield call(postAuthSetup, client);
+
+        const toast = getGlobalToast();
+        if (toast) toast(i18n.t('toast.signupSuccess'), 'success');
+
+        authLogger.info('Signup successful');
+    } catch (error) {
+        authLogger.error('Signup error', error);
+        throw error;
     }
-
-    // Save token
-    const saved = (yield call([authService, 'saveAuthTokens'], response.accessToken)) as boolean;
-    if (!saved) {
-      throw new Error('Failed to save authentication token');
-    }
-
-    // Verify token was saved
-    const savedTokens = (yield call([authService, 'getAuthTokens'])) as { accessToken: string } | null;
-    if (!savedTokens || !savedTokens.accessToken) {
-      throw new Error('Failed to save authentication token');
-    }
-
-    // Set token in API client
-    apiClient.setAuthToken(response.accessToken);
-
-    // Always get full user info from /me endpoint to ensure we have complete data including avatar
-    const userData: User = (yield call(apiClient.getCurrentUser.bind(apiClient))) as User;
-
-    authLogger.info('User data from /me endpoint', {
-      hasAvatar: !!userData?.avatarUrl,
-      avatarUrl: userData?.avatarUrl,
-      email: userData?.email,
-    });
-
-    // Save user
-    if (userData) {
-      yield call([authService, 'saveUser'], userData);
-      yield put(setUser(userData));
-
-      // Check if nickname is missing
-      if (!userData.nickname || userData.nickname.trim() === '') {
-        yield put(setShowNicknameSetup(true));
-      } else {
-        yield put(setShowNicknameSetup(false));
-      }
-    }
-
-    yield put(setAuthenticated(true));
-
-    // Fetch homes from server using CRUD endpoint
-    yield call([homeService, homeService.fetchHomes], apiClient);
-
-    // Ensure we have a default home if none exists
-    yield call(ensureDefaultHomeIfNeeded, apiClient);
-
-    // Restore active home ID or select default
-    yield call(restoreOrSelectActiveHome);
-
-    // Load data with correct context (settings will be loaded by _layout.tsx after auth completes)
-    yield put(loadItems());
-    yield put(loadTodos());
-    yield put(loadTodoCategoriesAction());
-    yield put(loadCategories());
-
-    // Show success toast
-    const toast = getGlobalToast();
-    if (toast) {
-      toast(i18n.t('toast.signupSuccess'), 'success');
-    }
-
-    authLogger.info('Signup successful');
-  } catch (error) {
-    authLogger.error('Signup error', error);
-    throw error;
-  }
 }
 
-function* googleLoginSaga(action: { type: string; payload: { idToken: string; platform: string } }): Generator {
-  const { idToken, platform } = action.payload;
-  const apiClient: ApiClient = (yield select((state: RootState) => state.auth.apiClient)) as ApiClient;
+function* googleLoginSaga(): Generator {
+    const client: ApiClient = (yield select(
+        (state: RootState) => state.auth.apiClient,
+    )) as ApiClient;
 
-  // Clear any previous errors and set loading
-  yield put(setError(null));
-  yield put(setLoading(true));
+    yield put(setError(null));
+    yield put(setLoading(true));
 
-  if (!apiClient) {
-    const errorMessage = 'API client not initialized';
-    yield put(setError(errorMessage));
-    yield put(setLoading(false));
-    return;
-  }
-
-  try {
-    const response = (yield call(apiClient.googleAuth.bind(apiClient), idToken, platform as 'ios' | 'android')) as { accessToken: string } | null;
-
-    // Validate token before saving
-    if (!response?.accessToken) {
-      authLogger.error('Invalid Google login response', response);
-      const errorMessage = 'Invalid Google login response: missing accessToken';
-      yield put(setError(errorMessage));
-      yield put(setLoading(false));
-      return;
+    if (!client) {
+        yield put(setError('API client not initialized'));
+        yield put(setLoading(false));
+        return;
     }
 
-    // Save token
-    const saved = (yield call([authService, 'saveAuthTokens'], response.accessToken)) as boolean;
-    if (!saved) {
-      const errorMessage = 'Failed to save authentication token';
-      yield put(setError(errorMessage));
-      yield put(setLoading(false));
-      return;
+    try {
+        const result: FirebaseAuthTypes.UserCredential | null = (yield call([
+            firebaseAuthService,
+            'signInWithGoogle',
+        ])) as FirebaseAuthTypes.UserCredential | null;
+
+        if (!result) {
+            // User cancelled the Google sign-in picker
+            yield put(setLoading(false));
+            return;
+        }
+
+        yield call(postAuthSetup, client);
+        yield put(setLoading(false));
+
+        const toast = getGlobalToast();
+        if (toast) toast(i18n.t('toast.loginSuccess'), 'success');
+
+        authLogger.info('Google login successful');
+    } catch (error) {
+        authLogger.error('Google login error', error);
+        yield put(
+            setError(
+                error instanceof Error ? error.message : 'Google login failed. Please try again.',
+            ),
+        );
+        yield put(setLoading(false));
     }
-
-    // Verify token was saved
-    const savedTokens = (yield call([authService, 'getAuthTokens'])) as { accessToken: string } | null;
-    if (!savedTokens || !savedTokens.accessToken) {
-      const errorMessage = 'Failed to save authentication token';
-      yield put(setError(errorMessage));
-      yield put(setLoading(false));
-      return;
-    }
-
-    // Set token in API client
-    apiClient.setAuthToken(response.accessToken);
-
-    // Always get full user info from /me endpoint to ensure we have complete data including avatar
-    const userData: User = (yield call(apiClient.getCurrentUser.bind(apiClient))) as User;
-
-    authLogger.info('User data from /me endpoint', {
-      hasAvatar: !!userData?.avatarUrl,
-      avatarUrl: userData?.avatarUrl,
-      email: userData?.email,
-    });
-
-    // Save user
-    if (userData) {
-      yield call([authService, 'saveUser'], userData);
-      yield put(setUser(userData));
-
-      // Check if nickname is missing
-      if (!userData.nickname || userData.nickname.trim() === '') {
-        yield put(setShowNicknameSetup(true));
-      } else {
-        yield put(setShowNicknameSetup(false));
-      }
-    }
-
-    yield put(setAuthenticated(true));
-    yield put(setError(null)); // Clear error on success
-
-    // Fetch homes from server using CRUD endpoint
-    yield call([homeService, homeService.fetchHomes], apiClient);
-
-    // Ensure we have a default home if none exists
-    yield call(ensureDefaultHomeIfNeeded, apiClient);
-
-    // Restore active home ID or select default
-    yield call(restoreOrSelectActiveHome);
-
-    // Load data with correct context
-    yield put(loadItems());
-    yield put(loadTodos());
-    yield put(loadTodoCategoriesAction());
-    yield put(loadCategories());
-
-    yield put(setLoading(false));
-
-    // Show success toast
-    const toast = getGlobalToast();
-    if (toast) {
-      toast(i18n.t('toast.loginSuccess'), 'success');
-    }
-
-    authLogger.info('Google login successful');
-  } catch (error) {
-    authLogger.error('Google login error', error);
-    const errorMessage = error instanceof Error ? error.message : 'Google login failed. Please try again.';
-
-    // Handle specific error cases
-    const errorWithStatus = error as Error & { status?: number; responseBody?: unknown };
-    if (errorWithStatus.status === 409) {
-      // Email already registered with email/password
-      yield put(setError('Email already registered with email/password. Please login with email and password.'));
-    } else if (errorWithStatus.status === 401) {
-      // Invalid Google ID token
-      yield put(setError('Invalid Google account. Please try again.'));
-    } else {
-      yield put(setError(errorMessage));
-    }
-
-    yield put(setLoading(false));
-  }
 }
 
-function* appleLoginSaga(action: { type: string; payload: { idToken: string; platform: string } }): Generator {
-  const { idToken, platform } = action.payload;
-  const apiClient: ApiClient = (yield select((state: RootState) => state.auth.apiClient)) as ApiClient;
+function* appleLoginSaga(): Generator {
+    const client: ApiClient = (yield select(
+        (state: RootState) => state.auth.apiClient,
+    )) as ApiClient;
 
-  // Clear any previous errors and set loading
-  yield put(setError(null));
-  yield put(setLoading(true));
+    yield put(setError(null));
+    yield put(setLoading(true));
 
-  if (!apiClient) {
-    const errorMessage = 'API client not initialized';
-    yield put(setError(errorMessage));
-    yield put(setLoading(false));
-    return;
-  }
-
-  try {
-    const response = (yield call(apiClient.appleAuth.bind(apiClient), idToken, platform as 'ios' | 'android')) as { accessToken: string } | null;
-
-    // Validate token before saving
-    if (!response?.accessToken) {
-      authLogger.error('Invalid Apple login response', response);
-      const errorMessage = 'Invalid Apple login response: missing accessToken';
-      yield put(setError(errorMessage));
-      yield put(setLoading(false));
-      return;
+    if (!client) {
+        yield put(setError('API client not initialized'));
+        yield put(setLoading(false));
+        return;
     }
 
-    // Save token
-    const saved = (yield call([authService, 'saveAuthTokens'], response.accessToken)) as boolean;
-    if (!saved) {
-      const errorMessage = 'Failed to save authentication token';
-      yield put(setError(errorMessage));
-      yield put(setLoading(false));
-      return;
+    try {
+        const result: FirebaseAuthTypes.UserCredential | null = (yield call([
+            firebaseAuthService,
+            'signInWithApple',
+        ])) as FirebaseAuthTypes.UserCredential | null;
+
+        if (!result) {
+            // User cancelled
+            yield put(setLoading(false));
+            return;
+        }
+
+        yield call(postAuthSetup, client);
+        yield put(setLoading(false));
+
+        const toast = getGlobalToast();
+        if (toast) toast(i18n.t('toast.loginSuccess'), 'success');
+
+        authLogger.info('Apple login successful');
+    } catch (error) {
+        authLogger.error('Apple login error', error);
+        yield put(
+            setError(
+                error instanceof Error ? error.message : 'Apple login failed. Please try again.',
+            ),
+        );
+        yield put(setLoading(false));
     }
-
-    // Verify token was saved
-    const savedTokens = (yield call([authService, 'getAuthTokens'])) as { accessToken: string } | null;
-    if (!savedTokens || !savedTokens.accessToken) {
-      const errorMessage = 'Failed to save authentication token';
-      yield put(setError(errorMessage));
-      yield put(setLoading(false));
-      return;
-    }
-
-    // Set token in API client
-    apiClient.setAuthToken(response.accessToken);
-
-    // Always get full user info from /me endpoint to ensure we have complete data including avatar
-    const userData: User = (yield call(apiClient.getCurrentUser.bind(apiClient))) as User;
-
-    authLogger.info('User data from /me endpoint', {
-      hasAvatar: !!userData?.avatarUrl,
-      avatarUrl: userData?.avatarUrl,
-      email: userData?.email,
-    });
-
-    // Save user
-    if (userData) {
-      yield call([authService, 'saveUser'], userData);
-      yield put(setUser(userData));
-
-      // Check if nickname is missing
-      if (!userData.nickname || userData.nickname.trim() === '') {
-        yield put(setShowNicknameSetup(true));
-      } else {
-        yield put(setShowNicknameSetup(false));
-      }
-    }
-
-    yield put(setAuthenticated(true));
-    yield put(setError(null)); // Clear error on success
-
-    // Fetch homes from server using CRUD endpoint
-    yield call([homeService, homeService.fetchHomes], apiClient);
-
-    // Ensure we have a default home if none exists
-    yield call(ensureDefaultHomeIfNeeded, apiClient);
-
-    // Restore active home ID or select default
-    yield call(restoreOrSelectActiveHome);
-
-    // Load data with correct context
-    yield put(loadItems());
-    yield put(loadTodos());
-    yield put(loadTodoCategoriesAction());
-    yield put(loadCategories());
-
-    yield put(setLoading(false));
-
-    // Show success toast
-    const toast = getGlobalToast();
-    if (toast) {
-      toast(i18n.t('toast.loginSuccess'), 'success');
-    }
-
-    authLogger.info('Apple login successful');
-  } catch (error) {
-    authLogger.error('Apple login error', error);
-    const errorMessage = error instanceof Error ? error.message : 'Apple login failed. Please try again.';
-
-    // Handle specific error cases
-    const errorWithStatus = error as Error & { status?: number; responseBody?: unknown };
-    if (errorWithStatus.status === 409) {
-      // Email already registered with email/password
-      yield put(setError('Email already registered with email/password. Please login with email and password.'));
-    } else if (errorWithStatus.status === 401) {
-      // Invalid Apple ID token
-      yield put(setError('Invalid Apple account. Please try again.'));
-    } else {
-      yield put(setError(errorMessage));
-    }
-
-    yield put(setLoading(false));
-  }
 }
 
 function* logoutSaga() {
-  authLogger.info('logout() called - clearing auth');
+    authLogger.info('logout() called – signing out from Firebase');
 
-  try {
-    yield call(clearAuthAndLogout);
+    try {
+        yield call(clearAuthAndLogout);
 
-    // Show success toast
-    const toast = getGlobalToast();
-    if (toast) {
-      toast(i18n.t('toast.logoutSuccess'), 'success');
+        const toast = getGlobalToast();
+        if (toast) toast(i18n.t('toast.logoutSuccess'), 'success');
+
+        authLogger.info('Logout successful');
+    } catch (error) {
+        authLogger.error('Error during logout', error);
+        yield call(clearAuthAndLogout);
     }
-
-    authLogger.info('Logout successful');
-  } catch (error) {
-    authLogger.error('Error during logout', error);
-    yield call(clearAuthAndLogout);
-  }
 }
 
 function* updateUserSaga(action: { type: string; payload: User }) {
-  try {
-    yield call([authService, 'saveUser'], action.payload);
-    yield put(setUser(action.payload));
-  } catch (error) {
-    authLogger.error('Error updating user', error);
-    throw error;
-  }
+    try {
+        yield call([authService, 'saveUser'], action.payload);
+        yield put(setUser(action.payload));
+    } catch (error) {
+        authLogger.error('Error updating user', error);
+        throw error;
+    }
 }
 
-// Handle active home ID change
-function* handleActiveHomeIdChange(action: { type: string; payload: string | null }) {
-  authLogger.info('Active home ID changed, persisting', action.payload);
+function* handleAuthError(action: { type: string; payload?: string }) {
+    const endpoint = action.payload;
 
-  if (action.payload) {
-    yield call([authService, 'saveActiveHomeId'], action.payload);
-
-    // Check if user is authenticated before loading data
-    // During initial app startup, setActiveHomeId may be dispatched before auth check completes
-    // In that case, the auth saga will handle loading data after successful authentication
-    const isAuthenticated: boolean = (yield select((state: RootState) => state.auth.isAuthenticated)) as boolean;
-    const authLoading: boolean = (yield select((state: RootState) => state.auth.isLoading)) as boolean;
-
-    // Only sync HomeService and reload data if auth is complete
-    // During auth loading, the data will be loaded by checkAuthSaga after successful auth
-    if (!authLoading && isAuthenticated) {
-      // Sync HomeService state
-      // We call this to ensure HomeService's internal state matches Redux
-      homeService.switchHome(action.payload);
-
-      // Reload data for the new home (settings are global, not home-scoped)
-      authLogger.info('Reloading data for new home (user authenticated)', action.payload);
-      yield put(loadItems());
-      yield put(loadTodos());
-      yield put(loadTodoCategoriesAction());
-      yield put(loadCategories());
-    } else {
-      authLogger.info('Skipping data reload during auth initialization, will load after auth completes');
+    // Only invalidate auth when /me endpoint returns 401
+    if (endpoint !== '/api/auth/me') {
+        authLogger.info(`401 on non-/me endpoint, ignoring: ${endpoint}`);
+        return;
     }
-  } else {
-    yield call([authService, 'removeActiveHomeId']);
-    // If no home is active, we might want to clear data or ensure HomeService knows
-    // homeService.switchHome(null); // HomeService might not support null completely yet
-  }
+
+    yield call(clearAuthAndLogout);
+}
+
+function* handleAccessDenied(action: { type: string; payload?: string }) {
+    const deniedUserId = action.payload;
+    authLogger.info('Access denied for user', deniedUserId);
+
+    if (!deniedUserId) return;
+
+    const activeHomeId: string | null = (yield select(
+        (state: RootState) => state.auth.activeHomeId,
+    )) as string | null;
+
+    if (activeHomeId === deniedUserId) {
+        authLogger.warn('Active home access denied, switching to default');
+        yield call(restoreOrSelectActiveHome);
+
+        const toast = getGlobalToast();
+        if (toast) toast('Access to this home has been revoked', 'error');
+    }
+}
+
+function* handleActiveHomeIdChange(action: { type: string; payload: string | null }) {
+    authLogger.info('Active home ID changed, persisting', action.payload);
+
+    if (action.payload) {
+        yield call([authService, 'saveActiveHomeId'], action.payload);
+
+        const isAuthenticated: boolean = (yield select(
+            (state: RootState) => state.auth.isAuthenticated,
+        )) as boolean;
+        const authLoading: boolean = (yield select(
+            (state: RootState) => state.auth.isLoading,
+        )) as boolean;
+
+        if (!authLoading && isAuthenticated) {
+            homeService.switchHome(action.payload);
+            authLogger.info('Reloading data for new home', action.payload);
+            yield put(loadItems());
+            yield put(loadTodos());
+            yield put(loadTodoCategoriesAction());
+            yield put(loadCategories());
+        } else {
+            authLogger.info('Skipping data reload during auth initialization');
+        }
+    } else {
+        yield call([authService, 'removeActiveHomeId']);
+    }
 }
 
 function* handlePasswordResetRequestSaga(action: { type: string; payload: string }) {
-  const email = action.payload;
-  const apiClient: ApiClient = (yield select((state: RootState) => state.auth.apiClient)) as ApiClient;
+    const email = action.payload;
 
-  try {
-    yield put(setLoading(true));
-    yield put(setError(null));
-    yield call(apiClient.passwordResetRequest.bind(apiClient), email);
-    yield put(setLoading(false));
+    try {
+        yield put(setLoading(true));
+        yield put(setError(null));
 
-    const toast = getGlobalToast();
-    if (toast) {
-      toast(i18n.t('login.passwordReset.errors.requestSuccess') || 'Reset code sent!', 'success');
+        yield call([firebaseAuthService, 'sendPasswordResetEmail'], email);
+
+        yield put(setLoading(false));
+
+        const toast = getGlobalToast();
+        if (toast) {
+            toast(
+                i18n.t('login.passwordReset.errors.requestSuccess') || 'Reset email sent!',
+                'success',
+            );
+        }
+    } catch (error) {
+        authLogger.error('Password reset request error', error);
+        const errorMessage =
+            error instanceof Error ? error.message : 'Failed to send reset email';
+        yield put(setError(errorMessage));
+        yield put(setLoading(false));
     }
-  } catch (error) {
-    authLogger.error('Password reset request error', error);
-    const errorMessage = error instanceof Error ? error.message : 'Failed to request reset code';
-    yield put(setError(errorMessage));
-    yield put(setLoading(false));
-  }
 }
 
-function* handlePasswordResetVerifySaga(action: { type: string; payload: { email: string; code: string; newPassword: string } }) {
-  const { email, code, newPassword } = action.payload;
-  const apiClient: ApiClient = (yield select((state: RootState) => state.auth.apiClient)) as ApiClient;
+// ─── Root Watcher ─────────────────────────────────────────────────────────────
 
-  try {
-    yield put(setLoading(true));
-    yield put(setError(null));
-    yield call(apiClient.passwordResetVerify.bind(apiClient), { email, code, newPassword });
-    yield put(setLoading(false));
-
-    const toast = getGlobalToast();
-    if (toast) {
-      toast(i18n.t('login.passwordReset.successTitle'), 'success');
-    }
-  } catch (error) {
-    authLogger.error('Password reset verify error', error);
-    const errorMessage = error instanceof Error ? error.message : 'Failed to reset password';
-    yield put(setError(errorMessage));
-    yield put(setLoading(false));
-  }
-}
-
-// Watchers
 export function* authSaga() {
-  yield takeLatest(INITIALIZE_API_CLIENT, initializeApiClientSaga);
-  yield takeLatest(AUTH_ERROR, handleAuthError);
-  yield takeLatest(ACCESS_DENIED, handleAccessDenied);
-  yield takeLatest(CHECK_AUTH, checkAuthSaga);
-  yield takeLatest(LOGIN, loginSaga);
-  yield takeLatest(SIGNUP, signupSaga);
-  yield takeLatest(GOOGLE_LOGIN, googleLoginSaga);
-  yield takeLatest(APPLE_LOGIN, appleLoginSaga);
-  yield takeLatest(LOGOUT, logoutSaga);
-  yield takeLatest(UPDATE_USER, updateUserSaga);
-  yield takeLatest(setActiveHomeId.type, handleActiveHomeIdChange);
-  yield takeLatest(PASSWORD_RESET_REQUEST, handlePasswordResetRequestSaga);
-  yield takeLatest(PASSWORD_RESET_VERIFY, handlePasswordResetVerifySaga);
+    yield takeLatest(INITIALIZE_API_CLIENT, initializeApiClientSaga);
+    yield takeLatest(AUTH_ERROR, handleAuthError);
+    yield takeLatest(ACCESS_DENIED, handleAccessDenied);
+    yield takeLatest(CHECK_AUTH, checkAuthSaga);
+    yield takeLatest(LOGIN, loginSaga);
+    yield takeLatest(SIGNUP, signupSaga);
+    yield takeLatest(GOOGLE_LOGIN, googleLoginSaga);
+    yield takeLatest(APPLE_LOGIN, appleLoginSaga);
+    yield takeLatest(LOGOUT, logoutSaga);
+    yield takeLatest(UPDATE_USER, updateUserSaga);
+    yield takeLatest(setActiveHomeId.type, handleActiveHomeIdChange);
+    yield takeLatest(PASSWORD_RESET_REQUEST, handlePasswordResetRequestSaga);
 }

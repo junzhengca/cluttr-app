@@ -13,10 +13,8 @@ import {
   checkAuth,
   updateUser,
   passwordResetRequestAction,
-  passwordResetVerifyAction,
 } from './sagas/authSaga';
 import { clearUpdateResult } from './slices/settingsSlice';
-import { User } from '../types/api';
 import { Settings } from '../types/settings';
 import { InventoryItem } from '../types/inventory';
 import { reduxLogger } from '../utils/Logger';
@@ -50,25 +48,20 @@ export const useAuth = () => {
     [dispatch]
   );
 
-  const googleLogin = useCallback(
-    (idToken: string, platform: 'ios' | 'android') => {
-      dispatch({ type: 'auth/GOOGLE_LOGIN', payload: { idToken, platform } });
-    },
-    [dispatch]
-  );
+  const googleLogin = useCallback(() => {
+    dispatch({ type: 'auth/GOOGLE_LOGIN' });
+  }, [dispatch]);
 
-  const appleLogin = useCallback(
-    (idToken: string, platform: 'ios' | 'android') => {
-      dispatch({ type: 'auth/APPLE_LOGIN', payload: { idToken, platform } });
-    },
-    [dispatch]
-  );
+  const appleLogin = useCallback(() => {
+    dispatch({ type: 'auth/APPLE_LOGIN' });
+  }, [dispatch]);
 
   const checkAuthSync = useCallback(() => {
     dispatch(checkAuth());
   }, [dispatch]);
 
   const updateUserData = useCallback((nickname: string) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     dispatch(updateUser({ nickname } as any));
   }, [dispatch]);
 
@@ -78,10 +71,6 @@ export const useAuth = () => {
 
   const requestPasswordReset = useCallback((email: string) => {
     dispatch(passwordResetRequestAction(email));
-  }, [dispatch]);
-
-  const verifyPasswordReset = useCallback((email: string, code: string, newPassword: string) => {
-    dispatch(passwordResetVerifyAction(email, code, newPassword));
   }, [dispatch]);
 
   return {
@@ -100,7 +89,6 @@ export const useAuth = () => {
     updateUser: updateUserData,
     getApiClient,
     requestPasswordReset,
-    verifyPasswordReset,
   };
 };
 
