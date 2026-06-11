@@ -7,7 +7,7 @@ import type { StyledProps } from '../../utils/styledComponents';
 import { useTheme } from '../../theme/ThemeProvider';
 import { MemberCard } from '../molecules';
 import { EmptyState, AddEntityButton, SectionTitle } from '../atoms';
-import { Member } from '../../types/api';
+import { Member } from '../../types/user';
 
 interface OwnerInfo {
   userId: string;

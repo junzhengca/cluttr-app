@@ -8,8 +8,8 @@ import { useTranslation } from 'react-i18next';
 import { BottomSheetModal } from '@gorhom/bottom-sheet';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
-import * as FileSystem from 'expo-file-system/legacy';
 import * as ImageManipulator from 'expo-image-manipulator';
+import storage from '@react-native-firebase/storage';
 import i18n from '../i18n/i18n';
 import type { StyledProps } from '../utils/styledComponents';
 import { uiLogger } from '../utils/Logger';
@@ -24,8 +24,9 @@ import {
   HorizontalSplitter,
   SettingsTextButton,
 } from '../components';
-import { useAuth, useAppSelector } from '../store/hooks';
-import { Member } from '../types/api';
+import { useAuth, useAppDispatch } from '../store/hooks';
+import { setUser } from '../store/slices/authSlice';
+import { userService } from '../services/UserService';
 import { useTheme } from '../theme/ThemeProvider';
 import { calculateBottomPadding } from '../utils/layout';
 import { formatDate } from '../utils/formatters';
@@ -160,42 +161,18 @@ const AuthSubtitle = styled(Text)`
 `;
 
 export const ProfileScreen: React.FC = () => {
-  const { user, isAuthenticated, isLoading, error, logout, updateUser, getApiClient } = useAuth();
-  const activeHomeId = useAppSelector((state) => state.auth.activeHomeId);
+  const { user, isAuthenticated, isLoading, error, logout } = useAuth();
+  const dispatch = useAppDispatch();
 
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
   const { t } = useTranslation();
   const theme = useTheme();
   const [isUploading, setIsUploading] = useState(false);
-  const [_members, setMembers] = useState<Member[]>([]);
   const loginBottomSheetRef = useRef<BottomSheetModal | null>(null);
   const signupBottomSheetRef = useRef<BottomSheetModal | null>(null);
   const editNicknameBottomSheetModalRef = useRef<BottomSheetModal | null>(null);
   const editNicknameBottomSheetRef = useRef<EditNicknameBottomSheetRef | null>(null);
-
-  const loadMembers = useCallback(async () => {
-    try {
-      const apiClient = getApiClient();
-      if (!apiClient) return;
-
-      // List members for the current active home
-      if (activeHomeId) {
-        const response = await apiClient.listMembers(activeHomeId);
-        setMembers(response.members);
-      } else {
-        setMembers([]);
-      }
-    } catch (error) {
-      uiLogger.error('Error loading members in Profile', error);
-    }
-  }, [getApiClient, activeHomeId]);
-
-  useEffect(() => {
-    if (isAuthenticated) {
-      loadMembers();
-    }
-  }, [isAuthenticated, loadMembers]);
 
   const getLocale = useCallback(() => {
     return i18n.language === 'zh' || i18n.language === 'zh-CN' ? 'zh-CN' : 'en-US';
@@ -231,6 +208,10 @@ export const ProfileScreen: React.FC = () => {
         return;
       }
 
+      if (!user) {
+        throw new Error('Not signed in');
+      }
+
       const imageUri = result.assets[0].uri;
       setIsUploading(true);
 
@@ -242,28 +223,17 @@ export const ProfileScreen: React.FC = () => {
         { compress: 0.8, format: ImageManipulator.SaveFormat.JPEG }
       );
 
-      // Convert resized image to base64
-      const base64 = await FileSystem.readAsStringAsync(manipulatedImage.uri, {
-        encoding: 'base64',
+      // Upload to Firebase Storage. A unique filename per upload ensures the
+      // new download URL busts the image cache.
+      const avatarRef = storage().ref(`avatars/${user.id}/avatar-${Date.now()}.jpg`);
+      await avatarRef.putFile(manipulatedImage.uri);
+      const downloadUrl = await avatarRef.getDownloadURL();
+
+      // Persist the avatar URL on the user profile
+      const updatedUser = await userService.updateProfile(user.id, {
+        avatarUrl: downloadUrl,
       });
-
-      // Get API client and upload image
-      const apiClient = getApiClient();
-      if (!apiClient) {
-        throw new Error('Failed to initialize API client');
-      }
-
-      // Upload image
-      const uploadResponse = await apiClient.uploadImage(base64);
-      if (!uploadResponse.url) {
-        throw new Error('Upload response missing URL');
-      }
-
-      // Update avatar URL
-      const updatedUser = await apiClient.updateAvatarUrl(uploadResponse.url);
-
-      // Update user state (nickname is the field tracked in Redux)
-      await updateUser(updatedUser.nickname || '');
+      dispatch(setUser(updatedUser));
 
       Alert.alert(
         t('profile.avatar.uploadSuccess.title'),
@@ -278,7 +248,7 @@ export const ProfileScreen: React.FC = () => {
     } finally {
       setIsUploading(false);
     }
-  }, [t, getApiClient, updateUser]);
+  }, [t, user, dispatch]);
 
   const handleLogout = () => {
     Alert.alert(
@@ -494,13 +464,8 @@ export const ProfileScreen: React.FC = () => {
       <EditNicknameBottomSheet
         ref={editNicknameBottomSheetRef}
         bottomSheetRef={editNicknameBottomSheetModalRef}
-        onNicknameUpdated={async () => {
-          // Refresh user data
-          const apiClient = getApiClient();
-          if (apiClient) {
-            const updatedUser = await apiClient.getCurrentUser();
-            await updateUser(updatedUser.nickname || '');
-          }
+        onNicknameUpdated={() => {
+          // The sheet already persisted the nickname and updated Redux
         }}
       />
     </Container>

@@ -1,0 +1,27 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Avatars: one folder per user; readable by any signed-in user
+    // (avatars appear in shared-home member lists).
+    match /avatars/{userId}/{fileName} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null
+        && request.auth.uid == userId
+        && request.resource.size < 5 * 1024 * 1024
+        && request.resource.contentType.matches('image/.*');
+    }
+
+    // Home-scoped media (e.g. item photos): membership checked against
+    // the Firestore home document.
+    match /homes/{homeId}/{allPaths=**} {
+      allow read: if request.auth != null
+        && request.auth.uid in firestore.get(
+             /databases/(default)/documents/homes/$(homeId)).data.memberIds;
+      allow write: if request.auth != null
+        && request.auth.uid in firestore.get(
+             /databases/(default)/documents/homes/$(homeId)).data.memberIds
+        && request.resource.size < 10 * 1024 * 1024
+        && request.resource.contentType.matches('image/.*');
+    }
+  }
+}

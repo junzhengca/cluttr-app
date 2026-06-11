@@ -4,7 +4,6 @@ import { homeService } from '../services/HomeService';
 import { Home, HomeLoadingState } from '../types/home';
 import { setActiveHomeId } from '../store/slices/authSlice';
 import { RootState } from '../store';
-import { ApiClient } from '../services/ApiClient';
 
 export const useHome = () => {
     const dispatch = useDispatch();
@@ -13,9 +12,10 @@ export const useHome = () => {
 
     // Use Redux as the source of truth for the active home ID
     const activeHomeId = useSelector((state: RootState) => state.auth.activeHomeId);
+    const currentUserId = useSelector((state: RootState) => state.auth.user?.id);
     const [currentHome, setCurrentHome] = useState<Home | undefined>(undefined);
 
-    // Subscribe to HomeService changes
+    // Subscribe to HomeService changes (fed by the live Firestore snapshot)
     useEffect(() => {
         const unsubscribe = homeService.subscribe(() => {
             setHomes(homeService.getHomes());
@@ -40,21 +40,12 @@ export const useHome = () => {
     }, [activeHomeId, homes]);
 
     // Auto-correct stale activeHomeId: if the active home no longer exists
-    // in the available homes list (e.g. removed by sync), switch to the first available
+    // in the available homes list (e.g. access revoked), switch to the first available
     useEffect(() => {
         if (activeHomeId && homes.length > 0 && !homes.find(h => h.id === activeHomeId)) {
             dispatch(setActiveHomeId(homes[0].id));
         }
     }, [activeHomeId, homes, dispatch]);
-
-    // Sync loading state from service
-    useEffect(() => {
-        const unsubscribe = homeService.subscribe(() => {
-            setLoadingState(homeService.getLoadingState());
-        });
-        setLoadingState(homeService.getLoadingState());
-        return unsubscribe;
-    }, []);
 
     const handleSwitchHome = useCallback((homeId: string) => {
         // Just dispatch the action, the saga will handle persistence and service sync
@@ -62,50 +53,35 @@ export const useHome = () => {
         homeService.switchHome(homeId);
     }, [dispatch]);
 
-    const handleFetchHomes = useCallback(async (apiClient: ApiClient) => {
-        return await homeService.fetchHomes(apiClient);
+    const handleCreateHome = useCallback(async (name: string, address?: string) => {
+        if (!currentUserId) return null;
+        const newHome = homeService.createHome(currentUserId, name, address);
+        dispatch(setActiveHomeId(newHome.id));
+        return newHome;
+    }, [dispatch, currentUserId]);
+
+    const handleUpdateHome = useCallback(async (id: string, updates: { name?: string; address?: string }) => {
+        return homeService.updateHome(id, updates);
     }, []);
 
-    const handleCreateHome = useCallback(async (apiClient: ApiClient, name: string, address?: string) => {
-        const newHome = await homeService.createHome(apiClient, name, address);
-        if (newHome) {
-            // Dispatch action to update Redux and persist
-            dispatch(setActiveHomeId(newHome.id));
-            return newHome;
-        }
-        return null;
-    }, [dispatch]);
-
-    const handleUpdateHome = useCallback(async (apiClient: ApiClient, id: string, updates: { name?: string; address?: string }) => {
-        return await homeService.updateHome(apiClient, id, updates);
-    }, []);
-
-    const handleDeleteHome = useCallback(async (apiClient: ApiClient, id: string, userId?: string) => {
+    const handleDeleteHome = useCallback(async (id: string) => {
+        if (!currentUserId) return false;
         const wasActiveHome = activeHomeId === id;
-        const success = await homeService.deleteHome(apiClient, id, userId);
+        const success = await homeService.deleteHome(id, currentUserId);
         if (success && wasActiveHome) {
             // HomeService has already switched internally; sync Redux with the next available home
             const availableHomes = homeService.getHomes();
-            if (availableHomes.length > 0) {
-                dispatch(setActiveHomeId(availableHomes[0].id));
-            }
+            dispatch(setActiveHomeId(availableHomes.length > 0 ? availableHomes[0].id : null));
         }
         return success;
-    }, [activeHomeId, dispatch]);
+    }, [activeHomeId, dispatch, currentUserId]);
 
-    const handleEnsureDefaultHome = useCallback(async (apiClient: ApiClient) => {
-        const home = await homeService.ensureDefaultHome(apiClient);
-        if (home) {
-            dispatch(setActiveHomeId(home.id));
-        }
-        return home;
-    }, [dispatch]);
-
-    const handleInit = useCallback(async () => {
-        await homeService.init();
-        // Initialize homes from service after init
-        setHomes(homeService.getHomes());
-    }, []);
+    const handleUpdateSettings = useCallback(
+        async (id: string, updates: Partial<{ canShareInventory: boolean; canShareTodos: boolean }>) => {
+            return homeService.updateSettings(id, updates);
+        },
+        [],
+    );
 
     return {
         homes,
@@ -116,8 +92,6 @@ export const useHome = () => {
         updateHome: handleUpdateHome,
         deleteHome: handleDeleteHome,
         switchHome: handleSwitchHome,
-        fetchHomes: handleFetchHomes,
-        ensureDefaultHome: handleEnsureDefaultHome,
-        init: handleInit,
+        updateHomeSettings: handleUpdateSettings,
     };
 };

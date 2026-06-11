@@ -1,77 +1,38 @@
-import { fileSystemService } from './FileSystemService';
+import firestore from '@react-native-firebase/firestore';
 import { Home, HomeLoadingState, HomeOperationType } from '../types/home';
 import { generateItemId } from '../utils/idGenerator';
-import { dataInitializationService } from './DataInitializationService';
 import { storageLogger } from '../utils/Logger';
-import { ApiClient } from './ApiClient';
 import {
-    ListHomesResponse,
-    CreateHomeRequest,
-    UpdateHomeRequest,
-    DeleteHomeResponse,
-    LeaveHomeResponse,
-    HomeDto,
-} from '../types/api';
+    homeRef,
+    invitationRef,
+    inventoryCol,
+    inventoryCategoriesCol,
+    locationsCol,
+    todosCol,
+    todoCategoriesCol,
+    fireWrite,
+    isoNow,
+} from './firebase/firestoreRefs';
 
-const HOMES_FILE = 'homes.json';
+const DELETE_PAGE_SIZE = 450;
 
-interface HomesData {
-    homes: Home[];
-}
-
+/**
+ * HomeService
+ *
+ * Holds the live list of homes the user belongs to. The list is fed by the
+ * Firestore homes snapshot (see authSaga) — writes go straight to Firestore
+ * with an optimistic local update, and the next snapshot reconciles.
+ */
 class HomeService {
-    // Simple state instead of RxJS BehaviorSubject
     private homes: Home[] = [];
     private currentHomeId: string | null = null;
     private listeners: Set<() => void> = new Set();
 
-    // Loading state tracking
     private loadingState: HomeLoadingState = {
         isLoading: false,
         operation: null,
         error: null,
     };
-
-    /**
-     * Initialize the service: read homes from disk.
-     * Does NOT create default home - homes should come from server or explicit creation.
-     */
-    async init(): Promise<void> {
-        const data = await fileSystemService.readFile<HomesData>(HOMES_FILE);
-        const homesData = data || { homes: [] };
-
-        // If no homes exist, initialize with empty array (no default home)
-        if (!homesData.homes || homesData.homes.length === 0) {
-            storageLogger.info('No homes found, initializing with empty list');
-            homesData.homes = [];
-            await fileSystemService.writeFile(HOMES_FILE, homesData);
-        }
-
-        // Migration: Clean up legacy sync metadata from existing homes
-        const cleanedHomes = homesData.homes.map(home => {
-            const legacyKeys = [
-                'serverUpdatedAt', 'clientUpdatedAt', 'lastSyncedAt',
-                'pendingCreate', 'pendingUpdate', 'pendingLeave', 'pendingJoin', 'pendingDelete'
-            ];
-            const hasLegacyKeys = legacyKeys.some(key => key in home);
-            if (hasLegacyKeys) {
-                storageLogger.info(`Migrating home ${home.id}, removing sync metadata`);
-                const cleaned = { ...home };
-                legacyKeys.forEach(key => delete (cleaned as Record<string, unknown>)[key]);
-                return cleaned as Home;
-            }
-            return home;
-        });
-
-        // If migration happened, persist the cleaned data
-        if (cleanedHomes.length !== homesData.homes.length ||
-            cleanedHomes.some((h, i) => h !== homesData.homes[i])) {
-            homesData.homes = cleanedHomes;
-            await fileSystemService.writeFile(HOMES_FILE, homesData);
-        }
-
-        this.homes = homesData.homes;
-    }
 
     /**
      * Subscribe to home state changes
@@ -84,23 +45,14 @@ class HomeService {
         };
     }
 
-    /**
-     * Notify all listeners of state change
-     */
     private notifyListeners(): void {
         this.listeners.forEach(cb => cb());
     }
 
-    /**
-     * Get current loading state
-     */
     getLoadingState(): HomeLoadingState {
         return { ...this.loadingState };
     }
 
-    /**
-     * Set loading state
-     */
     private setLoading(operation: HomeOperationType | null, error: string | null = null): void {
         this.loadingState = {
             isLoading: operation !== null,
@@ -111,134 +63,110 @@ class HomeService {
     }
 
     /**
-     * Persist homes to local storage
+     * Replace the homes list from the Firestore snapshot (single source of
+     * truth). Keeps the current home selection when still valid.
      */
-    private async persist(): Promise<void> {
-        const data: HomesData = { homes: this.homes };
-        await fileSystemService.writeFile(HOMES_FILE, data);
+    setHomesFromSnapshot(homes: Home[]): void {
+        this.homes = homes;
+        if (this.currentHomeId && !homes.find(h => h.id === this.currentHomeId)) {
+            this.currentHomeId = homes[0]?.id ?? null;
+        }
+        this.notifyListeners();
+    }
+
+    /** Clear all local home state (on logout). */
+    reset(): void {
+        this.homes = [];
+        this.currentHomeId = null;
+        this.notifyListeners();
     }
 
     /**
-     * Convert API DTO to domain model
+     * Create a new home and switch to it. The write is latency-compensated:
+     * the home is inserted locally right away and the snapshot confirms it.
      */
-    private dtoToHome(dto: HomeDto): Home {
-        const now = new Date().toISOString();
-        return {
-            id: dto.homeId,
-            name: dto.name,
-            address: dto.address,
-            role: dto.role,
-            owner: dto.owner,
-            settings: dto.settings,
-            invitationCode: dto.invitationCode,
-            memberCount: dto.memberCount,
-            isOwner: dto.role === 'owner',
-            createdAt: dto.createdAt || now,
-            updatedAt: dto.updatedAt || now,
+    createHome(uid: string, name: string, address?: string): Home {
+        const id = generateItemId();
+        const now = isoNow();
+        const home: Home = {
+            id,
+            name,
+            address,
+            ownerId: uid,
+            members: { [uid]: { role: 'owner', joinedAt: now } },
+            role: 'owner',
+            isOwner: true,
+            settings: { canShareInventory: true, canShareTodos: true },
+            memberCount: 1,
+            createdAt: now,
+            updatedAt: now,
         };
-    }
 
-    /**
-     * Fetch homes from server
-     */
-    async fetchHomes(apiClient: ApiClient): Promise<Home[]> {
-        this.setLoading('list');
-        try {
-            const response = await apiClient.listHomes() as ListHomesResponse;
-            const homes = response.homes.map(dto => this.dtoToHome(dto));
-
-            // Merge with local homes (preserve local homes that haven't been synced yet)
-            const syncedHomeIds = new Set(homes.map(h => h.id));
-            const localOnlyHomes = this.homes.filter(h => !syncedHomeIds.has(h.id));
-
-            const mergedHomes = [...homes, ...localOnlyHomes];
-            this.homes = mergedHomes;
-
-            // Persist merged list
-            await this.persist();
-
-            this.setLoading(null);
-            this.notifyListeners();
-            return this.homes;
-        } catch (error) {
-            const errorMessage = error instanceof Error ? error.message : 'Failed to fetch homes';
-            storageLogger.error('Failed to fetch homes:', error);
-            this.setLoading(null, errorMessage);
-            throw error;
-        }
-    }
-
-    /**
-     * Create a new home and switch to it
-     */
-    async createHome(apiClient: ApiClient, name: string, address?: string): Promise<Home | null> {
-        this.setLoading('create');
-        try {
-            const newId = generateItemId();
-            const request: CreateHomeRequest = {
-                homeId: newId,
+        fireWrite(
+            homeRef(id).set({
                 name,
-                address,
-            };
+                address: address ?? null,
+                ownerId: uid,
+                settings: home.settings,
+                members: home.members,
+                memberIds: [uid],
+                createdAt: now,
+                updatedAt: now,
+            }),
+            'Failed to create home',
+        );
 
-            const response = await apiClient.createHome(request) as { home: HomeDto };
-            const newHome = this.dtoToHome(response.home);
-
-            // Add to homes list
-            this.homes.push(newHome);
-            await this.persist();
-
-            // Switch to the new home
-            this.switchHome(newHome.id);
-
-            // Initialize home-specific data files
-            await dataInitializationService.initializeHomeData(newHome.id);
-
-            this.setLoading(null);
-            this.notifyListeners();
-            return newHome;
-        } catch (error) {
-            const errorMessage = error instanceof Error ? error.message : 'Failed to create home';
-            storageLogger.error('Failed to create home:', error);
-            this.setLoading(null, errorMessage);
-            throw error;
-        }
+        this.homes = [...this.homes, home];
+        this.currentHomeId = id;
+        this.notifyListeners();
+        return home;
     }
 
     /**
-     * Update an existing home
+     * Update home name/address.
      */
-    async updateHome(apiClient: ApiClient, id: string, updates: { name?: string; address?: string }): Promise<boolean> {
-        this.setLoading('update');
-        try {
-            const request: UpdateHomeRequest = updates;
-            const response = await apiClient.updateHome(id, request) as { home: HomeDto };
+    updateHome(id: string, updates: { name?: string; address?: string }): boolean {
+        const index = this.homes.findIndex(h => h.id === id);
+        if (index < 0) return false;
 
-            // Update local home
-            const index = this.homes.findIndex(h => h.id === id);
-            if (index >= 0) {
-                this.homes[index] = this.dtoToHome(response.home);
-                await this.persist();
-                this.notifyListeners();
-            }
+        const now = isoNow();
+        fireWrite(homeRef(id).update({ ...updates, updatedAt: now }), 'Failed to update home');
 
-            this.setLoading(null);
-            return true;
-        } catch (error) {
-            const errorMessage = error instanceof Error ? error.message : 'Failed to update home';
-            storageLogger.error('Failed to update home:', error);
-            this.setLoading(null, errorMessage);
-            return false;
-        }
+        this.homes = this.homes.map(h =>
+            h.id === id ? { ...h, ...updates, updatedAt: now } : h,
+        );
+        this.notifyListeners();
+        return true;
     }
 
     /**
-     * Delete (or leave) a home
-     * @param apiClient - API client instance
-     * @param id - Home ID
-     * @param userId - Optional user ID. Required when leaving as a member. If not provided and role is member, will use owner's userId (for backward compatibility)
+     * Update the sharing toggles (owner only — enforced by security rules).
      */
-    async deleteHome(apiClient: ApiClient, id: string, userId?: string): Promise<boolean> {
+    updateSettings(
+        id: string,
+        updates: Partial<{ canShareInventory: boolean; canShareTodos: boolean }>,
+    ): boolean {
+        const home = this.homes.find(h => h.id === id);
+        if (!home || !home.settings) return false;
+
+        const settings = { ...home.settings, ...updates };
+        const now = isoNow();
+        fireWrite(
+            homeRef(id).update({ settings, updatedAt: now }),
+            'Failed to update home settings',
+        );
+
+        this.homes = this.homes.map(h =>
+            h.id === id ? { ...h, settings, updatedAt: now } : h,
+        );
+        this.notifyListeners();
+        return true;
+    }
+
+    /**
+     * Delete a home (owner) or leave it (member).
+     */
+    async deleteHome(id: string, uid: string): Promise<boolean> {
         this.setLoading('delete');
         try {
             const home = this.homes.find(h => h.id === id);
@@ -247,35 +175,17 @@ class HomeService {
                 return false;
             }
 
-            if (home.role === 'owner') {
-                // Owner deleting the home
-                await apiClient.deleteHome(id) as DeleteHomeResponse;
+            if (home.ownerId === uid) {
+                await this.cascadeDelete(home);
             } else {
-                // Member leaving the home - userId is required
-                const memberUserId = userId || home.owner?.userId;
-                if (!memberUserId) {
-                    this.setLoading(null, 'User ID not found');
-                    return false;
-                }
-                await apiClient.leaveHome(id, memberUserId) as LeaveHomeResponse;
+                await this.leaveHome(id, uid);
             }
 
-            // Remove from local list
-            const wasActiveHome = this.currentHomeId === id;
+            // Optimistic removal; the homes snapshot confirms it
             this.homes = this.homes.filter(h => h.id !== id);
-            await this.persist();
-
-            // If we deleted the active home, switch to another one
-            if (wasActiveHome) {
-                if (this.homes.length > 0) {
-                    this.switchHome(this.homes[0].id);
-                } else {
-                    this.currentHomeId = null;
-                }
+            if (this.currentHomeId === id) {
+                this.currentHomeId = this.homes[0]?.id ?? null;
             }
-
-            // Delete home-specific files
-            await fileSystemService.deleteHomeFiles(id);
 
             this.setLoading(null);
             this.notifyListeners();
@@ -284,6 +194,73 @@ class HomeService {
             const errorMessage = error instanceof Error ? error.message : 'Failed to delete home';
             storageLogger.error('Failed to delete home:', error);
             this.setLoading(null, errorMessage);
+            return false;
+        }
+    }
+
+    /**
+     * Cascade delete: subcollections first (owner access requires the parent
+     * home doc to exist), then the invitation doc (its delete rule resolves
+     * ownership through the home doc), then the home doc itself.
+     */
+    private async cascadeDelete(home: Home): Promise<void> {
+        const subcollections = [
+            inventoryCol,
+            inventoryCategoriesCol,
+            locationsCol,
+            todosCol,
+            todoCategoriesCol,
+        ];
+
+        for (const col of subcollections) {
+            // Page through and batch-delete (500 writes max per batch)
+            for (;;) {
+                const page = await col(home.id).limit(DELETE_PAGE_SIZE).get();
+                if (page.empty) break;
+
+                const batch = firestore().batch();
+                page.docs.forEach(doc => batch.delete(doc.ref));
+                await batch.commit();
+
+                if (page.size < DELETE_PAGE_SIZE) break;
+            }
+        }
+
+        if (home.invitationCode) {
+            try {
+                await invitationRef(home.invitationCode).delete();
+            } catch (error) {
+                storageLogger.warn('Failed to delete invitation doc during home delete', error);
+            }
+        }
+
+        await homeRef(home.id).delete();
+    }
+
+    /**
+     * Leave a home as a member (removes own membership entry).
+     */
+    async leaveHome(homeId: string, uid: string): Promise<void> {
+        await homeRef(homeId).update({
+            [`members.${uid}`]: firestore.FieldValue.delete(),
+            memberIds: firestore.FieldValue.arrayRemove(uid),
+            updatedAt: isoNow(),
+        });
+    }
+
+    /**
+     * Remove a member from a home (owner only — enforced by security rules).
+     */
+    async removeMember(homeId: string, memberUid: string): Promise<boolean> {
+        try {
+            await homeRef(homeId).update({
+                [`members.${memberUid}`]: firestore.FieldValue.delete(),
+                memberIds: firestore.FieldValue.arrayRemove(memberUid),
+                updatedAt: isoNow(),
+            });
+            return true;
+        } catch (error) {
+            storageLogger.error('Failed to remove member:', error);
             return false;
         }
     }
@@ -314,50 +291,6 @@ class HomeService {
      */
     getHomes(): Home[] {
         return [...this.homes];
-    }
-
-    /**
-     * Ensure at least one home exists, creating default if needed
-     */
-    async ensureDefaultHome(apiClient: ApiClient): Promise<Home | null> {
-        const homes = this.getHomes();
-
-        if (homes.length === 0) {
-            storageLogger.info('No homes found, creating default home...');
-            try {
-                const newHome = await this.createHome(apiClient, 'My Home');
-                if (newHome) {
-                    storageLogger.info('Default home created and initialized');
-                    return newHome;
-                }
-            } catch (error) {
-                storageLogger.error('Failed to create default home via API, falling back to local-only home', error);
-                // Fallback: create local-only home
-                const now = new Date().toISOString();
-                const defaultHome: Home = {
-                    id: generateItemId(),
-                    name: 'My Home',
-                    createdAt: now,
-                    updatedAt: now,
-                };
-
-                this.homes.push(defaultHome);
-                await this.persist();
-                this.switchHome(defaultHome.id);
-                await dataInitializationService.initializeHomeData(defaultHome.id);
-                return defaultHome;
-            }
-            return null;
-        }
-
-        // If we have homes but no active home, set the first one
-        if (!this.currentHomeId && homes.length > 0) {
-            this.switchHome(homes[0].id);
-            await dataInitializationService.initializeHomeData(homes[0].id);
-            return homes[0];
-        }
-
-        return this.getCurrentHome();
     }
 }
 

@@ -1,14 +1,17 @@
+export interface HomeMemberEntry {
+    role: 'owner' | 'member';
+    joinedAt: string;
+    /** The invitation code the member joined with (absent for the owner). */
+    inviteCode?: string;
+}
+
 export interface Home {
     id: string;
     name: string;
     address?: string; // Detailed address
+    ownerId: string;
+    members: Record<string, HomeMemberEntry>;
     role?: 'owner' | 'member';
-    owner?: {
-        userId: string;
-        email: string;
-        nickname: string;
-        avatarUrl?: string;
-    };
     settings?: {
         canShareInventory: boolean;
         canShareTodos: boolean;

@@ -2,15 +2,16 @@ import { call, put, select, takeLatest } from 'redux-saga/effects';
 import type { RootState } from '../types';
 import {
   setCategories,
-  silentSetCategories,
-  addCategory as addCategorySlice,
-  updateCategory as updateCategorySlice,
-  removeCategory as removeCategorySlice,
   setLoading,
   setError,
 } from '../slices/inventoryCategorySlice';
+import { setActiveHomeId } from '../slices/authSlice';
+import { createSubscriptionSaga } from './firestoreSubscriptionSaga';
 import { inventoryCategoryService } from '../../services/InventoryCategoryService';
-import type { ApiClient } from '../../services/ApiClient';
+import {
+  inventoryCategoriesCol,
+  inventoryCategoryFromDoc,
+} from '../../services/firebase/firestoreRefs';
 import type { InventoryCategory } from '../../types/inventory';
 import { sagaLogger } from '../../utils/Logger';
 import { getGlobalToast } from '../../components/organisms/ToastProvider';
@@ -39,19 +40,6 @@ export const deleteCategoryAction = (id: string) => ({
 });
 
 /**
- * Get API client from Redux state
- */
-function* getApiClient(): Generator<unknown, ApiClient, unknown> {
-  const state = (yield select()) as RootState;
-  const apiClient = state.auth.apiClient;
-  if (!apiClient) {
-    sagaLogger.error('No API client available');
-    throw new Error('No API client available');
-  }
-  return apiClient;
-}
-
-/**
  * Get active home ID from Redux state
  */
 function* getActiveHomeId(): Generator<unknown, string, unknown> {
@@ -64,45 +52,20 @@ function* getActiveHomeId(): Generator<unknown, string, unknown> {
   return activeHomeId;
 }
 
-function* loadCategoriesSaga(): Generator<unknown, void, unknown> {
-  try {
-    const apiClient = (yield call(getApiClient)) as ApiClient;
-    const homeId = (yield call(getActiveHomeId)) as string;
+/** Live inventory-categories listener for the active home. */
+const subscribeCategoriesSaga = createSubscriptionSaga<InventoryCategory>({
+  name: 'Inventory categories',
+  buildQuery: inventoryCategoriesCol,
+  fromDoc: inventoryCategoryFromDoc,
+  sort: (a, b) => a.createdAt.localeCompare(b.createdAt),
+  setItems: setCategories,
+  setLoading,
+  setError,
+});
 
-    yield put(setLoading(true));
-    yield put(setError(null));
-
-    const categories = (yield call(
-      [inventoryCategoryService, 'fetchCategories'],
-      apiClient,
-      homeId
-    )) as InventoryCategory[];
-    yield put(setCategories(categories));
-  } catch (error) {
-    sagaLogger.error('Error loading inventory categories', error);
-    const errorMessage =
-      error instanceof Error ? error.message : 'Failed to load categories';
-    yield put(setError(errorMessage));
-  } finally {
-    yield put(setLoading(false));
-  }
-}
-
+/** Silent loads are no-ops: the live listener is already current. */
 function* silentLoadCategoriesSaga(): Generator<unknown, void, unknown> {
-  try {
-    const apiClient = (yield call(getApiClient)) as ApiClient;
-    const homeId = (yield call(getActiveHomeId)) as string;
-
-    const categories = (yield call(
-      [inventoryCategoryService, 'fetchCategories'],
-      apiClient,
-      homeId
-    )) as InventoryCategory[];
-    yield put(silentSetCategories(categories));
-  } catch (error) {
-    sagaLogger.error('Error silently loading inventory categories', error);
-    // Don't update error state on silent load
-  }
+  yield call([sagaLogger, 'verbose'], 'Silent category load skipped (live listener active)');
 }
 
 function* addCategorySaga(action: {
@@ -113,22 +76,9 @@ function* addCategorySaga(action: {
   if (!name.trim()) return;
 
   try {
-    const apiClient = (yield call(getApiClient)) as ApiClient;
     const homeId = (yield call(getActiveHomeId)) as string;
-
-    yield put(setLoading(true));
     yield put(setError(null));
-
-    const newCategory = (yield call(
-      [inventoryCategoryService, 'createCategory'],
-      apiClient,
-      homeId,
-      { name, description, color, icon }
-    )) as InventoryCategory | null;
-
-    if (newCategory) {
-      yield put(addCategorySlice(newCategory));
-    }
+    inventoryCategoryService.createCategory(homeId, { name, description, color, icon });
   } catch (error) {
     sagaLogger.error('Error adding inventory category', error);
     const errorMessage =
@@ -136,8 +86,6 @@ function* addCategorySaga(action: {
     yield put(setError(errorMessage));
     const toast = getGlobalToast();
     if (toast) toast(errorMessage, 'error');
-  } finally {
-    yield put(setLoading(false));
   }
 }
 
@@ -148,23 +96,9 @@ function* updateCategorySaga(action: {
   const { id, name, description, color, icon } = action.payload;
 
   try {
-    const apiClient = (yield call(getApiClient)) as ApiClient;
     const homeId = (yield call(getActiveHomeId)) as string;
-
-    yield put(setLoading(true));
     yield put(setError(null));
-
-    const updatedCategory = (yield call(
-      [inventoryCategoryService, 'updateCategory'],
-      apiClient,
-      homeId,
-      id,
-      { name, description, color, icon }
-    )) as InventoryCategory | null;
-
-    if (updatedCategory) {
-      yield put(updateCategorySlice(updatedCategory));
-    }
+    inventoryCategoryService.updateCategory(homeId, id, { name, description, color, icon });
   } catch (error) {
     sagaLogger.error('Error updating inventory category', error);
     const errorMessage =
@@ -172,8 +106,6 @@ function* updateCategorySaga(action: {
     yield put(setError(errorMessage));
     const toast = getGlobalToast();
     if (toast) toast(errorMessage, 'error');
-  } finally {
-    yield put(setLoading(false));
   }
 }
 
@@ -181,34 +113,10 @@ function* deleteCategorySaga(action: {
   type: string;
   payload: string;
 }): Generator<unknown, void, unknown> {
-  const id = action.payload;
-
   try {
-    const apiClient = (yield call(getApiClient)) as ApiClient;
     const homeId = (yield call(getActiveHomeId)) as string;
-
-    yield put(setLoading(true));
     yield put(setError(null));
-
-    // Optimistically remove from UI first
-    yield put(removeCategorySlice(id));
-
-    // Then call API
-    const success = (yield call(
-      [inventoryCategoryService, 'deleteCategory'],
-      apiClient,
-      homeId,
-      id
-    )) as boolean;
-
-    if (!success) {
-      // Revert on failure
-      sagaLogger.error('Failed to delete inventory category');
-      const errorMessage = 'Failed to delete category';
-      yield put(setError(errorMessage));
-      // Reload categories to get correct state
-      yield call(loadCategoriesSaga);
-    }
+    inventoryCategoryService.deleteCategory(homeId, action.payload);
   } catch (error) {
     sagaLogger.error('Error deleting inventory category', error);
     const errorMessage =
@@ -216,16 +124,12 @@ function* deleteCategorySaga(action: {
     yield put(setError(errorMessage));
     const toast = getGlobalToast();
     if (toast) toast(errorMessage, 'error');
-    // Reload categories to revert optimistic update
-    yield call(loadCategoriesSaga);
-  } finally {
-    yield put(setLoading(false));
   }
 }
 
 // Watcher
 export function* inventoryCategorySaga(): Generator<unknown, void, unknown> {
-  yield takeLatest(LOAD_CATEGORIES, loadCategoriesSaga);
+  yield takeLatest([setActiveHomeId.type, LOAD_CATEGORIES], subscribeCategoriesSaga);
   yield takeLatest(SILENT_LOAD_CATEGORIES, silentLoadCategoriesSaga);
   yield takeLatest(ADD_CATEGORY, addCategorySaga);
   yield takeLatest(UPDATE_CATEGORY, updateCategorySaga);

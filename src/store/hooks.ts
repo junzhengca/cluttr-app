@@ -32,7 +32,6 @@ export const useAuth = () => {
   const isAuthenticated = useAppSelector((state) => state.auth.isAuthenticated);
   const isLoading = useAppSelector((state) => state.auth.isLoading);
   const error = useAppSelector((state) => state.auth.error);
-  const apiClient = useAppSelector((state) => state.auth.apiClient);
 
   const login = useCallback(
     (email: string, password: string) => {
@@ -61,13 +60,8 @@ export const useAuth = () => {
   }, [dispatch]);
 
   const updateUserData = useCallback((nickname: string) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    dispatch(updateUser({ nickname } as any));
+    dispatch(updateUser({ nickname }));
   }, [dispatch]);
-
-  const getApiClient = useCallback(() => {
-    return apiClient;
-  }, [apiClient]);
 
   const requestPasswordReset = useCallback((email: string) => {
     dispatch(passwordResetRequestAction(email));
@@ -87,7 +81,6 @@ export const useAuth = () => {
     }, [dispatch]),
     checkAuth: checkAuthSync,
     updateUser: updateUserData,
-    getApiClient,
     requestPasswordReset,
   };
 };

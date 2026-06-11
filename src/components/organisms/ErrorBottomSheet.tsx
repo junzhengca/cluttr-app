@@ -8,7 +8,7 @@ import { useTranslation } from 'react-i18next';
 import * as Clipboard from 'expo-clipboard';
 import { useTheme } from '../../theme/ThemeProvider';
 import type { StyledProps } from '../../utils/styledComponents';
-import { ErrorDetails } from '../../types/api';
+import { ErrorDetails } from '../../types/errors';
 import { BottomActionBar } from '../molecules';
 import { uiLogger } from '../../utils/Logger';
 

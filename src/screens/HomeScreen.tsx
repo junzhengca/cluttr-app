@@ -8,8 +8,6 @@ import {
   FlatList,
   ActivityIndicator,
   View,
-  Alert,
-  Platform,
   TouchableWithoutFeedback,
   Keyboard,
   Text,
@@ -20,11 +18,7 @@ import { useNavigation } from '@react-navigation/native';
 import { BottomSheetModal } from '@gorhom/bottom-sheet';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useTranslation } from 'react-i18next';
-import * as ImagePicker from 'expo-image-picker';
-import * as ImageManipulator from 'expo-image-manipulator';
-import * as FileSystem from 'expo-file-system/legacy';
 import type { StyledProps, StyledPropsWith } from '../utils/styledComponents';
-import { uiLogger } from '../utils/Logger';
 
 import {
   PageHeader,
@@ -94,14 +88,13 @@ export const HomeScreen: React.FC = () => {
   );
   const [selectedStatusId, setSelectedStatusId] = useState<string | null>(null);
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
-  const [isAIRecognizing, setIsAIRecognizing] = useState(false);
   const [recognizedItemData, setRecognizedItemData] =
     useState<Partial<InventoryItem> | null>(null);
   const [isFilterVisible, setIsFilterVisible] = useState(false);
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<NavigationProp>();
   const { items, loading: isLoading } = useInventory();
-  const { user, getApiClient } = useAuth();
+  const { user } = useAuth();
   const { currentHome } = useHome();
   const loginBottomSheetRef = useRef<BottomSheetModal | null>(null);
   const signupBottomSheetRef = useRef<BottomSheetModal | null>(null);
@@ -215,121 +208,6 @@ export const HomeScreen: React.FC = () => {
   const handleSignupSuccess = useCallback(async () => {
     // User will be automatically updated via auth state
   }, []);
-
-  const handleAIAutomatic = useCallback(async () => {
-    try {
-      setIsAIRecognizing(true);
-      let result;
-
-      // Try to use camera first (if not on web)
-      if (Platform.OS !== 'web') {
-        try {
-          // Request camera permissions
-          const cameraPermission =
-            await ImagePicker.requestCameraPermissionsAsync();
-
-          if (cameraPermission.granted) {
-            // Try to launch camera
-            result = await ImagePicker.launchCameraAsync({
-              mediaTypes: ['images'],
-              allowsEditing: true,
-              quality: 0.8,
-            });
-          } else {
-            // Permission denied, use image picker
-            throw new Error('Camera permission denied');
-          }
-        } catch {
-          // Camera not available or failed (e.g., on simulator), use image picker
-          result = await ImagePicker.launchImageLibraryAsync({
-            mediaTypes: ['images'],
-            allowsEditing: true,
-            quality: 0.8,
-          });
-        }
-      } else {
-        // On web, use image picker
-        result = await ImagePicker.launchImageLibraryAsync({
-          mediaTypes: ['images'],
-          allowsEditing: true,
-          quality: 0.8,
-        });
-      }
-
-      if (result.canceled) {
-        setIsAIRecognizing(false);
-        return;
-      }
-
-      if (!result.assets || result.assets.length === 0) {
-        setIsAIRecognizing(false);
-        return;
-      }
-
-      const imageUri = result.assets[0].uri;
-      // Get original dimensions, default to reasonable values if not available
-      const originalWidth = result.assets[0].width || 1920;
-      const originalHeight = result.assets[0].height || 1080;
-
-      // Calculate dimensions to maintain aspect ratio with max 720p (1280x720)
-      let targetWidth = originalWidth;
-      let targetHeight = originalHeight;
-      const maxWidth = 1280;
-      const maxHeight = 720;
-
-      if (originalWidth > maxWidth || originalHeight > maxHeight) {
-        const aspectRatio = originalWidth / originalHeight;
-
-        if (originalWidth > originalHeight) {
-          // Landscape: constrain by width
-          targetWidth = maxWidth;
-          targetHeight = Math.round(maxWidth / aspectRatio);
-        } else if (originalHeight > originalWidth) {
-          // Portrait: constrain by height
-          targetHeight = maxHeight;
-          targetWidth = Math.round(maxHeight * aspectRatio);
-        } else {
-          // Square: use max dimension
-          targetWidth = Math.min(maxWidth, maxHeight);
-          targetHeight = targetWidth;
-        }
-      }
-
-      // Resize image to max 720p
-      const manipulatedImage = await ImageManipulator.manipulateAsync(
-        imageUri,
-        [{ resize: { width: targetWidth, height: targetHeight } }],
-        { compress: 0.8, format: ImageManipulator.SaveFormat.JPEG }
-      );
-
-      // Convert resized image to base64
-      const base64 = await FileSystem.readAsStringAsync(manipulatedImage.uri, {
-        encoding: 'base64',
-      });
-
-      // Call AI recognition API
-      const apiClient = getApiClient();
-      if (!apiClient) {
-        throw new Error('API client not available');
-      }
-
-      const recognizedItem = await apiClient.recognizeItem(base64);
-
-      setRecognizedItemData(recognizedItem);
-
-      createItemBottomSheetRef.current?.present();
-    } catch (error) {
-      uiLogger.error('AI automatic image capture error', error);
-      Alert.alert(
-        t('createItem.errors.title'),
-        error instanceof Error
-          ? error.message
-          : 'Failed to capture image. Please try again.'
-      );
-    } finally {
-      setIsAIRecognizing(false);
-    }
-  }, [t, getApiClient]);
 
   const handleAvatarPress = () => {
     const rootNavigation = navigation.getParent();
@@ -489,8 +367,6 @@ export const HomeScreen: React.FC = () => {
         {canAccessInventory && !showNoHomeState && (
           <FloatingActionButton
             onManualAdd={handleManualAdd}
-            onAIAutomatic={handleAIAutomatic}
-            isAIRecognizing={isAIRecognizing}
           />
         )}
       </Container>

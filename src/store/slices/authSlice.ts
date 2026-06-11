@@ -1,17 +1,13 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { User } from '../../types/api';
-import { ApiClient } from '../../services/ApiClient';
+import { User } from '../../types/user';
 
 interface AuthState {
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
   error: string | null;
-  apiBaseUrl: string;
-  apiClient: ApiClient | null;
   showNicknameSetup: boolean;
   activeHomeId: string | null;
-
 }
 
 const initialState: AuthState = {
@@ -19,11 +15,8 @@ const initialState: AuthState = {
   isAuthenticated: false,
   isLoading: true,
   error: null,
-  apiBaseUrl: '',
-  apiClient: null,
   showNicknameSetup: false,
   activeHomeId: null,
-
 };
 
 const authSlice = createSlice({
@@ -42,12 +35,6 @@ const authSlice = createSlice({
     setError: (state, action: PayloadAction<string | null>) => {
       state.error = action.payload;
     },
-    setApiBaseUrl: (state, action: PayloadAction<string>) => {
-      state.apiBaseUrl = action.payload;
-    },
-    setApiClient: (state, action: PayloadAction<ApiClient | null>) => {
-      state.apiClient = action.payload;
-    },
     setShowNicknameSetup: (state, action: PayloadAction<boolean>) => {
       state.showNicknameSetup = action.payload;
     },
@@ -62,10 +49,7 @@ export const {
   setAuthenticated,
   setLoading,
   setError,
-  setApiBaseUrl,
-  setApiClient,
   setShowNicknameSetup,
   setActiveHomeId,
 } = authSlice.actions;
 export default authSlice.reducer;
-

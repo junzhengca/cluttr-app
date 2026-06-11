@@ -6,7 +6,7 @@ import styled from 'styled-components/native';
 import { Swipeable } from 'react-native-gesture-handler';
 import { useTranslation } from 'react-i18next';
 import type { StyledProps } from '../../utils/styledComponents';
-import { Member } from '../../types/api';
+import { Member } from '../../types/user';
 
 const CardWrapper = styled(View)<{ noMarginBottom?: boolean }>`
   margin-bottom: ${({ theme, noMarginBottom }: StyledProps & { noMarginBottom?: boolean }) =>

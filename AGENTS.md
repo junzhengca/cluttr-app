@@ -6,7 +6,7 @@
 
 ## OVERVIEW
 
-Cluttr: React Native home inventory app with Expo, Redux Toolkit + Saga for state management, bottom-sheet modals with IME-safe uncontrolled inputs for Chinese text.
+Cluttr: React Native home inventory app with Expo (expo-router, entry `app/_layout.tsx`), Redux Toolkit + Saga for state management, bottom-sheet modals with IME-safe uncontrolled inputs for Chinese text. **The backend is 100% Firebase** (project `cluttr-app-f3c18`): Auth + Firestore (data, real-time listeners) + Storage (images). There is no custom server.
 
 ## FIREBASE
 
@@ -18,6 +18,9 @@ Cluttr: React Native home inventory app with Expo, Redux Toolkit + Saga for stat
 |------|---------|
 | `firebase.json` | Declares enabled services, Auth providers, Firestore rules/indexes, Storage rules |
 | `.firebaserc` | Maps environment aliases (`default`, `staging`, `production`) to Firebase project IDs |
+| `firestore.rules` | Firestore security rules — the entire authorization model (roles, sharing toggles, invitations) lives here |
+| `firestore.indexes.json` | Composite indexes (currently empty — the only query is a single `array-contains`; adding `orderBy` to the homes query would require one) |
+| `storage.rules` | Storage security rules (avatars, home-scoped media) |
 
 ### Auth Providers
 
@@ -34,15 +37,30 @@ To add a new provider:
 2. Add the provider entry under `auth.providers` in `firebase.json`.
 3. Implement the sign-in flow in `src/services/FirebaseAuthService.ts`.
 
-### Backend Integration
+### Data Layer: Firestore
 
-The backend **must** verify Firebase ID tokens (not its own JWTs). Every authenticated API request from the app now sends a Firebase ID token as the `Authorization: Bearer <token>` header. The backend should:
+All app data lives in Firestore, accessed directly from the client with `@react-native-firebase/firestore` (offline persistence on by default). Schema:
 
-1. Use the Firebase Admin SDK to verify the token.
-2. Identify users by their Firebase UID (`uid` claim).
-3. Auto-create a user record on first sign-in for social login providers.
+```
+users/{uid}                               email, nickname, avatarUrl, timestamps
+homes/{homeId}                            name, address, ownerId, settings{canShareInventory,canShareTodos},
+                                          invitationCode, members{uid→{role,joinedAt,inviteCode?}}, memberIds[]
+homes/{homeId}/inventory/{id}             item fields + batches[] array
+homes/{homeId}/inventoryCategories/{id}
+homes/{homeId}/locations/{id}
+homes/{homeId}/todos/{id}
+homes/{homeId}/todoCategories/{id}
+invitations/{code}                        doc ID = invitation code; homeId + denormalized preview
+                                          (homeName, owner profile, settings) for non-member validation
+```
 
-The `/api/auth/login`, `/api/auth/signup`, `/api/auth/google`, and `/api/auth/apple` backend endpoints are no longer called by the client. These are legacy and should be removed.
+- **Timestamps are ISO strings** (client clock), not Firestore Timestamps.
+- `memberIds` mirrors `members` keys (enforced by rules) so the homes list is one live query: `homes.where('memberIds','array-contains',uid)`.
+- **Reads are real-time**: each domain saga wraps `onSnapshot` in a redux-saga `eventChannel` (`createSnapshotChannel` in `src/services/firebase/firestoreRefs.ts`), subscribed via `takeLatest(setActiveHomeId, ...)` — switching home or logging out auto-cancels the previous listener. The homes listener lives in `authSaga`.
+- **Writes are fire-and-forget** (`fireWrite` helper): latency compensation updates the local snapshot immediately (even offline); errors surface as toasts. Inventory/location field edits are debounced 400 ms to coalesce billed writes.
+- **Invitations are rules-only** (no server): accepting = the invitee updates the home doc adding their own membership entry; rules validate the code doc. See `src/services/InvitationService.ts`.
+- **Home deletion cascade is client-side** (`HomeService.deleteHome`): batch-delete subcollections → invitation doc → home doc last (rules deny subcollection access once the home doc is gone, so orphans are unreachable; retry-safe).
+- **Access revocation signal**: the home disappearing from the homes snapshot (and `permission-denied` on domain listeners → `accessDenied` action).
 
 ## STRUCTURE
 
@@ -53,36 +71,42 @@ The `/api/auth/login`, `/api/auth/signup`, `/api/auth/google`, and `/api/auth/ap
 │   ├── screens/           # Screen components (10 files)
 │   ├── store/             # Redux Toolkit + Saga (17 files: slices/, sagas/, hooks.ts)
 │   ├── navigation/         # React Navigation 2-level (RootStack + 4 tabs)
-│   ├── services/           # Business logic (SyncService, ApiClient, etc.)
+│   ├── services/           # Business logic (Firestore services, FirebaseAuthService, firebase/firestoreRefs.ts)
 │   ├── utils/              # Shared utilities (11 files: Logger, formatters, validation)
-│   ├── hooks/              # Custom React hooks (useKeyboardVisibility, useItemForm, useToast)
-│   ├── types/              # TypeScript types (inventory, api, settings)
+│   ├── hooks/              # Custom React hooks (useKeyboardVisibility, useItemForm, useToast, useHome)
+│   ├── types/              # TypeScript types (inventory, home, user, settings, errors)
 │   ├── theme/              # Styled-components theme
 │   ├── i18n/              # i18next locales (en, zh-CN)
 │   └── data/               # Static config (categories, locations, statuses)
-└── App.tsx               # Entry with provider nesting
+└── app/_layout.tsx        # expo-router entry with provider nesting
 ```
+
+Components use atomic design: `src/components/{atoms,molecules,organisms}`.
 
 ## WHERE TO LOOK
 
 | Task                | Location                                                                             | Notes                                            |
 | ------------------- | ------------------------------------------------------------------------------------ | ------------------------------------------------ |
 | Redux state/actions | `src/store/slices/*.ts`, `src/store/sagas/*.ts`                                      | Use domain hooks from `src/store/hooks.ts`       |
-| API calls           | `src/services/ApiClient.ts`                                                          | Get client via `useAuth().getApiClient()`        |
+| Firestore refs/converters/channels | `src/services/firebase/firestoreRefs.ts`                              | Collection refs, doc⇄domain converters, `createSnapshotChannel`, `fireWrite` |
+| Data writes         | `src/services/{Inventory,Todo,Location,InventoryCategory,TodoCategory}Service.ts`     | Slim write helpers; import singletons directly   |
+| Homes/members       | `src/services/HomeService.ts`                                                        | Snapshot-fed; cascade delete, leave/remove member |
+| Invitations         | `src/services/InvitationService.ts`                                                  | Code create/validate/accept (rules-validated)    |
+| User profiles       | `src/services/UserService.ts`                                                        | `users/{uid}` docs: ensure, update, member join  |
 | Navigation          | `src/navigation/RootStack.tsx`, `src/navigation/TabNavigator.tsx`                    | 2-level: RootStack (modals) + MainTabs (screens) |
-| Sync logic          | `src/services/SyncService.ts`                                                        | File I/O, queue management, conflict resolution  |
 | Form patterns       | `src/components/CreateItemBottomSheet.tsx`, `src/components/EditItemBottomSheet.tsx` | IME-safe uncontrolled inputs                     |
 | Styling             | `src/theme/ThemeProvider.tsx`, `src/utils/styledComponents.ts`                       | Theme via `useTheme()`, styled via `StyledProps` |
-| Firebase logic      | `src/services/FirebaseAuthService.ts`                                                | Auth specific logic                              |
+| Firebase auth       | `src/services/FirebaseAuthService.ts`                                                | Email/Google/Apple sign-in, password reset       |
+| Security rules      | `firestore.rules`, `storage.rules`                                                   | The entire authorization model                   |
 
 ## CONVENTIONS
 
 - **Redux hooks pattern**: Use `useAuth()`, `useInventory()`, etc. from `src/store/hooks.ts` - NOT Context providers
 - **Uncontrolled inputs**: Bottom sheet forms use `defaultValue` + refs for IME composition (Chinese Pinyin support)
 - **Top-level BottomSheetModal styling**: ALWAYS set `backgroundStyle={{ backgroundColor: theme.colors.background }}` and use rounded `ContentContainer` for dark mode support
-- **API client**: ALWAYS get from `useAuth().getApiClient()` - never `new ApiClient()`
+- **Data access**: import service singletons directly (`homeService`, `userService`, `inventoryService`, …); never instantiate Firestore collection refs ad hoc in components — add them to `firestoreRefs.ts`
 - **Styled-components**: Inject theme via `({ theme }: StyledProps) => ...`
-- **Saga pattern**: Domain sagas in `src/store/sagas/`, watchers use `takeLatest`, access API client via `select()`
+- **Saga pattern**: Domain sagas in `src/store/sagas/`; listeners via `takeLatest([setActiveHomeId, LOAD_*], subscribe*Saga)` with `eventChannel`, writes via service helpers
 - **Selector pattern**: Memoized with `createSelector` (inventorySlice, todoSlice)
 - **OAuth client IDs**: Use iOS/Android client IDs (NOT Web) with custom scheme `com.cluttrapp.cluttr://`
 - **Firebase keys**: Never commit `GoogleService-Info.plist` or `google-services.json` (gitignored).
@@ -90,7 +114,9 @@ The `/api/auth/login`, `/api/auth/signup`, `/api/auth/google`, and `/api/auth/ap
 
 ## ANTI-PATTERNS (THIS PROJECT)
 
-- **NEVER** manually initialize ApiClient in components - use `useAuth().getApiClient()`
+- **NEVER** await Firestore writes in UI/saga flows (they block until server ack and hang offline) — use the `fireWrite` helper; await only explicit, online-expected operations (home delete cascade, invitation accept, profile/avatar update)
+- **NEVER** write `undefined` into Firestore docs (rejected) — `ignoreUndefinedProperties` is enabled in `firestoreRefs.ts`, but prefer explicit `null`
+- **NEVER** change the Firestore schema or membership model without updating `firestore.rules` in the same change (IaC rule above)
 - **NEVER** use controlled inputs (`value` prop) in bottom sheet modals - breaks IME composition
 - **NEVER** use Web OAuth client IDs for authentication - only iOS (`EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID`) and Android (`EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID`). *Note: `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID` is used for Firebase Auth configuration only.*
 - **NEVER** use `console.log()` - use Logger from `src/utils/Logger.ts`
@@ -100,9 +126,9 @@ The `/api/auth/login`, `/api/auth/signup`, `/api/auth/google`, and `/api/auth/ap
 ## UNIQUE STYLES
 
 - **Dual-state IME pattern**: Store form values in refs (update on `onChangeText`), sync to state on blur/submit, reset with `key` prop
-- **Non-serializable Redux**: ApiClient instance, SyncService instance, callback Sets stored in state (explicitly ignored in serializableCheck)
-- **Optimistic updates**: Inventory/todo sagas update state before API call, refresh silently on success/failure
-- **Callback suppression dance**: `syncCallbackRegistry.setSuppressCallbacks(true)` during sync operations to prevent cascading updates
+- **Non-serializable Redux**: callback Sets / Sets of ids stored in state (explicitly ignored in serializableCheck)
+- **Snapshot-as-truth**: sagas apply optimistic slice updates for instant feedback, but the Firestore snapshot always wins — there is no revert logic
+- **HomeService observer**: homes live outside Redux in `homeService` (observer pattern), fed by the authSaga homes channel; `useHome()` subscribes
 - **Promise-based hooks**: `useSettings()` uses Promise + timeout to track update completion
 - **2-level navigation**: RootStack (modals/screens) → MainTabs (bottom tabs) → Home/Notes/Share/Settings stacks
 
@@ -136,9 +162,48 @@ make build-android-internal-local    # Local internal APK
 make build-ios-production-local      # Local production build (auto-increments build number)
 ```
 
+## DEV HARNESS (AI LOOP)
+
+**E2E test playbook: see `E2E_TESTS.md`** — detailed CUJs/test cases (auth, inventory, todos, homes, sharing/invitations, real-time, avatar), harness operation gotchas, admin Firestore REST access for verification, and state-reset/cleanup procedures. Use it to run smoke or full regression passes.
+
+`scripts/harness.sh` runs the app on the iOS simulator (Expo dev client) and lets an agent interact with it and read feedback. Runtime state lives in `.harness/` (gitignored). UI driver: [AXe](https://github.com/cameroncooke/AXe) (`brew install cameroncooke/axe/axe`).
+
+```bash
+# Lifecycle
+./scripts/harness.sh doctor            # Check tooling, sim, app install, Metro health
+./scripts/harness.sh up                # Boot sim, start Metro (background), launch dev client
+./scripts/harness.sh down [--shutdown] # Stop Metro (optionally shut down sim)
+./scripts/harness.sh status            # Sim/Metro/app state + recent log lines
+./scripts/harness.sh build             # Local eas dev-client build + install (slow; only
+                                       # needed when native deps / app.json plugins change)
+
+# Feedback
+./scripts/harness.sh logs [-n N | -f]  # Tail Metro log (app Logger output lands here)
+./scripts/harness.sh screenshot [name] # PNG to .harness/screenshots/, prints path
+./scripts/harness.sh ui                # Accessibility tree JSON (axe describe-ui)
+
+# Interaction (axe wrappers, simulator UDID auto-resolved)
+./scripts/harness.sh tap --label "Log In"   # or: tap -x 201 -y 592
+./scripts/harness.sh type 'hello'
+./scripts/harness.sh swipe|key|button|touch|gesture ...
+./scripts/harness.sh reload            # Full JS reload (Fast Refresh on save is automatic)
+```
+
+**Canonical loop**: edit code → Fast Refresh applies automatically (use `reload` after .env/i18n changes) → `screenshot` / `ui` / `logs` to observe → `tap`/`type` to interact.
+
+**Harness tips (learned in practice):**
+- RN `TextInput` placeholders show up as TextField **values**, not labels, in the accessibility tree — tap inputs by coordinates from `ui` frames; tap a field first, then `type`.
+- Some buttons (e.g. styled Touchables) expose no accessibility label — fall back to coordinate taps. Frames in `ui` are in points and match screenshot pixels ÷ 3.
+- Stray typing with no focused field can open the Expo dev menu — close it via `tap --label "Close"`.
+- `up`/`reload` auto-accept the iOS "Open in Cluttr?" deep-link dialog.
+
+**Test accounts** (Firebase email/password, created via the signup UI):
+- Primary: `juncapersonal+cluttr-ai-test@gmail.com` / `Cluttr-AI-e16c71d6e9f2` (UID `LhiZ0HUZIIYL4NdA56Ce55jt4Wo1`, nickname "Cluttr Tester")
+- Secondary (for sharing/invitation tests): `juncapersonal+cluttr-ai-test2@gmail.com` / `Cluttr-AI-e16c71d6e9f2` (nickname "Tester Two", member of the primary account's "My Home")
+
 ## NOTES
 
-- **SyncService is largest file** (1234 lines) - god object handling queue, merge, cleanup; consider extraction
+- **Legacy Railway backend (`cluttr-server-v2`) is fully decommissioned client-side** (2026-06-11): ApiClient and all `/api/*` calls were replaced with direct Firestore/Storage access. The AI item-recognition feature was removed with it (would need a Cloud Function to re-add).
 - **Bottom sheets duplicate** ~80% code between CreateItem and EditItemBottomSheet - extract to generic component
 - **No testing infrastructure** - no test files or Jest config
 - **Build artifacts committed** - build-_.tar.gz, build-_.ipa in root should be gitignored

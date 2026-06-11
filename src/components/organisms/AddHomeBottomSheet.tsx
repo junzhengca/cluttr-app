@@ -73,7 +73,7 @@ export const AddHomeBottomSheet: React.FC<AddHomeBottomSheetProps> = ({
     const theme = useTheme();
     const insets = useSafeAreaInsets();
     const { createHome, loadingState } = useHome();
-    const { getApiClient, isAuthenticated } = useAuth();
+    const { isAuthenticated } = useAuth();
     const { isKeyboardVisible } = useKeyboardVisibility();
     const [name, setName] = useState('');
     const [address, setAddress] = useState('');
@@ -119,14 +119,8 @@ export const AddHomeBottomSheet: React.FC<AddHomeBottomSheetProps> = ({
                 return;
             }
 
-            const apiClient = getApiClient();
-            if (!apiClient) {
-                uiLogger.error('Cannot create home: API client not available');
-                return;
-            }
-
             try {
-                await createHome(apiClient, name, address);
+                await createHome(name, address);
 
                 // Clear inputs and state
                 setName('');
@@ -160,7 +154,7 @@ export const AddHomeBottomSheet: React.FC<AddHomeBottomSheetProps> = ({
                 />
             </FooterContainer>
         );
-    }, [insets.bottom, isKeyboardVisible, isAuthenticated, getApiClient, createHome, name, address, error, isLoading, handleClose, onHomeCreated, nameInputRef, addressInputRef, t, submitKey, theme]);
+    }, [insets.bottom, isKeyboardVisible, isAuthenticated, createHome, name, address, error, isLoading, handleClose, onHomeCreated, nameInputRef, addressInputRef, t, submitKey, theme]);
 
     // Estimated height of footer: 16px (top) + 16px (bottom) + 50px (button) = ~82px + inset
     // When keyboard is visible, safe area is removed, so we just use base height

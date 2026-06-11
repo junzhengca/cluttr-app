@@ -1,8 +1,136 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    match /{document=**} {
-      allow read, write: if false;
+
+    function signedIn() {
+      return request.auth != null;
+    }
+    function uid() {
+      return request.auth.uid;
+    }
+    function homeData(homeId) {
+      return get(/databases/$(database)/documents/homes/$(homeId)).data;
+    }
+
+    // ── users ──────────────────────────────────────────────────────────
+    // Profiles power member lists and invitation previews, so any
+    // signed-in user may `get` one, but profiles are not enumerable.
+    match /users/{userId} {
+      allow get: if signedIn();
+      allow list: if false;
+      allow create: if signedIn() && uid() == userId;
+      allow update: if signedIn() && uid() == userId
+        && request.resource.data.email == resource.data.email;
+      allow delete: if false;
+    }
+
+    // ── homes ──────────────────────────────────────────────────────────
+    match /homes/{homeId} {
+      function isMember() {
+        return signedIn() && uid() in resource.data.memberIds;
+      }
+      function isOwner() {
+        return signedIn() && resource.data.ownerId == uid();
+      }
+      // memberIds must always mirror the keys of the members map, and the
+      // owner must keep an owner-role entry.
+      function consistent(data) {
+        return data.memberIds.toSet() == data.members.keys().toSet()
+          && data.members[data.ownerId].role == 'owner';
+      }
+      // The write touches only the caller's own membership entry.
+      function onlyOwnMembershipChanged() {
+        return request.resource.data.diff(resource.data).affectedKeys()
+                 .hasOnly(['members', 'memberIds', 'updatedAt'])
+          && request.resource.data.members.diff(resource.data.members)
+                 .affectedKeys().hasOnly([uid()]);
+      }
+      function hasValidInvite() {
+        let entry = request.resource.data.members[uid()];
+        return entry.role == 'member'
+          && get(/databases/$(database)/documents/invitations/$(entry.inviteCode))
+               .data.homeId == homeId;
+      }
+
+      allow get, list: if isMember();
+
+      allow create: if signedIn()
+        && request.resource.data.ownerId == uid()
+        && request.resource.data.members.keys().hasOnly([uid()])
+        && request.resource.data.members[uid()].role == 'owner'
+        && request.resource.data.memberIds == [uid()]
+        && request.resource.data.settings.keys().hasAll(['canShareInventory', 'canShareTodos']);
+
+      allow update: if consistent(request.resource.data) && (
+          // Owner: full control, but ownership cannot transfer and the
+          // owner cannot remove themselves.
+          ( isOwner()
+            && request.resource.data.ownerId == resource.data.ownerId
+            && resource.data.ownerId in request.resource.data.memberIds )
+          // Member self-leave: removes exactly their own entry.
+          || ( isMember() && !isOwner()
+            && onlyOwnMembershipChanged()
+            && !(uid() in request.resource.data.members)
+            && request.resource.data.memberIds == resource.data.memberIds.removeAll([uid()]) )
+          // Invitation accept: a non-member adds themselves as 'member',
+          // recording an invite code that must point at this home.
+          || ( signedIn()
+            && !(uid() in resource.data.memberIds)
+            && onlyOwnMembershipChanged()
+            && request.resource.data.memberIds == resource.data.memberIds.concat([uid()])
+            && hasValidInvite() )
+        );
+
+      allow delete: if isOwner();
+    }
+
+    // ── home-scoped data ───────────────────────────────────────────────
+    // Owner always has access; members are gated by the home's sharing
+    // toggles. One get() of the parent home doc per evaluation.
+    function canAccessInventory(homeId) {
+      let h = homeData(homeId);
+      return signedIn() && (
+        h.ownerId == uid()
+        || (uid() in h.memberIds && h.settings.canShareInventory == true));
+    }
+    function canAccessTodos(homeId) {
+      let h = homeData(homeId);
+      return signedIn() && (
+        h.ownerId == uid()
+        || (uid() in h.memberIds && h.settings.canShareTodos == true));
+    }
+
+    match /homes/{homeId}/inventory/{itemId} {
+      allow read, write: if canAccessInventory(homeId);
+    }
+    match /homes/{homeId}/inventoryCategories/{categoryId} {
+      allow read, write: if canAccessInventory(homeId);
+    }
+    match /homes/{homeId}/locations/{locationId} {
+      allow read, write: if canAccessInventory(homeId);
+    }
+    match /homes/{homeId}/todos/{todoId} {
+      allow read, write: if canAccessTodos(homeId);
+    }
+    match /homes/{homeId}/todoCategories/{categoryId} {
+      allow read, write: if canAccessTodos(homeId);
+    }
+
+    // ── invitations ────────────────────────────────────────────────────
+    // Doc ID is the invitation code. Any signed-in user may `get` one to
+    // validate a code; codes are never listable. Regenerating a code is
+    // delete-old + create-new.
+    match /invitations/{code} {
+      allow get: if signedIn();
+      allow list: if false;
+      allow create: if signedIn()
+        && request.resource.data.homeId is string
+        && homeData(request.resource.data.homeId).ownerId == uid()
+        && request.resource.data.createdBy == uid()
+        && request.resource.data.settings == homeData(request.resource.data.homeId).settings;
+      allow update: if false;
+      allow delete: if signedIn()
+        && homeData(resource.data.homeId).ownerId == uid();
     }
   }
 }

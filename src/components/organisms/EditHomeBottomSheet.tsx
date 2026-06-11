@@ -70,7 +70,7 @@ export const EditHomeBottomSheet: React.FC<EditHomeBottomSheetProps> = ({
     const theme = useTheme();
     const insets = useSafeAreaInsets();
     const { updateHome, loadingState } = useHome();
-    const { getApiClient, isAuthenticated } = useAuth();
+    const { isAuthenticated } = useAuth();
     const { isKeyboardVisible } = useKeyboardVisibility();
     const [name, setName] = useState('');
     const [address, setAddress] = useState('');
@@ -114,14 +114,8 @@ export const EditHomeBottomSheet: React.FC<EditHomeBottomSheetProps> = ({
                 return;
             }
 
-            const apiClient = getApiClient();
-            if (!apiClient) {
-                uiLogger.error('Cannot update home: API client not available');
-                return;
-            }
-
             try {
-                const success = await updateHome(apiClient, home.id, { name, address });
+                const success = await updateHome(home.id, { name, address });
 
                 if (success) {
                     handleClose();
@@ -150,7 +144,7 @@ export const EditHomeBottomSheet: React.FC<EditHomeBottomSheetProps> = ({
                 />
             </FooterContainer>
         );
-    }, [insets.bottom, isKeyboardVisible, isAuthenticated, getApiClient, updateHome, home, name, address, error, isLoading, handleClose, onHomeUpdated, t, theme]);
+    }, [insets.bottom, isKeyboardVisible, isAuthenticated, updateHome, home, name, address, error, isLoading, handleClose, onHomeUpdated, t, theme]);
 
     const footerHeight = 82 + (isKeyboardVisible ? 0 : insets.bottom);
 

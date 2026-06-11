@@ -1,34 +1,39 @@
-import { call, put, takeLatest, select, fork, take } from 'redux-saga/effects';
-import { eventChannel, EventChannel } from 'redux-saga';
+import { call, put, takeLatest, select, take } from 'redux-saga/effects';
+import { EventChannel } from 'redux-saga';
 import {
     setUser,
     setAuthenticated,
     setLoading,
     setError,
-    setApiClient,
     setShowNicknameSetup,
     setActiveHomeId,
 } from '../slices/authSlice';
-import { loadItems } from './inventorySaga';
-import { loadTodos, loadTodoCategoriesAction } from './todoSaga';
-import { loadCategories } from './inventoryCategorySaga';
-import { apiClient, type ApiClient } from '../../services/ApiClient';
 import { authService } from '../../services/AuthService';
 import { firebaseAuthService } from '../../services/FirebaseAuthService';
 import { homeService } from '../../services/HomeService';
-import { User, ErrorDetails } from '../../types/api';
+import { userService } from '../../services/UserService';
+import {
+    createSnapshotChannel,
+    homesQueryForUser,
+    homeFromDoc,
+    SnapshotEvent,
+} from '../../services/firebase/firestoreRefs';
+import { User } from '../../types/user';
+import { ErrorDetails } from '../../types/errors';
 import type { RootState } from '../types';
 import { getGlobalToast } from '../../components/organisms/ToastProvider';
 import i18n from '../../i18n/i18n';
 import { authLogger } from '../../utils/Logger';
 import type { FirebaseAuthTypes } from '@react-native-firebase/auth';
 
-// Global error handler - set by App.tsx
+// Global error handler - set by app/_layout.tsx
 let globalErrorHandler: ((errorDetails: ErrorDetails) => void) | null = null;
 
 export const setGlobalErrorHandler = (handler: (errorDetails: ErrorDetails) => void) => {
     globalErrorHandler = handler;
 };
+
+export const getGlobalErrorHandler = () => globalErrorHandler;
 
 // ─── Action Types ─────────────────────────────────────────────────────────────
 
@@ -39,10 +44,10 @@ const GOOGLE_LOGIN = 'auth/GOOGLE_LOGIN';
 const APPLE_LOGIN = 'auth/APPLE_LOGIN';
 const LOGOUT = 'auth/LOGOUT';
 const UPDATE_USER = 'auth/UPDATE_USER';
-const INITIALIZE_API_CLIENT = 'auth/INITIALIZE_API_CLIENT';
-const AUTH_ERROR = 'auth/AUTH_ERROR';
+const INITIALIZE_AUTH = 'auth/INITIALIZE_AUTH';
 const ACCESS_DENIED = 'auth/ACCESS_DENIED';
 const PASSWORD_RESET_REQUEST = 'auth/PASSWORD_RESET_REQUEST';
+const SUBSCRIBE_HOMES = 'auth/SUBSCRIBE_HOMES';
 
 // ─── Action Creators ──────────────────────────────────────────────────────────
 
@@ -60,12 +65,8 @@ export const googleLogin = () => ({ type: GOOGLE_LOGIN });
 /** Dispatched with no payload – Firebase sign-in is handled inside the saga. */
 export const appleLogin = () => ({ type: APPLE_LOGIN });
 export const logout = () => ({ type: LOGOUT });
-export const updateUser = (userData: User) => ({ type: UPDATE_USER, payload: userData });
-export const initializeApiClient = (apiBaseUrl: string) => ({
-    type: INITIALIZE_API_CLIENT,
-    payload: apiBaseUrl,
-});
-export const authError = (endpoint?: string) => ({ type: AUTH_ERROR, payload: endpoint });
+export const updateUser = (userData: Partial<User>) => ({ type: UPDATE_USER, payload: userData });
+export const initializeAuth = () => ({ type: INITIALIZE_AUTH });
 export const accessDenied = (resourceId?: string) => ({
     type: ACCESS_DENIED,
     payload: resourceId,
@@ -74,30 +75,16 @@ export const passwordResetRequestAction = (email: string) => ({
     type: PASSWORD_RESET_REQUEST,
     payload: email,
 });
-
-// ─── API-Client Event Channel ─────────────────────────────────────────────────
-
-type AuthChannelEvent = { type: string; payload?: string };
-
-function createAuthChannel(client: ApiClient): EventChannel<AuthChannelEvent> {
-    return eventChannel((emit) => {
-        const onAuthError = (endpoint: string) => emit(authError(endpoint));
-        const onAccessDenied = (resourceId?: string) => emit(accessDenied(resourceId));
-
-        client.setOnAuthError(onAuthError);
-        client.setOnAccessDenied(onAccessDenied);
-
-        return () => {
-            client.setOnAuthError(() => {});
-            client.setOnAccessDenied(() => {});
-        };
-    });
-}
+/** Start (uid) or stop (null) the live homes subscription. */
+const subscribeHomes = (uid: string | null) => ({ type: SUBSCRIBE_HOMES, payload: uid });
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function* clearAuthAndLogout() {
     authLogger.info('Clearing auth data');
+
+    // Stop the homes listener before tearing down auth
+    yield put(subscribeHomes(null));
 
     // Sign out from Firebase (also signs out from Google if applicable)
     try {
@@ -109,6 +96,7 @@ function* clearAuthAndLogout() {
     yield put(setUser(null));
     yield put(setAuthenticated(false));
     yield put(setActiveHomeId(null));
+    homeService.reset();
 
     yield call([authService, 'clearAllUserData']);
 }
@@ -139,83 +127,107 @@ function* restoreOrSelectActiveHome() {
     return null;
 }
 
-function* ensureDefaultHomeIfNeeded(client: ApiClient): Generator {
-    try {
-        yield call([homeService, homeService.ensureDefaultHome], client);
-    } catch (error) {
-        authLogger.error('Error ensuring default home', error);
-    }
-}
+/**
+ * Shared post-auth setup: ensure the Firestore user profile exists, then
+ * start the live homes subscription (which selects the active home and
+ * triggers the per-domain data listeners).
+ */
+function* postAuthSetup(firebaseUser: FirebaseAuthTypes.User): Generator {
+    const userData: User = (yield call(
+        [userService, 'ensureUserDoc'],
+        firebaseUser,
+    )) as User;
 
-/** Shared post-auth setup: fetch user from /me, load homes and data. */
-function* postAuthSetup(client: ApiClient): Generator {
-    const userData: User = (yield call(client.getCurrentUser.bind(client))) as User;
-
-    if (userData) {
-        yield call([authService, 'saveUser'], userData);
-        yield put(setUser(userData));
-        yield put(
-            setShowNicknameSetup(!userData.nickname || userData.nickname.trim() === ''),
-        );
-    }
+    yield call([authService, 'saveUser'], userData);
+    yield put(setUser(userData));
+    yield put(setShowNicknameSetup(!userData.nickname || userData.nickname.trim() === ''));
 
     yield put(setAuthenticated(true));
     yield put(setError(null));
 
-    yield call([homeService, homeService.fetchHomes], client);
-    yield call(ensureDefaultHomeIfNeeded, client);
-    yield call(restoreOrSelectActiveHome);
+    yield put(subscribeHomes(firebaseUser.uid));
+}
 
-    yield put(loadItems());
-    yield put(loadTodos());
-    yield put(loadTodoCategoriesAction());
-    yield put(loadCategories());
+// ─── Homes Subscription ───────────────────────────────────────────────────────
+
+/**
+ * Live homes listener. Each snapshot updates HomeService (which feeds
+ * useHome), reconciles the active home selection, and creates the default
+ * home for brand-new accounts. takeLatest on SUBSCRIBE_HOMES cancels the
+ * previous listener on re-auth or logout.
+ */
+function* homesChannelSaga(action: { type: string; payload: string | null }): Generator {
+    const uid = action.payload;
+    if (!uid) return;
+
+    authLogger.info('Starting homes subscription', uid);
+    const channel = (yield call(
+        createSnapshotChannel,
+        homesQueryForUser(uid),
+    )) as EventChannel<SnapshotEvent>;
+    let createdDefaultHome = false;
+
+    try {
+        while (true) {
+            const event: SnapshotEvent = (yield take(channel)) as SnapshotEvent;
+
+            if (event.error) {
+                // onSnapshot errors are terminal — the listener has stopped.
+                authLogger.error('Homes listener error', event.error);
+                break;
+            }
+
+            const snapshot = event.snapshot!;
+            const homes = snapshot.docs.map((doc) => homeFromDoc(doc, uid));
+            authLogger.info(
+                `Homes snapshot: ${homes.length} home(s), fromCache=${snapshot.metadata.fromCache}`,
+            );
+            homeService.setHomesFromSnapshot(homes);
+
+            // Brand-new account: create the default home once we know the
+            // server (not just the local cache) says there are no homes.
+            if (homes.length === 0 && !snapshot.metadata.fromCache && !createdDefaultHome) {
+                createdDefaultHome = true;
+                authLogger.info('No homes found, creating default home');
+                const newHome = homeService.createHome(uid, 'My Home');
+                yield put(setActiveHomeId(newHome.id));
+                continue;
+            }
+
+            // Reconcile the active home with the live list
+            const activeHomeId: string | null = (yield select(
+                (state: RootState) => state.auth.activeHomeId,
+            )) as string | null;
+
+            if (homes.length > 0) {
+                if (!activeHomeId || !homes.find((h) => h.id === activeHomeId)) {
+                    if (activeHomeId && !snapshot.metadata.fromCache) {
+                        // Active home disappeared from the server list — the
+                        // user was removed or the home was deleted elsewhere.
+                        const toast = getGlobalToast();
+                        if (toast) toast(i18n.t('share.accessRevoked', 'Access to this home has been revoked'), 'error');
+                    }
+                    yield call(restoreOrSelectActiveHome);
+                } else {
+                    homeService.switchHome(activeHomeId);
+                }
+            } else if (activeHomeId && !snapshot.metadata.fromCache) {
+                yield put(setActiveHomeId(null));
+            }
+        }
+    } finally {
+        authLogger.info('Closing homes subscription');
+        channel.close();
+    }
 }
 
 // ─── Sagas ────────────────────────────────────────────────────────────────────
 
-function* initializeApiClientSaga(_action: { type: string; payload: string }) {
-    try {
-        const client = apiClient;
-
-        client.setOnError((errorDetails: ErrorDetails) => {
-            authLogger.info('API error callback triggered, showing error bottom sheet');
-            if (globalErrorHandler) {
-                globalErrorHandler(errorDetails);
-            } else {
-                authLogger.warn('Global error handler not set');
-            }
-        });
-
-        const authChannel: EventChannel<AuthChannelEvent> = yield call(
-            createAuthChannel,
-            client,
-        );
-        yield fork(function* () {
-            while (true) {
-                const event: AuthChannelEvent = (yield take(authChannel)) as AuthChannelEvent;
-                yield put(event);
-            }
-        });
-
-        yield put(setApiClient(client));
-        yield put(checkAuth());
-    } catch (error) {
-        authLogger.error('Error initializing API client', error);
-        yield put(setLoading(false));
-    }
+function* initializeAuthSaga() {
+    yield put(checkAuth());
 }
 
 function* checkAuthSaga(): Generator {
-    const client: ApiClient = (yield select(
-        (state: RootState) => state.auth.apiClient,
-    )) as ApiClient;
-
-    if (!client) {
-        yield put(setLoading(false));
-        return;
-    }
-
     try {
         // Wait for Firebase to resolve its persisted auth state
         const firebaseUser: FirebaseAuthTypes.User | null = (yield call([
@@ -231,54 +243,24 @@ function* checkAuthSaga(): Generator {
 
         authLogger.info('Firebase user found, restoring session', { uid: firebaseUser.uid });
 
-        // Optimistic UI: show cached user immediately
-        const savedUser: User | null = (yield call([authService, 'getUser'])) as User | null;
-        let hasBypassedLogin = false;
-
-        if (savedUser) {
-            authLogger.info('Found cached user, bypassing login screen immediately');
-            yield put(setUser(savedUser));
-            yield put(setAuthenticated(true));
-            yield put(
-                setShowNicknameSetup(!savedUser.nickname || savedUser.nickname.trim() === ''),
-            );
-            yield call(ensureDefaultHomeIfNeeded, client);
-            yield call(restoreOrSelectActiveHome);
-            yield put(loadItems());
-            yield put(loadTodos());
-            yield put(setLoading(false));
-            hasBypassedLogin = true;
-        }
-
-        // Verify session against backend in background (or foreground if no cache)
         try {
-            yield call(postAuthSetup, client);
+            yield call(postAuthSetup, firebaseUser);
         } catch (error) {
-            const errorStatus = (error as Error & { status?: number })?.status;
+            // Firestore unreachable and profile not cached — fall back to the
+            // locally cached user so the app still opens offline.
+            authLogger.warn('Post-auth setup failed, attempting cached session', error);
+            const savedUser: User | null = (yield call([authService, 'getUser'])) as User | null;
 
-            if (errorStatus === 401) {
-                authLogger.error('Backend rejected Firebase token (401) – signing out', error);
-                yield call(clearAuthAndLogout);
-            } else if (!hasBypassedLogin) {
-                authLogger.warn('Backend unreachable, attempting offline mode', error);
-                if (savedUser) {
-                    yield put(setUser(savedUser));
-                    yield put(setAuthenticated(true));
-                    yield put(
-                        setShowNicknameSetup(
-                            !savedUser.nickname || savedUser.nickname.trim() === '',
-                        ),
-                    );
-                    yield call(ensureDefaultHomeIfNeeded, client);
-                    yield call(restoreOrSelectActiveHome);
-                    yield put(loadItems());
-                    yield put(loadTodos());
-                } else {
-                    authLogger.error('No cached user and backend unreachable – signing out');
-                    yield call(clearAuthAndLogout);
-                }
+            if (savedUser) {
+                yield put(setUser(savedUser));
+                yield put(setAuthenticated(true));
+                yield put(
+                    setShowNicknameSetup(!savedUser.nickname || savedUser.nickname.trim() === ''),
+                );
+                yield put(subscribeHomes(firebaseUser.uid));
             } else {
-                authLogger.warn('Background auth verification failed – keeping cached session', error);
+                authLogger.error('No cached user and Firestore unreachable – signing out');
+                yield call(clearAuthAndLogout);
             }
         }
     } catch (error) {
@@ -299,27 +281,18 @@ function* loginSaga(action: {
     payload: { email: string; password: string };
 }): Generator {
     const { email, password } = action.payload;
-    const client: ApiClient = (yield select(
-        (state: RootState) => state.auth.apiClient,
-    )) as ApiClient;
 
     yield put(setError(null));
     yield put(setLoading(true));
 
-    if (!client) {
-        yield put(setError('API client not initialized'));
-        yield put(setLoading(false));
-        return;
-    }
-
     try {
-        yield call(
+        const credential = (yield call(
             [firebaseAuthService, 'signInWithEmailAndPassword'],
             email,
             password,
-        );
+        )) as FirebaseAuthTypes.UserCredential;
 
-        yield call(postAuthSetup, client);
+        yield call(postAuthSetup, credential.user);
         yield put(setLoading(false));
 
         const toast = getGlobalToast();
@@ -340,20 +313,15 @@ function* signupSaga(action: {
     payload: { email: string; password: string };
 }): Generator {
     const { email, password } = action.payload;
-    const client: ApiClient = (yield select(
-        (state: RootState) => state.auth.apiClient,
-    )) as ApiClient;
-
-    if (!client) throw new Error('API client not initialized');
 
     try {
-        yield call(
+        const credential = (yield call(
             [firebaseAuthService, 'createUserWithEmailAndPassword'],
             email,
             password,
-        );
+        )) as FirebaseAuthTypes.UserCredential;
 
-        yield call(postAuthSetup, client);
+        yield call(postAuthSetup, credential.user);
 
         const toast = getGlobalToast();
         if (toast) toast(i18n.t('toast.signupSuccess'), 'success');
@@ -366,18 +334,8 @@ function* signupSaga(action: {
 }
 
 function* googleLoginSaga(): Generator {
-    const client: ApiClient = (yield select(
-        (state: RootState) => state.auth.apiClient,
-    )) as ApiClient;
-
     yield put(setError(null));
     yield put(setLoading(true));
-
-    if (!client) {
-        yield put(setError('API client not initialized'));
-        yield put(setLoading(false));
-        return;
-    }
 
     try {
         const result: FirebaseAuthTypes.UserCredential | null = (yield call([
@@ -391,7 +349,7 @@ function* googleLoginSaga(): Generator {
             return;
         }
 
-        yield call(postAuthSetup, client);
+        yield call(postAuthSetup, result.user);
         yield put(setLoading(false));
 
         const toast = getGlobalToast();
@@ -410,18 +368,8 @@ function* googleLoginSaga(): Generator {
 }
 
 function* appleLoginSaga(): Generator {
-    const client: ApiClient = (yield select(
-        (state: RootState) => state.auth.apiClient,
-    )) as ApiClient;
-
     yield put(setError(null));
     yield put(setLoading(true));
-
-    if (!client) {
-        yield put(setError('API client not initialized'));
-        yield put(setLoading(false));
-        return;
-    }
 
     try {
         const result: FirebaseAuthTypes.UserCredential | null = (yield call([
@@ -435,7 +383,7 @@ function* appleLoginSaga(): Generator {
             return;
         }
 
-        yield call(postAuthSetup, client);
+        yield call(postAuthSetup, result.user);
         yield put(setLoading(false));
 
         const toast = getGlobalToast();
@@ -469,44 +417,61 @@ function* logoutSaga() {
     }
 }
 
-function* updateUserSaga(action: { type: string; payload: User }) {
+/** Persist profile changes (nickname/avatar) to Firestore and Redux. */
+function* updateUserSaga(action: { type: string; payload: Partial<User> }) {
     try {
-        yield call([authService, 'saveUser'], action.payload);
-        yield put(setUser(action.payload));
+        const firebaseUser = firebaseAuthService.getCurrentUser();
+        if (!firebaseUser) {
+            authLogger.error('Cannot update user: not signed in');
+            return;
+        }
+
+        const updated: User = (yield call(
+            [userService, 'updateProfile'],
+            firebaseUser.uid,
+            {
+                nickname: action.payload.nickname,
+                avatarUrl: action.payload.avatarUrl,
+            },
+        )) as User;
+
+        yield call([authService, 'saveUser'], updated);
+        yield put(setUser(updated));
     } catch (error) {
         authLogger.error('Error updating user', error);
-        throw error;
+        const toast = getGlobalToast();
+        if (toast) {
+            toast(error instanceof Error ? error.message : 'Failed to update profile', 'error');
+        }
     }
 }
 
-function* handleAuthError(action: { type: string; payload?: string }) {
-    const endpoint = action.payload;
-
-    // Only invalidate auth when /me endpoint returns 401
-    if (endpoint !== '/api/auth/me') {
-        authLogger.info(`401 on non-/me endpoint, ignoring: ${endpoint}`);
-        return;
-    }
-
-    yield call(clearAuthAndLogout);
-}
-
+/**
+ * A home-scoped listener hit permission-denied: the user lost access to that
+ * home (sharing toggle flipped or membership revoked). The homes snapshot is
+ * the primary signal; this just switches away promptly.
+ */
 function* handleAccessDenied(action: { type: string; payload?: string }) {
-    const deniedUserId = action.payload;
-    authLogger.info('Access denied for user', deniedUserId);
+    const deniedHomeId = action.payload;
+    authLogger.info('Access denied for home', deniedHomeId);
 
-    if (!deniedUserId) return;
+    if (!deniedHomeId) return;
 
     const activeHomeId: string | null = (yield select(
         (state: RootState) => state.auth.activeHomeId,
     )) as string | null;
 
-    if (activeHomeId === deniedUserId) {
+    if (activeHomeId === deniedHomeId) {
+        const stillMember = homeService.getHomes().some((h) => h.id === deniedHomeId);
+        if (stillMember) {
+            // Just gated by a sharing toggle — the home snapshot delivers the
+            // updated settings and the UI locks the affected tabs. Re-selecting
+            // would re-subscribe the denied listener in a loop.
+            authLogger.info('Access denied but still a member (sharing toggle); not switching');
+            return;
+        }
         authLogger.warn('Active home access denied, switching to default');
         yield call(restoreOrSelectActiveHome);
-
-        const toast = getGlobalToast();
-        if (toast) toast('Access to this home has been revoked', 'error');
     }
 }
 
@@ -515,24 +480,7 @@ function* handleActiveHomeIdChange(action: { type: string; payload: string | nul
 
     if (action.payload) {
         yield call([authService, 'saveActiveHomeId'], action.payload);
-
-        const isAuthenticated: boolean = (yield select(
-            (state: RootState) => state.auth.isAuthenticated,
-        )) as boolean;
-        const authLoading: boolean = (yield select(
-            (state: RootState) => state.auth.isLoading,
-        )) as boolean;
-
-        if (!authLoading && isAuthenticated) {
-            homeService.switchHome(action.payload);
-            authLogger.info('Reloading data for new home', action.payload);
-            yield put(loadItems());
-            yield put(loadTodos());
-            yield put(loadTodoCategoriesAction());
-            yield put(loadCategories());
-        } else {
-            authLogger.info('Skipping data reload during auth initialization');
-        }
+        homeService.switchHome(action.payload);
     } else {
         yield call([authService, 'removeActiveHomeId']);
     }
@@ -568,8 +516,8 @@ function* handlePasswordResetRequestSaga(action: { type: string; payload: string
 // ─── Root Watcher ─────────────────────────────────────────────────────────────
 
 export function* authSaga() {
-    yield takeLatest(INITIALIZE_API_CLIENT, initializeApiClientSaga);
-    yield takeLatest(AUTH_ERROR, handleAuthError);
+    yield takeLatest(INITIALIZE_AUTH, initializeAuthSaga);
+    yield takeLatest(SUBSCRIBE_HOMES, homesChannelSaga);
     yield takeLatest(ACCESS_DENIED, handleAccessDenied);
     yield takeLatest(CHECK_AUTH, checkAuthSaga);
     yield takeLatest(LOGIN, loginSaga);

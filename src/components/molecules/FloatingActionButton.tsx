@@ -4,7 +4,6 @@ import {
   View,
   Text,
   Pressable,
-  ActivityIndicator,
   ViewStyle,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -17,7 +16,7 @@ import Animated, {
   Easing,
 } from 'react-native-reanimated';
 import styled from 'styled-components/native';
-import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 import { GlassView } from 'expo-glass-effect';
 import { useTheme } from '../../theme/ThemeProvider';
 import type { StyledProps } from '../../utils/styledComponents';
@@ -93,16 +92,12 @@ const MainFABContent = styled(View)`
 
 export interface FloatingActionButtonProps {
   onManualAdd: () => void;
-  onAIAutomatic: () => void;
   bottomOffset?: number;
-  isAIRecognizing?: boolean;
 }
 
 export const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({
   onManualAdd,
-  onAIAutomatic,
   bottomOffset = 0,
-  isAIRecognizing = false,
 }) => {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
@@ -139,11 +134,6 @@ export const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({
     onManualAdd();
   }, [toggleExpanded, onManualAdd]);
 
-  const handleAIAutomatic = useCallback(() => {
-    toggleExpanded();
-    onAIAutomatic();
-  }, [toggleExpanded, onAIAutomatic]);
-
   // Icon opacity animation for add/close transition
   const addIconOpacity = useAnimatedStyle(() => {
     const opacity = interpolate(
@@ -178,22 +168,6 @@ export const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({
       expandAnimation.value,
       [0, 1],
       [0, 64],
-      Extrapolation.CLAMP
-    );
-    const opacity = expandAnimation.value;
-
-    return {
-      bottom,
-      opacity,
-    };
-  });
-
-  // Second action button (AI Automatic) animated style
-  const secondActionStyle = useAnimatedStyle(() => {
-    const bottom = interpolate(
-      expandAnimation.value,
-      [0, 1],
-      [0, 128],
       Extrapolation.CLAMP
     );
     const opacity = expandAnimation.value;
@@ -253,27 +227,6 @@ export const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({
           </GlassView>
         </ActionButtonWrapper>
 
-        {/* AI Automatic Button */}
-        <ActionButtonWrapper
-          style={secondActionStyle}
-          pointerEvents={isExpanded ? 'auto' : 'none'}
-        >
-          <GlassView
-            style={actionGlassStyle}
-            glassEffectStyle="regular"
-            isInteractive={true}
-          >
-            <TouchableOpacity onPress={handleAIAutomatic} activeOpacity={0.7}>
-              <ActionContent>
-                <ActionLabelText>{t('fab.aiAutomatic', 'AI Automatic')}</ActionLabelText>
-                <ActionIconContainer>
-                  <MaterialCommunityIcons name="auto-fix" size={20} color={theme.colors.primary} />
-                </ActionIconContainer>
-              </ActionContent>
-            </TouchableOpacity>
-          </GlassView>
-        </ActionButtonWrapper>
-
         {/* Main FAB */}
         <Animated.View
           style={{
@@ -291,21 +244,16 @@ export const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({
             <TouchableOpacity
               onPress={toggleExpanded}
               activeOpacity={0.8}
-              disabled={isAIRecognizing}
             >
               <MainFABContent>
-                {isAIRecognizing ? (
-                  <ActivityIndicator size="small" color={iconColor} />
-                ) : (
-                  <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-                    <Animated.View style={[{ position: 'absolute' }, addIconOpacity]}>
-                      <Ionicons name="add" size={32} color={iconColor} />
-                    </Animated.View>
-                    <Animated.View style={[{ position: 'absolute' }, closeIconOpacity]}>
-                      <Ionicons name="close" size={32} color={iconColor} />
-                    </Animated.View>
-                  </View>
-                )}
+                <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+                  <Animated.View style={[{ position: 'absolute' }, addIconOpacity]}>
+                    <Ionicons name="add" size={32} color={iconColor} />
+                  </Animated.View>
+                  <Animated.View style={[{ position: 'absolute' }, closeIconOpacity]}>
+                    <Ionicons name="close" size={32} color={iconColor} />
+                  </Animated.View>
+                </View>
               </MainFABContent>
             </TouchableOpacity>
           </GlassView>

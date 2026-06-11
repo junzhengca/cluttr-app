@@ -21,6 +21,9 @@ expo-env.d.ts
 # Metro
 .metro-health-check*
 
+# dev harness runtime state (scripts/harness.sh)
+.harness/
+
 # debug
 npm-debug.*
 yarn-debug.*

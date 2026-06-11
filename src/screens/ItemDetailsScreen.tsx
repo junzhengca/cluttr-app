@@ -236,7 +236,7 @@ export const ItemDetailsScreen: React.FC = () => {
           navigation.goBack();
           return;
         }
-        const itemData = inventoryService.getItemById(currentHomeId, itemId);
+        const itemData = await inventoryService.getItemById(currentHomeId, itemId);
         if (itemData) {
           setItem(itemData);
           // Trigger a reload of items to sync Redux

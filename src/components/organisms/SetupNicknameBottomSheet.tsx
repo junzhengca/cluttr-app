@@ -18,7 +18,8 @@ import { useTheme } from '../../theme/ThemeProvider';
 import type { StyledProps } from '../../utils/styledComponents';
 import { useAuth, useAppDispatch } from '../../store/hooks';
 import { BottomSheetHeader, FormSection, UncontrolledInput, GlassButton } from '../atoms';
-import { setShowNicknameSetup } from '../../store/slices/authSlice';
+import { setShowNicknameSetup, setUser } from '../../store/slices/authSlice';
+import { userService } from '../../services/UserService';
 import { uiLogger } from '../../utils/Logger';
 
 const Backdrop = styled(BottomSheetBackdrop)`
@@ -65,7 +66,7 @@ export const SetupNicknameBottomSheet: React.FC<
   const insets = useSafeAreaInsets();
   const { t } = useTranslation();
   const dispatch = useAppDispatch();
-  const { user, updateUser, logout, getApiClient } = useAuth();
+  const { user, logout } = useAuth();
 
   const nicknameInputRef = useRef<TextInput>(null);
   const nicknameValueRef = useRef('');
@@ -119,18 +120,18 @@ export const SetupNicknameBottomSheet: React.FC<
     setError(null);
 
     try {
-      // Get API client from Redux (already initialized with correct base URL and token)
-      const apiClient = getApiClient();
-      if (!apiClient) {
-        throw new Error('API client not initialized');
+      if (!user) {
+        throw new Error('Not signed in');
       }
 
       // Update nickname
       uiLogger.info('Updating nickname');
-      const updatedUser = await apiClient.updateNickname(currentNickname);
+      const updatedUser = await userService.updateProfile(user.id, {
+        nickname: currentNickname,
+      });
 
       // Update user state
-      await updateUser(updatedUser.nickname || '');
+      dispatch(setUser(updatedUser));
 
       // Clear the showNicknameSetup flag
       dispatch(setShowNicknameSetup(false));
@@ -149,7 +150,7 @@ export const SetupNicknameBottomSheet: React.FC<
     } finally {
       setIsLoading(false);
     }
-  }, [t, updateUser, handleClose, onNicknameSet, dispatch, getApiClient]);
+  }, [t, user, handleClose, onNicknameSet, dispatch]);
 
   const handleLogout = useCallback(() => {
     handleClose();

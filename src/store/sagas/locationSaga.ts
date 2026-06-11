@@ -3,17 +3,20 @@ import type { Task } from 'redux-saga';
 import type { RootState } from '../types';
 import {
   setLocations,
-  addLocation as addLocationSlice,
   updateLocation as updateLocationSlice,
-  removeLocation as removeLocationSlice,
   setLoading,
   setAddingLocation,
   addUpdatingLocationId,
   removeUpdatingLocationId,
   setError,
 } from '../slices/locationSlice';
+import { setActiveHomeId } from '../slices/authSlice';
+import { createSubscriptionSaga } from './firestoreSubscriptionSaga';
 import { locationService } from '../../services/LocationService';
-import type { ApiClient } from '../../services/ApiClient';
+import {
+  locationsCol,
+  locationFromDoc,
+} from '../../services/firebase/firestoreRefs';
 import type { Location } from '../../types/inventory';
 import { sagaLogger } from '../../utils/Logger';
 import { getGlobalToast } from '../../components/organisms/ToastProvider';
@@ -45,19 +48,6 @@ const DEBOUNCE_MS = 400;
 const pendingUpdateTasks = new Map<string, Task>();
 
 /**
- * Get API client from Redux state
- */
-function* getApiClient(): Generator<unknown, ApiClient, unknown> {
-  const state = (yield select()) as RootState;
-  const apiClient = state.auth.apiClient;
-  if (!apiClient) {
-    sagaLogger.error('No API client available');
-    throw new Error('No API client available');
-  }
-  return apiClient;
-}
-
-/**
  * Get active home ID from Redux state
  */
 function* getActiveHomeId(): Generator<unknown, string, unknown> {
@@ -70,29 +60,16 @@ function* getActiveHomeId(): Generator<unknown, string, unknown> {
   return activeHomeId;
 }
 
-function* loadLocationsSaga(): Generator<unknown, void, unknown> {
-  try {
-    const apiClient = (yield call(getApiClient)) as ApiClient;
-    const homeId = (yield call(getActiveHomeId)) as string;
-
-    yield put(setLoading(true));
-    yield put(setError(null));
-
-    const locations = (yield call(
-      [locationService, 'fetchLocations'],
-      apiClient,
-      homeId
-    )) as Location[];
-    yield put(setLocations(locations));
-  } catch (error) {
-    sagaLogger.error('Error loading locations', error);
-    const errorMessage =
-      error instanceof Error ? error.message : 'Failed to load locations';
-    yield put(setError(errorMessage));
-  } finally {
-    yield put(setLoading(false));
-  }
-}
+/** Live locations listener for the active home. */
+const subscribeLocationsSaga = createSubscriptionSaga<Location>({
+  name: 'Locations',
+  buildQuery: locationsCol,
+  fromDoc: locationFromDoc,
+  sort: (a, b) => a.createdAt.localeCompare(b.createdAt),
+  setItems: setLocations,
+  setLoading,
+  setError,
+});
 
 function* addLocationSaga(action: {
   type: string;
@@ -104,28 +81,12 @@ function* addLocationSaga(action: {
   sagaLogger.verbose(`addLocationSaga - Creating location: "${name}"`);
 
   try {
-    const apiClient = (yield call(getApiClient)) as ApiClient;
     const homeId = (yield call(getActiveHomeId)) as string;
-
     yield put(setAddingLocation(true));
     yield put(setError(null));
 
-    const newLocation = (yield call(
-      [locationService, 'createLocation'],
-      apiClient,
-      homeId,
-      { name, icon }
-    )) as Location | null;
-
-    if (newLocation) {
-      sagaLogger.verbose(
-        `Location created: id=${newLocation.id}, name="${newLocation.name}"`
-      );
-      yield put(addLocationSlice(newLocation));
-    } else {
-      sagaLogger.error('Failed to create location: newLocation is null/undefined');
-      yield put(setError('Failed to create location'));
-    }
+    const newLocation = locationService.createLocation(homeId, { name, icon });
+    sagaLogger.verbose(`Location created: id=${newLocation.id}, name="${newLocation.name}"`);
   } catch (error) {
     sagaLogger.error('Error adding location', error);
     const errorMessage =
@@ -140,35 +101,10 @@ function* deleteLocationSaga(action: {
   type: string;
   payload: string;
 }): Generator<unknown, void, unknown> {
-  const id = action.payload;
-
   try {
-    const apiClient = (yield call(getApiClient)) as ApiClient;
     const homeId = (yield call(getActiveHomeId)) as string;
-
     yield put(setError(null));
-
-    // Optimistically remove from UI first
-    yield put(removeLocationSlice(id));
-
-    // Then call API
-    const success = (yield call(
-      [locationService, 'deleteLocation'],
-      apiClient,
-      homeId,
-      id
-    )) as boolean;
-
-    if (!success) {
-      // Revert on failure
-      sagaLogger.error('Failed to delete location');
-      const errorMessage = i18n.t('location.deleteError', 'Failed to delete location');
-      yield put(setError(errorMessage));
-      const toast = getGlobalToast();
-      if (toast) toast(errorMessage, 'error');
-      // Reload locations to get correct state
-      yield call(loadLocationsSaga);
-    }
+    locationService.deleteLocation(homeId, action.payload);
   } catch (error) {
     sagaLogger.error('Error deleting location', error);
     const errorMessage =
@@ -176,20 +112,13 @@ function* deleteLocationSaga(action: {
     yield put(setError(errorMessage));
     const toast = getGlobalToast();
     if (toast) toast(errorMessage, 'error');
-    // Reload locations to revert optimistic update
-    yield call(loadLocationsSaga);
   }
 }
 
 /**
- * Runs after DEBOUNCE_MS: sends current state for this id to API, then applies or reverts.
- * previousLocation is the state before the optimistic update (used to revert on error).
+ * Runs after DEBOUNCE_MS: writes the current state for this id to Firestore.
  */
-function* debouncedUpdateForId(
-  id: string,
-  previousLocation: Location
-): Generator<unknown, void, unknown> {
-  let payloadSent = { name: '', icon: '' as string | undefined };
+function* debouncedUpdateForId(id: string): Generator<unknown, void, unknown> {
   try {
     yield delay(DEBOUNCE_MS);
 
@@ -197,49 +126,13 @@ function* debouncedUpdateForId(
     const currentLocation = state.location.locations.find((l) => l.id === id);
     if (!currentLocation) return;
 
-    payloadSent = {
+    const homeId = (yield call(getActiveHomeId)) as string;
+    locationService.updateLocation(homeId, id, {
       name: currentLocation.name.trim(),
       icon: currentLocation.icon,
-    };
-
-    const apiClient = (yield call(getApiClient)) as ApiClient;
-    const homeId = (yield call(getActiveHomeId)) as string;
-
-    const updatedLocation = (yield call(
-      [locationService, 'updateLocation'],
-      apiClient,
-      homeId,
-      id,
-      { name: payloadSent.name, icon: payloadSent.icon }
-    )) as Location | null;
-
-    if (updatedLocation) {
-      const stateAfter = (yield select()) as RootState;
-      const now = stateAfter.location.locations.find((l) => l.id === id);
-      const stillCurrent =
-        now &&
-        now.name.trim() === payloadSent.name &&
-        now.icon === payloadSent.icon;
-      if (stillCurrent) {
-        yield put(updateLocationSlice(updatedLocation));
-      }
-    }
+    });
   } catch (error) {
     sagaLogger.error('Error updating location', error);
-    const errorMessage =
-      error instanceof Error ? error.message : i18n.t('location.updateError', 'Failed to save location');
-    const stateAfter = (yield select()) as RootState;
-    const now = stateAfter.location.locations.find((l) => l.id === id);
-    const stillCurrent =
-      now &&
-      now.name.trim() === payloadSent.name &&
-      now.icon === payloadSent.icon;
-    if (stillCurrent) {
-      yield put(updateLocationSlice(previousLocation));
-      yield put(setError(errorMessage));
-      const toast = getGlobalToast();
-      if (toast) toast(errorMessage, 'error');
-    }
   } finally {
     yield put(removeUpdatingLocationId(id));
     pendingUpdateTasks.delete(id);
@@ -247,7 +140,7 @@ function* debouncedUpdateForId(
 }
 
 /**
- * On each UPDATE_LOCATION: apply optimistic update, then schedule a single debounced API call per id.
+ * On each UPDATE_LOCATION: apply optimistic update, then schedule a single debounced write per id.
  */
 function* updateLocationDebounceSaga(action: {
   type: string;
@@ -279,13 +172,13 @@ function* updateLocationDebounceSaga(action: {
     yield cancel(existing);
     pendingUpdateTasks.delete(id);
   }
-  const task = (yield fork(debouncedUpdateForId, id, previousLocation)) as Task;
+  const task = (yield fork(debouncedUpdateForId, id)) as Task;
   pendingUpdateTasks.set(id, task);
 }
 
 // Watcher
 export function* locationSaga(): Generator<unknown, void, unknown> {
-  yield takeLatest(LOAD_LOCATIONS, loadLocationsSaga);
+  yield takeLatest([setActiveHomeId.type, LOAD_LOCATIONS], subscribeLocationsSaga);
   yield takeLatest(ADD_LOCATION, addLocationSaga);
   yield takeEvery(DELETE_LOCATION, deleteLocationSaga);
   yield takeEvery(UPDATE_LOCATION, updateLocationDebounceSaga);

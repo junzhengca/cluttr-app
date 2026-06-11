@@ -19,7 +19,6 @@ export const store = configureStore({
       serializableCheck: {
         // Ignore these action types
         ignoredActions: [
-          'auth/setApiClient',
           'refresh/registerCategoryCallback',
           'refresh/unregisterCategoryCallback',
         ],
@@ -27,7 +26,6 @@ export const store = configureStore({
         ignoredActionPaths: ['payload'],
         // Ignore these paths in the state (non-serializable values like class instances and Sets)
         ignoredPaths: [
-          'auth.apiClient',
           'refresh.categoryCallbacks',
           'inventory.updatingItemIds',
         ],

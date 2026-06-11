@@ -12,15 +12,14 @@ import { I18nextProvider } from 'react-i18next';
 import { Provider } from 'react-redux';
 import { ThemeProvider } from '../src/theme/ThemeProvider';
 import { dataInitializationService } from '../src/services/DataInitializationService';
-import { homeService } from '../src/services/HomeService';
 import { ErrorBottomSheet, SetupNicknameBottomSheet, ToastProvider, InvitationBottomSheet, OfflineBadge, OfflineExplanationBottomSheet } from '../src/components';
 import { AuthNavigator } from '../src/navigation/AuthNavigator';
 import { ContextMenuProvider } from '../src/components/organisms/ContextMenu/ContextMenuProvider';
 import { UnitPickerProvider } from '../src/components/organisms/UnitPicker/UnitPickerContext';
-import { ErrorDetails } from '../src/types/api';
+import { ErrorDetails } from '../src/types/errors';
 import i18n from '../src/i18n/i18n';
 import { store } from '../src/store';
-import { initializeApiClient, setGlobalErrorHandler } from '../src/store/sagas/authSaga';
+import { initializeAuth, setGlobalErrorHandler } from '../src/store/sagas/authSaga';
 import { loadSettings } from '../src/store/sagas/settingsSaga';
 import { useAppDispatch, useAppSelector } from '../src/store/hooks';
 import { setShowNicknameSetup } from '../src/store/slices/authSlice';
@@ -41,9 +40,6 @@ setBackgroundMessageHandler(async (_message) => {
 });
 
 const appLogger = logger.scoped('general');
-
-// TODO: Configure your API base URL here or use environment variables
-const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL || 'https://cluttr-server-v2-production.up.railway.app';
 
 // Keep the splash screen visible while we fetch resources
 SplashScreen.preventAutoHideAsync().catch(() => {
@@ -115,9 +111,9 @@ function AppInner() {
         };
     }, []);
 
-    // Initialize API client and auth on mount
+    // Initialize auth on mount (Firebase session restore + Firestore listeners)
     useEffect(() => {
-        dispatch(initializeApiClient(API_BASE_URL));
+        dispatch(initializeAuth());
     }, [dispatch]);
 
     // Indicate that home service init has completed and we can proceed
@@ -269,7 +265,6 @@ export default function RootLayout() {
         const init = async () => {
             try {
                 await dataInitializationService.initializeDataFiles();
-                await homeService.init();
                 setIsInitialized(true);
             } catch (error) {
                 appLogger.error('Failed to initialize data files', error);

@@ -5,14 +5,13 @@ import { BottomSheetModal, BottomSheetBackdrop, BottomSheetView, BottomSheetBack
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../theme/ThemeProvider';
-import { ValidateInvitationResponse } from '../../types/api';
 import { GlassButton, BottomSheetHeader } from '../atoms';
 import { useAppSelector } from '../../store/hooks';
 import { useToast } from '../../hooks/useToast';
 import type { StyledProps } from '../../utils/styledComponents';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { uiLogger } from '../../utils/Logger';
-import { homeService } from '../../services/HomeService';
+import { invitationService, InvitationPreview } from '../../services/InvitationService';
 
 
 const ErrorRow = styled(View)`
@@ -121,14 +120,13 @@ export const InvitationBottomSheet: React.FC<InvitationBottomSheetProps> = ({
     const { t } = useTranslation();
     const theme = useTheme();
     const insets = useSafeAreaInsets();
-    const apiClient = useAppSelector((state) => state.auth.apiClient);
     const currentUser = useAppSelector((state) => state.auth.user);
 
     const { showToast } = useToast();
 
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [invitationData, setInvitationData] = useState<ValidateInvitationResponse | null>(null);
+    const [invitationData, setInvitationData] = useState<InvitationPreview | null>(null);
 
     // Use dynamic sizing or a calculated snap point
     const isOwnHome = useMemo(() => {
@@ -137,14 +135,12 @@ export const InvitationBottomSheet: React.FC<InvitationBottomSheetProps> = ({
     }, [invitationData, currentUser]);
 
     const fetchInvitationDetails = useCallback(async (code: string) => {
-        if (!apiClient) return;
-
         setLoading(true);
         setError(null);
         setInvitationData(null);
 
         try {
-            const data = await apiClient.validateInvitation(code);
+            const data = await invitationService.validate(code);
             if (data.valid) {
                 setInvitationData(data);
             } else {
@@ -156,20 +152,20 @@ export const InvitationBottomSheet: React.FC<InvitationBottomSheetProps> = ({
         } finally {
             setLoading(false);
         }
-    }, [apiClient]);
+    }, []);
 
     const processAccept = useCallback(async () => {
-        if (!apiClient || !inviteCode) return;
+        if (!inviteCode || !currentUser) return;
         setLoading(true);
         uiLogger.info(`Accepting home invitation: ${inviteCode}`);
         try {
-            await apiClient.acceptInvitation(inviteCode);
+            const result = await invitationService.accept(inviteCode, currentUser.id);
+            if (!result.success) {
+                throw new Error(result.message || t('share.invite.acceptError'));
+            }
 
-            // Fetch homes to get the new home
-            await homeService.fetchHomes(apiClient);
+            // The live homes snapshot delivers the new home automatically
             showToast(t('share.invite.acceptSuccess'), 'success');
-
-
 
             // Dismiss and clear state
             onDismiss?.();
@@ -181,19 +177,19 @@ export const InvitationBottomSheet: React.FC<InvitationBottomSheetProps> = ({
         } finally {
             setLoading(false);
         }
-    }, [apiClient, inviteCode, t, showToast, onDismiss, bottomSheetRef]);
+    }, [inviteCode, currentUser, t, showToast, onDismiss, bottomSheetRef]);
 
     useEffect(() => {
-        if (inviteCode && apiClient) {
+        if (inviteCode) {
             fetchInvitationDetails(inviteCode);
         }
-    }, [inviteCode, apiClient, fetchInvitationDetails]);
+    }, [inviteCode, fetchInvitationDetails]);
 
     const handleAccept = useCallback(async () => {
-        if (!apiClient || !inviteCode) return;
+        if (!inviteCode) return;
 
         await processAccept();
-    }, [apiClient, inviteCode, processAccept]);
+    }, [inviteCode, processAccept]);
 
     const handleClose = useCallback(() => {
         bottomSheetRef.current?.dismiss();

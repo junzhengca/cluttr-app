@@ -33,7 +33,10 @@ import { useHome } from '../hooks/useHome';
 import { useToast } from '../hooks/useToast';
 import { calculateBottomPadding } from '../utils/layout';
 import { RootStackParamList } from '../navigation/types';
-import { Member } from '../types/api';
+import { Member } from '../types/user';
+import { userService } from '../services/UserService';
+import { homeService } from '../services/HomeService';
+import { invitationService } from '../services/InvitationService';
 
 const Container = styled(View)`
   flex: 1;
@@ -132,10 +135,10 @@ export const SettingsScreen: React.FC = () => {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<NavigationProp>();
-  const { user, isAuthenticated, getApiClient } = useAuth();
+  const { user, isAuthenticated } = useAuth();
   const toast = useToast();
 
-  const { currentHome, deleteHome, fetchHomes: _fetchHomes } = useHome();
+  const { currentHome, deleteHome, updateHomeSettings } = useHome();
   const editHomeSheetRef = useRef<BottomSheetModal>(null);
   const inviteMenuBottomSheetRef = useRef<BottomSheetModal | null>(null);
 
@@ -148,23 +151,24 @@ export const SettingsScreen: React.FC = () => {
   const canShareTodos = currentHome?.settings?.canShareTodos ?? true;
 
   const loadMembers = useCallback(async () => {
-    if (!currentHome?.id) return;
+    if (!currentHome) return;
 
     setIsLoadingMembers(true);
     setMembersError(null);
     try {
-      const apiClient = getApiClient();
-      if (!apiClient) return;
-
-      const response = await apiClient.listMembers(currentHome.id);
-      setMembers(response.members);
+      const memberList = await userService.listMembers(
+        currentHome.members,
+        currentHome.ownerId,
+      );
+      setMembers(memberList);
     } catch (error) {
       uiLogger.error('Error loading members', error);
       setMembersError('Failed to load members');
     } finally {
       setIsLoadingMembers(false);
     }
-  }, [currentHome?.id, getApiClient]);
+    // Reload whenever the membership map changes (live via the homes snapshot)
+  }, [currentHome]);
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -176,24 +180,27 @@ export const SettingsScreen: React.FC = () => {
     async (memberUserId: string) => {
       if (!currentHome?.id) return;
 
-      try {
-        const apiClient = getApiClient();
-        if (!apiClient) return;
-
-        await apiClient.removeMember(currentHome.id, memberUserId);
+      const success = await homeService.removeMember(currentHome.id, memberUserId);
+      if (success) {
         toast.showToast(t('share.members.removeSuccess', 'Member removed successfully'), 'success');
-        loadMembers();
-      } catch (error) {
-        uiLogger.error('Error removing member', error);
+      } else {
         toast.showToast(t('share.members.removeError', 'Failed to remove member'), 'error');
       }
     },
-    [currentHome?.id, getApiClient, loadMembers, toast, t]
+    [currentHome?.id, toast, t]
   );
 
-  const handleInvitePress = useCallback(() => {
+  const handleInvitePress = useCallback(async () => {
+    // Lazily create the invitation code on first share
+    if (currentHome?.role === 'owner' && user) {
+      try {
+        await invitationService.ensureInvitation(currentHome, user);
+      } catch (error) {
+        uiLogger.error('Error ensuring invitation code', error);
+      }
+    }
     inviteMenuBottomSheetRef.current?.present();
-  }, []);
+  }, [currentHome, user]);
 
   const getInvitationLink = useCallback(() => {
     const scheme = 'com.cluttrapp.cluttr';
@@ -203,46 +210,28 @@ export const SettingsScreen: React.FC = () => {
   const handleToggleInventory = useCallback(async () => {
     if (!currentHome?.id) return;
 
-    const newValue = !canShareInventory;
-
-    try {
-      const apiClient = getApiClient();
-      if (!apiClient) return;
-
-      await apiClient.updateHomeSettings(currentHome.id, { canShareInventory: newValue });
+    const success = await updateHomeSettings(currentHome.id, {
+      canShareInventory: !canShareInventory,
+    });
+    if (success) {
       toast.showToast(t('share.settings.updateSuccess', 'Settings updated'), 'success');
-      const apiClient2 = getApiClient();
-      if (apiClient2) {
-        const { homeService } = await import('../services/HomeService');
-        await homeService.fetchHomes(apiClient2);
-      }
-    } catch (error) {
-      uiLogger.error('Error updating inventory settings', error);
+    } else {
       toast.showToast(t('share.settings.updateError', 'Failed to update settings'), 'error');
     }
-  }, [canShareInventory, currentHome?.id, getApiClient, toast, t]);
+  }, [canShareInventory, currentHome?.id, updateHomeSettings, toast, t]);
 
   const handleToggleTodos = useCallback(async () => {
     if (!currentHome?.id) return;
 
-    const newValue = !canShareTodos;
-
-    try {
-      const apiClient = getApiClient();
-      if (!apiClient) return;
-
-      await apiClient.updateHomeSettings(currentHome.id, { canShareTodos: newValue });
+    const success = await updateHomeSettings(currentHome.id, {
+      canShareTodos: !canShareTodos,
+    });
+    if (success) {
       toast.showToast(t('share.settings.updateSuccess', 'Settings updated'), 'success');
-      const apiClient2 = getApiClient();
-      if (apiClient2) {
-        const { homeService } = await import('../services/HomeService');
-        await homeService.fetchHomes(apiClient2);
-      }
-    } catch (error) {
-      uiLogger.error('Error updating todos settings', error);
+    } else {
       toast.showToast(t('share.settings.updateError', 'Failed to update settings'), 'error');
     }
-  }, [canShareTodos, currentHome?.id, getApiClient, toast, t]);
+  }, [canShareTodos, currentHome?.id, updateHomeSettings, toast, t]);
 
   const handleLeaveHome = useCallback(() => {
     if (!currentHome || !user?.id) return;
@@ -259,22 +248,10 @@ export const SettingsScreen: React.FC = () => {
           text: t('share.members.leaveConfirm.confirm', 'Leave'),
           style: 'destructive',
           onPress: async () => {
-            const apiClient = getApiClient();
-            if (!apiClient) {
-              toast.showToast(t('share.members.leaveError', 'Failed to leave home'), 'error');
-              return;
-            }
-
             try {
-              const success = await deleteHome(apiClient, currentHome.id, user.id);
+              const success = await deleteHome(currentHome.id);
               if (success) {
                 toast.showToast(t('share.members.leaveSuccess', 'Left home successfully'), 'success');
-                // Refresh homes list to reflect the change
-                const apiClient2 = getApiClient();
-                if (apiClient2) {
-                  const { homeService } = await import('../services/HomeService');
-                  await homeService.fetchHomes(apiClient2);
-                }
               } else {
                 toast.showToast(t('share.members.leaveError', 'Failed to leave home'), 'error');
               }
@@ -286,7 +263,7 @@ export const SettingsScreen: React.FC = () => {
         },
       ]
     );
-  }, [currentHome, user, deleteHome, getApiClient, toast, t]);
+  }, [currentHome, user, deleteHome, toast, t]);
 
   const handleLoginPress = useCallback(() => {
     const rootNavigation = navigation.getParent();
@@ -314,9 +291,7 @@ export const SettingsScreen: React.FC = () => {
           text: t('common.delete'),
           style: 'destructive',
           onPress: async () => {
-            const apiClient = getApiClient();
-            if (!apiClient) return;
-            const success = await deleteHome(apiClient, currentHome.id);
+            const success = await deleteHome(currentHome.id);
             if (success) {
               toast.showToast(t('settings.deleteHome.success'));
             } else {
@@ -326,7 +301,7 @@ export const SettingsScreen: React.FC = () => {
         },
       ]
     );
-  }, [currentHome, deleteHome, getApiClient, toast, t]);
+  }, [currentHome, deleteHome, toast, t]);
 
   const handleAvatarPress = () => {
     const rootNavigation = navigation.getParent();
@@ -425,16 +400,7 @@ export const SettingsScreen: React.FC = () => {
           ) : (
             <>
               <MemberList
-                owner={
-                  currentHome?.owner
-                    ? {
-                        userId: currentHome.owner.userId,
-                        email: currentHome.owner.email,
-                        nickname: currentHome.owner.nickname,
-                        avatarUrl: currentHome.owner.avatarUrl,
-                      }
-                    : null
-                }
+                owner={members.find((member) => member.isOwner) ?? null}
                 members={members.filter((member) => !member.isOwner)}
                 isLoading={isLoadingMembers}
                 error={membersError}

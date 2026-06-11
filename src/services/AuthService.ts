@@ -1,5 +1,5 @@
 import { fileSystemService } from './FileSystemService';
-import { User } from '../types/api';
+import { User } from '../types/user';
 import { authLogger } from '../utils/Logger';
 import * as SecureStore from 'expo-secure-store';
 

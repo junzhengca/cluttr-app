@@ -18,8 +18,10 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../theme/ThemeProvider';
 import type { StyledProps } from '../../utils/styledComponents';
-import { useAuth } from '../../store/hooks';
+import { useAuth, useAppDispatch } from '../../store/hooks';
 import { BottomSheetHeader, FormSection, UncontrolledInput, GlassButton } from '../atoms';
+import { setUser } from '../../store/slices/authSlice';
+import { userService } from '../../services/UserService';
 import { uiLogger } from '../../utils/Logger';
 
 const Backdrop = styled(BottomSheetBackdrop)`
@@ -66,7 +68,8 @@ export const EditNicknameBottomSheet = forwardRef<
   const theme = useTheme();
   const insets = useSafeAreaInsets();
   const { t } = useTranslation();
-  const { user, updateUser, getApiClient } = useAuth();
+  const { user } = useAuth();
+  const dispatch = useAppDispatch();
 
   const nicknameInputRef = useRef<TextInput>(null);
   const nicknameValueRef = useRef('');
@@ -154,18 +157,18 @@ export const EditNicknameBottomSheet = forwardRef<
     setError(null);
 
     try {
-      // Get API client from Redux (already initialized with correct base URL and token)
-      const apiClient = getApiClient();
-      if (!apiClient) {
-        throw new Error('API client not initialized');
+      if (!user) {
+        throw new Error('Not signed in');
       }
 
       // Update nickname
       uiLogger.info('Updating nickname');
-      const updatedUser = await apiClient.updateNickname(currentNickname);
+      const updatedUser = await userService.updateProfile(user.id, {
+        nickname: currentNickname,
+      });
 
       // Update user state
-      await updateUser(updatedUser.nickname || '');
+      dispatch(setUser(updatedUser));
 
       // Close and call callback
       handleClose();
@@ -182,7 +185,7 @@ export const EditNicknameBottomSheet = forwardRef<
     } finally {
       setIsLoading(false);
     }
-  }, [t, updateUser, handleClose, handleSheetClose, onNicknameUpdated, getApiClient]);
+  }, [t, user, dispatch, handleClose, handleSheetClose, onNicknameUpdated]);
 
   const currentNickname = useMemo(() => {
     return user?.nickname || '';
