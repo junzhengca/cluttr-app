@@ -4,8 +4,9 @@ End-to-end Critical User Journeys (CUJs) and test cases for Cluttr, executable b
 `scripts/harness.sh` against the **live Firebase backend** (project `cluttr-app-f3c18`:
 Auth + Firestore + Storage — there is no custom server).
 
-**Last validated:** 2026-06-11 (full pass after the Firebase migration; swipe-action CUJs added and
-validated the same day after `SwipeableRow` shipped), iPhone 16 Pro simulator.
+**Last validated:** 2026-06-12 (full regression on the `refactor/code-quality` branch — all CUJs
+pass; TC-3.5 re-specced after the todo-category manager shipped; TC-5.3 blocked by the native-switch
+harness limitation, see gotcha 2.3.12), iPhone 16 Pro simulator.
 
 ---
 
@@ -89,6 +90,11 @@ xcrun simctl openurl booted "com.cluttrapp.cluttr://?inviteCode=<CODE>"         
     role/permission-gated (e.g. member rows only swipe for the home OWNER; owner rows never
     swipe). Before debugging, confirm which account is logged in (avatar → Profile) and what the
     row's gating condition is.
+12. **Native `Switch` toggles do NOT respond to axe taps or drags** (verified 2026-06-12 on the
+    Xcode 26.5 simulator runtime, identical on `main` — not an app bug; they also don't appear in
+    the `ui` tree). This blocks driving TC-5.3's sharing toggles and the Dark Mode switch from the
+    harness. Workaround: flip the setting externally via admin REST PATCH on the home doc
+    (TC-6.5 exercises the same `settings` write path plus the member-side reaction).
 
 ### 2.4 Reading results
 
@@ -334,8 +340,12 @@ Run order matters only where stated. Each test case lists **Pre** (preconditions
 
 #### TC-3.5 Todo categories smoke
 
-- **Steps:** Via the category UI on Notes (Planning List header area): create category `E2E-Cat`, assign it, then delete the category.
-- **Expect:** Category appears/disappears live; docs in `homes/{homeId}/todoCategories` match.
+- **Steps:** Notes tab (planning mode) → tap the dashed "Categories" manage chip at the end of
+  the category picker row (under the add-todo input; always visible) → TodoCategoryManager
+  sheet → "New Category" → type `E2E-Cat` → Save → category appears in the list and as a picker
+  chip. Rename it via the pencil icon, then delete via the trash icon → confirm.
+- **Expect:** Category appears/renames/disappears live (sheet list AND picker chips); docs in
+  `homes/{homeId}/todoCategories` match at each step.
 
 ---
 
@@ -550,7 +560,6 @@ Full regression = CUJ-1 through CUJ-8 (CUJ-9 when network control available).
 | Symptom                                                                            | Status                                               |
 | ---------------------------------------------------------------------------------- | ---------------------------------------------------- |
 | RNFB "namespaced API deprecated" WARNs flooding logs                               | Pre-existing; ignore                                 |
-| Item cards show raw `loc-...` IDs for custom locations                             | Pre-existing display nit, not a regression           |
 | One `listener permission-denied, retrying` right after home creation/invite accept | Expected (server commit race); retried automatically |
 | Settings member list shows email until first home-doc change                       | Minor staleness; refreshes on next home snapshot     |
 | Signup form's nickname field doesn't pre-populate the Setup Profile sheet          | Pre-existing flow quirk                              |

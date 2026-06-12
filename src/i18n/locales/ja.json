@@ -132,20 +132,22 @@
     }
   },
   "todoCategories": {
-    "all": "すべて",
-    "produce": "野菜・果物",
-    "dairy": "乳製品・卵",
-    "meat": "肉類",
-    "seafood": "魚介類",
-    "bakery": "パン・菓子",
-    "frozen": "冷凍食品",
-    "pantry": "穀物・調味料",
-    "beverages": "飲み物",
-    "snacks": "お菓子",
-    "household": "日用品",
-    "personal-care": "ピーアール・ケア",
-    "other": "その他",
-    "uncategorized": "未分類"
+    "title": "買い物カテゴリ",
+    "subtitle": "買い物リストを整理する",
+    "createTitle": "新しいカテゴリ",
+    "editTitle": "カテゴリ名を変更",
+    "listLabel": "カテゴリ",
+    "nameLabel": "カテゴリ名",
+    "placeholder": "例：野菜・果物",
+    "emptyState": "カテゴリがまだありません。作成して買い物リストを整理しましょう。",
+    "manage": "カテゴリ",
+    "delete": {
+      "title": "カテゴリを削除",
+      "message": "このカテゴリを削除してもよろしいですか？このカテゴリのToDoは未分類になります。"
+    },
+    "errors": {
+      "enterName": "カテゴリ名を入力してください"
+    }
   },
   "inventoryCategories": {
     "produce": "野菜・果物",
@@ -497,37 +499,6 @@
       "noExpiry": "期限\nなし",
       "addBatch": "バッチを追加",
       "editBatch": "バッチを編集"
-    }
-  },
-  "categoryManager": {
-    "title": "カテゴリー管理",
-    "subtitle": "カスタムカテゴリーの作成と編集",
-    "editTitle": "カテゴリーを編集",
-    "createTitle": "カテゴリーを作成",
-    "formSubtitle": "カテゴリー名、アイコン、色を設定",
-    "customCategories": "カスタムカテゴリー",
-    "emptyState": "カスタムカテゴリーはまだありません",
-    "nameEn": "カテゴリー名 (英語)",
-    "nameZh": "カテゴリー名 (中国語)",
-    "placeholderEn": "例: electronics",
-    "placeholderZh": "例: 电子产品",
-    "buttons": {
-      "create": "カテゴリーを作成",
-      "save": "保存",
-      "cancel": "キャンセル",
-      "delete": "削除"
-    },
-    "errors": {
-      "title": "エラー",
-      "enterName": "カテゴリー名を入力してください",
-      "createFailed": "カテゴリーの作成に失敗しました。もう一度お試しください",
-      "updateFailed": "カテゴリーの更新に失敗しました。もう一度お試しください",
-      "deleteFailed": "カテゴリーの削除に失敗しました。もう一度お試しください",
-      "deleteInUse": "使用中のカテゴリーは削除できません"
-    },
-    "delete": {
-      "title": "削除確認",
-      "message": "このカテゴリーを削除してもよろしいですか？"
     }
   },
   "iconSelector": {

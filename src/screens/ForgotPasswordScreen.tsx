@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import {
   View,
   Text,
@@ -122,10 +122,16 @@ export const ForgotPasswordScreen: React.FC = () => {
     useNavigation<NativeStackNavigationProp<AuthStackParamList>>();
   const { settings } = useSettings();
   const isDark = settings?.darkMode;
-  const { requestPasswordReset, isLoading, error } = useAuth();
+  const { requestPasswordReset, isLoading, error, clearError } = useAuth();
 
   const [email, setEmail] = useState('');
   const [emailSent, setEmailSent] = useState(false);
+
+  // The auth error is shared across auth flows — drop anything left over from
+  // a failed login attempt so it doesn't render on this screen.
+  useEffect(() => {
+    clearError();
+  }, [clearError]);
 
   const handleSubmit = useCallback(async () => {
     if (!email.trim() || isLoading) return;

@@ -25,6 +25,7 @@ import {
   SignupBottomSheet,
   HomeSwitcher,
   TodoCategoryPicker,
+  TodoCategoryManagerBottomSheet,
 } from '../components';
 import { useTodos, useAuth, useTodoCategories } from '../store/hooks';
 import { useHome } from '../hooks/useHome';
@@ -165,6 +166,7 @@ export const NotesScreen: React.FC = () => {
 
   const loginBottomSheetRef = useRef<BottomSheetModal | null>(null);
   const signupBottomSheetRef = useRef<BottomSheetModal | null>(null);
+  const categoryManagerRef = useRef<BottomSheetModal | null>(null);
 
   // Animation values for notes field - height cannot use native driver
   const notesHeight = useRef(new Animated.Value(0)).current;
@@ -382,6 +384,7 @@ export const NotesScreen: React.FC = () => {
                   <TodoCategoryPicker
                     selectedCategoryId={selectedCategoryId}
                     onSelect={setSelectedCategoryId}
+                    onManagePress={() => categoryManagerRef.current?.present()}
                   />
                 </AddTodoContainer>
               )}
@@ -409,6 +412,7 @@ export const NotesScreen: React.FC = () => {
           bottomSheetRef={signupBottomSheetRef}
           onLoginPress={handleLoginPress}
         />
+        <TodoCategoryManagerBottomSheet bottomSheetRef={categoryManagerRef} />
       </Container>
     </GestureHandlerRootView>
   );

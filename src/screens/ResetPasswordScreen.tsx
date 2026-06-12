@@ -116,7 +116,13 @@ export const ResetPasswordScreen: React.FC = () => {
   // verifyPasswordReset is no longer available – Firebase handles password
   // reset via email link. This screen is kept for navigation compatibility
   // but is no longer reachable from the ForgotPassword flow.
-  const { isLoading, error } = useAuth();
+  const { isLoading, error, clearError } = useAuth();
+
+  // The auth error is shared across auth flows — drop anything left over from
+  // a failed login attempt so it doesn't render on this screen.
+  useEffect(() => {
+    clearError();
+  }, [clearError]);
 
   const [code, setCode] = useState('');
   const [newPassword, setNewPassword] = useState('');

@@ -2,10 +2,7 @@ import React from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import styled from 'styled-components/native';
 import { Ionicons } from '@expo/vector-icons';
-import { useTranslation } from 'react-i18next';
-import { Category } from '../../types/inventory';
 import { getLightColor } from '../../utils/colors';
-import { getInventoryCategoryDisplayName } from '../../utils/inventoryCategoryI18n';
 import type { StyledProps } from '../../utils/styledComponents';
 import { BaseCard } from '../atoms';
 import { useTheme } from '../../theme/ThemeProvider';
@@ -42,9 +39,20 @@ const ActionButton = styled(TouchableOpacity)`
   padding: ${({ theme }: StyledProps) => theme.spacing.sm}px;
 `;
 
-export interface CategoryPreviewCardProps {
-  category: Category;
-  onEdit?: (category: Category) => void;
+/** Minimal structural type so the card works for any category domain. */
+export interface CategoryPreviewLike {
+  id: string;
+  name: string;
+  icon?: string;
+}
+
+export interface CategoryPreviewCardProps<
+  T extends CategoryPreviewLike = CategoryPreviewLike,
+> {
+  category: T;
+  /** Resolved display name (e.g. i18n-translated); falls back to category.name. */
+  displayName?: string;
+  onEdit?: (category: T) => void;
   onDelete?: (categoryId: string) => void;
 }
 
@@ -52,22 +60,23 @@ export interface CategoryPreviewCardProps {
  * CategoryPreviewCard - A card component for displaying category previews
  * Uses the same BaseCard styling as ItemCard for consistency
  */
-export const CategoryPreviewCard: React.FC<CategoryPreviewCardProps> = ({
+export const CategoryPreviewCard = <
+  T extends CategoryPreviewLike = CategoryPreviewLike,
+>({
   category,
+  displayName,
   onEdit,
   onDelete,
-}) => {
+}: CategoryPreviewCardProps<T>) => {
   const theme = useTheme();
-  const { t } = useTranslation();
-
-  const displayLabel = getInventoryCategoryDisplayName(category, t);
 
   return (
     <BaseCard compact>
       <IconContainer backgroundColor={getLightColor(theme.colors.primary)}>
         <Ionicons
           name={
-            (category.icon || 'cube-outline') as keyof typeof Ionicons.glyphMap
+            (category.icon ||
+              'pricetag-outline') as keyof typeof Ionicons.glyphMap
           }
           size={24}
           color={theme.colors.primary}
@@ -75,7 +84,7 @@ export const CategoryPreviewCard: React.FC<CategoryPreviewCardProps> = ({
       </IconContainer>
 
       <ContentContainer>
-        <CategoryName>{displayLabel}</CategoryName>
+        <CategoryName>{displayName ?? category.name}</CategoryName>
       </ContentContainer>
 
       {(onEdit || onDelete) && (

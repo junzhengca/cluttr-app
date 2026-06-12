@@ -2,7 +2,7 @@
 
 export * from './AddHomeBottomSheet';
 export * from './BatchFormBottomSheet';
-export * from './CategoryManagerBottomSheet';
+export * from './TodoCategoryManagerBottomSheet';
 export * from './CreateCategoryBottomSheet';
 export * from './CreateLocationBottomSheet';
 export * from './EditHomeBottomSheet';

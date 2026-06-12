@@ -14,6 +14,7 @@ import {
   updateUser,
   passwordResetRequestAction,
 } from './sagas/authSaga';
+import { setError as setAuthError } from './slices/authSlice';
 import { clearUpdateResult } from './slices/settingsSlice';
 import { Settings } from '../types/settings';
 import { InventoryItem } from '../types/inventory';
@@ -88,6 +89,9 @@ export const useAuth = () => {
     checkAuth: checkAuthSync,
     updateUser: updateUserData,
     requestPasswordReset,
+    clearError: useCallback(() => {
+      dispatch(setAuthError(null));
+    }, [dispatch]),
   };
 };
 
@@ -216,8 +220,8 @@ export const useTodoCategories = () => {
   }, [allCategories, activeHomeId]);
 
   const createCategory = useCallback(
-    (name: string, homeId: string) => {
-      dispatch({ type: 'todo/ADD_TODO_CATEGORY', payload: { name, homeId } });
+    (name: string) => {
+      dispatch({ type: 'todo/ADD_TODO_CATEGORY', payload: { name } });
     },
     [dispatch]
   );
