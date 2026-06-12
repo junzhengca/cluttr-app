@@ -14,7 +14,7 @@ import {
 } from '../../services/firebase/firestoreRefs';
 import type { InventoryCategory } from '../../types/inventory';
 import { sagaLogger } from '../../utils/Logger';
-import { getGlobalToast } from '../../components/organisms/ToastProvider';
+import { getGlobalToast } from '../../utils/toastRegistry';
 
 // Action types
 const LOAD_CATEGORIES = 'inventoryCategory/LOAD_CATEGORIES';

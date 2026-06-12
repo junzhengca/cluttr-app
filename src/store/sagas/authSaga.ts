@@ -21,7 +21,7 @@ import {
 import { User } from '../../types/user';
 import { ErrorDetails } from '../../types/errors';
 import type { RootState } from '../types';
-import { getGlobalToast } from '../../components/organisms/ToastProvider';
+import { getGlobalToast } from '../../utils/toastRegistry';
 import i18n from '../../i18n/i18n';
 import { authLogger } from '../../utils/Logger';
 import type { FirebaseAuthTypes } from '@react-native-firebase/auth';

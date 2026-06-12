@@ -19,7 +19,7 @@ import {
 } from '../../services/firebase/firestoreRefs';
 import type { Location } from '../../types/inventory';
 import { sagaLogger } from '../../utils/Logger';
-import { getGlobalToast } from '../../components/organisms/ToastProvider';
+import { getGlobalToast } from '../../utils/toastRegistry';
 import i18n from '../../i18n/i18n';
 import Ionicons from '@expo/vector-icons/Ionicons';
 

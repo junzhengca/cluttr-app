@@ -10,7 +10,7 @@ import {
 } from '../../types/inventory';
 import { Home, HomeMemberEntry } from '../../types/home';
 import { User } from '../../types/user';
-import { getGlobalToast } from '../../components/organisms/ToastProvider';
+import { getGlobalToast } from '../../utils/toastRegistry';
 import { storageLogger } from '../../utils/Logger';
 
 // Strip undefined values before writing — Firestore rejects them.

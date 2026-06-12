@@ -1,5 +1,6 @@
 import React, { createContext, useState, useCallback, useEffect, ReactNode } from 'react';
 import { Toast, type ToastType } from '../atoms';
+import { setGlobalToast } from '../../utils/toastRegistry';
 
 interface ToastContextType {
   showToast: (message: string, type?: ToastType) => void;
@@ -7,16 +8,8 @@ interface ToastContextType {
 
 export const ToastContext = createContext<ToastContextType | undefined>(undefined);
 
-// Global toast reference for use in sagas
-let globalToastRef: ((message: string, type?: ToastType) => void) | null = null;
-
-export const setGlobalToast = (toastFn: (message: string, type?: ToastType) => void) => {
-  globalToastRef = toastFn;
-};
-
-export const getGlobalToast = (): ((message: string, type?: ToastType) => void) | null => {
-  return globalToastRef;
-};
+// Non-React layers (sagas, services) access the toast via utils/toastRegistry.
+export { setGlobalToast, getGlobalToast } from '../../utils/toastRegistry';
 
 export interface ToastProviderProps {
   children: ReactNode;
