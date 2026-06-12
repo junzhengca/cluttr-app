@@ -24,15 +24,24 @@ const IconGrid = styled(View)`
   align-items: flex-start;
 `;
 
-const IconButton = styled(TouchableOpacity)<{ isSelected: boolean; iconColor?: string }>`
+interface IconButtonProps {
+  isSelected: boolean;
+  iconColor?: string;
+  isLastInRow: boolean;
+  isLastRow: boolean;
+}
+
+const IconButton = styled(TouchableOpacity)<IconButtonProps>`
   width: 18%;
   aspect-ratio: 1;
-  margin-right: 2.5%;
-  margin-bottom: ${({ theme }: StyledProps) => theme.spacing.sm}px;
-  background-color: ${({ theme, isSelected }: StyledPropsWith<{ isSelected: boolean; iconColor?: string }>) =>
+  margin-right: ${({ isLastInRow }: StyledPropsWith<IconButtonProps>) =>
+    isLastInRow ? '0' : '2.5%'};
+  margin-bottom: ${({ theme, isLastRow }: StyledPropsWith<IconButtonProps>) =>
+    isLastRow ? 0 : theme.spacing.sm}px;
+  background-color: ${({ theme, isSelected }: StyledPropsWith<IconButtonProps>) =>
     isSelected ? theme.colors.primaryLightest : theme.colors.surface};
   border-width: 1.5px;
-  border-color: ${({ theme, isSelected, iconColor }: StyledPropsWith<{ isSelected: boolean; iconColor?: string }>) =>
+  border-color: ${({ theme, isSelected, iconColor }: StyledPropsWith<IconButtonProps>) =>
     isSelected ? (iconColor || theme.colors.primary) : theme.colors.border};
   border-radius: ${({ theme }: StyledProps) => theme.borderRadius.md}px;
   align-items: center;
@@ -77,12 +86,10 @@ export const IconSelector: React.FC<IconSelectorProps> = ({
               key={icon}
               isSelected={isSelected}
               iconColor={iconColor}
+              isLastInRow={isLastInRow}
+              isLastRow={isLastRow}
               onPress={() => onIconSelect(icon)}
               activeOpacity={0.7}
-              style={{
-                ...(isLastInRow ? { marginRight: 0 } : {}),
-                ...(isLastRow ? { marginBottom: 0 } : {}),
-              }}
             >
               <Ionicons
                 name={icon}

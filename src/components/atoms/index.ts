@@ -34,9 +34,6 @@ export type { MemoizedInputProps } from './MemoizedInput';
 export { UncontrolledInput } from './UncontrolledInput';
 export type { UncontrolledInputProps } from './UncontrolledInput';
 
-export { NumberInput } from './NumberInput';
-export type { NumberInputProps } from './NumberInput';
-
 export { UnitPicker } from './UnitPicker';
 export type { UnitPickerProps } from './UnitPicker';
 

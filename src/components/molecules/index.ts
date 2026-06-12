@@ -4,9 +4,6 @@
 export { ItemCard } from './ItemCard';
 export type { ItemCardProps } from './ItemCard';
 
-export { TodoCard } from './TodoCard';
-export type { TodoCardProps } from './TodoCard';
-
 export { CategoryPreviewCard } from './CategoryPreviewCard';
 export type { CategoryPreviewCardProps } from './CategoryPreviewCard';
 
@@ -35,6 +32,9 @@ export type { LocationFilterProps } from './LocationFilter';
 
 export { TodoCategoryPicker } from './TodoCategoryPicker';
 export type { TodoCategoryPickerProps } from './TodoCategoryPicker';
+
+export { NumberInput } from './NumberInput';
+export type { NumberInputProps } from './NumberInput';
 
 // Form field molecules
 export * from './BatchItemCard';

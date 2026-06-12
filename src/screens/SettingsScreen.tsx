@@ -12,21 +12,9 @@ import { uiLogger } from '../utils/Logger';
 
 import {
   PageHeader,
-  ThemeChooser,
-  CurrencySelector,
-  LanguageSelector,
-  SettingsTextButton,
   EditHomeBottomSheet,
   HomeSwitcher,
-  PermissionConfigPanel,
-  EmptyState,
-  Button,
-  MemberList,
   InviteMenuBottomSheet,
-  HorizontalSplitter,
-  IconContainer,
-  Toggle,
-  SectionTitle,
 } from '../components';
 import { useSettings, useAuth } from '../store/hooks';
 import { useHome } from '../hooks/useHome';
@@ -37,6 +25,8 @@ import { Member } from '../types/user';
 import { userService } from '../services/UserService';
 import { homeService } from '../services/HomeService';
 import { invitationService } from '../services/InvitationService';
+import { HomeSettingsSection } from './settings/HomeSettingsSection';
+import { AppearanceSection } from './settings/AppearanceSection';
 
 const Container = styled(View)`
   flex: 1;
@@ -46,13 +36,6 @@ const Container = styled(View)`
 const Content = styled(ScrollView)`
   flex: 1;
   padding: ${({ theme }: StyledProps) => theme.spacing.md}px;
-`;
-
-const SettingsSectionCard = styled(View)`
-  background-color: ${({ theme }: StyledProps) => theme.colors.surface};
-  border-radius: ${({ theme }: StyledProps) => theme.borderRadius.xxl}px;
-  padding: ${({ theme }: StyledProps) => theme.spacing.md}px;
-  margin-bottom: ${({ theme }: StyledProps) => theme.spacing.xl}px;
 `;
 
 const VersionText = styled(Text)`
@@ -68,64 +51,6 @@ const LoadingContainer = styled(View)`
   flex: 1;
   justify-content: center;
   align-items: center;
-`;
-
-const LoginPromptContainer = styled(View)`
-  align-items: center;
-  justify-content: center;
-  padding: ${({ theme }: StyledProps) => theme.spacing.xl}px;
-`;
-
-const ButtonContainer = styled(View)`
-  width: 100%;
-  max-width: 300px;
-  margin-top: ${({ theme }: StyledProps) => theme.spacing.lg}px;
-`;
-
-const CardFootnote = styled(Text)`
-  font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.sm}px;
-  font-weight: ${({ theme }: StyledProps) => theme.typography.fontWeight.regular};
-  color: ${({ theme }: StyledProps) => theme.colors.textLight};
-  text-align: center;
-  margin-top: 0px;
-  margin-bottom: 0px;
-`;
-
-const SectionWrapper = styled(View)`
-  margin-top: ${({ theme }: StyledProps) => theme.spacing.xl}px;
-`;
-
-const PermissionRow = styled(View)`
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
-  padding-vertical: ${({ theme }: StyledProps) => theme.spacing.md}px;
-`;
-
-const LeftSection = styled(View)`
-  flex-direction: row;
-  align-items: center;
-  flex: 1;
-  margin-right: ${({ theme }: StyledProps) => theme.spacing.md}px;
-`;
-
-const TextContainer = styled(View)`
-  flex: 1;
-  flex-direction: column;
-  margin-left: ${({ theme }: StyledProps) => theme.spacing.md}px;
-`;
-
-const ItemLabel = styled(Text)`
-  font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.md}px;
-  font-weight: ${({ theme }: StyledProps) => theme.typography.fontWeight.medium};
-  color: ${({ theme }: StyledProps) => theme.colors.text};
-  margin-bottom: ${({ theme }: StyledProps) => theme.spacing.xs}px;
-`;
-
-const ItemDescription = styled(Text)`
-  font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.sm}px;
-  font-weight: ${({ theme }: StyledProps) => theme.typography.fontWeight.regular};
-  color: ${({ theme }: StyledProps) => theme.colors.textLight};
 `;
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
@@ -375,119 +300,32 @@ export const SettingsScreen: React.FC = () => {
         contentContainerStyle={{ paddingBottom: bottomPadding }}
       >
         {/* Home Settings Section */}
-        {currentHome && (
-          <SectionTitle title={t('settings.homeSettings')} icon="home-outline" />
-        )}
-        <SettingsSectionCard>
-          {!isAuthenticated ? (
-            <>
-              <LoginPromptContainer>
-                <EmptyState
-                  icon="lock-closed"
-                  title={t('share.loginRequired.title')}
-                  description={t('share.loginRequired.description')}
-                />
-                <ButtonContainer>
-                  <Button
-                    onPress={handleLoginPress}
-                    label={t('login.submit')}
-                    icon="log-in"
-                    variant="primary"
-                  />
-                </ButtonContainer>
-              </LoginPromptContainer>
-            </>
-          ) : (
-            <>
-              <MemberList
-                owner={members.find((member) => member.isOwner) ?? null}
-                members={members.filter((member) => !member.isOwner)}
-                isLoading={isLoadingMembers}
-                error={membersError}
-                onRemoveMember={currentHome?.role === 'owner' ? handleRemoveMember : undefined}
-                onInvitePress={handleInvitePress}
-                showInviteButton={currentHome?.role === 'owner'}
-              />
-
-              {currentHome?.role === 'owner' && (
-                <PermissionConfigPanel
-                  canShareInventory={canShareInventory}
-                  canShareTodos={canShareTodos}
-                  onToggleInventory={handleToggleInventory}
-                  onToggleTodos={handleToggleTodos}
-                  isLoading={false}
-                />
-              )}
-              {currentHome && (
-                <>
-                  <HorizontalSplitter />
-                  {currentHome.role === 'owner' && (
-                    <>
-                      <SettingsTextButton
-                        label={t('settings.editHome')}
-                        icon="pencil-outline"
-                        onPress={handleEditHomePress}
-                      />
-                      <SettingsTextButton
-                        label={t('settings.deleteHome.title')}
-                        icon="trash-outline"
-                        onPress={handleDeleteHomePress}
-                        variant="destructive"
-                        noMarginBottom
-                      />
-                    </>
-                  )}
-                  {currentHome.role === 'member' && (
-                    <SettingsTextButton
-                      label={t('share.members.leaveHome', 'Leave Home')}
-                      icon="log-out-outline"
-                      onPress={handleLeaveHome}
-                      variant="destructive"
-                      noMarginBottom
-                    />
-                  )}
-                </>
-              )}
-            </>
-          )}
-        </SettingsSectionCard>
-        {currentHome && (
-          <CardFootnote>
-            {t('settings.appliesToHome', { homeName: currentHome.name })}
-          </CardFootnote>
-        )}
+        <HomeSettingsSection
+          isAuthenticated={isAuthenticated}
+          currentHome={currentHome}
+          members={members}
+          isLoadingMembers={isLoadingMembers}
+          membersError={membersError}
+          canShareInventory={canShareInventory}
+          canShareTodos={canShareTodos}
+          onLoginPress={handleLoginPress}
+          onRemoveMember={handleRemoveMember}
+          onInvitePress={handleInvitePress}
+          onToggleInventory={handleToggleInventory}
+          onToggleTodos={handleToggleTodos}
+          onEditHomePress={handleEditHomePress}
+          onDeleteHomePress={handleDeleteHomePress}
+          onLeaveHome={handleLeaveHome}
+        />
 
         {/* Appearance Section */}
-        <SectionWrapper>
-          <SectionTitle title={t('settings.appearance')} icon="color-palette-outline" />
-          <SettingsSectionCard>
-          <ThemeChooser
-            selectedThemeId={settings.theme}
-            onThemeSelect={handleThemeChange}
-          />
-          <CurrencySelector
-            selectedCurrencyId={settings.currency}
-            onCurrencySelect={handleCurrencyChange}
-          />
-          <LanguageSelector
-            selectedLanguageId={settings.language}
-            onLanguageSelect={handleLanguageChange}
-          />
-          <PermissionRow>
-            <LeftSection>
-              <IconContainer icon="moon-outline" />
-              <TextContainer>
-                <ItemLabel>{t('settings.darkMode')}</ItemLabel>
-                <ItemDescription>{t('settings.darkModeDescription')}</ItemDescription>
-              </TextContainer>
-            </LeftSection>
-            <Toggle
-              value={settings.darkMode ?? false}
-              onValueChange={handleDarkModeChange}
-            />
-          </PermissionRow>
-        </SettingsSectionCard>
-        </SectionWrapper>
+        <AppearanceSection
+          settings={settings}
+          onThemeChange={handleThemeChange}
+          onCurrencyChange={handleCurrencyChange}
+          onLanguageChange={handleLanguageChange}
+          onDarkModeChange={handleDarkModeChange}
+        />
 
         {/* Version Info */}
         <VersionText>
@@ -506,4 +344,3 @@ export const SettingsScreen: React.FC = () => {
     </Container>
   );
 };
-

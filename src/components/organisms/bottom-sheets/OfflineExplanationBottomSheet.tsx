@@ -4,8 +4,8 @@ import { BottomSheetModal, BottomSheetView } from '@gorhom/bottom-sheet';
 import styled, { useTheme } from 'styled-components/native';
 import { useTranslation } from 'react-i18next';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { GlassButton } from '../atoms/GlassButton';
-import { StyledProps } from '../../utils/styledComponents';
+import { GlassButton } from '../../atoms/GlassButton';
+import { StyledProps } from '../../../utils/styledComponents';
 
 // Styled components
 const Container = styled(BottomSheetView)`

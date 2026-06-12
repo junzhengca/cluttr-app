@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../../src/theme/ThemeProvider';
 import { useInventory, useTodos } from '../../../src/store/hooks';
 import { ItemCard } from '../../../src/components/molecules/ItemCard';
-import { TodoCard } from '../../../src/components/molecules/TodoCard';
+import { TodoCard } from '../../../src/components/organisms/TodoCard';
 import { InventoryItem, TodoItem } from '../../../src/types/inventory';
 import { Ionicons } from '@expo/vector-icons';
 import { PageHeader } from '../../../src/components/organisms/PageHeader';

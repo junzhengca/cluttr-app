@@ -1,35 +1,26 @@
-import React, { useCallback, useState, useEffect, useRef } from 'react';
-import { ScrollView, ActivityIndicator, View, Text, Alert, TouchableOpacity, Platform } from 'react-native';
-import { Image } from 'expo-image';
+import React, { useCallback, useEffect, useRef } from 'react';
+import { ScrollView, ActivityIndicator, View, Alert } from 'react-native';
 import styled from 'styled-components/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import { BottomSheetModal } from '@gorhom/bottom-sheet';
-import { Ionicons } from '@expo/vector-icons';
-import * as ImagePicker from 'expo-image-picker';
-import * as ImageManipulator from 'expo-image-manipulator';
-import storage from '@react-native-firebase/storage';
-import i18n from '../i18n/i18n';
 import type { StyledProps } from '../utils/styledComponents';
-import { uiLogger } from '../utils/Logger';
 import {
   PageHeader,
   LoginBottomSheet,
   SignupBottomSheet,
   EditNicknameBottomSheet,
   type EditNicknameBottomSheetRef,
-  Button,
   SectionTitle,
-  HorizontalSplitter,
   SettingsTextButton,
 } from '../components';
-import { useAuth, useAppDispatch } from '../store/hooks';
-import { setUser } from '../store/slices/authSlice';
-import { userService } from '../services/UserService';
-import { useTheme } from '../theme/ThemeProvider';
+import { useAuth } from '../store/hooks';
 import { calculateBottomPadding } from '../utils/layout';
-import { formatDate } from '../utils/formatters';
+import { AvatarSection } from './profile/AvatarSection';
+import { AccountDetailsSection } from './profile/AccountDetailsSection';
+import { AuthPromptSection } from './profile/AuthPromptSection';
+import { SettingsSectionCard, SectionWrapper } from './profile/styles';
 
 const Container = styled(View)`
   flex: 1;
@@ -41,214 +32,22 @@ const Content = styled(ScrollView)`
   padding: ${({ theme }: StyledProps) => theme.spacing.md}px;
 `;
 
-const SettingsSectionCard = styled(View)`
-  background-color: ${({ theme }: StyledProps) => theme.colors.surface};
-  border-radius: ${({ theme }: StyledProps) => theme.borderRadius.xxl}px;
-  padding: ${({ theme }: StyledProps) => theme.spacing.md}px;
-  margin-bottom: ${({ theme }: StyledProps) => theme.spacing.md}px;
-`;
-
-const SectionWrapper = styled(View)`
-  margin-top: ${({ theme }: StyledProps) => theme.spacing.md}px;
-`;
-
-const ProfileCardContent = styled(View)`
-  align-items: center;
-  padding-vertical: ${({ theme }: StyledProps) => theme.spacing.md}px;
-`;
-
-const AvatarContainer = styled(TouchableOpacity)`
-  width: 100px;
-  height: 100px;
-  border-radius: 50px;
-  overflow: hidden;
-  margin-bottom: ${({ theme }: StyledProps) => theme.spacing.md}px;
-  border-width: 4px;
-  border-color: ${({ theme }: StyledProps) => theme.colors.primary};
-`;
-
-const AvatarImage = styled(Image)`
-  width: 100%;
-  height: 100%;
-`;
-
-const AvatarPlaceholder = styled(View)`
-  width: 100%;
-  height: 100%;
-  background-color: ${({ theme }: StyledProps) => theme.colors.primaryLight};
-  align-items: center;
-  justify-content: center;
-`;
-
-const UserNameContainer = styled(View)`
-  flex-direction: row;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: ${({ theme }: StyledProps) => theme.spacing.xs}px;
-`;
-
-const UserName = styled(Text)`
-  font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.lg}px;
-  font-weight: ${({ theme }: StyledProps) => theme.typography.fontWeight.bold};
-  color: ${({ theme }: StyledProps) => theme.colors.text};
-  margin-right: ${({ theme }: StyledProps) => theme.spacing.sm}px;
-`;
-
-const EditNicknameButton = styled(TouchableOpacity)`
-  padding: ${({ theme }: StyledProps) => theme.spacing.xs}px;
-`;
-
-const UserEmail = styled(Text)`
-  font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.md}px;
-  color: ${({ theme }: StyledProps) => theme.colors.textSecondary};
-  margin-bottom: ${({ theme }: StyledProps) => theme.spacing.xs}px;
-`;
-
-const UserId = styled(Text)`
-  font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.sm}px;
-  color: ${({ theme }: StyledProps) => theme.colors.textSecondary};
-`;
-
-const InfoRow = styled(View)`
-  flex-direction: row;
-  justify-content: space-between;
-  align-items: center;
-  padding-vertical: ${({ theme }: StyledProps) => theme.spacing.sm}px;
-`;
-
-const InfoLabel = styled(Text)`
-  font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.md}px;
-  color: ${({ theme }: StyledProps) => theme.colors.textSecondary};
-`;
-
-const InfoValue = styled(Text)`
-  font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.md}px;
-  font-weight: ${({ theme }: StyledProps) => theme.typography.fontWeight.medium};
-  color: ${({ theme }: StyledProps) => theme.colors.text};
-`;
-
 const LoadingContainer = styled(View)`
   flex: 1;
   justify-content: center;
   align-items: center;
 `;
 
-const AuthButtonContainer = styled(View)`
-  width: 100%;
-  margin-top: ${({ theme }: StyledProps) => theme.spacing.lg}px;
-  align-items: center;
-`;
-
-const ButtonWrapper = styled(View)`
-  width: 100%;
-  max-width: 300px;
-  margin-bottom: ${({ theme }: StyledProps) => theme.spacing.sm}px;
-`;
-
-const AuthTitle = styled(Text)`
-  font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.xl}px;
-  font-weight: ${({ theme }: StyledProps) => theme.typography.fontWeight.bold};
-  color: ${({ theme }: StyledProps) => theme.colors.text};
-  margin-bottom: ${({ theme }: StyledProps) => theme.spacing.md}px;
-  text-align: center;
-`;
-
-const AuthSubtitle = styled(Text)`
-  font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.md}px;
-  color: ${({ theme }: StyledProps) => theme.colors.textSecondary};
-  margin-bottom: ${({ theme }: StyledProps) => theme.spacing.md}px;
-  text-align: center;
-`;
-
 export const ProfileScreen: React.FC = () => {
   const { user, isAuthenticated, isLoading, error, logout } = useAuth();
-  const dispatch = useAppDispatch();
 
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
   const { t } = useTranslation();
-  const theme = useTheme();
-  const [isUploading, setIsUploading] = useState(false);
   const loginBottomSheetRef = useRef<BottomSheetModal | null>(null);
   const signupBottomSheetRef = useRef<BottomSheetModal | null>(null);
   const editNicknameBottomSheetModalRef = useRef<BottomSheetModal | null>(null);
   const editNicknameBottomSheetRef = useRef<EditNicknameBottomSheetRef | null>(null);
-
-  const getLocale = useCallback(() => {
-    return i18n.language === 'zh' || i18n.language === 'zh-CN' ? 'zh-CN' : 'en-US';
-  }, []);
-
-  const handleAvatarPress = useCallback(async () => {
-    try {
-      // Request permissions
-      if (Platform.OS !== 'web') {
-        const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-        if (status !== 'granted') {
-          Alert.alert(
-            t('profile.avatar.uploadError.title'),
-            t('profile.avatar.uploadError.permissionDenied')
-          );
-          return;
-        }
-      }
-
-      // Launch image picker
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ['images'],
-        allowsEditing: true,
-        aspect: [1, 1],
-        quality: 0.8,
-      });
-
-      if (result.canceled) {
-        return;
-      }
-
-      if (!result.assets || result.assets.length === 0) {
-        return;
-      }
-
-      if (!user) {
-        throw new Error('Not signed in');
-      }
-
-      const imageUri = result.assets[0].uri;
-      setIsUploading(true);
-
-      // Resize image to max 1024x1024 to reduce payload size
-      // Since we're using square aspect ratio (1:1), 1024x1024 is appropriate
-      const manipulatedImage = await ImageManipulator.manipulateAsync(
-        imageUri,
-        [{ resize: { width: 1024, height: 1024 } }],
-        { compress: 0.8, format: ImageManipulator.SaveFormat.JPEG }
-      );
-
-      // Upload to Firebase Storage. A unique filename per upload ensures the
-      // new download URL busts the image cache.
-      const avatarRef = storage().ref(`avatars/${user.id}/avatar-${Date.now()}.jpg`);
-      await avatarRef.putFile(manipulatedImage.uri);
-      const downloadUrl = await avatarRef.getDownloadURL();
-
-      // Persist the avatar URL on the user profile
-      const updatedUser = await userService.updateProfile(user.id, {
-        avatarUrl: downloadUrl,
-      });
-      dispatch(setUser(updatedUser));
-
-      Alert.alert(
-        t('profile.avatar.uploadSuccess.title'),
-        t('profile.avatar.uploadSuccess.message')
-      );
-    } catch (error) {
-      uiLogger.error('Avatar upload error', error);
-      Alert.alert(
-        t('profile.avatar.uploadError.title'),
-        t('profile.avatar.uploadError.message')
-      );
-    } finally {
-      setIsUploading(false);
-    }
-  }, [t, user, dispatch]);
 
   const handleLogout = () => {
     Alert.alert(
@@ -287,6 +86,10 @@ export const ProfileScreen: React.FC = () => {
 
   const handleSignupSuccess = useCallback(() => {
     // User will be automatically updated via auth state
+  }, []);
+
+  const handleEditNickname = useCallback((currentNickname: string) => {
+    editNicknameBottomSheetRef.current?.present(currentNickname);
   }, []);
 
   // Handle auth errors from Google login
@@ -342,69 +145,9 @@ export const ProfileScreen: React.FC = () => {
       >
         {isAuthenticated && user ? (
           <>
-            <SectionTitle title={t('profile.title')} icon="person-outline" />
-            <SettingsSectionCard>
-              <ProfileCardContent>
-                <AvatarContainer onPress={handleAvatarPress} disabled={isUploading}>
-                  {isUploading ? (
-                    <View style={{ width: '100%', height: '100%', justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.5)' }}>
-                      <ActivityIndicator size="small" color="white" />
-                    </View>
-                  ) : user.avatarUrl ? (
-                    <AvatarImage source={{ uri: user.avatarUrl }} contentFit="cover" cachePolicy="memory-disk" />
-                  ) : (
-                    <AvatarPlaceholder>
-                      <Text style={{ fontSize: 40, color: 'white' }}>👤</Text>
-                    </AvatarPlaceholder>
-                  )}
-                </AvatarContainer>
-                <UserNameContainer>
-                  <UserName>{user.nickname || user.email}</UserName>
-                  <EditNicknameButton onPress={() => editNicknameBottomSheetRef.current?.present(user.nickname || '')}>
-                    <Ionicons name="create-outline" size={20} color={theme.colors.primary} />
-                  </EditNicknameButton>
-                </UserNameContainer>
-                {user.nickname && <UserEmail>{user.email}</UserEmail>}
-                {user.id && <UserId>{t('profile.userId')}: {user.id}</UserId>}
-              </ProfileCardContent>
-            </SettingsSectionCard>
+            <AvatarSection user={user} onEditNickname={handleEditNickname} />
 
-            <SectionWrapper>
-              <SectionTitle title={t('profile.accountInfo', 'Account Information')} icon="information-circle-outline" />
-              <SettingsSectionCard>
-                {user.nickname && (
-                  <>
-                    <InfoRow>
-                      <InfoLabel>{t('profile.nickname')}</InfoLabel>
-                      <InfoValue>{user.nickname}</InfoValue>
-                    </InfoRow>
-                    <HorizontalSplitter />
-                  </>
-                )}
-                <InfoRow>
-                  <InfoLabel>{t('profile.email')}</InfoLabel>
-                  <InfoValue>{user.email}</InfoValue>
-                </InfoRow>
-                {user.createdAt && (
-                  <>
-                    <HorizontalSplitter />
-                    <InfoRow>
-                      <InfoLabel>{t('profile.memberSince')}</InfoLabel>
-                      <InfoValue>{formatDate(user.createdAt, getLocale(), t)}</InfoValue>
-                    </InfoRow>
-                  </>
-                )}
-                {user.updatedAt && (
-                  <>
-                    <HorizontalSplitter />
-                    <InfoRow>
-                      <InfoLabel>{t('profile.lastUpdated')}</InfoLabel>
-                      <InfoValue>{formatDate(user.updatedAt, getLocale(), t)}</InfoValue>
-                    </InfoRow>
-                  </>
-                )}
-              </SettingsSectionCard>
-            </SectionWrapper>
+            <AccountDetailsSection user={user} />
 
             <SectionWrapper>
               <SectionTitle title={t('settings.actions', 'Actions')} icon="options-outline" />
@@ -420,35 +163,10 @@ export const ProfileScreen: React.FC = () => {
             </SectionWrapper>
           </>
         ) : (
-          <SectionWrapper>
-            <SettingsSectionCard>
-              <ProfileCardContent>
-                <AvatarContainer disabled={true}>
-                  <AvatarPlaceholder>
-                    <Ionicons name="person" size={50} color="white" />
-                  </AvatarPlaceholder>
-                </AvatarContainer>
-                <AuthTitle>{t('profile.auth.title')}</AuthTitle>
-                <AuthSubtitle>{t('profile.auth.subtitle')}</AuthSubtitle>
-                <AuthButtonContainer>
-                  <ButtonWrapper>
-                    <Button
-                      label={t('login.submit')}
-                      onPress={handleLoginPress}
-                      variant="primary"
-                    />
-                  </ButtonWrapper>
-                  <ButtonWrapper>
-                    <Button
-                      label={t('signup.submit')}
-                      onPress={handleSignupPress}
-                      variant="secondary"
-                    />
-                  </ButtonWrapper>
-                </AuthButtonContainer>
-              </ProfileCardContent>
-            </SettingsSectionCard>
-          </SectionWrapper>
+          <AuthPromptSection
+            onLoginPress={handleLoginPress}
+            onSignupPress={handleSignupPress}
+          />
         )}
       </Content>
       <LoginBottomSheet

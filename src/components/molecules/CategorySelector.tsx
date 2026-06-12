@@ -9,7 +9,7 @@ import type { StyledProps, StyledPropsWith } from '../../utils/styledComponents'
 import type { Theme } from '../../theme/types';
 import { BottomSheetModal } from '@gorhom/bottom-sheet';
 import { Ionicons } from '@expo/vector-icons';
-import { CreateCategoryBottomSheet } from '../organisms/CreateCategoryBottomSheet';
+import { CreateCategoryBottomSheet } from '../organisms/bottom-sheets/CreateCategoryBottomSheet';
 import { ContextMenu } from '../organisms/ContextMenu/ContextMenu';
 
 
@@ -25,7 +25,7 @@ const ScrollContainer = styled(ScrollView)`
 const CategoryButton = styled(TouchableOpacity) <{ isSelected: boolean }>`
   flex-direction: row;
   align-items: center;
-  padding-horizontal: 16px;
+  padding-horizontal: ${({ theme }: StyledProps) => theme.spacing.md}px;
   height: 38px;
   border-radius: 19px;
   background-color: ${({ theme, isSelected }: StyledPropsWith<{ isSelected: boolean }>) =>
@@ -76,6 +76,28 @@ const CreateCategoryButton = styled(TouchableOpacity)`
   margin-right: ${({ theme }: StyledProps) => theme.spacing.md}px;
   align-self: center;
 `;
+
+interface CategoryEditorSheetProps {
+  bottomSheetRef: React.RefObject<BottomSheetModal | null>;
+  categoryToEdit: { id: string; name: string; color?: string; icon?: string } | null;
+  onClose: () => void;
+}
+
+/**
+ * Nested bottom-sheet modal used to create a new category or edit an existing
+ * one. Kept as a private subcomponent so the selector itself reads top-down.
+ */
+const CategoryEditorSheet: React.FC<CategoryEditorSheetProps> = ({
+  bottomSheetRef,
+  categoryToEdit,
+  onClose,
+}) => (
+  <CreateCategoryBottomSheet
+    bottomSheetRef={bottomSheetRef}
+    categoryToEdit={categoryToEdit}
+    onClose={onClose}
+  />
+);
 
 export interface CategorySelectorProps {
   categories?: Category[];
@@ -277,7 +299,7 @@ export const CategorySelector: React.FC<CategorySelectorProps> = ({
         </CreateCategoryButton>
       </ScrollContainer>
 
-      <CreateCategoryBottomSheet
+      <CategoryEditorSheet
         bottomSheetRef={bottomSheetRef}
         categoryToEdit={categoryToEdit}
         onClose={() => onOpeningNestedModal?.(false)}

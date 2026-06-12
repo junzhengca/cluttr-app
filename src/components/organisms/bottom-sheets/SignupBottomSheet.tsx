@@ -1,28 +1,21 @@
-import React, { useState, useCallback, useRef, useEffect } from 'react';
+import React, { useState, useCallback, useRef } from 'react';
 import { TouchableOpacity, View, Text, Keyboard, TextInput } from 'react-native';
 import styled from 'styled-components/native';
 import { BottomSheetModal, BottomSheetBackdrop, BottomSheetView } from '@gorhom/bottom-sheet';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
-import { useTheme } from '../../theme/ThemeProvider';
-import type { StyledProps } from '../../utils/styledComponents';
-import { useAuth, useAppDispatch } from '../../store/hooks';
-import { useKeyboardVisibility } from '../../hooks/useKeyboardVisibility';
-import { setError } from '../../store/slices/authSlice';
-import { BottomSheetHeader, UncontrolledInput, FormSection, GlassButton } from '../atoms';
+import { useTheme } from '../../../theme/ThemeProvider';
+import type { StyledProps } from '../../../utils/styledComponents';
+import { useAuth } from '../../../store/hooks';
+import { useKeyboardVisibility } from '../../../hooks/useKeyboardVisibility';
+import { BottomSheetHeader, UncontrolledInput, FormSection, GlassButton } from '../../atoms';
+import { ContentContainer } from './shared/sheetPrimitives';
 
 interface FooterContainerProps {
   bottomInset: number;
   showSafeArea: boolean;
   theme: StyledProps['theme'];
 }
-
-const ContentContainer = styled.View`
-  flex: 1;
-  border-top-left-radius: ${({ theme }: StyledProps) => theme.borderRadius.xxl}px;
-  border-top-right-radius: ${({ theme }: StyledProps) => theme.borderRadius.xxl}px;
-  overflow: hidden;
-`;
 
 const FooterContainer = styled(View) <FooterContainerProps>`
   background-color: ${({ theme }: StyledProps) => theme.colors.background};
@@ -53,29 +46,30 @@ const LinkButton = styled(TouchableOpacity)`
 
 
 
-export interface LoginBottomSheetProps {
+export interface SignupBottomSheetProps {
   bottomSheetRef: React.RefObject<BottomSheetModal | null>;
-  onSignupPress?: () => void;
-  onLoginSuccess?: () => void;
+  onLoginPress?: () => void;
+  onSignupSuccess?: () => void;
 }
 
-export const LoginBottomSheet: React.FC<LoginBottomSheetProps> = ({
+export const SignupBottomSheet: React.FC<SignupBottomSheetProps> = ({
   bottomSheetRef,
-  onSignupPress,
-  onLoginSuccess,
+  onLoginPress,
+  onSignupSuccess,
 }) => {
   const { t } = useTranslation();
   const theme = useTheme();
   const insets = useSafeAreaInsets();
-  const dispatch = useAppDispatch();
-  const { login, error: authError, isLoading: authLoading } = useAuth();
+  const { signup } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [localError, setLocalError] = useState<string | null>(null);
-  const [loginAttempted, setLoginAttempted] = useState(false);
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
   const { isKeyboardVisible } = useKeyboardVisibility();
   const emailInputRef = useRef<TextInput>(null);
   const passwordInputRef = useRef<TextInput>(null);
+  const confirmPasswordInputRef = useRef<TextInput>(null);
 
   const renderBackdrop = useCallback(
     (props: Parameters<typeof BottomSheetBackdrop>[0]) => (
@@ -89,69 +83,74 @@ export const LoginBottomSheet: React.FC<LoginBottomSheetProps> = ({
     []
   );
 
+  // Stable onChangeText handlers to prevent IME composition interruption
+  const handleEmailChange = useCallback((text: string) => {
+    setEmail(text);
+  }, []);
+
+  const handlePasswordChange = useCallback((text: string) => {
+    setPassword(text);
+  }, []);
+
+  const handleConfirmPasswordChange = useCallback((text: string) => {
+    setConfirmPassword(text);
+  }, []);
+
   const handleClose = useCallback(() => {
     Keyboard.dismiss();
     bottomSheetRef.current?.dismiss();
     setEmail('');
     setPassword('');
-    setLocalError(null);
-    setLoginAttempted(false);
+    setConfirmPassword('');
+    setError(null);
     emailInputRef.current?.clear();
     passwordInputRef.current?.clear();
+    confirmPasswordInputRef.current?.clear();
   }, [bottomSheetRef]);
 
-  // Stable onChangeText handlers to prevent IME composition interruption
-  const handleEmailChange = useCallback((text: string) => {
-    setEmail(text);
-    if (localError || authError) {
-      setLocalError(null);
-      dispatch(setError(null));
-    }
-  }, [localError, authError, dispatch]);
-
-  const handlePasswordChange = useCallback((text: string) => {
-    setPassword(text);
-    if (localError || authError) {
-      setLocalError(null);
-      dispatch(setError(null));
-    }
-  }, [localError, authError, dispatch]);
-
-  const handleSubmit = useCallback(() => {
-    if (!email.trim() || !password.trim()) {
-      setLocalError(t('login.errors.emptyFields'));
+  const handleSubmit = useCallback(async () => {
+    if (!email.trim() || !password.trim() || !confirmPassword.trim()) {
+      setError(t('signup.errors.emptyFields'));
       return;
     }
 
-    setLocalError(null);
-    setLoginAttempted(true);
-    login(email.trim(), password);
-  }, [email, password, login, t]);
+    if (password !== confirmPassword) {
+      setError(t('signup.errors.passwordMismatch'));
+      return;
+    }
 
-  // Watch for authentication success or failure
-  useEffect(() => {
-    if (loginAttempted && !authLoading) {
-      if (!authError) {
-        // Login was successful
-        handleClose();
-        // Call onLoginSuccess callback after successful login
-        if (onLoginSuccess) {
-          // Small delay to ensure login modal is closed
-          setTimeout(() => {
-            onLoginSuccess();
-          }, 300);
-        }
+    if (password.length < 6) {
+      setError(t('signup.errors.passwordTooShort'));
+      return;
+    }
+
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      await signup(email.trim(), password);
+      handleClose();
+      // Call onSignupSuccess callback after successful signup
+      if (onSignupSuccess) {
+        // Small delay to ensure signup modal is closed
+        setTimeout(() => {
+          onSignupSuccess();
+        }, 300);
       }
-      // If there's an error, it will be displayed via displayError
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : t('signup.errors.failed');
+      setError(errorMessage);
+    } finally {
+      setIsLoading(false);
     }
-  }, [loginAttempted, authLoading, authError, handleClose, onLoginSuccess]);
+  }, [email, password, confirmPassword, signup, handleClose, onSignupSuccess, t]);
 
-  const handleSignupPress = useCallback(() => {
+  const handleLoginPress = useCallback(() => {
     handleClose();
-    if (onSignupPress) {
-      onSignupPress();
+    if (onLoginPress) {
+      onLoginPress();
     }
-  }, [handleClose, onSignupPress]);
+  }, [handleClose, onLoginPress]);
 
   const renderFooter = useCallback(
     () => (
@@ -160,22 +159,19 @@ export const LoginBottomSheet: React.FC<LoginBottomSheetProps> = ({
         showSafeArea={!isKeyboardVisible}
       >
         <GlassButton
-          text={authLoading ? t('common.saving') : t('login.submit')}
+          text={isLoading ? t('common.saving') : t('signup.submit')}
           onPress={handleSubmit}
-          icon="log-in"
-          loading={authLoading}
+          icon="person-add"
+          loading={isLoading}
           tintColor={theme.colors.primary}
           textColor={theme.colors.surface}
-          disabled={authLoading}
+          disabled={isLoading}
           style={{ width: '100%' }}
         />
       </FooterContainer>
     ),
-    [handleSubmit, authLoading, theme, t, isKeyboardVisible, insets.bottom]
+    [handleSubmit, isLoading, theme, t, isKeyboardVisible, insets.bottom]
   );
-
-  // Combine local and auth errors for display
-  const displayError = localError || authError;
 
   // Calculate footer height: button height (approx 50) + vertical padding (32) + safe area
   const footerHeight = 82 + (isKeyboardVisible ? 0 : insets.bottom);
@@ -195,44 +191,57 @@ export const LoginBottomSheet: React.FC<LoginBottomSheetProps> = ({
       <ContentContainer>
         <BottomSheetView style={{ paddingBottom: footerHeight }}>
           <BottomSheetHeader
-            title={t('login.title')}
-            subtitle={t('login.subtitle')}
+            title={t('signup.title')}
+            subtitle={t('signup.subtitle')}
             onClose={handleClose}
           />
 
           <View style={{ paddingHorizontal: theme.spacing.md }}>
 
 
-            <FormSection label={t('login.fields.email')}>
+            <FormSection label={t('signup.fields.email')}>
               <UncontrolledInput
                 ref={emailInputRef}
                 defaultValue={email}
                 onChangeText={handleEmailChange}
                 onBlur={() => { }}
-                placeholder={t('login.placeholders.email')}
+                placeholder={t('signup.placeholders.email')}
                 placeholderTextColor={theme.colors.textSecondary}
                 keyboardType="email-address"
               />
             </FormSection>
 
-            <FormSection label={t('login.fields.password')}>
+            <FormSection label={t('signup.fields.password')}>
               <UncontrolledInput
                 ref={passwordInputRef}
                 defaultValue={password}
                 onChangeText={handlePasswordChange}
                 onBlur={() => { }}
-                onSubmitEditing={handleSubmit}
-                placeholder={t('login.placeholders.password')}
+                placeholder={t('signup.placeholders.password')}
                 placeholderTextColor={theme.colors.textSecondary}
                 keyboardType="default"
                 secureTextEntry={true}
-                error={!!displayError}
-                errorMessage={displayError || undefined}
               />
             </FormSection>
 
-            <LinkButton onPress={handleSignupPress}>
-              <LinkText>{t('login.link')}</LinkText>
+            <FormSection label={t('signup.fields.confirmPassword')}>
+              <UncontrolledInput
+                ref={confirmPasswordInputRef}
+                defaultValue={confirmPassword}
+                onChangeText={handleConfirmPasswordChange}
+                onBlur={() => { }}
+                onSubmitEditing={handleSubmit}
+                placeholder={t('signup.placeholders.confirmPassword')}
+                placeholderTextColor={theme.colors.textSecondary}
+                keyboardType="default"
+                secureTextEntry={true}
+                error={!!error}
+                errorMessage={error || undefined}
+              />
+            </FormSection>
+
+            <LinkButton onPress={handleLoginPress}>
+              <LinkText>{t('signup.link')}</LinkText>
             </LinkButton>
           </View>
         </BottomSheetView>

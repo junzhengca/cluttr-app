@@ -3,9 +3,7 @@ import { TouchableOpacity, TextInput, View, type ViewStyle } from 'react-native'
 import styled from 'styled-components/native';
 import { Ionicons } from '@expo/vector-icons';
 import type { StyledProps } from '../../utils/styledComponents';
-import { UncontrolledInput } from './UncontrolledInput';
-import { MemoizedInput } from './MemoizedInput';
-import { UnitPicker } from './UnitPicker';
+import { UncontrolledInput, MemoizedInput, UnitPicker } from '../atoms';
 
 const ContainerWrapper = styled(View) <{ hasError: boolean }>`
   position: relative;

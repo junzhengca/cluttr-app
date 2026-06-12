@@ -1,23 +1,18 @@
-import React, { useCallback, useState, useRef } from 'react';
+import React, { useCallback, useState, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Keyboard, TextInput } from 'react-native';
 import { BottomSheetModal, BottomSheetBackdrop, BottomSheetView, BottomSheetBackdropProps } from '@gorhom/bottom-sheet';
 import styled from 'styled-components/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useTheme } from '../../theme/ThemeProvider';
-import { useHome } from '../../hooks/useHome';
-import { useAuth } from '../../store/hooks';
-import { BottomSheetHeader, GlassButton, FormSection, UncontrolledInput } from '../atoms';
-import { StyledProps } from '../../utils/styledComponents';
-import { useKeyboardVisibility } from '../../hooks/useKeyboardVisibility';
-import { uiLogger } from '../../utils/Logger';
-
-const ContentContainer = styled.View`
-  flex: 1;
-  border-top-left-radius: ${({ theme }: StyledProps) => theme.borderRadius.xxl}px;
-  border-top-right-radius: ${({ theme }: StyledProps) => theme.borderRadius.xxl}px;
-  overflow: hidden;
-`;
+import { useTheme } from '../../../theme/ThemeProvider';
+import { useHome } from '../../../hooks/useHome';
+import { useAuth } from '../../../store/hooks';
+import { BottomSheetHeader, GlassButton, FormSection, UncontrolledInput } from '../../atoms';
+import { StyledProps } from '../../../utils/styledComponents';
+import { useKeyboardVisibility } from '../../../hooks/useKeyboardVisibility';
+import { Home } from '../../../types/home';
+import { uiLogger } from '../../../utils/Logger';
+import { ContentContainer, FooterContainer } from './shared/sheetPrimitives';
 
 const FormContainer = styled.View`
   flex-direction: column;
@@ -38,41 +33,21 @@ const ErrorText = styled.Text`
   font-size: 12px;
 `;
 
-const FooterContainer = styled.View<{
-    bottomInset: number;
-    showSafeArea: boolean;
-}>`
-  background-color: ${({ theme }: StyledProps) => theme.colors.background};
-  padding-horizontal: ${({ theme }: StyledProps) => theme.spacing.lg}px;
-  padding-top: ${({ theme }: StyledProps) => theme.spacing.md}px;
-  padding-bottom: ${({ bottomInset, showSafeArea, theme }: StyledProps & { bottomInset: number; showSafeArea: boolean }) =>
-        showSafeArea ? bottomInset + theme.spacing.md : theme.spacing.md}px;
-  shadow-color: #000;
-  shadow-offset: 0px -2px;
-  shadow-opacity: 0.03;
-  shadow-radius: 4px;
-  elevation: 2;
-`;
-
-interface AddHomeBottomSheetProps {
+interface EditHomeBottomSheetProps {
     bottomSheetRef: React.RefObject<BottomSheetModal | null>;
-    onHomeCreated?: () => void;
-    /**
-     * If true, shows a special UI for when user has no homes and must create one.
-     * This happens after deleting the last home.
-     */
-    isRequired?: boolean;
+    home: Home | null;
+    onHomeUpdated?: () => void;
 }
 
-export const AddHomeBottomSheet: React.FC<AddHomeBottomSheetProps> = ({
+export const EditHomeBottomSheet: React.FC<EditHomeBottomSheetProps> = ({
     bottomSheetRef,
-    onHomeCreated,
-    isRequired = false,
+    home,
+    onHomeUpdated,
 }) => {
     const { t } = useTranslation();
     const theme = useTheme();
     const insets = useSafeAreaInsets();
-    const { createHome, loadingState } = useHome();
+    const { updateHome, loadingState } = useHome();
     const { isAuthenticated } = useAuth();
     const { isKeyboardVisible } = useKeyboardVisibility();
     const [name, setName] = useState('');
@@ -81,14 +56,12 @@ export const AddHomeBottomSheet: React.FC<AddHomeBottomSheetProps> = ({
     const nameInputRef = useRef<TextInput>(null);
     const addressInputRef = useRef<TextInput>(null);
 
-    // Use different translation keys based on whether this is required (no home) or optional
-    const titleKey = isRequired ? 'home.createRequired.title' : 'home.create.title';
-    const subtitleKey = isRequired ? 'home.createRequired.subtitle' : 'home.create.subtitle';
-    const nicknameLabelKey = isRequired ? 'home.createRequired.nicknameLabel' : 'home.create.nicknameLabel';
-    const nicknamePlaceholderKey = isRequired ? 'home.createRequired.nicknamePlaceholder' : 'home.create.nicknamePlaceholder';
-    const addressLabelKey = isRequired ? 'home.createRequired.addressLabel' : 'home.create.addressLabel';
-    const addressPlaceholderKey = isRequired ? 'home.createRequired.addressPlaceholder' : 'home.create.addressPlaceholder';
-    const submitKey = isRequired ? 'home.createRequired.submit' : 'home.create.submit';
+    useEffect(() => {
+        if (home) {
+            setName(home.name);
+            setAddress(home.address || '');
+        }
+    }, [home]);
 
     const handleClose = useCallback(() => {
         Keyboard.dismiss();
@@ -107,31 +80,27 @@ export const AddHomeBottomSheet: React.FC<AddHomeBottomSheetProps> = ({
         []
     );
 
-    const isLoading = loadingState.operation === 'create' && loadingState.isLoading;
-    const error = loadingState.operation === 'create' ? loadingState.error : null;
+    const isLoading = loadingState.operation === 'update' && loadingState.isLoading;
+    const error = loadingState.operation === 'update' ? loadingState.error : null;
 
     const renderFooter = useCallback(() => {
         const handleSubmit = async () => {
-            if (!name.trim()) return;
+            if (!name.trim() || !home) return;
 
             if (!isAuthenticated) {
-                uiLogger.error('Cannot create home: user not authenticated');
+                uiLogger.error('Cannot update home: user not authenticated');
                 return;
             }
 
             try {
-                await createHome(name, address);
+                const success = await updateHome(home.id, { name, address });
 
-                // Clear inputs and state
-                setName('');
-                setAddress('');
-                nameInputRef.current?.clear();
-                addressInputRef.current?.clear();
-
-                handleClose();
-                onHomeCreated?.();
+                if (success) {
+                    handleClose();
+                    onHomeUpdated?.();
+                }
             } catch (error) {
-                uiLogger.error('Failed to create home', error);
+                uiLogger.error('Failed to update home', error);
             }
         };
 
@@ -143,21 +112,18 @@ export const AddHomeBottomSheet: React.FC<AddHomeBottomSheetProps> = ({
                     </ErrorBanner>
                 )}
                 <GlassButton
-                    text={t(submitKey)}
+                    text={isLoading ? t('common.saving') : t('home.edit.submit')}
                     onPress={handleSubmit}
                     tintColor={theme.colors.primary}
                     textColor={theme.colors.surface}
                     disabled={!name.trim() || isLoading}
                     loading={isLoading}
-                    icon="checkmark"
                     style={{ width: '100%' }}
                 />
             </FooterContainer>
         );
-    }, [insets.bottom, isKeyboardVisible, isAuthenticated, createHome, name, address, error, isLoading, handleClose, onHomeCreated, nameInputRef, addressInputRef, t, submitKey, theme]);
+    }, [insets.bottom, isKeyboardVisible, isAuthenticated, updateHome, home, name, address, error, isLoading, handleClose, onHomeUpdated, t, theme]);
 
-    // Estimated height of footer: 16px (top) + 16px (bottom) + 50px (button) = ~82px + inset
-    // When keyboard is visible, safe area is removed, so we just use base height
     const footerHeight = 82 + (isKeyboardVisible ? 0 : insets.bottom);
 
     return (
@@ -165,7 +131,7 @@ export const AddHomeBottomSheet: React.FC<AddHomeBottomSheetProps> = ({
             ref={bottomSheetRef}
             enableDynamicSizing={true}
             backdropComponent={renderBackdrop}
-            enablePanDownToClose={!isRequired}
+            enablePanDownToClose
             handleComponent={null}
             android_keyboardInputMode="adjustResize"
             backgroundStyle={{ backgroundColor: theme.colors.background }}
@@ -175,31 +141,29 @@ export const AddHomeBottomSheet: React.FC<AddHomeBottomSheetProps> = ({
             <ContentContainer>
                 <BottomSheetView style={{ paddingBottom: footerHeight }}>
                     <BottomSheetHeader
-                        title={t(titleKey)}
-                        subtitle={t(subtitleKey)}
-                        onClose={isRequired ? undefined : handleClose} // No close button if required
+                        title={t('home.edit.title')}
+                        subtitle={t('home.edit.subtitle')}
+                        onClose={handleClose}
                     />
                     <FormContainer>
-                        <FormSection label={t(nicknameLabelKey)}>
+                        <FormSection label={t('home.create.nicknameLabel')}>
                             <UncontrolledInput
                                 ref={nameInputRef}
                                 defaultValue={name}
                                 onChangeText={setName}
                                 onBlur={() => { }}
-                                placeholder={t(nicknamePlaceholderKey)}
+                                placeholder={t('home.create.nicknamePlaceholder')}
                                 placeholderTextColor={theme.colors.textLight}
-                                editable={!isLoading}
                             />
                         </FormSection>
-                        <FormSection label={t(addressLabelKey)}>
+                        <FormSection label={t('home.create.addressLabel')}>
                             <UncontrolledInput
                                 ref={addressInputRef}
                                 defaultValue={address}
                                 onChangeText={setAddress}
                                 onBlur={() => { }}
-                                placeholder={t(addressPlaceholderKey)}
+                                placeholder={t('home.create.addressPlaceholder')}
                                 placeholderTextColor={theme.colors.textLight}
-                                editable={!isLoading}
                             />
                         </FormSection>
                     </FormContainer>

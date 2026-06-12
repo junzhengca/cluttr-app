@@ -4,14 +4,15 @@ import styled from 'styled-components/native';
 import { BottomSheetModal, BottomSheetBackdrop, BottomSheetView, BottomSheetBackdropProps } from '@gorhom/bottom-sheet';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
-import { useTheme } from '../../theme/ThemeProvider';
-import { GlassButton, BottomSheetHeader } from '../atoms';
-import { useAppSelector } from '../../store/hooks';
-import { useToast } from '../../hooks/useToast';
-import type { StyledProps } from '../../utils/styledComponents';
+import { useTheme } from '../../../theme/ThemeProvider';
+import { GlassButton, BottomSheetHeader } from '../../atoms';
+import { useAppSelector } from '../../../store/hooks';
+import { useToast } from '../../../hooks/useToast';
+import type { StyledProps } from '../../../utils/styledComponents';
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { uiLogger } from '../../utils/Logger';
-import { invitationService, InvitationPreview } from '../../services/InvitationService';
+import { uiLogger } from '../../../utils/Logger';
+import { invitationService, InvitationPreview } from '../../../services/InvitationService';
+import { ContentContainer } from './shared/sheetPrimitives';
 
 
 const ErrorRow = styled(View)`
@@ -25,13 +26,6 @@ const ErrorText = styled(Text)`
   color: ${({ theme }: StyledProps) => theme.colors.error};
   font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.md}px;
   margin-left: ${({ theme }: StyledProps) => theme.spacing.xs}px;
-`;
-
-const ContentContainer = styled(View)`
-  flex: 1;
-  border-top-left-radius: ${({ theme }: StyledProps) => theme.borderRadius.xxl}px;
-  border-top-right-radius: ${({ theme }: StyledProps) => theme.borderRadius.xxl}px;
-  overflow: hidden;
 `;
 
 // Styled components for the new layout

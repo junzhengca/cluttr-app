@@ -7,5 +7,4 @@ export * from './organisms';
 
 // Export new components
 export * from './molecules/OfflineBadge';
-export * from './organisms/OfflineExplanationBottomSheet';
-export * from './organisms/CollapsibleFilterPanel';
+// OfflineExplanationBottomSheet and CollapsibleFilterPanel are re-exported via './organisms'

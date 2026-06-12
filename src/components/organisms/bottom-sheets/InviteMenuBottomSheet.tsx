@@ -5,18 +5,12 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import styled from 'styled-components/native';
 import { useTranslation } from 'react-i18next';
-import type { StyledProps } from '../../utils/styledComponents';
-import { useTheme } from '../../theme/ThemeProvider';
-import { BottomSheetHeader } from '../atoms';
-import { QRCodeDisplay } from '../molecules';
-import { uiLogger } from '../../utils/Logger';
-
-const ContentContainer = styled(View)`
-  flex: 1;
-  border-top-left-radius: ${({ theme }: StyledProps) => theme.borderRadius.xxl}px;
-  border-top-right-radius: ${({ theme }: StyledProps) => theme.borderRadius.xxl}px;
-  overflow: hidden;
-`;
+import type { StyledProps } from '../../../utils/styledComponents';
+import { useTheme } from '../../../theme/ThemeProvider';
+import { BottomSheetHeader } from '../../atoms';
+import { QRCodeDisplay } from '../../molecules';
+import { uiLogger } from '../../../utils/Logger';
+import { ContentContainer } from './shared/sheetPrimitives';
 
 const OptionContainer = styled(TouchableOpacity)`
   flex-direction: row;

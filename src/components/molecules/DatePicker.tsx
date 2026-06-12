@@ -71,6 +71,18 @@ const ButtonContainer = styled(View)`
   gap: ${({ theme }: StyledProps) => theme.spacing.sm}px;
 `;
 
+const OverlayPressable = styled(Pressable)`
+  flex: 1;
+`;
+
+const FullWidthDateTimePicker = styled(DateTimePicker)`
+  width: 100%;
+`;
+
+const FlexGlassButton = styled(GlassButton)`
+  flex: 1;
+`;
+
 export interface DatePickerProps {
   value: Date | null;
   onChange: (date: Date | null) => void;
@@ -209,9 +221,9 @@ export const DatePicker: React.FC<DatePickerProps> = ({
               style={{ opacity: backdropOpacity }}
               pointerEvents="box-none"
             >
-              <Pressable style={{ flex: 1 }} onPress={handleClose}>
+              <OverlayPressable onPress={handleClose}>
                 <View />
-              </Pressable>
+              </OverlayPressable>
             </ModalOverlay>
             <ModalContent
               style={{
@@ -230,33 +242,30 @@ export const DatePicker: React.FC<DatePickerProps> = ({
                 <GlassButton onPress={handleClose} icon="close" />
               </ModalHeader>
 
-              <DateTimePicker
+              <FullWidthDateTimePicker
                 value={tempDate}
                 mode="date"
                 display="spinner"
-                onChange={(_event, selectedDate) => {
+                onChange={(_event: unknown, selectedDate?: Date) => {
                   if (selectedDate) {
                     setTempDate(selectedDate);
                   }
                 }}
                 minimumDate={minimumDate}
                 maximumDate={maximumDate}
-                style={{ width: '100%' }}
               />
 
               <ButtonContainer>
-                <GlassButton
+                <FlexGlassButton
                   text={t('datePicker.clear')}
                   onPress={handleClear}
-                  style={{ flex: 1 }}
                 />
-                <GlassButton
+                <FlexGlassButton
                   text={t('datePicker.confirm')}
                   icon="checkmark"
                   onPress={handleConfirm}
                   tintColor={theme.colors.primary}
                   textColor={theme.colors.surface}
-                  style={{ flex: 1 }}
                 />
               </ButtonContainer>
             </ModalContent>

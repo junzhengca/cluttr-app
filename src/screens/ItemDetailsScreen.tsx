@@ -6,7 +6,6 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { BottomSheetModal } from '@gorhom/bottom-sheet';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
-import { useTheme } from '../theme/ThemeProvider';
 import { useInventory, useSettings, useAppSelector, useInventoryCategories, useLocations, useAppDispatch } from '../store/hooks';
 import { selectItemById } from '../store/slices/inventorySlice';
 import { updateItemAction } from '../store/sagas/inventorySaga';
@@ -19,15 +18,13 @@ import {
   type ItemFormBottomSheetRef,
   PageHeader,
   BottomActionBar,
-  BatchItemCard,
-  SwipeableRow,
-  Button,
   BatchFormBottomSheet,
   type BatchFormBottomSheetRef,
-  ContextMenu,
 } from '../components';
 import { useItemActions } from '../hooks/useItemActions';
 import { useHome } from '../hooks/useHome';
+import { ItemInfoCard } from './item-details/ItemInfoCard';
+import { BatchListSection } from './item-details/BatchListSection';
 
 import { calculateBottomActionBarPadding } from '../utils/layout';
 import { getTotalAmount } from '../utils/batchUtils';
@@ -57,109 +54,6 @@ const Content = styled(ScrollView)`
   padding: ${({ theme }: StyledProps) => theme.spacing.md}px;
 `;
 
-
-const EmptyBatchText = styled(Text)`
-  font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.sm}px;
-  color: ${({ theme }: StyledProps) => theme.colors.textLight};
-  text-align: center;
-  padding: ${({ theme }: StyledProps) => theme.spacing.xl}px;
-  font-style: italic;
-`;
-
-const HeaderCard = styled(View)`
-  background-color: ${({ theme }: StyledProps) => theme.colors.surface};
-  border-radius: ${({ theme }: StyledProps) => theme.borderRadius.xl}px;
-  padding: ${({ theme }: StyledProps) => theme.spacing.md}px;
-  margin-bottom: ${({ theme }: StyledProps) => theme.spacing.md}px;
-  border-width: 1px;
-  border-color: ${({ theme }: StyledProps) => theme.colors.borderLight};
-  shadow-color: #000;
-  shadow-offset: 0px 2px;
-  shadow-opacity: 0.03;
-  shadow-radius: 8px;
-  elevation: 2;
-`;
-
-const ItemName = styled(Text)`
-  font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.xl}px;
-  font-weight: ${({ theme }: StyledProps) => theme.typography.fontWeight.bold};
-  color: ${({ theme }: StyledProps) => theme.colors.text};
-  margin-bottom: ${({ theme }: StyledProps) => theme.spacing.sm}px;
-  letter-spacing: -0.2px;
-`;
-
-const BadgesContainer = styled(View)`
-  flex-direction: row;
-  flex-wrap: wrap;
-  gap: 8px;
-`;
-
-const BadgesAndQuantityRow = styled(View)`
-  flex-direction: row;
-  justify-content: space-between;
-  align-items: center;
-`;
-
-const Badge = styled(View) <{ color?: string, isSelected?: boolean }>`
-  background-color: ${({ isSelected, theme }: StyledProps & { isSelected?: boolean }) =>
-    isSelected ? theme.colors.primary : theme.colors.borderLight};
-  padding-horizontal: 10px;
-  padding-vertical: 5px;
-  border-radius: 8px;
-  flex-direction: row;
-  justify-content: center;
-  align-items: center;
-`;
-
-const BadgeText = styled(Text) <{ isSelected?: boolean }>`
-  color: ${({ theme, isSelected }: StyledProps & { isSelected?: boolean }) =>
-    isSelected ? 'white' : theme.colors.textSecondary};
-  font-size: 11px;
-  font-weight: 600;
-`;
-
-const ColorDot = styled(View) <{ color: string }>`
-  width: 8px;
-  height: 8px;
-  border-radius: 4px;
-  background-color: ${({ color }: { color: string }) => color};
-  margin-right: 6px;
-`;
-
-const TotalAmountRow = styled(View)`
-  flex-direction: row;
-  align-items: baseline;
-`;
-
-const TotalAmountLabel = styled(Text)`
-  font-size: 10px;
-  font-weight: 600;
-  color: ${({ theme }: StyledProps) => theme.colors.textLight};
-  margin-right: 4px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-`;
-
-const TotalAmountValue = styled(Text)`
-  font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.md}px;
-  font-weight: ${({ theme }: StyledProps) => theme.typography.fontWeight.bold};
-  color: ${({ theme }: StyledProps) => theme.colors.text};
-`;
-
-
-const Section = styled(View)`
-  margin-top: ${({ theme }: StyledProps) => theme.spacing.sm}px;
-  margin-bottom: ${({ theme }: StyledProps) => theme.spacing.md}px;
-`;
-
-const SectionTitle = styled(Text)`
-  font-size: 15px;
-  font-weight: 700;
-  color: ${({ theme }: StyledProps) => theme.colors.text};
-  margin-bottom: 12px;
-  margin-left: 4px;
-`;
-
 const LoadingContainer = styled(View)`
   flex: 1;
   justify-content: center;
@@ -183,7 +77,6 @@ const ErrorText = styled(Text)`
 
 
 export const ItemDetailsScreen: React.FC = () => {
-  const theme = useTheme();
   const { settings } = useSettings();
   const { confirmDelete } = useItemActions();
   const { currentHomeId } = useHome();
@@ -334,6 +227,11 @@ export const ItemDetailsScreen: React.FC = () => {
     );
   }, [item, dispatch, t]);
 
+  const handleEditBatch = (batchId: string) => {
+    if (!item) return;
+    editBatchBottomSheetRef.current?.present(item.id, batchId);
+  };
+
   const totalAmount = item ? getTotalAmount(item.batches || []) : 0;
 
   // Calculate bottom padding for action bar
@@ -390,102 +288,22 @@ export const ItemDetailsScreen: React.FC = () => {
         <Content contentContainerStyle={{ paddingBottom: bottomPadding }}>
 
           {/* Item Header Card */}
-          <HeaderCard>
-            <ItemName>{item.name}</ItemName>
-
-            <BadgesAndQuantityRow>
-              <BadgesContainer>
-                {locationName ? (
-                  <Badge isSelected={false}>
-                    <BadgeText isSelected={false}>{locationName}</BadgeText>
-                  </Badge>
-                ) : null}
-                {categoryName ? (
-                  <Badge isSelected={false}>
-                    <ColorDot color={categoryColor || theme.colors.secondary} />
-                    <BadgeText isSelected={false}>{categoryName}</BadgeText>
-                  </Badge>
-                ) : null}
-              </BadgesContainer>
-
-              <TotalAmountRow>
-                <TotalAmountLabel>{t('itemDetails.fields.quantity')} : </TotalAmountLabel>
-                <TotalAmountValue>
-                  {totalAmount}{item.batches && item.batches.length > 0 && item.batches[0].unit ? ` ${item.batches[0].unit}` : ''}
-                </TotalAmountValue>
-              </TotalAmountRow>
-            </BadgesAndQuantityRow>
-          </HeaderCard>
-
-
+          <ItemInfoCard
+            item={item}
+            locationName={locationName}
+            categoryName={categoryName}
+            categoryColor={categoryColor}
+            totalAmount={totalAmount}
+          />
 
           {/* Batches Section */}
-          <Section>
-            <SectionTitle>{t('itemDetails.sections.batches')}</SectionTitle>
-            <View style={{ marginBottom: 12 }}>
-              <Button
-                label={t('itemDetails.batch.addBatch')}
-                onPress={handleAddBatch}
-                variant="secondary"
-                icon="add"
-              />
-            </View>
-            {(item.batches || []).length > 0 ? (
-              (item.batches || []).map((batch, index) => {
-                const batchMenuOptions = [
-                  {
-                    id: 'edit',
-                    label: t('itemDetails.actions.modify'),
-                    icon: 'pencil-outline',
-                    onPress: () => {
-                      if (batch.id) {
-                        editBatchBottomSheetRef.current?.present(item.id, batch.id);
-                      }
-                    },
-                  },
-                  {
-                    id: 'delete',
-                    label: t('itemDetails.actions.delete'),
-                    icon: 'trash-can-outline',
-                    onPress: () => {
-                      if (batch.id) {
-                        handleDeleteBatch(batch.id);
-                      }
-                    },
-                    isDestructive: true,
-                  },
-                ];
-
-                return (
-                  <SwipeableRow
-                    key={batch.id || index}
-                    onEdit={() => {
-                      if (batch.id) {
-                        editBatchBottomSheetRef.current?.present(item.id, batch.id);
-                      }
-                    }}
-                    onDelete={() => {
-                      if (batch.id) {
-                        handleDeleteBatch(batch.id);
-                      }
-                    }}
-                    editLabel={t('itemDetails.actions.modify')}
-                    deleteLabel={t('itemDetails.actions.delete')}
-                    style={{ marginBottom: 12 }}
-                  >
-                    <ContextMenu items={batchMenuOptions}>
-                      <BatchItemCard
-                        batch={batch}
-                        currencySymbol={currencySymbol}
-                      />
-                    </ContextMenu>
-                  </SwipeableRow>
-                );
-              })
-            ) : (
-              <EmptyBatchText>{t('itemDetails.noBatches')}</EmptyBatchText>
-            )}
-          </Section>
+          <BatchListSection
+            item={item}
+            currencySymbol={currencySymbol}
+            onAddBatch={handleAddBatch}
+            onEditBatch={handleEditBatch}
+            onDeleteBatch={handleDeleteBatch}
+          />
         </Content>
       </ScrollContainer>
 
@@ -534,4 +352,3 @@ export const ItemDetailsScreen: React.FC = () => {
     </Container>
   );
 };
-

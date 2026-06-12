@@ -67,13 +67,16 @@ invitations/{code}                        doc ID = invitation code; homeId + den
 ```
 ./
 ├── src/
-│   ├── components/        # Reusable UI (41 files, 3 subdirs: ui/, form/)
-│   ├── screens/           # Screen components (10 files)
-│   ├── store/             # Redux Toolkit + Saga (17 files: slices/, sagas/, hooks.ts)
+│   ├── components/        # Reusable UI: atoms/, molecules/, organisms/
+│   │   └── organisms/     #   + organisms/bottom-sheets/ (all *BottomSheet + shared/sheetPrimitives)
+│   │                      #   + organisms/forms/ (ItemFormFields)
+│   ├── screens/           # Screen components + per-screen subdirs:
+│   │                      #   notes/, item-details/, settings/, profile/
+│   ├── store/             # Redux Toolkit + Saga (slices/, sagas/, sagas/helpers/, hooks.ts)
 │   ├── navigation/         # React Navigation 2-level (RootStack + 4 tabs)
-│   ├── services/           # Business logic (Firestore services, FirebaseAuthService, firebase/firestoreRefs.ts)
-│   ├── utils/              # Shared utilities (11 files: Logger, formatters, validation)
-│   ├── hooks/              # Custom React hooks (useKeyboardVisibility, useItemForm, useToast, useHome)
+│   ├── services/           # Business logic (Firestore services, createCrudService, FirebaseAuthService, firebase/firestoreRefs.ts)
+│   ├── utils/              # Shared utilities (Logger, formatters, toastRegistry, validation)
+│   ├── hooks/              # Custom React hooks (useKeyboardVisibility, useItemForm, useBatchForm, useBottomSheetLifecycle, useToast, useHome, useItemActions, useNetwork)
 │   ├── types/              # TypeScript types (inventory, home, user, settings, errors)
 │   ├── theme/              # Styled-components theme
 │   ├── i18n/              # i18next locales (en, zh-CN)
@@ -89,12 +92,13 @@ Components use atomic design: `src/components/{atoms,molecules,organisms}`.
 | ------------------- | ------------------------------------------------------------------------------------ | ------------------------------------------------ |
 | Redux state/actions | `src/store/slices/*.ts`, `src/store/sagas/*.ts`                                      | Use domain hooks from `src/store/hooks.ts`       |
 | Firestore refs/converters/channels | `src/services/firebase/firestoreRefs.ts`                              | Collection refs, doc⇄domain converters, `createSnapshotChannel`, `fireWrite` |
-| Data writes         | `src/services/{Inventory,Todo,Location,InventoryCategory,TodoCategory}Service.ts`     | Slim write helpers; import singletons directly   |
+| Data writes         | `src/services/{Inventory,Todo,Location,InventoryCategory,TodoCategory}Service.ts`     | Slim write helpers built on `createCrudService.ts`; import singletons directly |
 | Homes/members       | `src/services/HomeService.ts`                                                        | Snapshot-fed; cascade delete, leave/remove member |
 | Invitations         | `src/services/InvitationService.ts`                                                  | Code create/validate/accept (rules-validated)    |
 | User profiles       | `src/services/UserService.ts`                                                        | `users/{uid}` docs: ensure, update, member join  |
 | Navigation          | `src/navigation/RootStack.tsx`, `src/navigation/TabNavigator.tsx`                    | 2-level: RootStack (modals) + MainTabs (screens) |
-| Form patterns       | `src/components/CreateItemBottomSheet.tsx`, `src/components/EditItemBottomSheet.tsx` | IME-safe uncontrolled inputs                     |
+| Form patterns       | `src/components/organisms/bottom-sheets/ItemFormBottomSheet.tsx`                     | IME-safe uncontrolled inputs (create + edit modes) |
+| Sheet lifecycle     | `src/hooks/useBottomSheetLifecycle.ts`, `src/components/organisms/bottom-sheets/shared/sheetPrimitives.tsx` | Open/close/reset lifecycle + shared sheet styled primitives |
 | Swipe actions       | `src/components/molecules/SwipeableRow.tsx`                                          | Shared iOS-style swipe-to-edit/delete; used by HomeScreen, ItemDetailsScreen, NotesScreen, MemberCard |
 | Styling             | `src/theme/ThemeProvider.tsx`, `src/utils/styledComponents.ts`                       | Theme via `useTheme()`, styled via `StyledProps` |
 | Firebase auth       | `src/services/FirebaseAuthService.ts`                                                | Email/Google/Apple sign-in, password reset       |
@@ -209,8 +213,7 @@ make build-ios-production-local      # Local production build (auto-increments b
 ## NOTES
 
 - **Legacy Railway backend (`cluttr-server-v2`) is fully decommissioned client-side** (2026-06-11): ApiClient and all `/api/*` calls were replaced with direct Firestore/Storage access. The AI item-recognition feature was removed with it (would need a Cloud Function to re-add).
-- **Bottom sheets duplicate** ~80% code between CreateItem and EditItemBottomSheet - extract to generic component
-- **No testing infrastructure** - no test files or Jest config
-- **Build artifacts committed** - build-_.tar.gz, build-_.ipa in root should be gitignored
-- **Empty src/contexts/** - Redux hooks replaced Context, remove this directory
+- **Targeted jest suites exist** (`npx jest`): pure-logic specs colocated in `__tests__/` dirs (slices, saga helpers, createCrudService, utils) — `ts-jest`, node environment, no component tests
+- **Saga helpers**: `requireActiveHomeId` (select active home or throw) and `handleSagaError` (log + slice `setError` + toast) in `src/store/sagas/helpers/` are the shared head/tail of domain saga operations
+- **Toast outside React**: sagas/services surface toasts via `src/utils/toastRegistry.ts` (`setGlobalToast`/`getGlobalToast`), registered by the toast provider
 - **IME composition critical** - Chinese input requires uncontrolled pattern to prevent keyboard reset on each keystroke

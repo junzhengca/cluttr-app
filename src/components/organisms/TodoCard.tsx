@@ -5,7 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { getTodoCategoryDisplayName } from '../../utils/todoCategoryI18n';
 import { useTheme } from '../../theme/ThemeProvider';
-import { TodoItem } from '../../types/inventory';
+import { TodoItem, TodoCategory } from '../../types/inventory';
 import { useTodoCategories } from '../../store/hooks';
 import type { StyledProps, StyledPropsWith } from '../../utils/styledComponents';
 import { BaseCard } from '../atoms';
@@ -69,12 +69,31 @@ const TitleRow = styled(View)`
   width: 100%;
 `;
 
+const TitleColumn = styled(View)`
+  flex: 1;
+`;
+
+const EditingTitleContainer = styled(View)`
+  width: 100%;
+`;
+
+/** Invisible copy of the title used purely for measurement while editing. */
+const MeasurementTitleText = styled(TodoText)`
+  opacity: 0;
+  width: 100%;
+  pointer-events: none;
+`;
+
 const BadgeContainer = styled(View)`
   flex-direction: row;
   align-items: center;
   height: ${({ theme }: StyledProps) => theme.typography.fontSize.md * 1.2}px;
   justify-content: center;
   margin-left: ${({ theme }: StyledProps) => theme.spacing.sm}px;
+`;
+
+const SavingIndicator = styled(ActivityIndicator)`
+  margin-right: 6px;
 `;
 
 const CategoryTag = styled(View)`
@@ -110,6 +129,19 @@ const EditableTextInput = styled(TextInput) <{ completed: boolean; isEditing: bo
   width: 100%;
 `;
 
+/** Title input overlaid on the measurement text so the row grows instantly. */
+const OverlayTitleInput = styled(EditableTextInput)`
+  border-width: 0px;
+  position: absolute;
+  top: 0px;
+  left: 0px;
+  right: 0px;
+  bottom: 0px;
+  height: 100%;
+  padding: 0px;
+  margin: 0px;
+`;
+
 const NotesHeightWrapper = Animated.View;
 
 const NotesInputContainer = styled(View)`
@@ -138,6 +170,258 @@ const EditableNoteInput = styled(TextInput) <{ completed: boolean; isEditing: bo
   width: 100%;
 `;
 
+/** Invisible copy of the notes area used purely for measurement. */
+const NotesMeasurementOverlay = styled(View)`
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+  width: 100%;
+`;
+
+const MeasurementNoteInput = styled(EditableNoteInput)`
+  min-height: 0px;
+`;
+
+interface TodoTitleProps {
+  todo: TodoItem;
+  editable: boolean;
+  isEditing: boolean;
+  titleContent: string;
+  textInputRef: React.RefObject<TextInput | null>;
+  onChangeText: (text: string) => void;
+  onSubmitEditing: () => void;
+  onFocus: () => void;
+  onBlur: () => void;
+  onPress: () => void;
+}
+
+/**
+ * Inline-editable title: a touchable text in display mode, and in edit mode an
+ * invisible measurement copy with an absolutely positioned input overlaid on it
+ * (so the parent container grows instantly while typing).
+ */
+const TodoTitle: React.FC<TodoTitleProps> = ({
+  todo,
+  editable,
+  isEditing,
+  titleContent,
+  textInputRef,
+  onChangeText,
+  onSubmitEditing,
+  onFocus,
+  onBlur,
+  onPress,
+}) => {
+  if (!isEditing) {
+    return (
+      <TouchableOpacity
+        onPress={onPress}
+        activeOpacity={todo.completed || !editable ? 1 : 0.7}
+        disabled={todo.completed || !editable}
+      >
+        <TodoText completed={todo.completed}>{todo.text}</TodoText>
+      </TouchableOpacity>
+    );
+  }
+
+  return (
+    <EditingTitleContainer>
+      {/* Invisible Measurement View for Title - Ensures parent container grows instantly */}
+      <MeasurementTitleText completed={todo.completed}>
+        {titleContent || ' '}
+      </MeasurementTitleText>
+      <OverlayTitleInput
+        ref={textInputRef}
+        value={titleContent}
+        onChangeText={onChangeText}
+        onSubmitEditing={onSubmitEditing}
+        onFocus={onFocus}
+        onBlur={onBlur}
+        completed={todo.completed}
+        isEditing={true}
+        editable={!todo.completed && editable}
+        multiline
+        scrollEnabled={false}
+        blurOnSubmit={true} // Maintain enter-to-submit behavior for title
+        autoCorrect={false}
+        spellCheck={false}
+        textContentType="none"
+        autoComplete="off"
+        underlineColorAndroid="transparent"
+        textAlignVertical="top"
+      />
+    </EditingTitleContainer>
+  );
+};
+
+interface TodoBadgesProps {
+  isSaving: boolean;
+  category?: TodoCategory;
+}
+
+/** Saving spinner + category tag shown to the right of the title. */
+const TodoBadges: React.FC<TodoBadgesProps> = ({ isSaving, category }) => {
+  const theme = useTheme();
+  const { t } = useTranslation();
+
+  if (!isSaving && !category) {
+    return null;
+  }
+
+  return (
+    <BadgeContainer>
+      {isSaving && <SavingIndicator size="small" color={theme.colors.textSecondary} />}
+      {category && (
+        <CategoryTag>
+          <CategoryTagText>{getTodoCategoryDisplayName(category, t)}</CategoryTagText>
+        </CategoryTag>
+      )}
+    </BadgeContainer>
+  );
+};
+
+interface TodoNotesSectionProps {
+  todo: TodoItem;
+  editable: boolean;
+  editingField: 'text' | 'note' | null;
+  noteContent: string;
+  currentNoteHeight: number;
+  setCurrentNoteHeight: (height: number) => void;
+  notesHeight: Animated.Value;
+  notesOpacity: Animated.Value;
+  noteInputRef: React.RefObject<TextInput | null>;
+  isFocusingNoteRef: React.MutableRefObject<boolean>;
+  onNotePress: () => void;
+  onNoteChange: (text: string) => void;
+  onNoteSubmit: () => void;
+  onNoteFocus: () => void;
+  onNoteBlur: () => void;
+}
+
+/**
+ * Animated, inline-editable notes area. An invisible measurement copy drives the
+ * animated wrapper height so show/hide and content growth stay smooth.
+ */
+const TodoNotesSection: React.FC<TodoNotesSectionProps> = ({
+  todo,
+  editable,
+  editingField,
+  noteContent,
+  currentNoteHeight,
+  setCurrentNoteHeight,
+  notesHeight,
+  notesOpacity,
+  noteInputRef,
+  isFocusingNoteRef,
+  onNotePress,
+  onNoteChange,
+  onNoteSubmit,
+  onNoteFocus,
+  onNoteBlur,
+}) => {
+  const theme = useTheme();
+  const { t } = useTranslation();
+
+  return (
+    <NotesHeightWrapper
+      style={{
+        height: notesHeight.interpolate({
+          inputRange: [0, 1],
+          outputRange: [0, currentNoteHeight],
+        }),
+        opacity: notesOpacity,
+        overflow: 'hidden',
+      }}
+      pointerEvents="auto"
+    >
+      {/* Measurement View (invisible) - ensures wrapper has correct height */}
+      <NotesMeasurementOverlay
+        onLayout={(event) => {
+          const { height } = event.nativeEvent.layout;
+          if (height > 0) {
+            const measuredHeight = height;
+            if (Math.abs(currentNoteHeight - measuredHeight) > 0.1) {
+              setCurrentNoteHeight(measuredHeight);
+            }
+          }
+        }}
+      >
+        <NotesInputContainer>
+          {/* Measure based on the note text or input placeholder */}
+          {editingField === null && todo.note ? (
+            <TodoNote completed={todo.completed}>{todo.note}</TodoNote>
+          ) : (
+            <MeasurementNoteInput
+              key="measurement-note"
+              value={noteContent} // Controlled measurement ensures real-time growth
+              completed={todo.completed}
+              isEditing={true}
+              multiline
+              scrollEnabled={false}
+              placeholder={t('notes.addNote')}
+              underlineColorAndroid="transparent"
+              textAlignVertical="top"
+            />
+          )}
+        </NotesInputContainer>
+      </NotesMeasurementOverlay>
+
+      {/* Visible Note Area */}
+      <TouchableOpacity
+        activeOpacity={todo.completed || !editable ? 1 : 0.7}
+        disabled={todo.completed || !editable}
+        onPress={() => {
+          if (todo.completed || !editable) return; // Prevent editing completed or read-only todos
+          if (editingField === null) {
+            onNotePress();
+          } else if (editingField === 'text') {
+            isFocusingNoteRef.current = true;
+            noteInputRef.current?.focus();
+          }
+        }}
+      >
+        <NotesInputContainer>
+          {editingField === null && todo.note ? (
+            <TodoNote completed={todo.completed}>{todo.note}</TodoNote>
+          ) : (
+            <EditableNoteInput
+              ref={noteInputRef}
+              value={noteContent} // Controlled visible input
+              onChangeText={onNoteChange}
+              onContentSizeChange={(event: NativeSyntheticEvent<TextInputContentSizeChangeEventData>) => {
+                const { height } = event.nativeEvent.contentSize;
+                if (height > 0) {
+                  const containerPadding = theme.spacing.xs * 2;
+                  const totalHeight = height + containerPadding;
+                  if (Math.abs(currentNoteHeight - totalHeight) > 1) {
+                    setCurrentNoteHeight(totalHeight);
+                  }
+                }
+              }}
+              onSubmitEditing={onNoteSubmit}
+              onFocus={onNoteFocus}
+              onBlur={onNoteBlur}
+              completed={todo.completed}
+              isEditing={true}
+              editable={!todo.completed && editable}
+              multiline
+              scrollEnabled={false}
+              placeholder={t('notes.addNote')}
+              placeholderTextColor={theme.colors.textLight}
+              autoCorrect={false}
+              spellCheck={false}
+              textContentType="none"
+              autoComplete="off"
+              underlineColorAndroid="transparent"
+              textAlignVertical="top"
+            />
+          )}
+        </NotesInputContainer>
+      </TouchableOpacity>
+    </NotesHeightWrapper>
+  );
+};
+
 export interface TodoCardProps {
   todo: TodoItem;
   onToggle?: (id: string) => void;
@@ -160,8 +444,6 @@ export const TodoCard: React.FC<TodoCardProps> = ({
   editable = true,
   isSaving = false,
 }) => {
-  const theme = useTheme();
-  const { t } = useTranslation();
   const { categories } = useTodoCategories();
 
   const category = categories.find(c => c.id === todo.categoryId);
@@ -418,184 +700,44 @@ export const TodoCard: React.FC<TodoCardProps> = ({
         </Checkbox>
         <TextContainer>
           <TitleRow>
-            <View style={{ flex: 1 }}>
-              {editingField === 'text' ? (
-                <View style={{ width: '100%' }}>
-                  {/* Invisible Measurement View for Title - Ensures parent container grows instantly */}
-                  <TodoText
-                    completed={todo.completed}
-                    style={{
-                      opacity: 0,
-                      width: '100%',
-                      pointerEvents: 'none',
-                    }}
-                  >
-                    {titleContent || ' '}
-                  </TodoText>
-                  <EditableTextInput
-                    ref={textInputRef}
-                    value={titleContent}
-                    onChangeText={handleTextChange}
-                    onSubmitEditing={handleTextSubmit}
-                    onFocus={handleTextFocus}
-                    onBlur={handleTextBlur}
-                    completed={todo.completed}
-                    isEditing={true}
-                    editable={!todo.completed && editable}
-                    multiline
-                    scrollEnabled={false}
-                    blurOnSubmit={true} // Maintain enter-to-submit behavior for title
-                    autoCorrect={false}
-                    spellCheck={false}
-                    textContentType="none"
-                    autoComplete="off"
-                    underlineColorAndroid="transparent"
-                    textAlignVertical="top"
-                    style={{
-                      borderWidth: 0,
-                      position: 'absolute',
-                      top: 0,
-                      left: 0,
-                      right: 0,
-                      bottom: 0,
-                      height: '100%',
-                      padding: 0,
-                      margin: 0,
-                    } as import('react-native').ViewStyle}
-                  />
-                </View>
-              ) : (
-                <TouchableOpacity
-                  onPress={handleTextPress}
-                  activeOpacity={todo.completed || !editable ? 1 : 0.7}
-                  disabled={todo.completed || !editable}
-                >
-                  <TodoText completed={todo.completed}>{todo.text}</TodoText>
-                </TouchableOpacity>
-              )}
-            </View>
-            {(isSaving || category) && (
-              <BadgeContainer>
-                {isSaving && (
-                  <ActivityIndicator
-                    size="small"
-                    color={theme.colors.textSecondary}
-                    style={{ marginRight: 6 }}
-                  />
-                )}
-                {category && (
-                  <CategoryTag>
-                    <CategoryTagText>{getTodoCategoryDisplayName(category, t)}</CategoryTagText>
-                  </CategoryTag>
-                )}
-              </BadgeContainer>
-            )}
+            <TitleColumn>
+              <TodoTitle
+                todo={todo}
+                editable={editable}
+                isEditing={editingField === 'text'}
+                titleContent={titleContent}
+                textInputRef={textInputRef}
+                onChangeText={handleTextChange}
+                onSubmitEditing={handleTextSubmit}
+                onFocus={handleTextFocus}
+                onBlur={handleTextBlur}
+                onPress={handleTextPress}
+              />
+            </TitleColumn>
+            <TodoBadges isSaving={isSaving} category={category} />
           </TitleRow>
           {/* Unified note area - handled by animation wrapper for both display and editing */}
           {showNotesWrapper && (
-            <NotesHeightWrapper
-              style={{
-                height: notesHeight.interpolate({
-                  inputRange: [0, 1],
-                  outputRange: [0, currentNoteHeight],
-                }),
-                opacity: notesOpacity,
-                overflow: 'hidden',
-              }}
-              pointerEvents="auto"
-            >
-              {/* Measurement View (invisible) - ensures wrapper has correct height */}
-              <View
-                onLayout={(event) => {
-                  const { height } = event.nativeEvent.layout;
-                  if (height > 0) {
-                    const measuredHeight = height;
-                    if (Math.abs(currentNoteHeight - measuredHeight) > 0.1) {
-                      setCurrentNoteHeight(measuredHeight);
-                    }
-                  }
-                }}
-                style={{ position: 'absolute', opacity: 0, pointerEvents: 'none', width: '100%' }}
-              >
-                <NotesInputContainer>
-                  {/* Measure based on the note text or input placeholder */}
-                  {editingField === null && todo.note ? (
-                    <TodoNote completed={todo.completed}>{todo.note}</TodoNote>
-                  ) : (
-                    <EditableNoteInput
-                      key="measurement-note"
-                      value={noteContent} // Controlled measurement ensures real-time growth
-                      completed={todo.completed}
-                      isEditing={true}
-                      multiline
-                      scrollEnabled={false}
-                      placeholder={t('notes.addNote')}
-                      underlineColorAndroid="transparent"
-                      textAlignVertical="top"
-                      style={{ minHeight: 0 }}
-                    />
-                  )}
-                </NotesInputContainer>
-              </View>
-
-              {/* Visible Note Area */}
-              <TouchableOpacity
-                activeOpacity={todo.completed || !editable ? 1 : 0.7}
-                disabled={todo.completed || !editable}
-                onPress={() => {
-                  if (todo.completed || !editable) return; // Prevent editing completed or read-only todos
-                  if (editingField === null) {
-                    handleNotePress();
-                  } else if (editingField === 'text') {
-                    isFocusingNoteRef.current = true;
-                    noteInputRef.current?.focus();
-                  }
-                }}
-              >
-                <NotesInputContainer>
-                  {editingField === null && todo.note ? (
-                    <TodoNote completed={todo.completed}>{todo.note}</TodoNote>
-                  ) : (
-                    <EditableNoteInput
-                      ref={noteInputRef}
-                      value={noteContent} // Controlled visible input
-                      onChangeText={handleNoteChange}
-                      onContentSizeChange={(event: NativeSyntheticEvent<TextInputContentSizeChangeEventData>) => {
-                        const { height } = event.nativeEvent.contentSize;
-                        if (height > 0) {
-                          const containerPadding = theme.spacing.xs * 2;
-                          const totalHeight = height + containerPadding;
-                          if (Math.abs(currentNoteHeight - totalHeight) > 1) {
-                            setCurrentNoteHeight(totalHeight);
-                          }
-                        }
-                      }}
-                      onSubmitEditing={handleNoteSubmit}
-                      onFocus={handleNoteFocus}
-                      onBlur={handleNoteBlur}
-                      completed={todo.completed}
-                      isEditing={true}
-                      editable={!todo.completed && editable}
-                      multiline
-                      scrollEnabled={false}
-                      placeholder={t('notes.addNote')}
-                      placeholderTextColor={theme.colors.textLight}
-                      autoCorrect={false}
-                      spellCheck={false}
-                      textContentType="none"
-                      autoComplete="off"
-                      underlineColorAndroid="transparent"
-                      textAlignVertical="top"
-                      style={{ borderWidth: 0 } as import('react-native').TextStyle}
-                    />
-                  )}
-                </NotesInputContainer>
-              </TouchableOpacity>
-            </NotesHeightWrapper>
+            <TodoNotesSection
+              todo={todo}
+              editable={editable}
+              editingField={editingField}
+              noteContent={noteContent}
+              currentNoteHeight={currentNoteHeight}
+              setCurrentNoteHeight={setCurrentNoteHeight}
+              notesHeight={notesHeight}
+              notesOpacity={notesOpacity}
+              noteInputRef={noteInputRef}
+              isFocusingNoteRef={isFocusingNoteRef}
+              onNotePress={handleNotePress}
+              onNoteChange={handleNoteChange}
+              onNoteSubmit={handleNoteSubmit}
+              onNoteFocus={handleNoteFocus}
+              onNoteBlur={handleNoteBlur}
+            />
           )}
         </TextContainer>
       </ContentContainer>
     </BaseCard>
   );
 };
-

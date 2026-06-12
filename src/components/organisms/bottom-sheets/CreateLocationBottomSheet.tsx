@@ -6,19 +6,19 @@ import styled from 'styled-components/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 
-import { useTheme } from '../../theme/ThemeProvider';
-import { useLocations } from '../../store/hooks';
-import { BottomSheetHeader, GlassButton, FormSection, UncontrolledInput } from '../atoms';
-import { StyledProps } from '../../utils/styledComponents';
-import { useKeyboardVisibility } from '../../hooks/useKeyboardVisibility';
-import { useBottomSheetLifecycle } from '../../hooks/useBottomSheetLifecycle';
-import { uiLogger } from '../../utils/Logger';
-import { IconSelector } from '../molecules/IconSelector';
-import { categoryIcons } from '../../data/categoryIcons';
+import { useTheme } from '../../../theme/ThemeProvider';
+import { useLocations } from '../../../store/hooks';
+import { BottomSheetHeader, GlassButton, FormSection, UncontrolledInput } from '../../atoms';
+import { StyledProps } from '../../../utils/styledComponents';
+import { useKeyboardVisibility } from '../../../hooks/useKeyboardVisibility';
+import { useBottomSheetLifecycle } from '../../../hooks/useBottomSheetLifecycle';
+import { uiLogger } from '../../../utils/Logger';
+import { IconSelector } from '../../molecules/IconSelector';
+import { categoryIcons } from '../../../data/categoryIcons';
 import {
   ContentContainer,
   FooterContainer,
-} from './bottom-sheets/shared/sheetPrimitives';
+} from './shared/sheetPrimitives';
 
 const FormContainer = styled.View`
   flex-direction: column;

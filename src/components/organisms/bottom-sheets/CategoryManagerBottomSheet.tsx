@@ -9,20 +9,17 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
-import { useTheme } from '../../theme/ThemeProvider';
-import type { StyledProps } from '../../utils/styledComponents';
-import type { Category } from '../../types/inventory';
-import { DEFAULT_INVENTORY_CATEGORY_IDS } from '../../utils/inventoryCategoryI18n';
-import { uiLogger } from '../../utils/Logger';
-import { useInventoryCategories } from '../../store/hooks';
-import { useKeyboardVisibility } from '../../hooks';
-import { BottomSheetHeader, FormSection, MemoizedInput } from '../atoms';
-import { CategoryPreviewCard, IconSelector, BottomActionBar } from '../molecules';
-import { categoryIcons } from '../../data/categoryIcons';
-
-const Backdrop = styled(BottomSheetBackdrop)`
-  background-color: rgba(0, 0, 0, 0.5);
-`;
+import { useTheme } from '../../../theme/ThemeProvider';
+import type { StyledProps } from '../../../utils/styledComponents';
+import type { Category } from '../../../types/inventory';
+import { DEFAULT_INVENTORY_CATEGORY_IDS } from '../../../utils/inventoryCategoryI18n';
+import { uiLogger } from '../../../utils/Logger';
+import { useInventoryCategories } from '../../../store/hooks';
+import { useKeyboardVisibility } from '../../../hooks';
+import { BottomSheetHeader, FormSection, MemoizedInput } from '../../atoms';
+import { CategoryPreviewCard, IconSelector, BottomActionBar } from '../../molecules';
+import { categoryIcons } from '../../../data/categoryIcons';
+import { Backdrop } from './shared/sheetPrimitives';
 
 const ContentContainer = styled.View`
   flex: 1;

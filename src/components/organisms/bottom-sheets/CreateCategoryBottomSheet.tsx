@@ -5,21 +5,15 @@ import { BottomSheetModal, BottomSheetBackdrop, BottomSheetView, BottomSheetBack
 import styled from 'styled-components/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { useTheme } from '../../theme/ThemeProvider';
-import { useInventoryCategories } from '../../store/hooks';
-import { BottomSheetHeader, GlassButton, FormSection, UncontrolledInput } from '../atoms';
-import { StyledProps } from '../../utils/styledComponents';
-import { useKeyboardVisibility } from '../../hooks/useKeyboardVisibility';
-import { uiLogger } from '../../utils/Logger';
-import { ColorPalette } from '../molecules/ColorPalette';
-import { categoryColors } from '../../data/categoryColors';
-
-const ContentContainer = styled.View`
-  flex: 1;
-  border-top-left-radius: ${({ theme }: StyledProps) => theme.borderRadius.xxl}px;
-  border-top-right-radius: ${({ theme }: StyledProps) => theme.borderRadius.xxl}px;
-  overflow: hidden;
-`;
+import { useTheme } from '../../../theme/ThemeProvider';
+import { useInventoryCategories } from '../../../store/hooks';
+import { BottomSheetHeader, GlassButton, FormSection, UncontrolledInput } from '../../atoms';
+import { StyledProps } from '../../../utils/styledComponents';
+import { useKeyboardVisibility } from '../../../hooks/useKeyboardVisibility';
+import { uiLogger } from '../../../utils/Logger';
+import { ColorPalette } from '../../molecules/ColorPalette';
+import { categoryColors } from '../../../data/categoryColors';
+import { ContentContainer, FooterContainer } from './shared/sheetPrimitives';
 
 const FormContainer = styled.View`
   flex-direction: column;
@@ -38,22 +32,6 @@ const ErrorBanner = styled.View`
 const ErrorText = styled.Text`
   color: ${({ theme }: StyledProps) => theme.colors.surface};
   font-size: 12px;
-`;
-
-const FooterContainer = styled.View<{
-    bottomInset: number;
-    showSafeArea: boolean;
-}>`
-  background-color: ${({ theme }: StyledProps) => theme.colors.background};
-  padding-horizontal: ${({ theme }: StyledProps) => theme.spacing.lg}px;
-  padding-top: ${({ theme }: StyledProps) => theme.spacing.md}px;
-  padding-bottom: ${({ bottomInset, showSafeArea, theme }: StyledProps & { bottomInset: number; showSafeArea: boolean }) =>
-        showSafeArea ? bottomInset + theme.spacing.md : theme.spacing.md}px;
-  shadow-color: #000;
-  shadow-offset: 0px -2px;
-  shadow-opacity: 0.03;
-  shadow-radius: 4px;
-  elevation: 2;
 `;
 
 export interface CreateCategoryBottomSheetProps {

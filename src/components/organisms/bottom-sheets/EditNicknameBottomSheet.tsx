@@ -3,6 +3,9 @@ import React, {
   useCallback,
   useMemo,
   useState,
+  useEffect,
+  forwardRef,
+  useImperativeHandle,
 } from 'react';
 import { Keyboard, type TextInput } from 'react-native';
 import styled from 'styled-components/native';
@@ -12,19 +15,15 @@ import {
   BottomSheetScrollView,
 } from '@gorhom/bottom-sheet';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
-import { useTheme } from '../../theme/ThemeProvider';
-import type { StyledProps } from '../../utils/styledComponents';
-import { useAuth, useAppDispatch } from '../../store/hooks';
-import { BottomSheetHeader, FormSection, UncontrolledInput, GlassButton } from '../atoms';
-import { setShowNicknameSetup, setUser } from '../../store/slices/authSlice';
-import { userService } from '../../services/UserService';
-import { uiLogger } from '../../utils/Logger';
-
-const Backdrop = styled(BottomSheetBackdrop)`
-  background-color: rgba(0, 0, 0, 0.5);
-`;
+import { useTheme } from '../../../theme/ThemeProvider';
+import type { StyledProps } from '../../../utils/styledComponents';
+import { useAuth, useAppDispatch } from '../../../store/hooks';
+import { BottomSheetHeader, FormSection, UncontrolledInput, GlassButton } from '../../atoms';
+import { setUser } from '../../../store/slices/authSlice';
+import { userService } from '../../../services/UserService';
+import { uiLogger } from '../../../utils/Logger';
+import { Backdrop } from './shared/sheetPrimitives';
 
 const ContentContainer = styled.View`
   flex: 1;
@@ -40,42 +39,65 @@ const HelperText = styled.Text`
   margin-top: ${({ theme }: StyledProps) => theme.spacing.xs}px;
 `;
 
-const LogoutLink = styled.TouchableOpacity`
-  flex-direction: row;
-  align-items: center;
-  justify-content: center;
-  margin-top: ${({ theme }: StyledProps) => theme.spacing.lg}px;
-  padding: ${({ theme }: StyledProps) => theme.spacing.md}px;
-`;
-
-const LogoutLinkText = styled.Text`
-  font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.md}px;
-  color: ${({ theme }: StyledProps) => theme.colors.textSecondary};
-`;
-
-export interface SetupNicknameBottomSheetProps {
+export interface EditNicknameBottomSheetProps {
   bottomSheetRef: React.RefObject<BottomSheetModal | null>;
-  onNicknameSet?: () => void;
-  onLogout?: () => void;
+  onNicknameUpdated?: () => void;
 }
 
-export const SetupNicknameBottomSheet: React.FC<
-  SetupNicknameBottomSheetProps
-> = ({ bottomSheetRef, onNicknameSet, onLogout }) => {
+export interface EditNicknameBottomSheetRef {
+  present: (nickname: string) => void;
+}
+
+/**
+ * Edit nickname bottom sheet - allows users to change their display name.
+ * Unlike SetupNicknameBottomSheet, this can be dismissed by the user.
+ *
+ * Uses uncontrolled inputs with refs to prevent IME composition interruption
+ * for Chinese/Japanese input methods.
+ *
+ * Pattern: Form is populated BEFORE the modal is presented via the present() method.
+ * This ensures the form is fully initialized with current values when shown.
+ */
+export const EditNicknameBottomSheet = forwardRef<
+  EditNicknameBottomSheetRef,
+  EditNicknameBottomSheetProps
+>(({ bottomSheetRef, onNicknameUpdated }, ref) => {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
   const { t } = useTranslation();
+  const { user } = useAuth();
   const dispatch = useAppDispatch();
-  const { user, logout } = useAuth();
 
   const nicknameInputRef = useRef<TextInput>(null);
   const nicknameValueRef = useRef('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isValid, setIsValid] = useState(false);
+
+  // State for initial nickname (triggers form population in useEffect)
+  const [initialNickname, setInitialNickname] = useState<string | null>(null);
+
+  // Default value state for uncontrolled input
+  const [defaultNickname, setDefaultNickname] = useState('');
 
   const snapPoints = useMemo(() => ['50%'], []);
   const keyboardBehavior = useMemo(() => 'interactive' as const, []);
   const keyboardBlurBehavior = useMemo(() => 'restore' as const, []);
+
+  // Populate form when initialNickname changes
+  useEffect(() => {
+    if (initialNickname !== null) {
+      // Update ref for form submission
+      nicknameValueRef.current = initialNickname;
+
+      // Update state for defaultValue prop
+      setDefaultNickname(initialNickname);
+
+      // Update validity state
+      setIsValid(initialNickname.trim().length > 0);
+      setError(null);
+    }
+  }, [initialNickname]);
 
   const renderBackdrop = useCallback(
     (props: React.ComponentProps<typeof BottomSheetBackdrop>) => (
@@ -87,19 +109,31 @@ export const SetupNicknameBottomSheet: React.FC<
   const handleClose = useCallback(() => {
     Keyboard.dismiss();
     bottomSheetRef.current?.dismiss();
-    nicknameValueRef.current = '';
-    setError(null);
   }, [bottomSheetRef]);
+
+  const handleSheetClose = useCallback(() => {
+    // Reset form state when modal closes
+    nicknameValueRef.current = '';
+    setInitialNickname(null);
+    setDefaultNickname('');
+    setError(null);
+    setIsValid(false);
+  }, []);
 
   // Update ref during typing (no re-render)
   const handleNicknameChangeText = useCallback(
     (text: string) => {
       nicknameValueRef.current = text;
-      if (error) {
+      const trimmed = text.trim();
+      const valid = !!trimmed;
+      setIsValid(valid);
+      if (valid) {
         setError(null);
+      } else {
+        setError(t('editNickname.errors.enterNickname'));
       }
     },
-    [error]
+    [t]
   );
 
   // Sync ref to state on blur (not needed for this use case, but following pattern)
@@ -112,7 +146,7 @@ export const SetupNicknameBottomSheet: React.FC<
 
     // Validation
     if (!currentNickname) {
-      setError(t('setupNickname.errors.enterNickname'));
+      setError(t('editNickname.errors.enterNickname'));
       return;
     }
 
@@ -133,12 +167,10 @@ export const SetupNicknameBottomSheet: React.FC<
       // Update user state
       dispatch(setUser(updatedUser));
 
-      // Clear the showNicknameSetup flag
-      dispatch(setShowNicknameSetup(false));
-
       // Close and call callback
       handleClose();
-      onNicknameSet?.();
+      handleSheetClose();
+      onNicknameUpdated?.();
     } catch (error) {
       uiLogger.error('Error updating nickname', error);
       const errorMessage = error instanceof Error ? error.message : String(error);
@@ -146,37 +178,40 @@ export const SetupNicknameBottomSheet: React.FC<
         message: errorMessage,
         errorType: error instanceof Error ? error.constructor.name : typeof error,
       });
-      setError(t('setupNickname.errors.updateFailed'));
+      setError(t('editNickname.errors.updateFailed'));
     } finally {
       setIsLoading(false);
     }
-  }, [t, user, handleClose, onNicknameSet, dispatch]);
+  }, [t, user, dispatch, handleClose, handleSheetClose, onNicknameUpdated]);
 
-  const handleLogout = useCallback(() => {
-    handleClose();
-    if (onLogout) {
-      onLogout();
-    } else {
-      logout();
-    }
-  }, [handleClose, onLogout, logout]);
-
-  const defaultValue = useMemo(() => {
-    if (user?.nickname && user.nickname.trim() !== '') {
-      return user.nickname;
-    } else if (user?.email) {
-      return user.email.split('@')[0];
-    }
-    return '';
+  const currentNickname = useMemo(() => {
+    return user?.nickname || '';
   }, [user]);
+
+  // Expose present method via imperative handle
+  useImperativeHandle(
+    ref,
+    () => ({
+      present: (nickname: string) => {
+        // Set initial nickname - this triggers form population in useEffect
+        setInitialNickname(nickname);
+
+        // Present the bottom sheet immediately
+        // The form will be populated on the next render cycle
+        setTimeout(() => {
+          bottomSheetRef.current?.present();
+        }, 0);
+      },
+    }),
+    [bottomSheetRef]
+  );
 
   return (
     <BottomSheetModal
       ref={bottomSheetRef}
       snapPoints={snapPoints}
       backdropComponent={renderBackdrop}
-      backgroundStyle={{ backgroundColor: theme.colors.background }}
-      enablePanDownToClose={false}
+      enablePanDownToClose={true}
       enableContentPanningGesture={false}
       keyboardBehavior={keyboardBehavior}
       keyboardBlurBehavior={keyboardBlurBehavior}
@@ -184,13 +219,18 @@ export const SetupNicknameBottomSheet: React.FC<
       enableHandlePanningGesture={false}
       handleComponent={null}
       topInset={insets.top}
-      index={0}
       enableDynamicSizing={false}
+      backgroundStyle={{ backgroundColor: 'transparent' }}
+      onChange={(index) => {
+        if (index === -1) {
+          handleSheetClose();
+        }
+      }}
     >
       <ContentContainer>
         <BottomSheetHeader
-          title={t('setupNickname.title')}
-          subtitle={t('setupNickname.subtitle')}
+          title={t('editNickname.title')}
+          subtitle={t('editNickname.subtitle')}
           onClose={handleClose}
         />
         <BottomSheetScrollView
@@ -203,42 +243,34 @@ export const SetupNicknameBottomSheet: React.FC<
           keyboardShouldPersistTaps="handled"
           enableOnPanDownToDismiss={false}
         >
-          <FormSection label={t('setupNickname.nicknameLabel')}>
+          <FormSection label={t('editNickname.nicknameLabel')}>
             <UncontrolledInput
               ref={nicknameInputRef}
-              defaultValue={defaultValue}
+              defaultValue={defaultNickname}
               onChangeText={handleNicknameChangeText}
               onBlur={handleNicknameBlur}
-              placeholder={defaultValue}
+              placeholder={currentNickname}
               placeholderTextColor={theme.colors.textSecondary}
               error={!!error}
               errorMessage={error ?? undefined}
             />
-            <HelperText>{t('setupNickname.nicknameHelper')}</HelperText>
+            <HelperText>{t('editNickname.nicknameHelper')}</HelperText>
           </FormSection>
 
           <GlassButton
-            text={isLoading ? t('common.saving') : t('setupNickname.submit')}
+            text={isLoading ? t('common.saving') : t('editNickname.submit')}
             onPress={handleSubmit}
-            icon="home"
+            icon="checkmark"
             loading={isLoading}
             tintColor={theme.colors.primary}
             textColor={theme.colors.surface}
-            disabled={isLoading}
+            disabled={isLoading || !isValid}
             style={{ width: '100%' }}
           />
-
-          <LogoutLink onPress={handleLogout}>
-            <Ionicons
-              name="log-out-outline"
-              size={16}
-              color={theme.colors.textSecondary}
-              style={{ marginRight: 4 }}
-            />
-            <LogoutLinkText>{t('setupNickname.logoutLink')}</LogoutLinkText>
-          </LogoutLink>
         </BottomSheetScrollView>
       </ContentContainer>
     </BottomSheetModal>
   );
-};
+});
+
+EditNicknameBottomSheet.displayName = 'EditNicknameBottomSheet';

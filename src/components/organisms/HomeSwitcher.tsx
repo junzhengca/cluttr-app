@@ -17,7 +17,7 @@ import Animated, {
 import { useHome } from '../../hooks/useHome';
 import { StyledProps } from '../../utils/styledComponents';
 import { useTheme } from '../../theme/ThemeProvider';
-import { AddHomeBottomSheet } from './AddHomeBottomSheet';
+import { AddHomeBottomSheet } from './bottom-sheets/AddHomeBottomSheet';
 import { BottomSheetModal } from '@gorhom/bottom-sheet';
 
 const styles = StyleSheet.create({

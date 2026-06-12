@@ -6,7 +6,8 @@ import { useTranslation } from 'react-i18next';
 import type { StyledProps } from '../../utils/styledComponents';
 import { useTheme } from '../../theme/ThemeProvider';
 import { useSettings } from '../../store/hooks';
-import { FormSection, UncontrolledInput, NumberInput } from '../atoms';
+import { FormSection, UncontrolledInput } from '../atoms';
+import { NumberInput } from './NumberInput';
 import { getCurrencySymbol } from './CurrencySelector';
 
 // ---------------------------------------------------------------------------

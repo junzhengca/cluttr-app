@@ -12,7 +12,7 @@ import type { Theme } from '../../theme/types';
 import type { Location } from '../../types/inventory';
 import { useLocations } from '../../store/hooks';
 import { getLocationDisplayName, DEFAULT_LOCATION_IDS } from '../../utils/locationI18n';
-import { CreateLocationBottomSheet } from '../organisms/CreateLocationBottomSheet';
+import { CreateLocationBottomSheet } from '../organisms/bottom-sheets/CreateLocationBottomSheet';
 import { ContextMenu } from '../organisms/ContextMenu/ContextMenu';
 
 const SelectorContainer = styled(View) <{ edgeToEdge?: boolean }>`

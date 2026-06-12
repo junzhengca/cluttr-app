@@ -6,11 +6,11 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import * as Clipboard from 'expo-clipboard';
-import { useTheme } from '../../theme/ThemeProvider';
-import type { StyledProps } from '../../utils/styledComponents';
-import { ErrorDetails } from '../../types/errors';
-import { BottomActionBar } from '../molecules';
-import { uiLogger } from '../../utils/Logger';
+import { useTheme } from '../../../theme/ThemeProvider';
+import type { StyledProps } from '../../../utils/styledComponents';
+import { ErrorDetails } from '../../../types/errors';
+import { BottomActionBar } from '../../molecules';
+import { uiLogger } from '../../../utils/Logger';
 
 const Header = styled(View)`
   flex-direction: row;
