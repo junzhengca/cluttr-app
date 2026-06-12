@@ -66,6 +66,7 @@
         }
       ],
       "expo-router",
+      "expo-apple-authentication",
       "@react-native-firebase/app",
       "@react-native-firebase/auth",
       "@react-native-firebase/perf",

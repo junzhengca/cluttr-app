@@ -5,6 +5,7 @@ import {
   statusCodes,
 } from '@react-native-google-signin/google-signin';
 import * as AppleAuthentication from 'expo-apple-authentication';
+import * as Crypto from 'expo-crypto';
 import { Platform } from 'react-native';
 import { authLogger } from '../utils/Logger';
 
@@ -129,11 +130,20 @@ class FirebaseAuthService {
     try {
       authLogger.info('Starting Apple Sign-In');
 
+      // Nonce ties the Apple identity token to this sign-in request
+      // (replay protection, recommended by Firebase).
+      const rawNonce = Crypto.randomUUID();
+      const hashedNonce = await Crypto.digestStringAsync(
+        Crypto.CryptoDigestAlgorithm.SHA256,
+        rawNonce
+      );
+
       const credential = await AppleAuthentication.signInAsync({
         requestedScopes: [
           AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
           AppleAuthentication.AppleAuthenticationScope.EMAIL,
         ],
+        nonce: hashedNonce,
       });
 
       const { identityToken } = credential;
@@ -141,8 +151,25 @@ class FirebaseAuthService {
         throw new Error('Apple Sign-In did not return an identity token');
       }
 
-      const appleCredential = auth.AppleAuthProvider.credential(identityToken);
+      const appleCredential = auth.AppleAuthProvider.credential(
+        identityToken,
+        rawNonce
+      );
       const result = await auth().signInWithCredential(appleCredential);
+
+      // Apple only delivers the user's name on the FIRST authorization;
+      // Firebase never copies it to displayName, so persist it now or
+      // the profile stays nameless forever.
+      const fullName = [
+        credential.fullName?.givenName,
+        credential.fullName?.familyName,
+      ]
+        .filter(Boolean)
+        .join(' ');
+      if (!result.user.displayName && fullName) {
+        await result.user.updateProfile({ displayName: fullName });
+      }
+
       authLogger.info('Apple Sign-In successful');
       return result;
     } catch (error: unknown) {
