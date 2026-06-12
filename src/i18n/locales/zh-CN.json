@@ -125,6 +125,10 @@
       "errors": {
         "updateFailed": "更新分类失败，请重试"
       }
+    },
+    "delete": {
+      "title": "删除分类",
+      "message": "确定要删除这个分类吗？该分类下的物品将变为未分类。"
     }
   },
   "todoCategories": {
