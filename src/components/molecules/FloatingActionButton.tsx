@@ -14,6 +14,8 @@ import Animated, {
   interpolate,
   Extrapolation,
   Easing,
+  FadeInDown,
+  FadeOutDown,
 } from 'react-native-reanimated';
 import styled from 'styled-components/native';
 import Ionicons from '@react-native-vector-icons/ionicons/static';
@@ -40,19 +42,6 @@ const Backdrop = styled(Pressable)<{ visible: boolean }>`
   background-color: rgba(0, 0, 0, 0.3);
   pointer-events: ${({ visible }: { visible: boolean }) =>
     visible ? 'auto' : 'none'};
-`;
-
-const ActionsContainer = styled(Animated.View)`
-  position: absolute;
-  right: ${({ theme }: StyledProps) => theme.spacing.md}px;
-  align-items: flex-end;
-  pointer-events: box-none;
-`;
-
-const ActionButtonWrapper = styled(Animated.View)`
-  position: absolute;
-  right: 0;
-  pointer-events: auto;
 `;
 
 // Simplified content container inside TouchableOpacity
@@ -165,29 +154,7 @@ export const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({
     };
   });
 
-  // First action button (Manual Add) animated style - closest to main FAB
-  const firstActionStyle = useAnimatedStyle(() => {
-    const bottom = interpolate(
-      expandAnimation.value,
-      [0, 1],
-      [0, 64],
-      Extrapolation.CLAMP
-    );
-    const opacity = expandAnimation.value;
-
-    return {
-      bottom,
-      opacity,
-    };
-  });
-
   const bottomPosition = insets.bottom + 100 + bottomOffset;
-
-  const actionsContainerStyle = useAnimatedStyle(() => {
-    return {
-      bottom: bottomPosition,
-    };
-  });
 
   const iconColor = theme.colors.primary;
 
@@ -213,43 +180,51 @@ export const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({
         <Backdrop visible={isExpanded} onPress={handleBackdropPress} />
       </Animated.View>
 
-      <ActionsContainer style={actionsContainerStyle}>
+      {/* Statically laid-out column anchored bottom-right: the pill mounts
+          above the FAB with enter/exit animations. Animating layout offsets
+          (bottom/translate) here breaks Fabric hit-testing on RN 0.85 — the
+          visual moves but the touch target does not. */}
+      <View
+        style={{
+          position: 'absolute',
+          right: theme.spacing.md,
+          bottom: bottomPosition,
+          alignItems: 'flex-end',
+          gap: theme.spacing.sm,
+        }}
+        pointerEvents="box-none"
+      >
         {/* Manual Add Button */}
-        <ActionButtonWrapper
-          style={firstActionStyle}
-          pointerEvents={isExpanded ? 'auto' : 'none'}
-        >
-          <GlassView
-            style={actionGlassStyle}
-            glassEffectStyle="regular"
-            isInteractive={true}
+        {isExpanded && (
+          <Animated.View
+            entering={FadeInDown.duration(200)}
+            exiting={FadeOutDown.duration(150)}
           >
-            <TouchableOpacity onPress={handleManualAdd} activeOpacity={0.7}>
-              <ActionContent>
-                <ActionLabelText>
-                  {t('fab.manuallyAdd', 'Manually Add')}
-                </ActionLabelText>
-                <ActionIconContainer>
-                  <Ionicons
-                    name="create-outline"
-                    size={20}
-                    color={theme.colors.primary}
-                  />
-                </ActionIconContainer>
-              </ActionContent>
-            </TouchableOpacity>
-          </GlassView>
-        </ActionButtonWrapper>
+            <GlassView
+              style={actionGlassStyle}
+              glassEffectStyle="regular"
+              isInteractive={true}
+            >
+              <TouchableOpacity onPress={handleManualAdd} activeOpacity={0.7}>
+                <ActionContent>
+                  <ActionLabelText>
+                    {t('fab.manuallyAdd', 'Manually Add')}
+                  </ActionLabelText>
+                  <ActionIconContainer>
+                    <Ionicons
+                      name="create-outline"
+                      size={20}
+                      color={theme.colors.primary}
+                    />
+                  </ActionIconContainer>
+                </ActionContent>
+              </TouchableOpacity>
+            </GlassView>
+          </Animated.View>
+        )}
 
         {/* Main FAB */}
-        <Animated.View
-          style={{
-            position: 'absolute',
-            bottom: 0,
-            right: 0,
-          }}
-          pointerEvents="auto"
-        >
+        <View pointerEvents="auto">
           <GlassView
             style={mainFabGlassStyle}
             glassEffectStyle="regular"
@@ -278,8 +253,8 @@ export const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({
               </MainFABContent>
             </TouchableOpacity>
           </GlassView>
-        </Animated.View>
-      </ActionsContainer>
+        </View>
+      </View>
     </FABContainer>
   );
 };

@@ -1,6 +1,4 @@
 import { NativeTabs } from 'expo-router/unstable-native-tabs';
-import Ionicons from '@react-native-vector-icons/ionicons/static';
-import MaterialCommunityIcons from '@react-native-vector-icons/material-design-icons/static';
 
 import { useTheme } from '../../src/theme/ThemeProvider';
 import { useSettings } from '../../src/store/hooks';
@@ -27,42 +25,25 @@ export default function TabLayout() {
         <NativeTabs.Trigger.Label>
           {t('navigation.home')}
         </NativeTabs.Trigger.Label>
-        <NativeTabs.Trigger.Icon
-          src={<NativeTabs.Trigger.VectorIcon family={Ionicons} name="home" />}
-        />
+        <NativeTabs.Trigger.Icon sf="house.fill" md="home" />
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="search" role="search">
         <NativeTabs.Trigger.Label>
           {t('navigation.search')}
         </NativeTabs.Trigger.Label>
-        <NativeTabs.Trigger.Icon
-          src={
-            <NativeTabs.Trigger.VectorIcon family={Ionicons} name="search" />
-          }
-        />
+        <NativeTabs.Trigger.Icon sf="magnifyingglass" md="search" />
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="notes">
         <NativeTabs.Trigger.Label>
           {t('navigation.notes')}
         </NativeTabs.Trigger.Label>
-        <NativeTabs.Trigger.Icon
-          src={
-            <NativeTabs.Trigger.VectorIcon
-              family={MaterialCommunityIcons}
-              name="notebook-edit"
-            />
-          }
-        />
+        <NativeTabs.Trigger.Icon sf="square.and.pencil" md="edit_note" />
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="settings">
         <NativeTabs.Trigger.Label>
           {t('navigation.settings')}
         </NativeTabs.Trigger.Label>
-        <NativeTabs.Trigger.Icon
-          src={
-            <NativeTabs.Trigger.VectorIcon family={Ionicons} name="settings" />
-          }
-        />
+        <NativeTabs.Trigger.Icon sf="gearshape.fill" md="settings" />
       </NativeTabs.Trigger>
     </NativeTabs>
   );

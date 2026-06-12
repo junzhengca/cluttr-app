@@ -75,7 +75,6 @@ invitations/{code}                        doc ID = invitation code; homeId + den
 │   ├── screens/           # Screen components + per-screen subdirs:
 │   │                      #   notes/, item-details/, settings/, profile/
 │   ├── store/             # Redux Toolkit + Saga (slices/, sagas/, sagas/helpers/, hooks.ts)
-│   ├── navigation/         # React Navigation 2-level (RootStack + 4 tabs)
 │   ├── services/           # Business logic (Firestore services, createCrudService, FirebaseAuthService, firebase/firestoreRefs.ts)
 │   ├── utils/              # Shared utilities (Logger, formatters, toastRegistry, validation)
 │   ├── hooks/              # Custom React hooks (useKeyboardVisibility, useItemForm, useBatchForm, useBottomSheetLifecycle, useToast, useHome, useItemActions, useNetwork)
@@ -83,7 +82,12 @@ invitations/{code}                        doc ID = invitation code; homeId + den
 │   ├── theme/              # Styled-components theme
 │   ├── i18n/              # i18next locales (en, zh-CN)
 │   └── data/               # Static config + default-home presets (categories, locations, todo categories, statuses)
-└── app/_layout.tsx        # expo-router entry with provider nesting
+└── app/                   # expo-router file routes (the ONLY navigation layer)
+    ├── _layout.tsx        # providers + root Stack with Stack.Protected auth guards
+    ├── (auth)/            # login, signup, forgot-password, reset-password (own Stack)
+    ├── (tabs)/            # NativeTabs (_layout) + index/notes/settings + search/ Stack
+    ├── ItemDetails.tsx    # pushed from Home/Search (param: itemId)
+    └── Profile.tsx        # pushed from PageHeader avatar
 ```
 
 Components use atomic design: `src/components/{atoms,molecules,organisms}`.
@@ -99,7 +103,7 @@ Components use atomic design: `src/components/{atoms,molecules,organisms}`.
 | Default home seeding               | `src/services/seedHomeDefaults.ts`, `src/data/default{Categories,Locations,TodoCategories}.ts`              | i18n-resolved names at creation time; invoked from `HomeService.createHome`                           |
 | Invitations                        | `src/services/InvitationService.ts`                                                                         | Code create/validate/accept (rules-validated)                                                         |
 | User profiles                      | `src/services/UserService.ts`                                                                               | `users/{uid}` docs: ensure, update, member join                                                       |
-| Navigation                         | `src/navigation/RootStack.tsx`, `src/navigation/TabNavigator.tsx`                                           | 2-level: RootStack (modals) + MainTabs (screens)                                                      |
+| Navigation                         | `app/_layout.tsx`, `app/(tabs)/_layout.tsx`                                                                 | expo-router file routes; `Stack.Protected` guards on auth; screens navigate via `useRouter()`         |
 | Form patterns                      | `src/components/organisms/bottom-sheets/ItemFormBottomSheet.tsx`                                            | IME-safe uncontrolled inputs (create + edit modes)                                                    |
 | Sheet lifecycle                    | `src/hooks/useBottomSheetLifecycle.ts`, `src/components/organisms/bottom-sheets/shared/sheetPrimitives.tsx` | Open/close/reset lifecycle + shared sheet styled primitives                                           |
 | Swipe actions                      | `src/components/molecules/SwipeableRow.tsx`                                                                 | Shared iOS-style swipe-to-edit/delete; used by HomeScreen, ItemDetailsScreen, NotesScreen, MemberCard |
@@ -119,7 +123,8 @@ Components use atomic design: `src/components/{atoms,molecules,organisms}`.
 - **Swipe actions**: wrap rows in the `SwipeableRow` molecule (`onEdit`/`onDelete` callbacks + labels; omit a callback to hide that pill — no actions renders plain children, useful for permission-gated rows). It owns one-open-at-a-time, haptics, close-before-action, and a11y labels. Composition order: `SwipeableRow > ContextMenu > Card`; keep row spacing on the wrapper (`style` prop / list `gap`), NOT on the card, so the action pills match card height
 - **OAuth client IDs**: Use iOS/Android client IDs (NOT Web) with custom scheme `com.cluttrapp.cluttr://`
 - **Firebase keys**: Never commit `GoogleService-Info.plist` or `google-services.json` (gitignored).
-- **Firebase SDK**: Version-locked (currently `^23.x.x` for `@react-native-firebase/*`).
+- **Firebase SDK**: Version-locked (currently `^24.x.x` for `@react-native-firebase/*`). The codebase uses the namespaced API (`firestore().collection(...)`), so Firestore types come from the `FirebaseFirestoreTypes` namespace — the root type exports (`DocumentSnapshot` etc.) are for the modular API only.
+- **Icons**: `@react-native-vector-icons/{ionicons,material-design-icons}` with `/static` imports (fonts linked natively via each package's config plugin in `app.json`). The components have no `glyphMap` static — use the `IoniconsName`/`MaterialCommunityIconsName` aliases from `src/types/icons.ts` for icon-name types. Do NOT reintroduce `@expo/vector-icons`.
 
 ## ANTI-PATTERNS (THIS PROJECT)
 
@@ -129,6 +134,7 @@ Components use atomic design: `src/components/{atoms,molecules,organisms}`.
 - **NEVER** use controlled inputs (`value` prop) in bottom sheet modals - breaks IME composition
 - **NEVER** use the deprecated `Swipeable` from `react-native-gesture-handler` or hand-roll swipe-action UI — use the `SwipeableRow` molecule (built on `ReanimatedSwipeable`; legacy usages fully migrated 2026-06-11)
 - **NEVER** use Web OAuth client IDs for authentication - only iOS (`EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID`) and Android (`EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID`). _Note: `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID` is used for Firebase Auth configuration only._
+- **NEVER** animate layout props (`height`, `width`, `top`, `bottom`, `left`, `right`) via Reanimated `useAnimatedStyle` worklets — on RN 0.85/Fabric the visual may move but the Fabric shadow tree (hit-testing) does not, or the style silently fails. Use Reanimated CSS transitions (`transitionProperty`/`transitionDuration` in style — see `CollapsibleFilterPanel`) or mount/unmount `entering`/`exiting` animations (see `FloatingActionButton`). `transform`/`opacity` worklet animation is fine.
 - **NEVER** use `console.log()` - use Logger from `src/utils/Logger.ts`
 - **NEVER** suppress type errors with `as any` or `@ts-ignore`
 - **ALWAYS** run `npm run lint` after edits (enforced by `.cursor/rules/eslint-ensure.mdc`)
@@ -140,7 +146,7 @@ Components use atomic design: `src/components/{atoms,molecules,organisms}`.
 - **Snapshot-as-truth**: sagas apply optimistic slice updates for instant feedback, but the Firestore snapshot always wins — there is no revert logic
 - **HomeService observer**: homes live outside Redux in `homeService` (observer pattern), fed by the authSaga homes channel; `useHome()` subscribes
 - **Promise-based hooks**: `useSettings()` uses Promise + timeout to track update completion
-- **2-level navigation**: RootStack (modals/screens) → MainTabs (bottom tabs) → Home/Notes/Share/Settings stacks
+- **Navigation is pure expo-router** (SDK 56 forked expo-router from React Navigation; `@react-navigation/*` imports are unsupported): root `Stack` in `app/_layout.tsx` with `Stack.Protected guard={isAuthenticated}` for `(tabs)`/`ItemDetails`/`Profile` and `guard={!isAuthenticated}` for `(auth)`; logout/login transitions happen automatically when the guard flips. Tabs are `NativeTabs` (`expo-router/unstable-native-tabs`) with `NativeTabs.Trigger.Label/Icon/VectorIcon` sub-components. Params flow via `useLocalSearchParams`.
 
 ## COMMANDS
 

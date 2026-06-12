@@ -95,6 +95,19 @@ xcrun simctl openurl booted "com.cluttrapp.cluttr://?inviteCode=<CODE>"         
     the `ui` tree). This blocks driving TC-5.3's sharing toggles and the Dark Mode switch from the
     harness. Workaround: flip the setting externally via admin REST PATCH on the home doc
     (TC-6.5 exercises the same `settings` write path plus the member-side reaction).
+13. **The SDK 56 dev client shows a draggable floating dev-menu button (grey gear)** that
+    SWALLOWS TOUCHES in a generous region around itself — it boots at top-right, hidden behind
+    the PageHeader avatar, where it blocks the header filter button (and shows in `ui` as an
+    `Image 'gearshape.fill'`). If a top-right control mysteriously ignores taps, drag the gear
+    away first (e.g. `swipe --start-x 360 --start-y 113 --end-x 30 --end-y 700`) and re-check
+    where it landed after every reload. Tapping it opens the dev menu (close via
+    `tap --label "Close"`).
+14. **`type` only supports ASCII** (axe maps characters to hardware keycodes); CJK input cannot
+    be driven from the harness — IME behavior needs a manual pass.
+15. **Verify which bundle is running when edits "don't apply".** A `WARN bundle scheme is file`
+    line means the dev client loaded its embedded (build-time) bundle, not Metro. Relaunch with
+    `./scripts/harness.sh up`; to be certain, add a temporary boot-time log marker and grep
+    `logs` for it after reload.
 
 ### 2.4 Reading results
 

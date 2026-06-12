@@ -282,7 +282,6 @@ export const ErrorBottomSheet: React.FC<ErrorBottomSheetProps> = ({
             paddingBottom: theme.spacing.lg,
           }}
           showsVerticalScrollIndicator={false}
-          enableOnPanDownToDismiss={false}
         >
           <Header>
             <HeaderLeft>

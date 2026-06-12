@@ -202,7 +202,6 @@ export const SetupNicknameBottomSheet: React.FC<
           }}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
-          enableOnPanDownToDismiss={false}
         >
           <FormSection label={t('setupNickname.nicknameLabel')}>
             <UncontrolledInput

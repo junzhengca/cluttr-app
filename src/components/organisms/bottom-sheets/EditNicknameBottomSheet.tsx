@@ -250,7 +250,6 @@ export const EditNicknameBottomSheet = forwardRef<
           }}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
-          enableOnPanDownToDismiss={false}
         >
           <FormSection label={t('editNickname.nicknameLabel')}>
             <UncontrolledInput

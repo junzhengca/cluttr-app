@@ -373,7 +373,6 @@ export const BatchFormBottomSheet = forwardRef<
           }}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
-          enableOnPanDownToDismiss={false}
         >
           <FormContainer key={formKey}>
             <BatchDetailsFormSection

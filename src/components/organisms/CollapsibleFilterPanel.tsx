@@ -1,12 +1,8 @@
-import React, { useEffect } from 'react';
+import React, { useState } from 'react';
 import { View, TouchableOpacity, Text, ActivityIndicator } from 'react-native';
 import styled from 'styled-components/native';
 import Ionicons from '@react-native-vector-icons/ionicons/static';
-import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-  withTiming,
-} from 'react-native-reanimated';
+import Animated from 'react-native-reanimated';
 import { useTranslation } from 'react-i18next';
 import type { StyledProps } from '../../utils/styledComponents';
 
@@ -86,25 +82,11 @@ export const CollapsibleFilterPanel: React.FC<CollapsibleFilterPanelProps> = ({
 }) => {
   const { t } = useTranslation();
   const theme = useTheme();
-  const listHeight = useSharedValue(0);
-  const open = useSharedValue(isExpanded);
-
-  // Sync shared value with prop
-  useEffect(() => {
-    open.value = isExpanded;
-  }, [isExpanded, open]);
-
-  const animatedStyle = useAnimatedStyle(() => {
-    const heightValue = open.value ? listHeight.value : 0;
-    return {
-      height:
-        listHeight.value === 0
-          ? undefined
-          : withTiming(heightValue, { duration: 300 }),
-      opacity: withTiming(open.value ? 1 : 0, { duration: 300 }),
-      overflow: 'hidden',
-    };
-  });
+  // Measured natural height of the (absolutely positioned) content. Height is
+  // a layout prop, so it is animated with a Reanimated CSS transition —
+  // worklet-driven layout animation (useAnimatedStyle + withTiming) does not
+  // move the Fabric shadow tree on RN 0.85.
+  const [contentHeight, setContentHeight] = useState(0);
 
   return (
     <Container>
@@ -132,12 +114,18 @@ export const CollapsibleFilterPanel: React.FC<CollapsibleFilterPanelProps> = ({
       </Header>
 
       <Animated.View
-        style={[animatedStyle, { marginHorizontal: -theme.spacing.md }]}
+        style={{
+          height: isExpanded ? contentHeight : 0,
+          opacity: isExpanded ? 1 : 0,
+          overflow: 'hidden',
+          transitionProperty: ['height', 'opacity'],
+          transitionDuration: 300,
+          marginHorizontal: -theme.spacing.md,
+        }}
       >
         <View
           onLayout={(event) => {
-            'worklet';
-            listHeight.value = event.nativeEvent.layout.height;
+            setContentHeight(event.nativeEvent.layout.height);
           }}
           style={{ position: 'absolute', width: '100%', top: 0 }}
         >

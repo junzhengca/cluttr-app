@@ -227,7 +227,6 @@ export const IconColorPicker: React.FC<IconColorPickerProps> = ({
             }}
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
-            enableOnPanDownToDismiss={false}
           >
             <Section>
               <SectionLabel>{t('iconColorPicker.colorLabel')}</SectionLabel>

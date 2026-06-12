@@ -530,7 +530,6 @@ export const ItemFormBottomSheet = forwardRef<
               }}
               showsVerticalScrollIndicator={false}
               keyboardShouldPersistTaps="handled"
-              enableOnPanDownToDismiss={false}
             >
               {mode === 'create' ? (
                 <ItemFormFields
