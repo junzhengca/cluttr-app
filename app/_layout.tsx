@@ -23,7 +23,6 @@ import {
   OfflineBadge,
   OfflineExplanationBottomSheet,
 } from '../src/components';
-import { AuthNavigator } from '../src/navigation/AuthNavigator';
 import { ContextMenuProvider } from '../src/components/organisms/ContextMenu/ContextMenuProvider';
 import { UnitPickerProvider } from '../src/components/organisms/UnitPicker/UnitPickerContext';
 import { ErrorDetails } from '../src/types/errors';
@@ -235,46 +234,41 @@ function AppInner() {
     };
   }, [isAuthenticated]);
 
-  if (!isAuthenticated) {
-    return (
-      <>
-        <AuthNavigator />
-        <StatusBar style={darkMode ? 'light' : 'dark'} />
-        <ErrorBottomSheet
-          bottomSheetRef={errorBottomSheetRef}
-          errorDetails={errorDetails}
-          onDismiss={handleErrorDismiss}
-        />
-      </>
-    );
-  }
-
   return (
     <>
       <Stack screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="(tabs)" />
-        <Stack.Screen name="ItemDetails" />
-        <Stack.Screen name="Profile" />
+        <Stack.Protected guard={isAuthenticated}>
+          <Stack.Screen name="(tabs)" />
+          <Stack.Screen name="ItemDetails" />
+          <Stack.Screen name="Profile" />
+        </Stack.Protected>
+        <Stack.Protected guard={!isAuthenticated}>
+          <Stack.Screen name="(auth)" />
+        </Stack.Protected>
       </Stack>
-      <OfflineBadge onPress={handleOfflineBadgePress} />
+      {isAuthenticated && <OfflineBadge onPress={handleOfflineBadgePress} />}
       <StatusBar style={darkMode ? 'light' : 'dark'} />
       <ErrorBottomSheet
         bottomSheetRef={errorBottomSheetRef}
         errorDetails={errorDetails}
         onDismiss={handleErrorDismiss}
       />
-      <SetupNicknameBottomSheet
-        bottomSheetRef={setupNicknameBottomSheetRef}
-        onNicknameSet={handleNicknameSet}
-      />
-      <InvitationBottomSheet
-        bottomSheetRef={invitationBottomSheetRef}
-        inviteCode={inviteCode}
-        onDismiss={() => setInviteCode(null)}
-      />
-      <OfflineExplanationBottomSheet
-        bottomSheetRef={offlineExplanationBottomSheetRef}
-      />
+      {isAuthenticated && (
+        <>
+          <SetupNicknameBottomSheet
+            bottomSheetRef={setupNicknameBottomSheetRef}
+            onNicknameSet={handleNicknameSet}
+          />
+          <InvitationBottomSheet
+            bottomSheetRef={invitationBottomSheetRef}
+            inviteCode={inviteCode}
+            onDismiss={() => setInviteCode(null)}
+          />
+          <OfflineExplanationBottomSheet
+            bottomSheetRef={offlineExplanationBottomSheetRef}
+          />
+        </>
+      )}
     </>
   );
 }

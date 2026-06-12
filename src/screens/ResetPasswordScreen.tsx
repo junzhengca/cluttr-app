@@ -14,14 +14,12 @@ import styled from 'styled-components/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { StatusBar } from 'expo-status-bar';
-import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
-import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 
 import type { StyledProps } from '../utils/styledComponents';
 import { AuthTextInput, GlassButton } from '../components';
 import { useAuth, useSettings } from '../store/hooks';
 import { useTheme } from '../theme/ThemeProvider';
-import type { AuthStackParamList } from '../navigation/AuthNavigator';
 
 const Container = styled(View)`
   flex: 1;
@@ -107,10 +105,8 @@ export const ResetPasswordScreen: React.FC = () => {
   const { t } = useTranslation();
   const theme = useTheme();
   const insets = useSafeAreaInsets();
-  const navigation =
-    useNavigation<NativeStackNavigationProp<AuthStackParamList>>();
-  const route = useRoute<RouteProp<AuthStackParamList, 'ResetPassword'>>();
-  const { email } = route.params;
+  const router = useRouter();
+  const { email } = useLocalSearchParams<{ email: string }>();
   const { settings } = useSettings();
   const isDark = settings?.darkMode;
   // verifyPasswordReset is no longer available – Firebase handles password
@@ -138,11 +134,11 @@ export const ResetPasswordScreen: React.FC = () => {
         Alert.alert(
           t('login.passwordReset.successTitle'),
           t('login.passwordReset.successMessage'),
-          [{ text: 'OK', onPress: () => navigation.navigate('Login') }]
+          [{ text: 'OK', onPress: () => router.dismissTo('/login') }]
         );
       }
     }
-  }, [isSubmitting, isLoading, error, navigation, t]);
+  }, [isSubmitting, isLoading, error, router, t]);
 
   const handleSubmit = useCallback(() => {
     if (!code.trim() || !newPassword.trim() || isLoading) {
@@ -231,7 +227,7 @@ export const ResetPasswordScreen: React.FC = () => {
                 />
               </ButtonContainer>
 
-              <GhostButton onPress={() => navigation.goBack()}>
+              <GhostButton onPress={() => router.back()}>
                 <GhostButtonText>{t('common.cancel')}</GhostButtonText>
               </GhostButton>
             </FormContainer>

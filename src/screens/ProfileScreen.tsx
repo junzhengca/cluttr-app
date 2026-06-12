@@ -2,7 +2,6 @@ import React, { useCallback, useEffect, useRef } from 'react';
 import { ScrollView, ActivityIndicator, View, Alert } from 'react-native';
 import styled from 'styled-components/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useNavigation } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import { BottomSheetModal } from '@gorhom/bottom-sheet';
 import type { StyledProps } from '../utils/styledComponents';
@@ -42,7 +41,6 @@ export const ProfileScreen: React.FC = () => {
   const { user, isAuthenticated, isLoading, error, logout } = useAuth();
 
   const insets = useSafeAreaInsets();
-  const navigation = useNavigation();
   const { t } = useTranslation();
   const loginBottomSheetRef = useRef<BottomSheetModal | null>(null);
   const signupBottomSheetRef = useRef<BottomSheetModal | null>(null);
@@ -62,7 +60,6 @@ export const ProfileScreen: React.FC = () => {
         style: 'destructive',
         onPress: async () => {
           await logout();
-          navigation.goBack();
         },
       },
     ]);

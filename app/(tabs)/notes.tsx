@@ -1,2 +1,2 @@
-import { NotesStack } from '../../src/navigation/NotesStack';
-export default NotesStack;
+import { NotesScreen } from '../../src/screens/NotesScreen';
+export default NotesScreen;

@@ -12,14 +12,12 @@ import styled from 'styled-components/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { StatusBar } from 'expo-status-bar';
-import { useNavigation } from '@react-navigation/native';
-import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useRouter } from 'expo-router';
 
 import type { StyledProps } from '../utils/styledComponents';
 import { AuthTextInput, GlassButton } from '../components';
 import { useAuth, useSettings } from '../store/hooks';
 import { useTheme } from '../theme/ThemeProvider';
-import type { AuthStackParamList } from '../navigation/AuthNavigator';
 
 const Container = styled(View)`
   flex: 1;
@@ -118,8 +116,7 @@ export const ForgotPasswordScreen: React.FC = () => {
   const { t } = useTranslation();
   const theme = useTheme();
   const insets = useSafeAreaInsets();
-  const navigation =
-    useNavigation<NativeStackNavigationProp<AuthStackParamList>>();
+  const router = useRouter();
   const { settings } = useSettings();
   const isDark = settings?.darkMode;
   const { requestPasswordReset, isLoading, error, clearError } = useAuth();
@@ -179,7 +176,7 @@ export const ForgotPasswordScreen: React.FC = () => {
             </SuccessContainer>
 
             <FormContainer>
-              <GhostButton onPress={() => navigation.navigate('Login')}>
+              <GhostButton onPress={() => router.dismissTo('/login')}>
                 <GhostButtonText>
                   {t('login.passwordReset.backToLogin') || 'Back to Login'}
                 </GhostButtonText>
@@ -249,7 +246,7 @@ export const ForgotPasswordScreen: React.FC = () => {
                 />
               </ButtonContainer>
 
-              <GhostButton onPress={() => navigation.goBack()}>
+              <GhostButton onPress={() => router.back()}>
                 <GhostButtonText>{t('common.cancel')}</GhostButtonText>
               </GhostButton>
             </FormContainer>

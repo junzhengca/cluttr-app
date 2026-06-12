@@ -12,7 +12,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import styled from 'styled-components/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useNavigation } from '@react-navigation/native';
+import { useRouter } from 'expo-router';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { BottomSheetModal } from '@gorhom/bottom-sheet';
 import type { StyledProps, StyledPropsWith } from '../utils/styledComponents';
@@ -29,8 +29,6 @@ import {
 } from '../components';
 import { useTodos, useAuth, useTodoCategories } from '../store/hooks';
 import { useHome } from '../hooks/useHome';
-import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { RootStackParamList } from '../navigation/types';
 import { useTheme } from '../theme/ThemeProvider';
 import { NotesBanner, type TodoMode } from './notes/NotesBanner';
 import { TodoListSection } from './notes/TodoListSection';
@@ -120,11 +118,9 @@ const NotesInput = styled(TextInput)`
   padding-vertical: ${({ theme }: StyledProps) => theme.spacing.xs}px;
 `;
 
-type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
-
 export const NotesScreen: React.FC = () => {
   const insets = useSafeAreaInsets();
-  const navigation = useNavigation<NavigationProp>();
+  const router = useRouter();
   const {
     pendingTodos,
     completedTodos,
@@ -231,10 +227,7 @@ export const NotesScreen: React.FC = () => {
   };
 
   const handleAvatarPress = () => {
-    const rootNavigation = navigation.getParent();
-    if (rootNavigation) {
-      rootNavigation.navigate('Profile');
-    }
+    router.push('/Profile');
   };
 
   // Calculate bottom padding: nav bar height (60) + margin (16*2) + safe area + extra spacing

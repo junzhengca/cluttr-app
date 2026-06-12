@@ -10,9 +10,6 @@ export * from './forms';
 export { PageHeader } from './PageHeader';
 export type { PageHeaderProps } from './PageHeader';
 
-export { BottomNavBar } from './BottomNavBar';
-// BottomNavBar uses BottomTabBarProps from @react-navigation/bottom-tabs
-
 // Provider organisms
 export { ToastProvider } from './ToastProvider';
 export type { ToastProviderProps } from './ToastProvider';

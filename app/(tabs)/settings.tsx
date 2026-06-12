@@ -1,2 +1,2 @@
-import { SettingsStack } from '../../src/navigation/SettingsStack';
-export default SettingsStack;
+import { SettingsScreen } from '../../src/screens/SettingsScreen';
+export default SettingsScreen;

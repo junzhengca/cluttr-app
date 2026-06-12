@@ -14,15 +14,13 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { StatusBar } from 'expo-status-bar';
-import { useNavigation } from '@react-navigation/native';
-import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useRouter } from 'expo-router';
 
 import type { StyledProps } from '../utils/styledComponents';
 import { AuthTextInput, GlassButton } from '../components';
 import { useAuth, useSettings, useAppDispatch } from '../store/hooks';
 import { setError } from '../store/slices/authSlice';
 import { useTheme } from '../theme/ThemeProvider';
-import type { AuthStackParamList } from '../navigation/AuthNavigator';
 
 const Container = styled(View)`
   flex: 1;
@@ -161,8 +159,7 @@ export const LoginScreen: React.FC = () => {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
   const dispatch = useAppDispatch();
-  const navigation =
-    useNavigation<NativeStackNavigationProp<AuthStackParamList>>();
+  const router = useRouter();
   const { settings } = useSettings();
   const isDark = settings?.darkMode;
   const {
@@ -291,7 +288,7 @@ export const LoginScreen: React.FC = () => {
 
               <ForgotPasswordRow>
                 <TouchableOpacity
-                  onPress={() => navigation.navigate('ForgotPassword', {})}
+                  onPress={() => router.push('/forgot-password')}
                 >
                   <ForgotPasswordText>
                     {t('login.forgotPassword')}
@@ -314,7 +311,7 @@ export const LoginScreen: React.FC = () => {
 
               <SwitchRow>
                 <SwitchText>{t('login.switchToSignup')}</SwitchText>
-                <TouchableOpacity onPress={() => navigation.navigate('Signup')}>
+                <TouchableOpacity onPress={() => router.push('/signup')}>
                   <SwitchLinkText>
                     {t('login.switchToSignupLink')}
                   </SwitchLinkText>

@@ -1,2 +1,2 @@
-import { HomeStack } from '../../src/navigation/HomeStack';
-export default HomeStack;
+import { HomeScreen } from '../../src/screens/HomeScreen';
+export default HomeScreen;

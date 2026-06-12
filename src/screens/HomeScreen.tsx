@@ -9,9 +9,8 @@ import {
 } from 'react-native';
 import styled from 'styled-components/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useNavigation } from '@react-navigation/native';
+import { useRouter } from 'expo-router';
 import { BottomSheetModal } from '@gorhom/bottom-sheet';
-import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useTranslation } from 'react-i18next';
 import type { StyledProps, StyledPropsWith } from '../utils/styledComponents';
 
@@ -34,7 +33,6 @@ import {
 } from '../components';
 import { useItemActions } from '../hooks/useItemActions';
 import { InventoryItem } from '../types/inventory';
-import { RootStackParamList } from '../navigation/types';
 import { useInventory, useAuth, useTodos } from '../store/hooks';
 import { useHome } from '../hooks/useHome';
 import { calculateBottomPadding } from '../utils/layout';
@@ -42,8 +40,6 @@ import { useToast } from '../hooks/useToast';
 import { isExpiringSoon, countExpiringItems } from '../utils/dateUtils';
 import { getEarliestExpiry } from '../utils/batchUtils';
 import { useTheme } from '../theme/ThemeProvider';
-
-type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 const Container = styled(View)`
   flex: 1;
@@ -90,7 +86,7 @@ export const HomeScreen: React.FC = () => {
     useState<Partial<InventoryItem> | null>(null);
   const [isFilterVisible, setIsFilterVisible] = useState(false);
   const insets = useSafeAreaInsets();
-  const navigation = useNavigation<NavigationProp>();
+  const router = useRouter();
   const { items, loading: isLoading } = useInventory();
   const { user } = useAuth();
   const { currentHome } = useHome();
@@ -173,10 +169,7 @@ export const HomeScreen: React.FC = () => {
   }, [currentHome]);
 
   const handleItemPress = (item: InventoryItem) => {
-    const rootNavigation = navigation.getParent();
-    if (rootNavigation) {
-      rootNavigation.navigate('ItemDetails', { itemId: item.id });
-    }
+    router.push({ pathname: '/ItemDetails', params: { itemId: item.id } });
   };
 
   const handleSignupPress = () => {
@@ -210,10 +203,7 @@ export const HomeScreen: React.FC = () => {
   }, []);
 
   const handleAvatarPress = () => {
-    const rootNavigation = navigation.getParent();
-    if (rootNavigation) {
-      rootNavigation.navigate('Profile');
-    }
+    router.push('/Profile');
   };
 
   // Calculate bottom padding for scrollable content

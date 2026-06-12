@@ -2,8 +2,7 @@ import React, { useRef, useCallback, useState, useEffect } from 'react';
 import { ScrollView, ActivityIndicator, View, Text, Alert } from 'react-native';
 import styled from 'styled-components/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useNavigation } from '@react-navigation/native';
-import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useRouter } from 'expo-router';
 import { BottomSheetModal } from '@gorhom/bottom-sheet';
 import { useTranslation } from 'react-i18next';
 import Constants from 'expo-constants';
@@ -20,7 +19,6 @@ import { useSettings, useAuth } from '../store/hooks';
 import { useHome } from '../hooks/useHome';
 import { useToast } from '../hooks/useToast';
 import { calculateBottomPadding } from '../utils/layout';
-import { RootStackParamList } from '../navigation/types';
 import { Member } from '../types/user';
 import { userService } from '../services/UserService';
 import { homeService } from '../services/HomeService';
@@ -54,13 +52,11 @@ const LoadingContainer = styled(View)`
   align-items: center;
 `;
 
-type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
-
 export const SettingsScreen: React.FC = () => {
   const { settings, updateSettings, isLoading } = useSettings();
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
-  const navigation = useNavigation<NavigationProp>();
+  const router = useRouter();
   const { user, isAuthenticated } = useAuth();
   const toast = useToast();
 
@@ -225,11 +221,8 @@ export const SettingsScreen: React.FC = () => {
   }, [currentHome, user, deleteHome, toast, t]);
 
   const handleLoginPress = useCallback(() => {
-    const rootNavigation = navigation.getParent();
-    if (rootNavigation) {
-      rootNavigation.navigate('Profile');
-    }
-  }, [navigation]);
+    router.push('/Profile');
+  }, [router]);
 
   const handleEditHomePress = useCallback(() => {
     editHomeSheetRef.current?.present();
@@ -263,10 +256,7 @@ export const SettingsScreen: React.FC = () => {
   }, [currentHome, deleteHome, toast, t]);
 
   const handleAvatarPress = () => {
-    const rootNavigation = navigation.getParent();
-    if (rootNavigation) {
-      rootNavigation.navigate('Profile');
-    }
+    router.push('/Profile');
   };
 
   const handleThemeChange = async (themeId: string) => {

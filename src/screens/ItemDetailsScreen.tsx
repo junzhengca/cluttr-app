@@ -1,8 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Alert, ActivityIndicator, ScrollView, View, Text } from 'react-native';
 import styled from 'styled-components/native';
-import { useRoute, useNavigation } from '@react-navigation/native';
-import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { BottomSheetModal } from '@gorhom/bottom-sheet';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
@@ -16,7 +15,6 @@ import {
 } from '../store/hooks';
 import { selectItemById } from '../store/slices/inventorySlice';
 import { updateItemAction } from '../store/sagas/inventorySaga';
-import { RootStackParamList } from '../navigation/types';
 import { InventoryItem } from '../types/inventory';
 import { inventoryService } from '../services/InventoryService';
 import {
@@ -39,13 +37,6 @@ import { getLocationDisplayName } from '../utils/locationI18n';
 import { getInventoryCategoryDisplayName } from '../utils/inventoryCategoryI18n';
 import type { StyledProps } from '../utils/styledComponents';
 import { uiLogger } from '../utils/Logger';
-
-type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
-type RouteProp = {
-  key: string;
-  name: 'ItemDetails';
-  params: { itemId: string };
-};
 
 const Container = styled(View)`
   flex: 1;
@@ -89,9 +80,8 @@ export const ItemDetailsScreen: React.FC = () => {
   const { categories } = useInventoryCategories();
   const { locations, refreshLocations } = useLocations();
   const { loading: itemsLoading, loadItems } = useInventory();
-  const navigation = useNavigation<NavigationProp>();
-  const route = useRoute<RouteProp>();
-  const { itemId } = route.params;
+  const router = useRouter();
+  const { itemId } = useLocalSearchParams<{ itemId: string }>();
   const insets = useSafeAreaInsets();
   const { t } = useTranslation();
 
@@ -139,7 +129,7 @@ export const ItemDetailsScreen: React.FC = () => {
             t('itemDetails.error.title'),
             t('itemDetails.error.noHome')
           );
-          navigation.goBack();
+          router.back();
           return;
         }
         const itemData = await inventoryService.getItemById(
@@ -155,7 +145,7 @@ export const ItemDetailsScreen: React.FC = () => {
             t('itemDetails.error.title'),
             t('itemDetails.error.itemNotFound')
           );
-          navigation.goBack();
+          router.back();
         }
       } catch (error) {
         uiLogger.error('Error loading item', error);
@@ -163,7 +153,7 @@ export const ItemDetailsScreen: React.FC = () => {
           t('itemDetails.error.title'),
           t('itemDetails.error.loadFailed')
         );
-        navigation.goBack();
+        router.back();
       } finally {
         setIsLoading(false);
       }
@@ -176,7 +166,7 @@ export const ItemDetailsScreen: React.FC = () => {
     itemId,
     itemsLoading,
     loadItems,
-    navigation,
+    router,
     t,
   ]);
 
@@ -212,7 +202,7 @@ export const ItemDetailsScreen: React.FC = () => {
 
   const handleDelete = () => {
     confirmDelete(itemId, () => {
-      navigation.goBack();
+      router.back();
     });
   };
 
@@ -225,7 +215,7 @@ export const ItemDetailsScreen: React.FC = () => {
   };
 
   const handleClose = () => {
-    navigation.goBack();
+    router.back();
   };
 
   const handleAddBatch = () => {

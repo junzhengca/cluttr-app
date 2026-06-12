@@ -45,7 +45,6 @@ module.exports = {
     '!src/**/*.spec.ts',
     '!src/**/*.test.ts',
     '!src/types/**',
-    '!src/navigation/**',
     '!src/screens/**',
     '!src/components/**',
   ],

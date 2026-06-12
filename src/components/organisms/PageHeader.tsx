@@ -5,7 +5,7 @@ import styled from 'styled-components/native';
 import { Ionicons } from '@expo/vector-icons';
 import { GlassView } from 'expo-glass-effect';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useNavigation } from '@react-navigation/native';
+import { useRouter } from 'expo-router';
 import type { StyledProps } from '../../utils/styledComponents';
 import { uiLogger } from '../../utils/Logger';
 import { useTheme } from '../../theme/ThemeProvider';
@@ -122,7 +122,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
   showRightButtons = true,
 }) => {
   const insets = useSafeAreaInsets();
-  const navigation = useNavigation();
+  const router = useRouter();
   const theme = useTheme();
 
   const _handleSharePress = () => {
@@ -149,7 +149,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
     if (onBackPress) {
       onBackPress();
     } else {
-      navigation.goBack();
+      router.back();
     }
   };
 
