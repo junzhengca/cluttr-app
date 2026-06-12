@@ -215,6 +215,8 @@ make build-ios-production-local      # Local production build (auto-increments b
 - `up`/`reload` auto-accept the iOS "Open in Cluttr?" deep-link dialog.
 - Fast Refresh can serve stale code after multi-file edits — if the UI doesn't match fresh changes, `reload` before debugging.
 - Swipe a row left to reveal swipe actions: `swipe --start-x 360 --start-y <rowY> --end-x 100 --end-y <rowY>`. Pill labels ("Modify"/"Delete") can collide with other on-screen buttons — tap by coordinates when ambiguous (more in E2E_TESTS.md §2.3).
+- **The SDK 56 dev client shows a draggable floating dev-menu button (grey gear) that swallows touches around itself.** It boots at top-right, hidden behind the PageHeader avatar, where it silently blocks the header filter button. If a top-right control ignores taps, drag the gear away (`swipe --start-x 360 --start-y 113 --end-x 30 --end-y 700`) and re-check its position after every reload. Dev-client-only — absent from release builds (E2E_TESTS.md §2.3.13).
+- **`type` only supports ASCII** (axe maps characters to hardware keycodes) — CJK/IME input cannot be driven from the harness. Chinese-input behavior in bottom-sheet forms needs a manual pass before release.
 
 **Test accounts** (Firebase email/password, created via the signup UI):
 
