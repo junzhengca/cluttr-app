@@ -4,7 +4,7 @@ import styled from 'styled-components/native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { InventoryItem } from '../../types/inventory';
-import { useInventoryCategories } from '../../store/hooks';
+import { useInventoryCategories, useLocations } from '../../store/hooks';
 import { formatLocation } from '../../utils/formatters';
 import { isExpiringSoon } from '../../utils/dateUtils';
 import { getTotalAmount, getEarliestExpiry } from '../../utils/batchUtils';
@@ -163,6 +163,7 @@ const StatusBadgeText = styled(Text)`
 export const ItemCard: React.FC<ItemCardProps> = ({ item, onPress }) => {
   const { t } = useTranslation();
   const { categories } = useInventoryCategories();
+  const { locations } = useLocations();
 
   // Find category by ID from Redux state
   const category = useMemo(() => {
@@ -179,7 +180,13 @@ export const ItemCard: React.FC<ItemCardProps> = ({ item, onPress }) => {
   };
 
   // Build metadata text: category name + location name
-  const locationText = formatLocation(item.location, item.detailedLocation, t);
+  const location = locations.find((loc) => loc.id === item.location);
+  const locationText = formatLocation(
+    item.location,
+    item.detailedLocation,
+    t,
+    location?.name
+  );
   const categoryName = category
     ? getInventoryCategoryDisplayName(category, t)
     : null;

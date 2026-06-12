@@ -9,14 +9,17 @@ import { getLocationDisplayNameForId, type LocationTranslateFn } from './locatio
  * @param locationId - Location ID (e.g., "living-room")
  * @param detailedLocation - Optional detailed location string
  * @param t - i18n translation function
+ * @param locationName - Resolved location name (required for custom locations,
+ *   whose IDs are opaque; default locations are translated by ID)
  * @returns Formatted location string (e.g., "Living Room • Desk" or "Living Room")
  */
 export const formatLocation = (
   locationId: string,
   detailedLocation: string | undefined,
-  t: LocationTranslateFn
+  t: LocationTranslateFn,
+  locationName?: string
 ): string => {
-  const locationText = getLocationDisplayNameForId(locationId, undefined, t);
+  const locationText = getLocationDisplayNameForId(locationId, locationName, t);
   
   if (!detailedLocation || detailedLocation.trim() === '') {
     return locationText;
