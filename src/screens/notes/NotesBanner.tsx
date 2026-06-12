@@ -3,7 +3,10 @@ import { Animated, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import styled from 'styled-components/native';
 import { useTranslation } from 'react-i18next';
-import type { StyledProps, StyledPropsWith } from '../../utils/styledComponents';
+import type {
+  StyledProps,
+  StyledPropsWith,
+} from '../../utils/styledComponents';
 
 import { GlassButton } from '../../components';
 import { useTheme } from '../../theme/ThemeProvider';
@@ -17,7 +20,7 @@ const BannerContent = styled(View)`
   flex: 1;
 `;
 
-const IconContainer = styled(View) <{ mode: TodoMode }>`
+const IconContainer = styled(View)<{ mode: TodoMode }>`
   width: 32px;
   height: 32px;
   border-radius: ${({ theme }: StyledProps) => theme.borderRadius.lg}px;
@@ -32,7 +35,7 @@ const TextContainer = styled(View)`
   flex: 1;
 `;
 
-const BannerTitle = styled(Text) <{ mode: TodoMode }>`
+const BannerTitle = styled(Text)<{ mode: TodoMode }>`
   font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.md}px;
   font-weight: 600;
   color: ${({ theme, mode }: StyledPropsWith<{ mode: TodoMode }>) =>
@@ -40,10 +43,12 @@ const BannerTitle = styled(Text) <{ mode: TodoMode }>`
   margin-bottom: 2px;
 `;
 
-const BannerSubtitle = styled(Text) <{ mode: TodoMode }>`
+const BannerSubtitle = styled(Text)<{ mode: TodoMode }>`
   font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.xs}px;
   color: ${({ theme, mode }: StyledPropsWith<{ mode: TodoMode }>) =>
-    mode === 'shopping' ? 'rgba(255, 255, 255, 0.8)' : theme.colors.textSecondary};
+    mode === 'shopping'
+      ? 'rgba(255, 255, 255, 0.8)'
+      : theme.colors.textSecondary};
 `;
 
 const AnimatedIconContainer = Animated.createAnimatedComponent(IconContainer);
@@ -95,7 +100,10 @@ export const NotesBanner: React.FC<NotesBannerProps> = ({
           style={{
             backgroundColor: bannerProgress.interpolate({
               inputRange: [0, 1],
-              outputRange: [theme.colors.background, 'rgba(255, 255, 255, 0.2)'],
+              outputRange: [
+                theme.colors.background,
+                'rgba(255, 255, 255, 0.2)',
+              ],
             }),
           }}
         >
@@ -122,7 +130,10 @@ export const NotesBanner: React.FC<NotesBannerProps> = ({
             style={{
               color: bannerProgress.interpolate({
                 inputRange: [0, 1],
-                outputRange: [theme.colors.textSecondary, 'rgba(255, 255, 255, 0.8)'],
+                outputRange: [
+                  theme.colors.textSecondary,
+                  'rgba(255, 255, 255, 0.8)',
+                ],
               }),
             }}
           >

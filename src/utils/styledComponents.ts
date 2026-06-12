@@ -11,4 +11,3 @@ export type StyledProps = { theme: Theme };
  * Usage: ${({ theme, isSelected }: StyledPropsWith<{ isSelected: boolean }>) => ...}
  */
 export type StyledPropsWith<T> = { theme: Theme } & T;
-

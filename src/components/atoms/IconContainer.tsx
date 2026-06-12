@@ -37,11 +37,7 @@ export const IconContainer: React.FC<IconContainerProps> = ({
 
   return (
     <Container>
-      <Icon
-        name={icon}
-        size={size}
-        color={iconColor || theme.colors.primary}
-      />
+      <Icon name={icon} size={size} color={iconColor || theme.colors.primary} />
     </Container>
   );
 };

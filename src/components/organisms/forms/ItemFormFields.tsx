@@ -220,7 +220,10 @@ export const ItemFormFields: React.FC<ItemFormFieldsProps> = (props) => {
       {/* Advanced Section */}
       <CollapsibleSection title={translations.fields.advanced}>
         <FormContainer gapSize={gapSize}>
-          <FormSection compact={compact} label={translations.fields.detailedLocation}>
+          <FormSection
+            compact={compact}
+            label={translations.fields.detailedLocation}
+          >
             <UncontrolledInput
               ref={props.detailedLocationInputRef}
               defaultValue={props.defaultDetailedLocation}
@@ -238,7 +241,10 @@ export const ItemFormFields: React.FC<ItemFormFieldsProps> = (props) => {
             />
           </FormSection>
 
-          <FormSection compact={compact} label={translations.fields.warningThreshold}>
+          <FormSection
+            compact={compact}
+            label={translations.fields.warningThreshold}
+          >
             <UncontrolledInput
               ref={props.warningThresholdInputRef}
               defaultValue={props.defaultWarningThreshold}

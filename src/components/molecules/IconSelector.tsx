@@ -5,7 +5,10 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../theme/ThemeProvider';
 import { categoryIcons } from '../../data/categoryIcons';
-import type { StyledProps, StyledPropsWith } from '../../utils/styledComponents';
+import type {
+  StyledProps,
+  StyledPropsWith,
+} from '../../utils/styledComponents';
 
 const Container = styled(View)`
   /* No margin-bottom - parent FormSection handles spacing */
@@ -13,7 +16,8 @@ const Container = styled(View)`
 
 const Label = styled(Text)`
   font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.md}px;
-  font-weight: ${({ theme }: StyledProps) => theme.typography.fontWeight.medium};
+  font-weight: ${({ theme }: StyledProps) =>
+    theme.typography.fontWeight.medium};
   color: ${({ theme }: StyledProps) => theme.colors.text};
   margin-bottom: ${({ theme }: StyledProps) => theme.spacing.sm}px;
 `;
@@ -38,11 +42,18 @@ const IconButton = styled(TouchableOpacity)<IconButtonProps>`
     isLastInRow ? '0' : '2.5%'};
   margin-bottom: ${({ theme, isLastRow }: StyledPropsWith<IconButtonProps>) =>
     isLastRow ? 0 : theme.spacing.sm}px;
-  background-color: ${({ theme, isSelected }: StyledPropsWith<IconButtonProps>) =>
+  background-color: ${({
+    theme,
+    isSelected,
+  }: StyledPropsWith<IconButtonProps>) =>
     isSelected ? theme.colors.primaryLightest : theme.colors.surface};
   border-width: 1.5px;
-  border-color: ${({ theme, isSelected, iconColor }: StyledPropsWith<IconButtonProps>) =>
-    isSelected ? (iconColor || theme.colors.primary) : theme.colors.border};
+  border-color: ${({
+    theme,
+    isSelected,
+    iconColor,
+  }: StyledPropsWith<IconButtonProps>) =>
+    isSelected ? iconColor || theme.colors.primary : theme.colors.border};
   border-radius: ${({ theme }: StyledProps) => theme.borderRadius.md}px;
   align-items: center;
   justify-content: center;
@@ -80,7 +91,7 @@ export const IconSelector: React.FC<IconSelectorProps> = ({
           const itemsInLastRow = totalItems % NUM_COLUMNS || NUM_COLUMNS;
           const lastRowStartIndex = totalItems - itemsInLastRow;
           const isLastRow = index >= lastRowStartIndex;
-          
+
           return (
             <IconButton
               key={icon}
@@ -94,7 +105,12 @@ export const IconSelector: React.FC<IconSelectorProps> = ({
               <Ionicons
                 name={icon}
                 size={20}
-                color={iconColor || (isSelected ? theme.colors.primary : theme.colors.textSecondary)}
+                color={
+                  iconColor ||
+                  (isSelected
+                    ? theme.colors.primary
+                    : theme.colors.textSecondary)
+                }
               />
             </IconButton>
           );
@@ -103,4 +119,3 @@ export const IconSelector: React.FC<IconSelectorProps> = ({
     </Container>
   );
 };
-

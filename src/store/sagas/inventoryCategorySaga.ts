@@ -26,11 +26,22 @@ const DELETE_CATEGORY = 'inventoryCategory/DELETE_CATEGORY';
 // Action creators
 export const loadCategories = () => ({ type: LOAD_CATEGORIES });
 export const silentLoadCategories = () => ({ type: SILENT_LOAD_CATEGORIES });
-export const addCategoryAction = (name: string, description?: string, color?: string, icon?: string) => ({
+export const addCategoryAction = (
+  name: string,
+  description?: string,
+  color?: string,
+  icon?: string
+) => ({
   type: ADD_CATEGORY,
   payload: { name, description, color, icon },
 });
-export const updateCategoryAction = (id: string, name: string, description?: string, color?: string, icon?: string) => ({
+export const updateCategoryAction = (
+  id: string,
+  name: string,
+  description?: string,
+  color?: string,
+  icon?: string
+) => ({
   type: UPDATE_CATEGORY,
   payload: { id, name, description, color, icon },
 });
@@ -52,20 +63,36 @@ const subscribeCategoriesSaga = createSubscriptionSaga<InventoryCategory>({
 
 /** Silent loads are no-ops: the live listener is already current. */
 function* silentLoadCategoriesSaga(): Generator<unknown, void, unknown> {
-  yield call([sagaLogger, 'verbose'], 'Silent category load skipped (live listener active)');
+  yield call(
+    [sagaLogger, 'verbose'],
+    'Silent category load skipped (live listener active)'
+  );
 }
 
 function* addCategorySaga(action: {
   type: string;
-  payload: { name: string; description?: string; color?: string; icon?: string };
+  payload: {
+    name: string;
+    description?: string;
+    color?: string;
+    icon?: string;
+  };
 }): Generator<unknown, void, unknown> {
   const { name, description, color, icon } = action.payload;
   if (!name.trim()) return;
 
   try {
-    const homeId = (yield call(requireActiveHomeId, 'inventory category')) as string;
+    const homeId = (yield call(
+      requireActiveHomeId,
+      'inventory category'
+    )) as string;
     yield put(setError(null));
-    inventoryCategoryService.createCategory(homeId, { name, description, color, icon });
+    inventoryCategoryService.createCategory(homeId, {
+      name,
+      description,
+      color,
+      icon,
+    });
   } catch (error) {
     yield call(handleSagaError, error, {
       logMessage: 'Error adding inventory category',
@@ -78,14 +105,28 @@ function* addCategorySaga(action: {
 
 function* updateCategorySaga(action: {
   type: string;
-  payload: { id: string; name: string; description?: string; color?: string; icon?: string };
+  payload: {
+    id: string;
+    name: string;
+    description?: string;
+    color?: string;
+    icon?: string;
+  };
 }): Generator<unknown, void, unknown> {
   const { id, name, description, color, icon } = action.payload;
 
   try {
-    const homeId = (yield call(requireActiveHomeId, 'inventory category')) as string;
+    const homeId = (yield call(
+      requireActiveHomeId,
+      'inventory category'
+    )) as string;
     yield put(setError(null));
-    inventoryCategoryService.updateCategory(homeId, id, { name, description, color, icon });
+    inventoryCategoryService.updateCategory(homeId, id, {
+      name,
+      description,
+      color,
+      icon,
+    });
   } catch (error) {
     yield call(handleSagaError, error, {
       logMessage: 'Error updating inventory category',
@@ -101,7 +142,10 @@ function* deleteCategorySaga(action: {
   payload: string;
 }): Generator<unknown, void, unknown> {
   try {
-    const homeId = (yield call(requireActiveHomeId, 'inventory category')) as string;
+    const homeId = (yield call(
+      requireActiveHomeId,
+      'inventory category'
+    )) as string;
     yield put(setError(null));
     inventoryCategoryService.deleteCategory(homeId, action.payload);
   } catch (error) {
@@ -116,7 +160,10 @@ function* deleteCategorySaga(action: {
 
 // Watcher
 export function* inventoryCategorySaga(): Generator<unknown, void, unknown> {
-  yield takeLatest([setActiveHomeId.type, LOAD_CATEGORIES], subscribeCategoriesSaga);
+  yield takeLatest(
+    [setActiveHomeId.type, LOAD_CATEGORIES],
+    subscribeCategoriesSaga
+  );
   yield takeLatest(SILENT_LOAD_CATEGORIES, silentLoadCategoriesSaga);
   yield takeLatest(ADD_CATEGORY, addCategorySaga);
   yield takeLatest(UPDATE_CATEGORY, updateCategorySaga);

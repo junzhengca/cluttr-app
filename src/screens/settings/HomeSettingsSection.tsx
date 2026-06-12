@@ -31,7 +31,8 @@ const ButtonContainer = styled(View)`
 
 const CardFootnote = styled(Text)`
   font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.sm}px;
-  font-weight: ${({ theme }: StyledProps) => theme.typography.fontWeight.regular};
+  font-weight: ${({ theme }: StyledProps) =>
+    theme.typography.fontWeight.regular};
   color: ${({ theme }: StyledProps) => theme.colors.textLight};
   text-align: center;
   margin-top: 0px;
@@ -106,7 +107,9 @@ export const HomeSettingsSection: React.FC<HomeSettingsSectionProps> = ({
               members={members.filter((member) => !member.isOwner)}
               isLoading={isLoadingMembers}
               error={membersError}
-              onRemoveMember={currentHome?.role === 'owner' ? onRemoveMember : undefined}
+              onRemoveMember={
+                currentHome?.role === 'owner' ? onRemoveMember : undefined
+              }
               onInvitePress={onInvitePress}
               showInviteButton={currentHome?.role === 'owner'}
             />

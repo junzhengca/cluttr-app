@@ -5,7 +5,6 @@ import { storageLogger } from '../utils/Logger';
 const SETTINGS_KEY = 'app_settings';
 
 class SettingsService {
-
   /**
    * Get current settings (global, not home-scoped)
    */
@@ -21,7 +20,7 @@ class SettingsService {
             ...defaultSettings,
             ...parsed,
             createdAt: parsed.createdAt || now,
-            updatedAt: parsed.updatedAt || now
+            updatedAt: parsed.updatedAt || now,
           } as Settings;
         } catch {
           // JSON parse error, fall through to defaults

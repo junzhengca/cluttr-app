@@ -2,7 +2,10 @@
  * Date formatting utilities
  */
 
-import { getLocationDisplayNameForId, type LocationTranslateFn } from './locationI18n';
+import {
+  getLocationDisplayNameForId,
+  type LocationTranslateFn,
+} from './locationI18n';
 
 /**
  * Format location text with optional detailed location
@@ -20,11 +23,11 @@ export const formatLocation = (
   locationName?: string
 ): string => {
   const locationText = getLocationDisplayNameForId(locationId, locationName, t);
-  
+
   if (!detailedLocation || detailedLocation.trim() === '') {
     return locationText;
   }
-  
+
   return `${locationText} • ${detailedLocation}`;
 };
 
@@ -88,7 +91,7 @@ export const formatCurrency = (
 ): string => {
   if (useWanFormat) {
     const isChinese = locale.startsWith('zh');
-    
+
     // Use more aggressive shortening for better fit in small cards
     if (value >= 100000000) {
       // 100 million or more
@@ -139,4 +142,3 @@ export const formatCurrency = (
   }
   return `${currencySymbol} ${value.toLocaleString()}`;
 };
-

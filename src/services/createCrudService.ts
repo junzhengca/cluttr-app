@@ -16,7 +16,7 @@ import { fireWrite, isoNow } from './firebase/firestoreRefs';
 export interface CrudServiceConfig<TEntity, TCreateInput> {
   /** Home-scoped collection ref builder from `firestoreRefs.ts`. */
   collection: (
-    homeId: string,
+    homeId: string
   ) => FirebaseFirestoreTypes.CollectionReference<FirebaseFirestoreTypes.DocumentData>;
   /** Domain id generator from `utils/idGenerator`. */
   generateId: () => string;
@@ -28,7 +28,7 @@ export interface CrudServiceConfig<TEntity, TCreateInput> {
    */
   buildCreate: (
     input: TCreateInput,
-    ctx: { id: string; homeId: string; now: string },
+    ctx: { id: string; homeId: string; now: string }
   ) => {
     docData: Record<string, unknown>;
     entity: TEntity;
@@ -46,7 +46,7 @@ export function createCrudService<
   TCreateInput,
   TUpdateInput extends object,
 >(
-  config: CrudServiceConfig<TEntity, TCreateInput>,
+  config: CrudServiceConfig<TEntity, TCreateInput>
 ): CrudService<TEntity, TCreateInput, TUpdateInput> {
   const { collection, generateId, entityLabel, buildCreate } = config;
 
@@ -60,7 +60,7 @@ export function createCrudService<
         collection(homeId)
           .doc(id)
           .set({ ...docData, createdAt: now, updatedAt: now }),
-        `Failed to create ${entityLabel}`,
+        `Failed to create ${entityLabel}`
       );
 
       return entity;
@@ -71,14 +71,14 @@ export function createCrudService<
         collection(homeId)
           .doc(id)
           .update({ ...updates, updatedAt: isoNow() }),
-        `Failed to update ${entityLabel}`,
+        `Failed to update ${entityLabel}`
       );
     },
 
     remove(homeId: string, id: string): void {
       fireWrite(
         collection(homeId).doc(id).delete(),
-        `Failed to delete ${entityLabel}`,
+        `Failed to delete ${entityLabel}`
       );
     },
   };

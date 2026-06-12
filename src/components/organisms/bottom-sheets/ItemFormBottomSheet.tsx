@@ -66,8 +66,7 @@ interface ItemFormBottomSheetBaseProps {
   bottomSheetRef: React.RefObject<BottomSheetModal | null>;
 }
 
-export interface ItemFormBottomSheetCreateProps
-  extends ItemFormBottomSheetBaseProps {
+export interface ItemFormBottomSheetCreateProps extends ItemFormBottomSheetBaseProps {
   mode: 'create';
   /** Seed values (e.g. recognized item data) — only location/categoryId are used. */
   initialData?: Partial<InventoryItem> | null;
@@ -75,8 +74,7 @@ export interface ItemFormBottomSheetCreateProps
   onSheetClose?: () => void;
 }
 
-export interface ItemFormBottomSheetEditProps
-  extends ItemFormBottomSheetBaseProps {
+export interface ItemFormBottomSheetEditProps extends ItemFormBottomSheetBaseProps {
   mode: 'edit';
   onItemUpdated?: () => void;
 }
@@ -110,8 +108,10 @@ export const ItemFormBottomSheet = forwardRef<
   ItemFormBottomSheetProps
 >((props, ref) => {
   const { mode, bottomSheetRef } = props;
-  const externalInitialData = props.mode === 'create' ? props.initialData : undefined;
-  const onItemCreated = props.mode === 'create' ? props.onItemCreated : undefined;
+  const externalInitialData =
+    props.mode === 'create' ? props.initialData : undefined;
+  const onItemCreated =
+    props.mode === 'create' ? props.onItemCreated : undefined;
   const onSheetClose = props.mode === 'create' ? props.onSheetClose : undefined;
   const onItemUpdated = props.mode === 'edit' ? props.onItemUpdated : undefined;
 
@@ -131,7 +131,9 @@ export const ItemFormBottomSheet = forwardRef<
 
   // --- Create mode: persisted last-used location --------------------------
 
-  const [lastLocation, setLastLocation] = useState<string | undefined>(undefined);
+  const [lastLocation, setLastLocation] = useState<string | undefined>(
+    undefined
+  );
 
   useEffect(() => {
     if (mode !== 'create') return;
@@ -146,7 +148,9 @@ export const ItemFormBottomSheet = forwardRef<
   }, [mode]);
 
   const resolvedInitialLocation =
-    mode === 'create' ? externalInitialData?.location ?? lastLocation : undefined;
+    mode === 'create'
+      ? (externalInitialData?.location ?? lastLocation)
+      : undefined;
 
   // --- Form hook -----------------------------------------------------------
 
@@ -203,7 +207,7 @@ export const ItemFormBottomSheet = forwardRef<
     mode,
     initialLocation: resolvedInitialLocation,
     initialCategoryId:
-      mode === 'create' ? externalInitialData?.categoryId ?? null : null,
+      mode === 'create' ? (externalInitialData?.categoryId ?? null) : null,
     initialData: mode === 'edit' ? editInitialData : null,
     onFormValidChange: handleFormValidChange,
   });
@@ -226,7 +230,7 @@ export const ItemFormBottomSheet = forwardRef<
         nameInputRef.current?.focus();
       }
     },
-    [mode, nameInputRef],
+    [mode, nameInputRef]
   );
 
   const { handleSheetChange, handleClose, setOpeningNestedModal } =
@@ -253,14 +257,14 @@ export const ItemFormBottomSheet = forwardRef<
     if (!formValues.name.trim()) {
       Alert.alert(
         t(`${mode}Item.errors.title`),
-        t(`${mode}Item.errors.enterName`),
+        t(`${mode}Item.errors.enterName`)
       );
       return;
     }
     if (!formValues.location) {
       Alert.alert(
         t(`${mode}Item.errors.title`),
-        t(`${mode}Item.errors.selectLocation`),
+        t(`${mode}Item.errors.selectLocation`)
       );
       return;
     }
@@ -337,7 +341,9 @@ export const ItemFormBottomSheet = forwardRef<
       uiLogger.error(`Error in ${mode} item`, error);
       Alert.alert(
         t(`${mode}Item.errors.title`),
-        t(`${mode}Item.errors.${mode === 'create' ? 'createFailed' : 'updateFailed'}`),
+        t(
+          `${mode}Item.errors.${mode === 'create' ? 'createFailed' : 'updateFailed'}`
+        )
       );
     } finally {
       setIsLoading(false);
@@ -381,7 +387,7 @@ export const ItemFormBottomSheet = forwardRef<
         }, 0);
       },
     }),
-    [store, bottomSheetRef],
+    [store, bottomSheetRef]
   );
 
   // --- Translations (memoised) ----------------------------------------------
@@ -406,7 +412,7 @@ export const ItemFormBottomSheet = forwardRef<
         warningThreshold: t(`${mode}Item.placeholders.warningThreshold`),
       },
     }),
-    [mode, t],
+    [mode, t]
   );
 
   // --- Theme overrides (piggy mode easter egg, create mode only) ------------
@@ -453,7 +459,16 @@ export const ItemFormBottomSheet = forwardRef<
         />
       </FooterContainer>
     ),
-    [mode, handleSubmit, isLoading, isFormValid, isKeyboardVisible, insets.bottom, t, activeTheme],
+    [
+      mode,
+      handleSubmit,
+      isLoading,
+      isFormValid,
+      isKeyboardVisible,
+      insets.bottom,
+      t,
+      activeTheme,
+    ]
   );
 
   const sharedFieldProps = {

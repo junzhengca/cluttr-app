@@ -8,7 +8,7 @@ import { sagaLogger } from '../../../utils/Logger';
  * log line (e.g. 'inventory', 'todo').
  */
 export function* requireActiveHomeId(
-  domain: string,
+  domain: string
 ): Generator<unknown, string, unknown> {
   const state = (yield select()) as RootState;
   const activeHomeId = state.auth.activeHomeId;

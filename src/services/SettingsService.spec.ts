@@ -44,7 +44,9 @@ describe('SettingsService', () => {
   describe('getSettings', () => {
     it('should return settings when storage has data', async () => {
       const settings = createMockSettings();
-      (AsyncStorage.getItem as jest.Mock).mockResolvedValue(JSON.stringify(settings));
+      (AsyncStorage.getItem as jest.Mock).mockResolvedValue(
+        JSON.stringify(settings)
+      );
 
       const result = await settingsService.getSettings();
 
@@ -72,7 +74,9 @@ describe('SettingsService', () => {
 
     it('should merge stored settings with defaults', async () => {
       const partialSettings = { theme: 'ocean', currency: 'usd' };
-      (AsyncStorage.getItem as jest.Mock).mockResolvedValue(JSON.stringify(partialSettings));
+      (AsyncStorage.getItem as jest.Mock).mockResolvedValue(
+        JSON.stringify(partialSettings)
+      );
 
       const result = await settingsService.getSettings();
 
@@ -85,7 +89,9 @@ describe('SettingsService', () => {
     });
 
     it('should return defaults on storage error', async () => {
-      (AsyncStorage.getItem as jest.Mock).mockRejectedValue(new Error('Storage error'));
+      (AsyncStorage.getItem as jest.Mock).mockRejectedValue(
+        new Error('Storage error')
+      );
 
       const result = await settingsService.getSettings();
 
@@ -105,7 +111,9 @@ describe('SettingsService', () => {
   describe('updateSettings', () => {
     it('should update existing settings', async () => {
       const currentSettings = createMockSettings();
-      (AsyncStorage.getItem as jest.Mock).mockResolvedValue(JSON.stringify(currentSettings));
+      (AsyncStorage.getItem as jest.Mock).mockResolvedValue(
+        JSON.stringify(currentSettings)
+      );
       (AsyncStorage.setItem as jest.Mock).mockResolvedValue(undefined);
 
       const result = await settingsService.updateSettings({
@@ -143,7 +151,9 @@ describe('SettingsService', () => {
       const currentSettings = createMockSettings({
         createdAt: '2020-01-01T00:00:00.000Z',
       });
-      (AsyncStorage.getItem as jest.Mock).mockResolvedValue(JSON.stringify(currentSettings));
+      (AsyncStorage.getItem as jest.Mock).mockResolvedValue(
+        JSON.stringify(currentSettings)
+      );
       (AsyncStorage.setItem as jest.Mock).mockResolvedValue(undefined);
 
       const result = await settingsService.updateSettings({
@@ -167,8 +177,12 @@ describe('SettingsService', () => {
     });
 
     it('should return null on error', async () => {
-      (AsyncStorage.getItem as jest.Mock).mockResolvedValue(JSON.stringify(createMockSettings()));
-      (AsyncStorage.setItem as jest.Mock).mockRejectedValue(new Error('Write error'));
+      (AsyncStorage.getItem as jest.Mock).mockResolvedValue(
+        JSON.stringify(createMockSettings())
+      );
+      (AsyncStorage.setItem as jest.Mock).mockRejectedValue(
+        new Error('Write error')
+      );
 
       const result = await settingsService.updateSettings({
         theme: 'ocean',
@@ -179,7 +193,9 @@ describe('SettingsService', () => {
 
     it('should handle partial updates correctly', async () => {
       const currentSettings = createMockSettings();
-      (AsyncStorage.getItem as jest.Mock).mockResolvedValue(JSON.stringify(currentSettings));
+      (AsyncStorage.getItem as jest.Mock).mockResolvedValue(
+        JSON.stringify(currentSettings)
+      );
       (AsyncStorage.setItem as jest.Mock).mockResolvedValue(undefined);
 
       const result = await settingsService.updateSettings({ darkMode: true });
@@ -219,7 +235,9 @@ describe('SettingsService', () => {
     });
 
     it('should return null on error', async () => {
-      (AsyncStorage.setItem as jest.Mock).mockRejectedValue(new Error('Write error'));
+      (AsyncStorage.setItem as jest.Mock).mockRejectedValue(
+        new Error('Write error')
+      );
 
       const result = await settingsService.resetToDefaults();
 
@@ -231,7 +249,10 @@ describe('SettingsService', () => {
 
       await settingsService.resetToDefaults();
 
-      expect(AsyncStorage.setItem).toHaveBeenCalledWith('app_settings', expect.stringContaining('"theme":"ocean"'));
+      expect(AsyncStorage.setItem).toHaveBeenCalledWith(
+        'app_settings',
+        expect.stringContaining('"theme":"ocean"')
+      );
     });
   });
 
@@ -242,7 +263,9 @@ describe('SettingsService', () => {
   describe('Edge Cases', () => {
     it('should handle empty updates', async () => {
       const currentSettings = createMockSettings();
-      (AsyncStorage.getItem as jest.Mock).mockResolvedValue(JSON.stringify(currentSettings));
+      (AsyncStorage.getItem as jest.Mock).mockResolvedValue(
+        JSON.stringify(currentSettings)
+      );
       (AsyncStorage.setItem as jest.Mock).mockResolvedValue(undefined);
 
       const result = await settingsService.updateSettings({});
@@ -259,7 +282,9 @@ describe('SettingsService', () => {
 
     it('should handle all settings being updated', async () => {
       const currentSettings = createMockSettings();
-      (AsyncStorage.getItem as jest.Mock).mockResolvedValue(JSON.stringify(currentSettings));
+      (AsyncStorage.getItem as jest.Mock).mockResolvedValue(
+        JSON.stringify(currentSettings)
+      );
       (AsyncStorage.setItem as jest.Mock).mockResolvedValue(undefined);
 
       const result = await settingsService.updateSettings({

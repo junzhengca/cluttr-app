@@ -4,7 +4,10 @@ import { GlassView } from 'expo-glass-effect';
 import styled from 'styled-components/native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../theme/ThemeProvider';
-import type { StyledProps, StyledPropsWith } from '../../utils/styledComponents';
+import type {
+  StyledProps,
+  StyledPropsWith,
+} from '../../utils/styledComponents';
 
 export type ButtonVariant = 'primary' | 'secondary' | 'danger';
 
@@ -19,8 +22,21 @@ export interface ButtonProps {
   useGlass?: boolean; // If true, uses the glass effect (defaults to true)
 }
 
-const StyledButton = styled(TouchableOpacity).attrs({ activeOpacity: 0.7 }) <{ variant: ButtonVariant; disabled?: boolean; useGlass?: boolean }>`
-  background-color: ${({ theme, variant, disabled, useGlass }: StyledPropsWith<{ variant: ButtonVariant; disabled?: boolean; useGlass?: boolean }>) =>
+const StyledButton = styled(TouchableOpacity).attrs({ activeOpacity: 0.7 })<{
+  variant: ButtonVariant;
+  disabled?: boolean;
+  useGlass?: boolean;
+}>`
+  background-color: ${({
+    theme,
+    variant,
+    disabled,
+    useGlass,
+  }: StyledPropsWith<{
+    variant: ButtonVariant;
+    disabled?: boolean;
+    useGlass?: boolean;
+  }>) =>
     disabled
       ? theme.colors.borderLight
       : useGlass
@@ -34,16 +50,27 @@ const StyledButton = styled(TouchableOpacity).attrs({ activeOpacity: 0.7 }) <{ v
   flex-direction: row;
   align-items: center;
   justify-content: center;
-  border-width: ${({ variant, disabled, useGlass }: { variant: ButtonVariant; disabled?: boolean; useGlass?: boolean }) =>
-    (variant !== 'primary' && !disabled && !useGlass) ? 1.5 : 0}px;
-  border-color: ${({ theme, variant }: StyledPropsWith<{ variant: ButtonVariant }>) =>
+  border-width: ${({
+    variant,
+    disabled,
+    useGlass,
+  }: {
+    variant: ButtonVariant;
+    disabled?: boolean;
+    useGlass?: boolean;
+  }) => (variant !== 'primary' && !disabled && !useGlass ? 1.5 : 0)}px;
+  border-color: ${({
+    theme,
+    variant,
+  }: StyledPropsWith<{ variant: ButtonVariant }>) =>
     variant === 'danger' ? theme.colors.error : theme.colors.border};
   width: 100%;
   height: 100%;
 `;
 
-const ButtonWrapper = styled(View) <{ fullWidth?: boolean }>`
-  ${({ fullWidth }: { fullWidth?: boolean }) => fullWidth ? 'width: 100%;' : 'flex: 1;'}
+const ButtonWrapper = styled(View)<{ fullWidth?: boolean }>`
+  ${({ fullWidth }: { fullWidth?: boolean }) =>
+    fullWidth ? 'width: 100%;' : 'flex: 1;'}
   height: 44px;
 `;
 
@@ -55,14 +82,34 @@ const IconContainer = styled(View)`
   justify-content: center;
 `;
 
-const StyledIcon = styled(Ionicons) <{ variant: ButtonVariant; disabled?: boolean; color?: string; useGlass?: boolean }>`
-  color: ${({ theme, variant, disabled, color, useGlass }: StyledPropsWith<{ variant: ButtonVariant; disabled?: boolean; color?: string; useGlass?: boolean }>) =>
+const StyledIcon = styled(Ionicons)<{
+  variant: ButtonVariant;
+  disabled?: boolean;
+  color?: string;
+  useGlass?: boolean;
+}>`
+  color: ${({
+    theme,
+    variant,
+    disabled,
+    color,
+    useGlass,
+  }: StyledPropsWith<{
+    variant: ButtonVariant;
+    disabled?: boolean;
+    color?: string;
+    useGlass?: boolean;
+  }>) =>
     color
       ? color
       : disabled
         ? theme.colors.textSecondary
         : useGlass
-          ? (variant === 'danger' ? theme.colors.error : variant === 'primary' ? theme.colors.primary : theme.colors.text)
+          ? variant === 'danger'
+            ? theme.colors.error
+            : variant === 'primary'
+              ? theme.colors.primary
+              : theme.colors.text
           : variant === 'primary'
             ? theme.colors.surface
             : variant === 'danger'
@@ -70,14 +117,32 @@ const StyledIcon = styled(Ionicons) <{ variant: ButtonVariant; disabled?: boolea
               : theme.colors.primary};
 `;
 
-const ButtonText = styled(Text) <{ variant: ButtonVariant; disabled?: boolean; useGlass?: boolean }>`
+const ButtonText = styled(Text)<{
+  variant: ButtonVariant;
+  disabled?: boolean;
+  useGlass?: boolean;
+}>`
   font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.md}px;
-  font-weight: ${({ theme }: StyledProps) => theme.typography.fontWeight.medium};
-  color: ${({ theme, variant, disabled, useGlass }: StyledPropsWith<{ variant: ButtonVariant; disabled?: boolean; useGlass?: boolean }>) =>
+  font-weight: ${({ theme }: StyledProps) =>
+    theme.typography.fontWeight.medium};
+  color: ${({
+    theme,
+    variant,
+    disabled,
+    useGlass,
+  }: StyledPropsWith<{
+    variant: ButtonVariant;
+    disabled?: boolean;
+    useGlass?: boolean;
+  }>) =>
     disabled
       ? theme.colors.textSecondary
       : useGlass
-        ? (variant === 'danger' ? theme.colors.error : variant === 'primary' ? theme.colors.primary : theme.colors.text)
+        ? variant === 'danger'
+          ? theme.colors.error
+          : variant === 'primary'
+            ? theme.colors.primary
+            : theme.colors.text
         : variant === 'primary'
           ? theme.colors.surface
           : variant === 'danger'
@@ -149,7 +214,9 @@ export const Button: React.FC<ButtonProps> = ({
             useGlass={true}
           >
             {renderIcon()}
-            <ButtonText variant={variant} disabled={disabled} useGlass={true}>{label}</ButtonText>
+            <ButtonText variant={variant} disabled={disabled} useGlass={true}>
+              {label}
+            </ButtonText>
           </StyledButton>
         </GlassView>
       </ButtonWrapper>
@@ -172,7 +239,9 @@ export const Button: React.FC<ButtonProps> = ({
         }}
       >
         {renderIcon()}
-        <ButtonText variant={variant} disabled={disabled}>{label}</ButtonText>
+        <ButtonText variant={variant} disabled={disabled}>
+          {label}
+        </ButtonText>
       </StyledButton>
     </ButtonWrapper>
   );

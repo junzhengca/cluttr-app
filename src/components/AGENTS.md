@@ -29,15 +29,15 @@ components/
 
 ## WHERE TO LOOK
 
-| Task              | Location                                        | Notes                                                          |
-| ----------------- | ----------------------------------------------- | --------------------------------------------------------------- |
-| Item create/edit  | `organisms/bottom-sheets/ItemFormBottomSheet.tsx` | Single sheet, `create`/`edit` modes; fields in `organisms/forms/ItemFormFields.tsx` |
-| Batch add/edit    | `organisms/bottom-sheets/BatchFormBottomSheet.tsx` | Single sheet, `add`/`edit` modes (uses `useBatchForm`)         |
-| Sheet scaffolding | `organisms/bottom-sheets/shared/sheetPrimitives.tsx` | Shared Backdrop/ContentContainer/Footer styled primitives    |
-| Sheet lifecycle   | `src/hooks/useBottomSheetLifecycle.ts`           | Open/close/reset (`formKey`) handling for sheets               |
-| Swipe actions     | `molecules/SwipeableRow.tsx`                     | Shared iOS-style swipe-to-edit/delete                          |
-| Reusable UI       | `atoms/`                                         | Button, BaseCard, UncontrolledInput with index.ts exports      |
-| Styled components | All tiers                                        | Theme injection via `StyledProps` from `utils/styledComponents.ts` |
+| Task              | Location                                             | Notes                                                                               |
+| ----------------- | ---------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| Item create/edit  | `organisms/bottom-sheets/ItemFormBottomSheet.tsx`    | Single sheet, `create`/`edit` modes; fields in `organisms/forms/ItemFormFields.tsx` |
+| Batch add/edit    | `organisms/bottom-sheets/BatchFormBottomSheet.tsx`   | Single sheet, `add`/`edit` modes (uses `useBatchForm`)                              |
+| Sheet scaffolding | `organisms/bottom-sheets/shared/sheetPrimitives.tsx` | Shared Backdrop/ContentContainer/Footer styled primitives                           |
+| Sheet lifecycle   | `src/hooks/useBottomSheetLifecycle.ts`               | Open/close/reset (`formKey`) handling for sheets                                    |
+| Swipe actions     | `molecules/SwipeableRow.tsx`                         | Shared iOS-style swipe-to-edit/delete                                               |
+| Reusable UI       | `atoms/`                                             | Button, BaseCard, UncontrolledInput with index.ts exports                           |
+| Styled components | All tiers                                            | Theme injection via `StyledProps` from `utils/styledComponents.ts`                  |
 
 ## CONVENTIONS
 

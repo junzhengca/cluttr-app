@@ -59,13 +59,19 @@ export const useAuth = () => {
     dispatch(checkAuth());
   }, [dispatch]);
 
-  const updateUserData = useCallback((nickname: string) => {
-    dispatch(updateUser({ nickname }));
-  }, [dispatch]);
+  const updateUserData = useCallback(
+    (nickname: string) => {
+      dispatch(updateUser({ nickname }));
+    },
+    [dispatch]
+  );
 
-  const requestPasswordReset = useCallback((email: string) => {
-    dispatch(passwordResetRequestAction(email));
-  }, [dispatch]);
+  const requestPasswordReset = useCallback(
+    (email: string) => {
+      dispatch(passwordResetRequestAction(email));
+    },
+    [dispatch]
+  );
 
   return {
     user,
@@ -307,7 +313,9 @@ export const useInventory = () => {
 export const useInventoryCategories = () => {
   const dispatch = useAppDispatch();
   const activeHomeId = useAppSelector((state) => state.auth.activeHomeId);
-  const allCategories = useAppSelector((state) => state.inventoryCategory.categories);
+  const allCategories = useAppSelector(
+    (state) => state.inventoryCategory.categories
+  );
   const loading = useAppSelector((state) => state.inventoryCategory.loading);
   const error = useAppSelector((state) => state.inventoryCategory.error);
 
@@ -321,14 +329,26 @@ export const useInventoryCategories = () => {
 
   const createCategory = useCallback(
     (name: string, description?: string, color?: string, icon?: string) => {
-      dispatch({ type: 'inventoryCategory/ADD_CATEGORY', payload: { name, description, color, icon } });
+      dispatch({
+        type: 'inventoryCategory/ADD_CATEGORY',
+        payload: { name, description, color, icon },
+      });
     },
     [dispatch]
   );
 
   const updateCategory = useCallback(
-    (id: string, name: string, description?: string, color?: string, icon?: string) => {
-      dispatch({ type: 'inventoryCategory/UPDATE_CATEGORY', payload: { id, name, description, color, icon } });
+    (
+      id: string,
+      name: string,
+      description?: string,
+      color?: string,
+      icon?: string
+    ) => {
+      dispatch({
+        type: 'inventoryCategory/UPDATE_CATEGORY',
+        payload: { id, name, description, color, icon },
+      });
     },
     [dispatch]
   );
@@ -357,8 +377,12 @@ export const useLocations = () => {
   const activeHomeId = useAppSelector((state) => state.auth.activeHomeId);
   const allLocations = useAppSelector((state) => state.location.locations);
   const loading = useAppSelector((state) => state.location.loading);
-  const addingLocation = useAppSelector((state) => state.location.addingLocation);
-  const updatingLocationIds = useAppSelector((state) => state.location.updatingLocationIds);
+  const addingLocation = useAppSelector(
+    (state) => state.location.addingLocation
+  );
+  const updatingLocationIds = useAppSelector(
+    (state) => state.location.updatingLocationIds
+  );
   const error = useAppSelector((state) => state.location.error);
 
   const locations = useMemo(() => {
@@ -378,7 +402,10 @@ export const useLocations = () => {
 
   const updateLocation = useCallback(
     (id: string, name: string, icon?: string) => {
-      dispatch({ type: 'location/UPDATE_LOCATION', payload: { id, name, icon } });
+      dispatch({
+        type: 'location/UPDATE_LOCATION',
+        payload: { id, name, icon },
+      });
     },
     [dispatch]
   );

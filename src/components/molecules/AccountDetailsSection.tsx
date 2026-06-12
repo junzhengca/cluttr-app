@@ -65,7 +65,8 @@ const UserName = styled(Text)`
 
 const PlanName = styled(Text)`
   font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.sm}px;
-  font-weight: ${({ theme }: StyledProps) => theme.typography.fontWeight.regular};
+  font-weight: ${({ theme }: StyledProps) =>
+    theme.typography.fontWeight.regular};
   color: ${({ theme }: StyledProps) => theme.colors.textSecondary};
 `;
 
@@ -78,7 +79,8 @@ const UpgradeButton = styled(TouchableOpacity)`
 
 const UpgradeButtonText = styled(Text)`
   font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.sm}px;
-  font-weight: ${({ theme }: StyledProps) => theme.typography.fontWeight.medium};
+  font-weight: ${({ theme }: StyledProps) =>
+    theme.typography.fontWeight.medium};
   color: #ffffff;
 `;
 
@@ -92,7 +94,11 @@ export const AccountDetailsSection: React.FC<AccountDetailsSectionProps> = ({
     <Container>
       <AvatarContainer>
         {avatarUrl ? (
-          <AvatarImage source={{ uri: avatarUrl }} contentFit="cover" cachePolicy="memory-disk" />
+          <AvatarImage
+            source={{ uri: avatarUrl }}
+            contentFit="cover"
+            cachePolicy="memory-disk"
+          />
         ) : (
           <AvatarPlaceholder>
             <Ionicons name="person" size={30} color="white" />
@@ -109,4 +115,3 @@ export const AccountDetailsSection: React.FC<AccountDetailsSectionProps> = ({
     </Container>
   );
 };
-

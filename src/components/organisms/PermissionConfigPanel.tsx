@@ -31,14 +31,16 @@ const TextContainer = styled(View)`
 
 const ItemLabel = styled(Text)`
   font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.md}px;
-  font-weight: ${({ theme }: StyledProps) => theme.typography.fontWeight.medium};
+  font-weight: ${({ theme }: StyledProps) =>
+    theme.typography.fontWeight.medium};
   color: ${({ theme }: StyledProps) => theme.colors.text};
   margin-bottom: ${({ theme }: StyledProps) => theme.spacing.xs}px;
 `;
 
 const ItemDescription = styled(Text)`
   font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.sm}px;
-  font-weight: ${({ theme }: StyledProps) => theme.typography.fontWeight.regular};
+  font-weight: ${({ theme }: StyledProps) =>
+    theme.typography.fontWeight.regular};
   color: ${({ theme }: StyledProps) => theme.colors.textLight};
 `;
 
@@ -76,7 +78,7 @@ export const PermissionConfigPanel: React.FC<PermissionConfigPanelProps> = ({
   return (
     <Container>
       <SectionTitle title={t('share.permissions.title')} icon="share-outline" />
-      
+
       <PermissionRow>
         <LeftSection>
           <IconContainer icon="cube-outline" />

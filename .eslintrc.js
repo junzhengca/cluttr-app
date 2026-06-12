@@ -1,6 +1,6 @@
 /**
  * ESLint Configuration
- * 
+ *
  * Key rules to prevent common mistakes:
  * 1. no-undef: Catches missing imports (e.g., using View without importing it from react-native)
  * 2. @typescript-eslint/no-use-before-define: Prevents using styled components before they're defined
@@ -41,20 +41,26 @@ module.exports = {
 
     // TypeScript-specific: prevent using variables before they're defined
     // This catches forward references in styled components (e.g., AddCategoryButton using CategoryButton before it's defined)
-    '@typescript-eslint/no-use-before-define': ['error', {
-      functions: false, // Allow function declarations to be hoisted
-      classes: true,
-      variables: true, // This will catch const/let used before definition (catches styled component forward references)
-      typedefs: false, // TypeScript type definitions can be forward referenced
-      enums: true,
-      ignoreTypeReferences: false,
-    }],
+    '@typescript-eslint/no-use-before-define': [
+      'error',
+      {
+        functions: false, // Allow function declarations to be hoisted
+        classes: true,
+        variables: true, // This will catch const/let used before definition (catches styled component forward references)
+        typedefs: false, // TypeScript type definitions can be forward referenced
+        enums: true,
+        ignoreTypeReferences: false,
+      },
+    ],
 
     // Ensure all imports are used (ERROR to prevent future violations)
-    '@typescript-eslint/no-unused-vars': ['error', {
-      argsIgnorePattern: '^_',
-      varsIgnorePattern: '^_',
-    }],
+    '@typescript-eslint/no-unused-vars': [
+      'error',
+      {
+        argsIgnorePattern: '^_',
+        varsIgnorePattern: '^_',
+      },
+    ],
 
     // Prevent accidental use of undefined
     '@typescript-eslint/no-explicit-any': 'error',
@@ -88,8 +94,10 @@ module.exports = {
     'no-restricted-syntax': [
       'error',
       {
-        selector: 'TemplateLiteral[expressions.length>0] > ArrowFunctionExpression > ObjectPattern:not([typeAnnotation])',
-        message: 'Destructured parameters in template literals must have explicit types. Use StyledProps or StyledPropsWith<T>. Example: ({ theme }: StyledProps) => or ({ theme, isSelected }: StyledPropsWith<{ isSelected: boolean }>) =>',
+        selector:
+          'TemplateLiteral[expressions.length>0] > ArrowFunctionExpression > ObjectPattern:not([typeAnnotation])',
+        message:
+          'Destructured parameters in template literals must have explicit types. Use StyledProps or StyledPropsWith<T>. Example: ({ theme }: StyledProps) => or ({ theme, isSelected }: StyledPropsWith<{ isSelected: boolean }>) =>',
       },
     ],
   },
@@ -102,7 +110,14 @@ module.exports = {
       },
     },
     {
-      files: ['*.spec.ts', '*.test.ts', '**/__tests__/**/*.ts', '*.spec.tsx', '*.test.tsx', 'jest.setup.js'],
+      files: [
+        '*.spec.ts',
+        '*.test.ts',
+        '**/__tests__/**/*.ts',
+        '*.spec.tsx',
+        '*.test.tsx',
+        'jest.setup.js',
+      ],
       env: {
         jest: true,
       },
@@ -128,4 +143,3 @@ module.exports = {
     },
   },
 };
-

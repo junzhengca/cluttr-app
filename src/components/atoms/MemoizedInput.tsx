@@ -9,23 +9,53 @@ const InputWrapper = styled(View)<{ hasError: boolean }>`
   position: relative;
 `;
 
-const Input = styled(BottomSheetTextInput)<{ hasError: boolean; isFocused: boolean; noBorder?: boolean; textAlign?: 'left' | 'center' | 'right' }>`
-  background-color: ${({ theme, hasError }: StyledProps & { hasError: boolean }) =>
+const Input = styled(BottomSheetTextInput)<{
+  hasError: boolean;
+  isFocused: boolean;
+  noBorder?: boolean;
+  textAlign?: 'left' | 'center' | 'right';
+}>`
+  background-color: ${({
+    theme,
+    hasError,
+  }: StyledProps & { hasError: boolean }) =>
     hasError ? theme.colors.errorLight : theme.colors.surface};
-  border-width: ${({ noBorder, isFocused }: { noBorder?: boolean; isFocused: boolean }) =>
-    noBorder ? '0px' : isFocused ? '2px' : '1px'};
-  border-color: ${({ theme, hasError, isFocused, noBorder }: StyledProps & { hasError: boolean; isFocused: boolean; noBorder?: boolean }) =>
-    noBorder ? 'transparent' : hasError
-      ? theme.colors.error
-      : isFocused
-        ? theme.colors.primary
-        : theme.colors.border};
+  border-width: ${({
+    noBorder,
+    isFocused,
+  }: {
+    noBorder?: boolean;
+    isFocused: boolean;
+  }) => (noBorder ? '0px' : isFocused ? '2px' : '1px')};
+  border-color: ${({
+    theme,
+    hasError,
+    isFocused,
+    noBorder,
+  }: StyledProps & {
+    hasError: boolean;
+    isFocused: boolean;
+    noBorder?: boolean;
+  }) =>
+    noBorder
+      ? 'transparent'
+      : hasError
+        ? theme.colors.error
+        : isFocused
+          ? theme.colors.primary
+          : theme.colors.border};
   border-radius: ${({ theme }: StyledProps) => theme.borderRadius.md}px;
-  padding: ${({ theme, textAlign }: StyledProps & { textAlign?: 'left' | 'center' | 'right' }) =>
-    textAlign === 'center' ? `${theme.spacing.md}px ${theme.spacing.md}px` : `${theme.spacing.md}px ${theme.spacing.xl}px ${theme.spacing.md}px ${theme.spacing.md}px`};
+  padding: ${({
+    theme,
+    textAlign,
+  }: StyledProps & { textAlign?: 'left' | 'center' | 'right' }) =>
+    textAlign === 'center'
+      ? `${theme.spacing.md}px ${theme.spacing.md}px`
+      : `${theme.spacing.md}px ${theme.spacing.xl}px ${theme.spacing.md}px ${theme.spacing.md}px`};
   font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.md}px;
   color: ${({ theme }: StyledProps) => theme.colors.text};
-  text-align: ${({ textAlign }: { textAlign?: 'left' | 'center' | 'right' }) => textAlign || 'left'};
+  text-align: ${({ textAlign }: { textAlign?: 'left' | 'center' | 'right' }) =>
+    textAlign || 'left'};
   transition: all 0.2s ease;
 `;
 
@@ -50,7 +80,8 @@ const ErrorIconSmall = styled(View)`
 const ErrorText = styled.Text`
   font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.sm}px;
   color: ${({ theme }: StyledProps) => theme.colors.error};
-  line-height: ${({ theme }: StyledProps) => theme.typography.fontSize.sm * theme.typography.lineHeight.normal}px;
+  line-height: ${({ theme }: StyledProps) =>
+    theme.typography.fontSize.sm * theme.typography.lineHeight.normal}px;
   flex: 1;
 `;
 

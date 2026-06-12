@@ -4,7 +4,10 @@ import styled from 'styled-components/native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../theme/ThemeProvider';
 import { useTranslation } from 'react-i18next';
-import type { StyledProps, StyledPropsWith } from '../../utils/styledComponents';
+import type {
+  StyledProps,
+  StyledPropsWith,
+} from '../../utils/styledComponents';
 
 const Container = styled(View)<{ isFocused: boolean }>`
   flex-direction: row;
@@ -15,7 +18,10 @@ const Container = styled(View)<{ isFocused: boolean }>`
   margin-bottom: ${({ theme }: StyledProps) => theme.spacing.md}px;
   height: 48px;
   border-width: 1.5px;
-  border-color: ${({ theme, isFocused }: StyledPropsWith<{ isFocused: boolean }>) =>
+  border-color: ${({
+    theme,
+    isFocused,
+  }: StyledPropsWith<{ isFocused: boolean }>) =>
     isFocused ? theme.colors.inputFocus : theme.colors.borderLight};
 `;
 
@@ -59,11 +65,14 @@ export const SearchInput: React.FC<SearchInputProps> = ({
   const translatedPlaceholder = placeholder || t('search.placeholder');
 
   // Stable onChangeText handler to prevent IME composition interruption
-  const handleChangeText = useCallback((text: string) => {
-    if (onChangeText) {
-      onChangeText(text);
-    }
-  }, [onChangeText]);
+  const handleChangeText = useCallback(
+    (text: string) => {
+      if (onChangeText) {
+        onChangeText(text);
+      }
+    },
+    [onChangeText]
+  );
 
   const handleClear = useCallback(() => {
     if (onChangeText) {
@@ -94,4 +103,3 @@ export const SearchInput: React.FC<SearchInputProps> = ({
     </Container>
   );
 };
-

@@ -1,9 +1,4 @@
-import React, {
-  useState,
-  useMemo,
-  useRef,
-  useCallback,
-} from 'react';
+import React, { useState, useMemo, useRef, useCallback } from 'react';
 import {
   FlatList,
   ActivityIndicator,
@@ -70,11 +65,12 @@ const LoadingContainer = styled(View)`
   align-items: center;
 `;
 
-const FilterTitle = styled(Text) <{ isFirst?: boolean }>`
+const FilterTitle = styled(Text)<{ isFirst?: boolean }>`
   font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.sm}px;
   font-weight: ${({ theme }: StyledProps) => theme.typography.fontWeight.bold};
   color: ${({ theme }: StyledProps) => theme.colors.textSecondary};
-  margin-top: ${({ theme, isFirst }: StyledPropsWith<{ isFirst?: boolean }>) => (isFirst ? 0 : theme.spacing.md)}px;
+  margin-top: ${({ theme, isFirst }: StyledPropsWith<{ isFirst?: boolean }>) =>
+    isFirst ? 0 : theme.spacing.md}px;
   margin-bottom: ${({ theme }: StyledProps) => theme.spacing.sm}px;
   margin-left: ${({ theme }: StyledProps) => theme.spacing.md}px;
   align-self: flex-start;
@@ -87,7 +83,9 @@ export const HomeScreen: React.FC = () => {
     null
   );
   const [selectedStatusId, setSelectedStatusId] = useState<string | null>(null);
-  const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(
+    null
+  );
   const [recognizedItemData, setRecognizedItemData] =
     useState<Partial<InventoryItem> | null>(null);
   const [isFilterVisible, setIsFilterVisible] = useState(false);
@@ -160,7 +158,9 @@ export const HomeScreen: React.FC = () => {
 
     // Filter by category
     if (selectedCategoryId !== null) {
-      filtered = filtered.filter((item) => item.categoryId === selectedCategoryId);
+      filtered = filtered.filter(
+        (item) => item.categoryId === selectedCategoryId
+      );
     }
 
     return filtered;
@@ -234,7 +234,14 @@ export const HomeScreen: React.FC = () => {
         />
         {/* Show no-home state when user has deleted their last home */}
         {showNoHomeState ? (
-          <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: theme.spacing.md }}>
+          <View
+            style={{
+              flex: 1,
+              justifyContent: 'center',
+              alignItems: 'center',
+              paddingHorizontal: theme.spacing.md,
+            }}
+          >
             <EmptyState
               icon="home-outline"
               title={t('home.noHome.title')}
@@ -287,8 +294,8 @@ export const HomeScreen: React.FC = () => {
                   title={t('inventory.empty.title')}
                   description={
                     selectedLocationId !== null ||
-                      selectedStatusId !== null ||
-                      selectedCategoryId !== null
+                    selectedStatusId !== null ||
+                    selectedCategoryId !== null
                       ? t('inventory.empty.filtered')
                       : t('inventory.empty.description')
                   }
@@ -378,9 +385,7 @@ export const HomeScreen: React.FC = () => {
           bottomSheetRef={editBottomSheetModalRef}
         />
         {canAccessInventory && !showNoHomeState && (
-          <FloatingActionButton
-            onManualAdd={handleManualAdd}
-          />
+          <FloatingActionButton onManualAdd={handleManualAdd} />
         )}
       </Container>
     </TouchableWithoutFeedback>

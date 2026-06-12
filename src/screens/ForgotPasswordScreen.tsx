@@ -1,12 +1,12 @@
 import React, { useState, useCallback } from 'react';
 import {
-    View,
-    Text,
-    ScrollView,
-    KeyboardAvoidingView,
-    Platform,
-    Image,
-    TouchableOpacity,
+  View,
+  Text,
+  ScrollView,
+  KeyboardAvoidingView,
+  Platform,
+  Image,
+  TouchableOpacity,
 } from 'react-native';
 import styled from 'styled-components/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -27,11 +27,11 @@ const Container = styled(View)`
 `;
 
 const ScrollContent = styled(ScrollView).attrs({
-    contentContainerStyle: {
-        flexGrow: 1,
-        justifyContent: 'center',
-    },
-    keyboardShouldPersistTaps: 'handled',
+  contentContainerStyle: {
+    flexGrow: 1,
+    justifyContent: 'center',
+  },
+  keyboardShouldPersistTaps: 'handled',
 })`
   flex: 1;
 `;
@@ -110,142 +110,146 @@ const GhostButton = styled(TouchableOpacity)`
 const GhostButtonText = styled(Text)`
   font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.md}px;
   color: ${({ theme }: StyledProps) => theme.colors.primary};
-  font-weight: ${({ theme }: StyledProps) => theme.typography.fontWeight.medium};
+  font-weight: ${({ theme }: StyledProps) =>
+    theme.typography.fontWeight.medium};
 `;
 
 export const ForgotPasswordScreen: React.FC = () => {
-    const { t } = useTranslation();
-    const theme = useTheme();
-    const insets = useSafeAreaInsets();
-    const navigation = useNavigation<NativeStackNavigationProp<AuthStackParamList>>();
-    const { settings } = useSettings();
-    const isDark = settings?.darkMode;
-    const { requestPasswordReset, isLoading, error } = useAuth();
+  const { t } = useTranslation();
+  const theme = useTheme();
+  const insets = useSafeAreaInsets();
+  const navigation =
+    useNavigation<NativeStackNavigationProp<AuthStackParamList>>();
+  const { settings } = useSettings();
+  const isDark = settings?.darkMode;
+  const { requestPasswordReset, isLoading, error } = useAuth();
 
-    const [email, setEmail] = useState('');
-    const [emailSent, setEmailSent] = useState(false);
+  const [email, setEmail] = useState('');
+  const [emailSent, setEmailSent] = useState(false);
 
-    const handleSubmit = useCallback(async () => {
-        if (!email.trim() || isLoading) return;
+  const handleSubmit = useCallback(async () => {
+    if (!email.trim() || isLoading) return;
 
-        requestPasswordReset(email.trim());
-        // Firebase password reset emails are delivered nearly instantly.
-        // Show the success state optimistically; errors will surface via the
-        // error field from the Redux store.
-        setEmailSent(true);
-    }, [email, isLoading, requestPasswordReset]);
+    requestPasswordReset(email.trim());
+    // Firebase password reset emails are delivered nearly instantly.
+    // Show the success state optimistically; errors will surface via the
+    // error field from the Redux store.
+    setEmailSent(true);
+  }, [email, isLoading, requestPasswordReset]);
 
-    if (emailSent && !error) {
-        return (
-            <Container>
-                <StatusBar style={isDark ? 'light' : 'dark'} />
-                <ScrollContent
-                    contentContainerStyle={{
-                        flexGrow: 1,
-                        justifyContent: 'center',
-                        paddingTop: insets.top + 20,
-                        paddingBottom: insets.bottom + 20,
-                    }}
-                >
-                    <Content>
-                        <LogoContainer>
-                            <MascotPlaceholder>
-                                <Image
-                                    source={require('../../assets/logo-transparent.png')}
-                                    style={{ width: 80, height: 80 }}
-                                    resizeMode="contain"
-                                />
-                            </MascotPlaceholder>
-                            <TitleText>
-                                {t('login.passwordReset.emailSentTitle') || 'Check your email'}
-                            </TitleText>
-                        </LogoContainer>
-
-                        <SuccessContainer>
-                            <SuccessText>
-                                {t('login.passwordReset.emailSentMessage', { email: email.trim() }) ||
-                                    `We sent a password reset link to ${email.trim()}. Click the link in the email to set a new password.`}
-                            </SuccessText>
-                        </SuccessContainer>
-
-                        <FormContainer>
-                            <GhostButton onPress={() => navigation.navigate('Login')}>
-                                <GhostButtonText>
-                                    {t('login.passwordReset.backToLogin') || 'Back to Login'}
-                                </GhostButtonText>
-                            </GhostButton>
-                        </FormContainer>
-                    </Content>
-                </ScrollContent>
-            </Container>
-        );
-    }
-
+  if (emailSent && !error) {
     return (
-        <Container>
-            <StatusBar style={isDark ? 'light' : 'dark'} />
-            <KeyboardAvoidingView
-                style={{ flex: 1 }}
-                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-            >
-                <ScrollContent
-                    contentContainerStyle={{
-                        flexGrow: 1,
-                        justifyContent: 'center',
-                        paddingTop: insets.top + 20,
-                        paddingBottom: insets.bottom + 20,
-                    }}
-                >
-                    <Content>
-                        <LogoContainer>
-                            <MascotPlaceholder>
-                                <Image
-                                    source={require('../../assets/logo-transparent.png')}
-                                    style={{ width: 80, height: 80 }}
-                                    resizeMode="contain"
-                                />
-                            </MascotPlaceholder>
-                            <TitleText>{t('login.passwordReset.title')}</TitleText>
-                            <SubtitleText>{t('login.passwordReset.subtitle')}</SubtitleText>
-                        </LogoContainer>
+      <Container>
+        <StatusBar style={isDark ? 'light' : 'dark'} />
+        <ScrollContent
+          contentContainerStyle={{
+            flexGrow: 1,
+            justifyContent: 'center',
+            paddingTop: insets.top + 20,
+            paddingBottom: insets.bottom + 20,
+          }}
+        >
+          <Content>
+            <LogoContainer>
+              <MascotPlaceholder>
+                <Image
+                  source={require('../../assets/logo-transparent.png')}
+                  style={{ width: 80, height: 80 }}
+                  resizeMode="contain"
+                />
+              </MascotPlaceholder>
+              <TitleText>
+                {t('login.passwordReset.emailSentTitle') || 'Check your email'}
+              </TitleText>
+            </LogoContainer>
 
-                        <FormContainer>
-                            <InputSpacing>
-                                <AuthTextInput
-                                    icon="mail-outline"
-                                    placeholder={t('login.passwordReset.emailPlaceholder')}
-                                    value={email}
-                                    onChangeText={(text) => {
-                                        setEmail(text);
-                                        if (emailSent) setEmailSent(false);
-                                    }}
-                                    keyboardType="email-address"
-                                    autoCapitalize="none"
-                                    onSubmitEditing={handleSubmit}
-                                    error={!!error}
-                                    errorMessage={error || undefined}
-                                />
-                            </InputSpacing>
+            <SuccessContainer>
+              <SuccessText>
+                {t('login.passwordReset.emailSentMessage', {
+                  email: email.trim(),
+                }) ||
+                  `We sent a password reset link to ${email.trim()}. Click the link in the email to set a new password.`}
+              </SuccessText>
+            </SuccessContainer>
 
-                            <ButtonContainer>
-                                <GlassButton
-                                    text={t('login.passwordReset.submitRequest')}
-                                    onPress={handleSubmit}
-                                    icon="paper-plane"
-                                    loading={isLoading}
-                                    disabled={isLoading || !email.trim()}
-                                    tintColor={theme.colors.primary}
-                                    textColor={theme.colors.surface}
-                                />
-                            </ButtonContainer>
-
-                            <GhostButton onPress={() => navigation.goBack()}>
-                                <GhostButtonText>{t('common.cancel')}</GhostButtonText>
-                            </GhostButton>
-                        </FormContainer>
-                    </Content>
-                </ScrollContent>
-            </KeyboardAvoidingView>
-        </Container>
+            <FormContainer>
+              <GhostButton onPress={() => navigation.navigate('Login')}>
+                <GhostButtonText>
+                  {t('login.passwordReset.backToLogin') || 'Back to Login'}
+                </GhostButtonText>
+              </GhostButton>
+            </FormContainer>
+          </Content>
+        </ScrollContent>
+      </Container>
     );
+  }
+
+  return (
+    <Container>
+      <StatusBar style={isDark ? 'light' : 'dark'} />
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      >
+        <ScrollContent
+          contentContainerStyle={{
+            flexGrow: 1,
+            justifyContent: 'center',
+            paddingTop: insets.top + 20,
+            paddingBottom: insets.bottom + 20,
+          }}
+        >
+          <Content>
+            <LogoContainer>
+              <MascotPlaceholder>
+                <Image
+                  source={require('../../assets/logo-transparent.png')}
+                  style={{ width: 80, height: 80 }}
+                  resizeMode="contain"
+                />
+              </MascotPlaceholder>
+              <TitleText>{t('login.passwordReset.title')}</TitleText>
+              <SubtitleText>{t('login.passwordReset.subtitle')}</SubtitleText>
+            </LogoContainer>
+
+            <FormContainer>
+              <InputSpacing>
+                <AuthTextInput
+                  icon="mail-outline"
+                  placeholder={t('login.passwordReset.emailPlaceholder')}
+                  value={email}
+                  onChangeText={(text) => {
+                    setEmail(text);
+                    if (emailSent) setEmailSent(false);
+                  }}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  onSubmitEditing={handleSubmit}
+                  error={!!error}
+                  errorMessage={error || undefined}
+                />
+              </InputSpacing>
+
+              <ButtonContainer>
+                <GlassButton
+                  text={t('login.passwordReset.submitRequest')}
+                  onPress={handleSubmit}
+                  icon="paper-plane"
+                  loading={isLoading}
+                  disabled={isLoading || !email.trim()}
+                  tintColor={theme.colors.primary}
+                  textColor={theme.colors.surface}
+                />
+              </ButtonContainer>
+
+              <GhostButton onPress={() => navigation.goBack()}>
+                <GhostButtonText>{t('common.cancel')}</GhostButtonText>
+              </GhostButton>
+            </FormContainer>
+          </Content>
+        </ScrollContent>
+      </KeyboardAvoidingView>
+    </Container>
+  );
 };

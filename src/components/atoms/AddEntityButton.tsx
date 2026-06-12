@@ -3,7 +3,10 @@ import { TouchableOpacity, View, Text } from 'react-native';
 import styled from 'styled-components/native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../theme/ThemeProvider';
-import type { StyledProps, StyledPropsWith } from '../../utils/styledComponents';
+import type {
+  StyledProps,
+  StyledPropsWith,
+} from '../../utils/styledComponents';
 
 export interface AddEntityButtonProps {
   onPress: () => void;
@@ -15,7 +18,8 @@ export interface AddEntityButtonProps {
 }
 
 const ButtonWrapper = styled(View)<{ fullWidth?: boolean }>`
-  ${({ fullWidth }: { fullWidth?: boolean }) => (fullWidth ? 'width: 100%;' : 'flex: 1;')}
+  ${({ fullWidth }: { fullWidth?: boolean }) =>
+    fullWidth ? 'width: 100%;' : 'flex: 1;'}
 `;
 
 const StyledButton = styled(TouchableOpacity).attrs({ activeOpacity: 0.7 })<{
@@ -47,7 +51,8 @@ const StyledIcon = styled(Ionicons)<{ iconColor?: string }>`
 
 const ButtonText = styled(Text)<{ disabled?: boolean }>`
   font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.md}px;
-  font-weight: ${({ theme }: StyledProps) => theme.typography.fontWeight.medium};
+  font-weight: ${({ theme }: StyledProps) =>
+    theme.typography.fontWeight.medium};
   color: ${({ theme }: StyledProps) => theme.colors.textSecondary};
 `;
 

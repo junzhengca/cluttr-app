@@ -44,14 +44,14 @@ Pure-logic specs live in colocated `__tests__/` dirs (slices, saga helpers) — 
 
 ## WHERE TO LOOK
 
-| Task            | Location                              | Notes                                                                      |
-| --------------- | ------------------------------------- | --------------------------------------------------------------------------- |
-| Domain hooks    | `hooks.ts`                            | useAuth, useSettings, useTodos, useTodoCategories, useInventory, useInventoryCategories, useLocations, useSelectedCategory |
-| Live listeners  | `sagas/firestoreSubscriptionSaga.ts`  | `createSubscriptionSaga` wired via `takeLatest([setActiveHomeId, LOAD_*], ...)` |
-| Saga helpers    | `sagas/helpers/`                      | `requireActiveHomeId`, `handleSagaError`                                    |
-| Data writes     | `src/services/*Service.ts`            | Service singletons built on `createCrudService`; sagas call them, never Firestore directly |
-| Toasts from sagas | `src/utils/toastRegistry.ts`        | `getGlobalToast()` — registered by the toast provider; used by `handleSagaError` |
-| Slice actions   | `slices/*.ts`                         | `set{Property}` reducers; snapshot `setItems`-style actions fed by listeners |
+| Task              | Location                             | Notes                                                                                                                      |
+| ----------------- | ------------------------------------ | -------------------------------------------------------------------------------------------------------------------------- |
+| Domain hooks      | `hooks.ts`                           | useAuth, useSettings, useTodos, useTodoCategories, useInventory, useInventoryCategories, useLocations, useSelectedCategory |
+| Live listeners    | `sagas/firestoreSubscriptionSaga.ts` | `createSubscriptionSaga` wired via `takeLatest([setActiveHomeId, LOAD_*], ...)`                                            |
+| Saga helpers      | `sagas/helpers/`                     | `requireActiveHomeId`, `handleSagaError`                                                                                   |
+| Data writes       | `src/services/*Service.ts`           | Service singletons built on `createCrudService`; sagas call them, never Firestore directly                                 |
+| Toasts from sagas | `src/utils/toastRegistry.ts`         | `getGlobalToast()` — registered by the toast provider; used by `handleSagaError`                                           |
+| Slice actions     | `slices/*.ts`                        | `set{Property}` reducers; snapshot `setItems`-style actions fed by listeners                                               |
 
 ## CONVENTIONS
 

@@ -44,11 +44,11 @@ describe('requireActiveHomeId', () => {
     gen.next(); // select effect
 
     expect(() => gen.next({ auth: { activeHomeId: null } })).toThrow(
-      'No active home selected',
+      'No active home selected'
     );
     expect(sagaLogger.error).toHaveBeenCalledTimes(1);
     expect(sagaLogger.error).toHaveBeenCalledWith(
-      'No active home - cannot perform inventory operation',
+      'No active home - cannot perform inventory operation'
     );
   });
 
@@ -57,10 +57,10 @@ describe('requireActiveHomeId', () => {
     gen.next(); // select effect
 
     expect(() => gen.next({ auth: { activeHomeId: '' } })).toThrow(
-      'No active home selected',
+      'No active home selected'
     );
     expect(sagaLogger.error).toHaveBeenCalledWith(
-      'No active home - cannot perform todo operation',
+      'No active home - cannot perform todo operation'
     );
   });
 });

@@ -3,7 +3,10 @@ import { TouchableOpacity, ScrollView, View, Text } from 'react-native';
 import styled, { useTheme } from 'styled-components/native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
-import type { StyledProps, StyledPropsWith } from '../../utils/styledComponents';
+import type {
+  StyledProps,
+  StyledPropsWith,
+} from '../../utils/styledComponents';
 import type { Theme } from '../../theme/types';
 import { SectionTitle } from '../atoms';
 
@@ -28,7 +31,11 @@ const Container = styled(View)`
  * proper spacing while allowing content to scroll to the screen edges.
  */
 const ScrollContainer = styled(View)<{ horizontalPadding: number }>`
-  margin-horizontal: -${({ horizontalPadding }: { horizontalPadding: number }) => horizontalPadding}px;
+  margin-horizontal: -${({
+      horizontalPadding,
+    }: {
+      horizontalPadding: number;
+    }) => horizontalPadding}px;
 `;
 
 const OptionsScroll = styled(ScrollView)`
@@ -40,14 +47,22 @@ const OptionsContainer = styled(View)`
   gap: ${({ theme }: StyledProps) => theme.spacing.md}px;
 `;
 
-const OptionContainer = styled(TouchableOpacity)<{ isSelected: boolean; color: string }>`
+const OptionContainer = styled(TouchableOpacity)<{
+  isSelected: boolean;
+  color: string;
+}>`
   align-items: center;
   justify-content: center;
   padding-vertical: ${({ theme }: StyledProps) => theme.spacing.md}px;
   padding-horizontal: ${({ theme }: StyledProps) => theme.spacing.md}px;
   border-radius: ${({ theme }: StyledProps) => theme.borderRadius.xl}px;
   border-width: 2px;
-  border-color: ${({ theme, isSelected, color }: StyledPropsWith<{ isSelected: boolean; color: string }>) => (isSelected ? color : theme.colors.borderLight)};
+  border-color: ${({
+    theme,
+    isSelected,
+    color,
+  }: StyledPropsWith<{ isSelected: boolean; color: string }>) =>
+    isSelected ? color : theme.colors.borderLight};
   background-color: ${({ theme }: StyledProps) => theme.colors.surface};
   min-width: 90px;
 `;
@@ -68,8 +83,15 @@ const Checkmark = styled(Ionicons)`
 
 const OptionLabel = styled(Text)<{ isSelected: boolean }>`
   font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.sm}px;
-  font-weight: ${({ theme, isSelected }: StyledPropsWith<{ isSelected: boolean }>) => (isSelected ? theme.typography.fontWeight.bold : theme.typography.fontWeight.medium)};
-  color: ${({ theme, isSelected }: StyledPropsWith<{ isSelected: boolean }>) => (isSelected ? theme.colors.text : theme.colors.textSecondary)};
+  font-weight: ${({
+    theme,
+    isSelected,
+  }: StyledPropsWith<{ isSelected: boolean }>) =>
+    isSelected
+      ? theme.typography.fontWeight.bold
+      : theme.typography.fontWeight.medium};
+  color: ${({ theme, isSelected }: StyledPropsWith<{ isSelected: boolean }>) =>
+    isSelected ? theme.colors.text : theme.colors.textSecondary};
   text-align: center;
 `;
 
@@ -115,11 +137,11 @@ export const ThemeChooser: React.FC<ThemeChooserProps> = ({
                   activeOpacity={0.7}
                 >
                   <ColorCircle color={themeOption.color}>
-                    {isSelected && (
-                      <Checkmark name="checkmark" size={24} />
-                    )}
+                    {isSelected && <Checkmark name="checkmark" size={24} />}
                   </ColorCircle>
-                  <OptionLabel isSelected={isSelected}>{t(`settings.themeNames.${themeOption.id}`)}</OptionLabel>
+                  <OptionLabel isSelected={isSelected}>
+                    {t(`settings.themeNames.${themeOption.id}`)}
+                  </OptionLabel>
                 </OptionContainer>
               );
             })}
@@ -129,4 +151,3 @@ export const ThemeChooser: React.FC<ThemeChooserProps> = ({
     </Container>
   );
 };
-

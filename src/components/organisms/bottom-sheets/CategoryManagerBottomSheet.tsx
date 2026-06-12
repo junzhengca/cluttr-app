@@ -17,7 +17,11 @@ import { uiLogger } from '../../../utils/Logger';
 import { useInventoryCategories } from '../../../store/hooks';
 import { useKeyboardVisibility } from '../../../hooks';
 import { BottomSheetHeader, FormSection, MemoizedInput } from '../../atoms';
-import { CategoryPreviewCard, IconSelector, BottomActionBar } from '../../molecules';
+import {
+  CategoryPreviewCard,
+  IconSelector,
+  BottomActionBar,
+} from '../../molecules';
 import { categoryIcons } from '../../../data/categoryIcons';
 import { Backdrop } from './shared/sheetPrimitives';
 
@@ -60,12 +64,21 @@ export const CategoryManagerBottomSheet: React.FC<
   const theme = useTheme();
   const insets = useSafeAreaInsets();
   const { t } = useTranslation();
-  const { categories: allCategories, createCategory, updateCategory, deleteCategory, loading } = useInventoryCategories();
+  const {
+    categories: allCategories,
+    createCategory,
+    updateCategory,
+    deleteCategory,
+    loading,
+  } = useInventoryCategories();
   const { isKeyboardVisible, dismissKeyboard } = useKeyboardVisibility();
 
   // Filter to show only custom categories
   const categories = useMemo(
-    () => allCategories.filter((cat) => !DEFAULT_INVENTORY_CATEGORY_IDS.has(cat.id)),
+    () =>
+      allCategories.filter(
+        (cat) => !DEFAULT_INVENTORY_CATEGORY_IDS.has(cat.id)
+      ),
     [allCategories]
   );
 
@@ -105,7 +118,10 @@ export const CategoryManagerBottomSheet: React.FC<
   const handleStartEdit = useCallback((category: Category) => {
     setFormData({
       name: category.name,
-      icon: (category.icon as keyof typeof Ionicons.glyphMap) || categoryIcons[0] || 'cube-outline',
+      icon:
+        (category.icon as keyof typeof Ionicons.glyphMap) ||
+        categoryIcons[0] ||
+        'cube-outline',
     });
     setEditingId(category.id);
     setMode('edit');
@@ -127,9 +143,20 @@ export const CategoryManagerBottomSheet: React.FC<
     setIsLoading(true);
     try {
       if (editingId) {
-        updateCategory(editingId, formData.name.trim(), undefined, undefined, formData.icon);
+        updateCategory(
+          editingId,
+          formData.name.trim(),
+          undefined,
+          undefined,
+          formData.icon
+        );
       } else {
-        createCategory(formData.name.trim(), undefined, undefined, formData.icon);
+        createCategory(
+          formData.name.trim(),
+          undefined,
+          undefined,
+          formData.icon
+        );
       }
 
       resetForm();
@@ -140,9 +167,9 @@ export const CategoryManagerBottomSheet: React.FC<
       Alert.alert(
         t('categoryManager.errors.title'),
         errorMessage ||
-        (editingId
-          ? t('categoryManager.errors.updateFailed')
-          : t('categoryManager.errors.createFailed'))
+          (editingId
+            ? t('categoryManager.errors.updateFailed')
+            : t('categoryManager.errors.createFailed'))
       );
     } finally {
       setIsLoading(false);

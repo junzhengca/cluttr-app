@@ -1,14 +1,14 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import {
-    View,
-    Text,
-    ScrollView,
-    KeyboardAvoidingView,
-    Platform,
-    Image,
-    TextInput,
-    Alert,
-    TouchableOpacity,
+  View,
+  Text,
+  ScrollView,
+  KeyboardAvoidingView,
+  Platform,
+  Image,
+  TextInput,
+  Alert,
+  TouchableOpacity,
 } from 'react-native';
 import styled from 'styled-components/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -29,11 +29,11 @@ const Container = styled(View)`
 `;
 
 const ScrollContent = styled(ScrollView).attrs({
-    contentContainerStyle: {
-        flexGrow: 1,
-        justifyContent: 'center',
-    },
-    keyboardShouldPersistTaps: 'handled',
+  contentContainerStyle: {
+    flexGrow: 1,
+    justifyContent: 'center',
+  },
+  keyboardShouldPersistTaps: 'handled',
 })`
   flex: 1;
 `;
@@ -99,135 +99,139 @@ const GhostButton = styled(TouchableOpacity)`
 const GhostButtonText = styled(Text)`
   font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.md}px;
   color: ${({ theme }: StyledProps) => theme.colors.primary};
-  font-weight: ${({ theme }: StyledProps) => theme.typography.fontWeight.medium};
+  font-weight: ${({ theme }: StyledProps) =>
+    theme.typography.fontWeight.medium};
 `;
 
 export const ResetPasswordScreen: React.FC = () => {
-    const { t } = useTranslation();
-    const theme = useTheme();
-    const insets = useSafeAreaInsets();
-    const navigation = useNavigation<NativeStackNavigationProp<AuthStackParamList>>();
-    const route = useRoute<RouteProp<AuthStackParamList, 'ResetPassword'>>();
-    const { email } = route.params;
-    const { settings } = useSettings();
-    const isDark = settings?.darkMode;
-    // verifyPasswordReset is no longer available – Firebase handles password
-    // reset via email link. This screen is kept for navigation compatibility
-    // but is no longer reachable from the ForgotPassword flow.
-    const { isLoading, error } = useAuth();
+  const { t } = useTranslation();
+  const theme = useTheme();
+  const insets = useSafeAreaInsets();
+  const navigation =
+    useNavigation<NativeStackNavigationProp<AuthStackParamList>>();
+  const route = useRoute<RouteProp<AuthStackParamList, 'ResetPassword'>>();
+  const { email } = route.params;
+  const { settings } = useSettings();
+  const isDark = settings?.darkMode;
+  // verifyPasswordReset is no longer available – Firebase handles password
+  // reset via email link. This screen is kept for navigation compatibility
+  // but is no longer reachable from the ForgotPassword flow.
+  const { isLoading, error } = useAuth();
 
-    const [code, setCode] = useState('');
-    const [newPassword, setNewPassword] = useState('');
-    const [isSubmitting, setIsSubmitting] = useState(false);
+  const [code, setCode] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const passwordRef = useRef<TextInput>(null);
+  const passwordRef = useRef<TextInput>(null);
 
-    useEffect(() => {
-        if (isSubmitting && !isLoading) {
-            setIsSubmitting(false);
-            if (!error) {
-                // On success, notify user and navigate to login
-                Alert.alert(
-                    t('login.passwordReset.successTitle'),
-                    t('login.passwordReset.successMessage'),
-                    [{ text: 'OK', onPress: () => navigation.navigate('Login') }]
-                );
-            }
-        }
-    }, [isSubmitting, isLoading, error, navigation, t]);
+  useEffect(() => {
+    if (isSubmitting && !isLoading) {
+      setIsSubmitting(false);
+      if (!error) {
+        // On success, notify user and navigate to login
+        Alert.alert(
+          t('login.passwordReset.successTitle'),
+          t('login.passwordReset.successMessage'),
+          [{ text: 'OK', onPress: () => navigation.navigate('Login') }]
+        );
+      }
+    }
+  }, [isSubmitting, isLoading, error, navigation, t]);
 
-    const handleSubmit = useCallback(() => {
-        if (!code.trim() || !newPassword.trim() || isLoading) {
-            return;
-        }
+  const handleSubmit = useCallback(() => {
+    if (!code.trim() || !newPassword.trim() || isLoading) {
+      return;
+    }
 
-        if (newPassword.length < 6) {
-            Alert.alert(t('common.error'), t('signup.errors.passwordTooShort'));
-            return;
-        }
+    if (newPassword.length < 6) {
+      Alert.alert(t('common.error'), t('signup.errors.passwordTooShort'));
+      return;
+    }
 
-        setIsSubmitting(true);
-        // No-op: Firebase password resets are handled via email link, not OTP.
-        // This handler is kept to avoid breaking the UI while the screen is
-        // removed from the navigation flow.
-        setIsSubmitting(false);
-    }, [code, newPassword, isLoading, t]);
+    setIsSubmitting(true);
+    // No-op: Firebase password resets are handled via email link, not OTP.
+    // This handler is kept to avoid breaking the UI while the screen is
+    // removed from the navigation flow.
+    setIsSubmitting(false);
+  }, [code, newPassword, isLoading, t]);
 
-    return (
-        <Container>
-            <StatusBar style={isDark ? 'light' : 'dark'} />
-            <KeyboardAvoidingView
-                style={{ flex: 1 }}
-                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-            >
-                <ScrollContent
-                    contentContainerStyle={{
-                        flexGrow: 1,
-                        justifyContent: 'center',
-                        paddingTop: insets.top + 20,
-                        paddingBottom: insets.bottom + 20,
-                    }}
-                >
-                    <Content>
-                        <LogoContainer>
-                            <MascotPlaceholder>
-                                <Image
-                                    source={require('../../assets/logo-transparent.png')}
-                                    style={{ width: 80, height: 80 }}
-                                    resizeMode="contain"
-                                />
-                            </MascotPlaceholder>
-                            <TitleText>{t('login.passwordReset.verifyTitle')}</TitleText>
-                            <SubtitleText>{t('login.passwordReset.verifySubtitle', { email })}</SubtitleText>
-                        </LogoContainer>
+  return (
+    <Container>
+      <StatusBar style={isDark ? 'light' : 'dark'} />
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      >
+        <ScrollContent
+          contentContainerStyle={{
+            flexGrow: 1,
+            justifyContent: 'center',
+            paddingTop: insets.top + 20,
+            paddingBottom: insets.bottom + 20,
+          }}
+        >
+          <Content>
+            <LogoContainer>
+              <MascotPlaceholder>
+                <Image
+                  source={require('../../assets/logo-transparent.png')}
+                  style={{ width: 80, height: 80 }}
+                  resizeMode="contain"
+                />
+              </MascotPlaceholder>
+              <TitleText>{t('login.passwordReset.verifyTitle')}</TitleText>
+              <SubtitleText>
+                {t('login.passwordReset.verifySubtitle', { email })}
+              </SubtitleText>
+            </LogoContainer>
 
-                        <FormContainer>
-                            <InputSpacing>
-                                <AuthTextInput
-                                    icon="key-outline"
-                                    placeholder={t('login.passwordReset.codePlaceholder')}
-                                    value={code}
-                                    onChangeText={setCode}
-                                    keyboardType="numeric"
-                                    autoCapitalize="none"
-                                    returnKeyType="next"
-                                    onSubmitEditing={() => passwordRef.current?.focus()}
-                                />
-                            </InputSpacing>
+            <FormContainer>
+              <InputSpacing>
+                <AuthTextInput
+                  icon="key-outline"
+                  placeholder={t('login.passwordReset.codePlaceholder')}
+                  value={code}
+                  onChangeText={setCode}
+                  keyboardType="numeric"
+                  autoCapitalize="none"
+                  returnKeyType="next"
+                  onSubmitEditing={() => passwordRef.current?.focus()}
+                />
+              </InputSpacing>
 
-                            <InputSpacing>
-                                <AuthTextInput
-                                    ref={passwordRef}
-                                    icon="lock-closed-outline"
-                                    placeholder={t('login.passwordReset.passwordPlaceholder')}
-                                    value={newPassword}
-                                    onChangeText={setNewPassword}
-                                    secureTextEntry
-                                    onSubmitEditing={handleSubmit}
-                                    error={!!error}
-                                    errorMessage={error || undefined}
-                                />
-                            </InputSpacing>
+              <InputSpacing>
+                <AuthTextInput
+                  ref={passwordRef}
+                  icon="lock-closed-outline"
+                  placeholder={t('login.passwordReset.passwordPlaceholder')}
+                  value={newPassword}
+                  onChangeText={setNewPassword}
+                  secureTextEntry
+                  onSubmitEditing={handleSubmit}
+                  error={!!error}
+                  errorMessage={error || undefined}
+                />
+              </InputSpacing>
 
-                            <ButtonContainer>
-                                <GlassButton
-                                    text={t('login.passwordReset.submitVerify')}
-                                    onPress={handleSubmit}
-                                    icon="checkmark-circle-outline"
-                                    loading={isLoading}
-                                    disabled={isLoading || !code.trim() || !newPassword.trim()}
-                                    tintColor={theme.colors.primary}
-                                    textColor={theme.colors.surface}
-                                />
-                            </ButtonContainer>
+              <ButtonContainer>
+                <GlassButton
+                  text={t('login.passwordReset.submitVerify')}
+                  onPress={handleSubmit}
+                  icon="checkmark-circle-outline"
+                  loading={isLoading}
+                  disabled={isLoading || !code.trim() || !newPassword.trim()}
+                  tintColor={theme.colors.primary}
+                  textColor={theme.colors.surface}
+                />
+              </ButtonContainer>
 
-                            <GhostButton onPress={() => navigation.goBack()}>
-                                <GhostButtonText>{t('common.cancel')}</GhostButtonText>
-                            </GhostButton>
-                        </FormContainer>
-                    </Content>
-                </ScrollContent>
-            </KeyboardAvoidingView>
-        </Container>
-    );
+              <GhostButton onPress={() => navigation.goBack()}>
+                <GhostButtonText>{t('common.cancel')}</GhostButtonText>
+              </GhostButton>
+            </FormContainer>
+          </Content>
+        </ScrollContent>
+      </KeyboardAvoidingView>
+    </Container>
+  );
 };

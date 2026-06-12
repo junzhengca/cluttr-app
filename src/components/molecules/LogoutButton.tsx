@@ -37,7 +37,8 @@ const Icon = styled(Ionicons)`
 
 const ButtonText = styled(Text)`
   font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.md}px;
-  font-weight: ${({ theme }: StyledProps) => theme.typography.fontWeight.medium};
+  font-weight: ${({ theme }: StyledProps) =>
+    theme.typography.fontWeight.medium};
   color: ${({ theme }: StyledProps) => theme.colors.error};
   flex: 1;
 `;
@@ -52,4 +53,3 @@ export const LogoutButton: React.FC<LogoutButtonProps> = ({ onPress }) => {
     </Button>
   );
 };
-

@@ -5,6 +5,7 @@ This document explains how to configure and use the logging system in Cluttr.
 ## Overview
 
 Cluttr uses a centralized logging system (`src/utils/Logger.ts`) that provides:
+
 - Configurable log levels
 - Category-based filtering
 - Optional timestamps
@@ -19,16 +20,17 @@ All logging is configured via environment variables in your `.env` file:
 
 Controls the overall verbosity of logging. Available levels (from least to most verbose):
 
-| Level | Description |
-|-------|-------------|
-| `silent` | No logging output |
-| `error` | Only errors |
-| `warn` | Warnings and errors |
-| `info` | Info, warnings, and errors (default) |
-| `debug` | Debug, info, warnings, and errors |
-| `verbose` | Maximum detail including all traces |
+| Level     | Description                          |
+| --------- | ------------------------------------ |
+| `silent`  | No logging output                    |
+| `error`   | Only errors                          |
+| `warn`    | Warnings and errors                  |
+| `info`    | Info, warnings, and errors (default) |
+| `debug`   | Debug, info, warnings, and errors    |
+| `verbose` | Maximum detail including all traces  |
 
 **Example:**
+
 ```bash
 EXPO_PUBLIC_LOG_LEVEL=debug
 ```
@@ -37,22 +39,23 @@ EXPO_PUBLIC_LOG_LEVEL=debug
 
 Filter logs by category. Use `*` for all categories, or specify a comma-separated list.
 
-| Category | Description |
-|----------|-------------|
-| `api` | API client requests/responses |
-| `sync` | Sync service operations |
-| `auth` | Authentication operations |
-| `storage` | Local storage/file operations |
-| `navigation` | Navigation events |
-| `ui` | UI events and interactions |
-| `redux` | Redux state changes |
-| `saga` | Redux saga operations |
-| `network` | Network status and connectivity |
-| `image` | Image processing and uploads |
-| `ai` | AI recognition operations |
-| `general` | General logging |
+| Category     | Description                     |
+| ------------ | ------------------------------- |
+| `api`        | API client requests/responses   |
+| `sync`       | Sync service operations         |
+| `auth`       | Authentication operations       |
+| `storage`    | Local storage/file operations   |
+| `navigation` | Navigation events               |
+| `ui`         | UI events and interactions      |
+| `redux`      | Redux state changes             |
+| `saga`       | Redux saga operations           |
+| `network`    | Network status and connectivity |
+| `image`      | Image processing and uploads    |
+| `ai`         | AI recognition operations       |
+| `general`    | General logging                 |
 
 **Examples:**
+
 ```bash
 # All categories (default)
 EXPO_PUBLIC_LOG_CATEGORIES=*
@@ -91,6 +94,7 @@ When enabled, logs are displayed in the following format:
 ```
 
 Breaking down the components:
+
 - `[HH:MM:SS.mmm]` - Timestamp (if enabled)
 - `🔄` - Category emoji (if enabled)
 - `[SYNC]` - Log category
@@ -98,30 +102,30 @@ Breaking down the components:
 
 ## Emoji Indicators
 
-| Emoji | Usage |
-|-------|-------|
-| 🚨 | Errors |
-| ⚠️ | Warnings |
-| ℹ️ | Info |
-| 🔍 | Debug |
-| 🔬 | Verbose |
-| 🌐 | API requests |
-| 🔄 | Sync operations |
-| 🔐 | Authentication |
-| 💾 | Storage |
-| 🧭 | Navigation |
-| 🎨 | UI |
-| 🗂️ | Redux |
-| ⚙️ | Saga |
-| 📡 | Network |
-| 🖼️ | Images |
-| 🤖 | AI |
-| 📝 | General |
-| ▶️ | Operation start |
-| ✅ | Operation complete |
-| ❌ | Operation failed |
-| 🔁 | Retry |
-| 📦 | Data size |
+| Emoji | Usage              |
+| ----- | ------------------ |
+| 🚨    | Errors             |
+| ⚠️    | Warnings           |
+| ℹ️    | Info               |
+| 🔍    | Debug              |
+| 🔬    | Verbose            |
+| 🌐    | API requests       |
+| 🔄    | Sync operations    |
+| 🔐    | Authentication     |
+| 💾    | Storage            |
+| 🧭    | Navigation         |
+| 🎨    | UI                 |
+| 🗂️    | Redux              |
+| ⚙️    | Saga               |
+| 📡    | Network            |
+| 🖼️    | Images             |
+| 🤖    | AI                 |
+| 📝    | General            |
+| ▶️    | Operation start    |
+| ✅    | Operation complete |
+| ❌    | Operation failed   |
+| 🔁    | Retry              |
+| 📦    | Data size          |
 
 ## Common Scenarios
 
@@ -196,6 +200,7 @@ customLogger.info('This goes to the sync category');
 After modifying `.env`:
 
 1. **Development**: Restart the Expo dev server
+
    ```bash
    npm start
    ```
@@ -225,6 +230,7 @@ After modifying `.env`:
 ### Emoji Display Issues
 
 If emojis don't display correctly in your terminal:
+
 ```bash
 EXPO_PUBLIC_LOG_EMOJIS=false
 ```

@@ -104,7 +104,9 @@ function* addTodoSaga(action: {
     yield put(setError(null));
 
     const newTodo = todoService.createTodo(homeId, { text, note, categoryId });
-    sagaLogger.verbose(`Todo created: id=${newTodo.id}, text="${newTodo.text}"`);
+    sagaLogger.verbose(
+      `Todo created: id=${newTodo.id}, text="${newTodo.text}"`
+    );
   } catch (error) {
     sagaLogger.error('Error adding todo', error);
     const errorMessage =
@@ -267,20 +269,29 @@ function* deleteTodoCategorySaga(action: {
 
 /** Silent refreshes are no-ops: the live listener is already current. */
 function* silentRefreshTodoCategoriesSaga(): Generator<unknown, void, unknown> {
-  yield call([sagaLogger, 'verbose'], 'Silent todo category refresh skipped (live listener active)');
+  yield call(
+    [sagaLogger, 'verbose'],
+    'Silent todo category refresh skipped (live listener active)'
+  );
 }
 
 // Watcher
 export function* todoSaga(): Generator<unknown, void, unknown> {
   yield takeLatest([setActiveHomeId.type, LOAD_TODOS], subscribeTodosSaga);
-  yield takeLatest([setActiveHomeId.type, LOAD_TODO_CATEGORIES], subscribeTodoCategoriesSaga);
+  yield takeLatest(
+    [setActiveHomeId.type, LOAD_TODO_CATEGORIES],
+    subscribeTodoCategoriesSaga
+  );
   yield takeLatest(ADD_TODO, addTodoSaga);
   yield takeEvery(TOGGLE_TODO, toggleTodoSaga);
   yield takeEvery(DELETE_TODO, deleteTodoSaga);
   yield takeEvery(UPDATE_TODO, updateTodoSaga);
 
   // Todo categories
-  yield takeLatest(SILENT_REFRESH_TODO_CATEGORIES, silentRefreshTodoCategoriesSaga);
+  yield takeLatest(
+    SILENT_REFRESH_TODO_CATEGORIES,
+    silentRefreshTodoCategoriesSaga
+  );
   yield takeLatest(ADD_TODO_CATEGORY, addTodoCategorySaga);
   yield takeLatest(UPDATE_TODO_CATEGORY, updateTodoCategorySaga);
   yield takeLatest(DELETE_TODO_CATEGORY, deleteTodoCategorySaga);

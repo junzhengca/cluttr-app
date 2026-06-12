@@ -1,4 +1,10 @@
-import React, { createContext, useState, useCallback, useEffect, ReactNode } from 'react';
+import React, {
+  createContext,
+  useState,
+  useCallback,
+  useEffect,
+  ReactNode,
+} from 'react';
 import { Toast, type ToastType } from '../atoms';
 import { setGlobalToast } from '../../utils/toastRegistry';
 
@@ -6,7 +12,9 @@ interface ToastContextType {
   showToast: (message: string, type?: ToastType) => void;
 }
 
-export const ToastContext = createContext<ToastContextType | undefined>(undefined);
+export const ToastContext = createContext<ToastContextType | undefined>(
+  undefined
+);
 
 // Non-React layers (sagas, services) access the toast via utils/toastRegistry.
 export { setGlobalToast, getGlobalToast } from '../../utils/toastRegistry';
@@ -22,13 +30,16 @@ export const ToastProvider: React.FC<ToastProviderProps> = ({ children }) => {
     visible: boolean;
   } | null>(null);
 
-  const showToast = useCallback((message: string, type: ToastType = 'success') => {
-    setToast({
-      message,
-      type,
-      visible: true,
-    });
-  }, []);
+  const showToast = useCallback(
+    (message: string, type: ToastType = 'success') => {
+      setToast({
+        message,
+        type,
+        visible: true,
+      });
+    },
+    []
+  );
 
   const handleHide = useCallback(() => {
     setToast((prev) => (prev ? { ...prev, visible: false } : null));

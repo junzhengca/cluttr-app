@@ -22,16 +22,33 @@ export interface BottomActionBarProps {
   inBottomSheet?: boolean;
 }
 
-const BottomBarContainer = styled(View)<{ bottomInset: number; showSafeArea: boolean; inBottomSheet: boolean }>`
-  ${({ inBottomSheet }: { inBottomSheet: boolean }) => !inBottomSheet ? 'position: absolute;' : ''}
-  ${({ inBottomSheet }: { inBottomSheet: boolean }) => !inBottomSheet ? 'bottom: 0;' : ''}
-  ${({ inBottomSheet }: { inBottomSheet: boolean }) => !inBottomSheet ? 'left: 0;' : ''}
-  ${({ inBottomSheet }: { inBottomSheet: boolean }) => !inBottomSheet ? 'right: 0;' : ''}
-  background-color: ${({ theme, inBottomSheet }: StyledProps & { inBottomSheet: boolean }) =>
+const BottomBarContainer = styled(View)<{
+  bottomInset: number;
+  showSafeArea: boolean;
+  inBottomSheet: boolean;
+}>`
+  ${({ inBottomSheet }: { inBottomSheet: boolean }) =>
+    !inBottomSheet ? 'position: absolute;' : ''}
+  ${({ inBottomSheet }: { inBottomSheet: boolean }) =>
+    !inBottomSheet ? 'bottom: 0;' : ''}
+  ${({ inBottomSheet }: { inBottomSheet: boolean }) =>
+    !inBottomSheet ? 'left: 0;' : ''}
+  ${({ inBottomSheet }: { inBottomSheet: boolean }) =>
+    !inBottomSheet ? 'right: 0;' : ''}
+  background-color: ${({
+    theme,
+    inBottomSheet,
+  }: StyledProps & { inBottomSheet: boolean }) =>
     inBottomSheet ? theme.colors.background : theme.colors.surface};
   padding-horizontal: ${({ theme }: StyledProps) => theme.spacing.lg}px;
   padding-vertical: ${({ theme }: StyledProps) => theme.spacing.md}px;
-  padding-bottom: ${({ bottomInset, showSafeArea }: { bottomInset: number; showSafeArea: boolean }) => showSafeArea ? bottomInset + 12 : 12}px;
+  padding-bottom: ${({
+    bottomInset,
+    showSafeArea,
+  }: {
+    bottomInset: number;
+    showSafeArea: boolean;
+  }) => (showSafeArea ? bottomInset + 12 : 12)}px;
   border-top-width: 1px;
   border-top-color: ${({ theme }: StyledProps) => theme.colors.borderLight};
   shadow-color: #000;
@@ -50,8 +67,10 @@ const getTintAndTextColor = (
   theme: ReturnType<typeof useTheme>,
   variant?: 'outlined' | 'filled' | 'danger'
 ): { tintColor: string; textColor: string } => {
-  if (variant === 'filled') return { tintColor: theme.colors.primary, textColor: theme.colors.surface };
-  if (variant === 'danger') return { tintColor: theme.colors.error, textColor: theme.colors.surface };
+  if (variant === 'filled')
+    return { tintColor: theme.colors.primary, textColor: theme.colors.surface };
+  if (variant === 'danger')
+    return { tintColor: theme.colors.error, textColor: theme.colors.surface };
   return { tintColor: theme.colors.borderLight, textColor: theme.colors.text };
 };
 
@@ -64,10 +83,17 @@ export const BottomActionBar: React.FC<BottomActionBarProps> = ({
   const theme = useTheme();
 
   return (
-    <BottomBarContainer bottomInset={insets.bottom} showSafeArea={safeArea} inBottomSheet={inBottomSheet}>
+    <BottomBarContainer
+      bottomInset={insets.bottom}
+      showSafeArea={safeArea}
+      inBottomSheet={inBottomSheet}
+    >
       <ActionsContainer>
         {actions.map((action, index) => {
-          const { tintColor, textColor } = getTintAndTextColor(theme, action.variant);
+          const { tintColor, textColor } = getTintAndTextColor(
+            theme,
+            action.variant
+          );
           return (
             <GlassButton
               key={index}

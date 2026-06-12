@@ -27,15 +27,15 @@ export interface Location extends HomeScopedCrudEntity {
 }
 
 export interface ItemBatch {
-  id: string;              // UUID, generated client-side
-  amount: number;          // Quantity in this batch
-  unit?: string;           // Unit of measurement (e.g. "kg", "pcs", "bottles")
-  expiryDate?: string;     // ISO date string
-  purchaseDate?: string;   // ISO date string
-  price?: number;          // Price paid for this batch
-  vendor?: string;         // Where it was purchased
-  note?: string;           // Optional note for this batch
-  createdAt: string;       // ISO date string
+  id: string; // UUID, generated client-side
+  amount: number; // Quantity in this batch
+  unit?: string; // Unit of measurement (e.g. "kg", "pcs", "bottles")
+  expiryDate?: string; // ISO date string
+  purchaseDate?: string; // ISO date string
+  price?: number; // Price paid for this batch
+  vendor?: string; // Where it was purchased
+  note?: string; // Optional note for this batch
+  createdAt: string; // ISO date string
 }
 
 export interface InventoryItem extends HomeScopedCrudEntity {
@@ -46,7 +46,7 @@ export interface InventoryItem extends HomeScopedCrudEntity {
   icon: keyof typeof Ionicons.glyphMap;
   iconColor: string;
   warningThreshold?: number; // Warning threshold for restocking badge (defaults to 0)
-  batches: ItemBatch[];      // Purchase batches
+  batches: ItemBatch[]; // Purchase batches
   categoryId?: string;
 }
 

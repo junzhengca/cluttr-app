@@ -4,45 +4,63 @@ import styled, { useTheme } from 'styled-components/native';
 import { useTranslation } from 'react-i18next';
 import type { Category } from '../../types/inventory';
 import { useInventoryCategories } from '../../store/hooks';
-import { getInventoryCategoryDisplayName, DEFAULT_INVENTORY_CATEGORY_IDS } from '../../utils/inventoryCategoryI18n';
-import type { StyledProps, StyledPropsWith } from '../../utils/styledComponents';
+import {
+  getInventoryCategoryDisplayName,
+  DEFAULT_INVENTORY_CATEGORY_IDS,
+} from '../../utils/inventoryCategoryI18n';
+import type {
+  StyledProps,
+  StyledPropsWith,
+} from '../../utils/styledComponents';
 import type { Theme } from '../../theme/types';
 import { BottomSheetModal } from '@gorhom/bottom-sheet';
 import { Ionicons } from '@expo/vector-icons';
 import { CreateCategoryBottomSheet } from '../organisms/bottom-sheets/CreateCategoryBottomSheet';
 import { ContextMenu } from '../organisms/ContextMenu/ContextMenu';
 
-
-const Container = styled(View) <{ edgeToEdge?: boolean; horizontalPadding: number }>`
-  ${({ edgeToEdge, horizontalPadding }: { edgeToEdge?: boolean; horizontalPadding: number }) =>
-    edgeToEdge ? `margin-horizontal: -${horizontalPadding}px;` : ''}
+const Container = styled(View)<{
+  edgeToEdge?: boolean;
+  horizontalPadding: number;
+}>`
+  ${({
+    edgeToEdge,
+    horizontalPadding,
+  }: {
+    edgeToEdge?: boolean;
+    horizontalPadding: number;
+  }) => (edgeToEdge ? `margin-horizontal: -${horizontalPadding}px;` : '')}
 `;
 
 const ScrollContainer = styled(ScrollView)`
   flex-direction: row;
 `;
 
-const CategoryButton = styled(TouchableOpacity) <{ isSelected: boolean }>`
+const CategoryButton = styled(TouchableOpacity)<{ isSelected: boolean }>`
   flex-direction: row;
   align-items: center;
   padding-horizontal: ${({ theme }: StyledProps) => theme.spacing.md}px;
   height: 38px;
   border-radius: 19px;
-  background-color: ${({ theme, isSelected }: StyledPropsWith<{ isSelected: boolean }>) =>
+  background-color: ${({
+    theme,
+    isSelected,
+  }: StyledPropsWith<{ isSelected: boolean }>) =>
     isSelected ? theme.colors.primary : theme.colors.surface};
   margin-right: ${({ theme }: StyledProps) => theme.spacing.sm}px;
 
   /* Elevation for Android */
-  elevation: ${({ isSelected }: { isSelected: boolean }) => (isSelected ? 4 : 0)};
+  elevation: ${({ isSelected }: { isSelected: boolean }) =>
+    isSelected ? 4 : 0};
 
   /* Shadow for iOS */
   shadow-color: #000;
   shadow-offset: 0px 2px;
-  shadow-opacity: ${({ isSelected }: { isSelected: boolean }) => (isSelected ? 0.1 : 0)};
+  shadow-opacity: ${({ isSelected }: { isSelected: boolean }) =>
+    isSelected ? 0.1 : 0};
   shadow-radius: 2px;
 `;
 
-const ColorDot = styled(View) <{ color: string }>`
+const ColorDot = styled(View)<{ color: string }>`
   width: 8px;
   height: 8px;
   border-radius: 4px;
@@ -50,14 +68,15 @@ const ColorDot = styled(View) <{ color: string }>`
   margin-right: 6px;
 `;
 
-const CategoryText = styled(Text) <{ isSelected: boolean }>`
+const CategoryText = styled(Text)<{ isSelected: boolean }>`
   font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.md}px;
-  font-weight: ${({ theme }: StyledProps) => theme.typography.fontWeight.medium};
+  font-weight: ${({ theme }: StyledProps) =>
+    theme.typography.fontWeight.medium};
   color: ${({ theme, isSelected }: StyledPropsWith<{ isSelected: boolean }>) =>
     isSelected ? theme.colors.surface : theme.colors.text};
 `;
 
-const CountText = styled(Text) <{ isSelected: boolean }>`
+const CountText = styled(Text)<{ isSelected: boolean }>`
   font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.md}px;
   color: ${({ theme, isSelected }: StyledPropsWith<{ isSelected: boolean }>) =>
     isSelected ? theme.colors.surface : theme.colors.textSecondary};
@@ -79,7 +98,12 @@ const CreateCategoryButton = styled(TouchableOpacity)`
 
 interface CategoryEditorSheetProps {
   bottomSheetRef: React.RefObject<BottomSheetModal | null>;
-  categoryToEdit: { id: string; name: string; color?: string; icon?: string } | null;
+  categoryToEdit: {
+    id: string;
+    name: string;
+    color?: string;
+    icon?: string;
+  } | null;
   onClose: () => void;
 }
 
@@ -110,7 +134,6 @@ export interface CategorySelectorProps {
   edgeToEdge?: boolean;
 }
 
-
 export const CategorySelector: React.FC<CategorySelectorProps> = ({
   categories: providedCategories,
   selectedCategoryId: parentSelectedCategoryId,
@@ -124,10 +147,18 @@ export const CategorySelector: React.FC<CategorySelectorProps> = ({
   const { t } = useTranslation();
   const theme = useTheme() as Theme;
   const bottomSheetRef = React.useRef<BottomSheetModal>(null);
-  const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(parentSelectedCategoryId || (showAllOption ? 'all' : null));
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(
+    parentSelectedCategoryId || (showAllOption ? 'all' : null)
+  );
   const [categories, setCategories] = useState<Category[]>([]);
-  const { categories: allCategories, deleteCategory } = useInventoryCategories();
-  const [categoryToEdit, setCategoryToEdit] = useState<{ id: string; name: string; color?: string; icon?: string } | null>(null);
+  const { categories: allCategories, deleteCategory } =
+    useInventoryCategories();
+  const [categoryToEdit, setCategoryToEdit] = useState<{
+    id: string;
+    name: string;
+    color?: string;
+    icon?: string;
+  } | null>(null);
 
   const horizontalPadding = theme.spacing.md;
 
@@ -138,7 +169,10 @@ export const CategorySelector: React.FC<CategorySelectorProps> = ({
     paddingRight: horizontalPadding,
   };
 
-  const totalCount = Object.values(counts).reduce((sum, count) => sum + count, 0);
+  const totalCount = Object.values(counts).reduce(
+    (sum, count) => sum + count,
+    0
+  );
 
   const loadCategories = useCallback(() => {
     if (providedCategories) {
@@ -176,7 +210,7 @@ export const CategorySelector: React.FC<CategorySelectorProps> = ({
   // Auto-select first category if nothing is selected and categories exist (for forms)
   useEffect(() => {
     if (autoSelectFirst && !selectedCategoryId && categories.length > 0) {
-      const firstNonAll = categories.find(c => c.id !== 'all');
+      const firstNonAll = categories.find((c) => c.id !== 'all');
       if (firstNonAll) {
         onSelect(firstNonAll.id);
       }
@@ -223,7 +257,9 @@ export const CategorySelector: React.FC<CategorySelectorProps> = ({
         contentContainerStyle={scrollContentStyle}
       >
         {categories.map((category) => {
-          const isSystem = category.id === 'all' || DEFAULT_INVENTORY_CATEGORY_IDS.has(category.id);
+          const isSystem =
+            category.id === 'all' ||
+            DEFAULT_INVENTORY_CATEGORY_IDS.has(category.id);
 
           const menuItems = [
             {
@@ -253,27 +289,37 @@ export const CategorySelector: React.FC<CategorySelectorProps> = ({
                 color="transparent"
                 style={{
                   borderWidth: 1.5,
-                  borderColor: category.id === 'all'
-                    ? (selectedCategoryId === 'all' ? theme.colors.surface : theme.colors.textSecondary)
-                    : 'transparent',
-                  backgroundColor: category.id === 'all'
-                    ? 'transparent'
-                    : (category.color || theme.colors.secondary)
+                  borderColor:
+                    category.id === 'all'
+                      ? selectedCategoryId === 'all'
+                        ? theme.colors.surface
+                        : theme.colors.textSecondary
+                      : 'transparent',
+                  backgroundColor:
+                    category.id === 'all'
+                      ? 'transparent'
+                      : category.color || theme.colors.secondary,
                 }}
               />
               <CategoryText isSelected={selectedCategoryId === category.id}>
                 {getInventoryCategoryDisplayName(category, t)}
               </CategoryText>
-              {counts && (counts[category.id] !== undefined || category.id === 'all') && (
-                <CountText isSelected={selectedCategoryId === category.id}>
-                  {category.id === 'all' ? totalCount : (counts[category.id] || 0)}
-                </CountText>
-              )}
+              {counts &&
+                (counts[category.id] !== undefined ||
+                  category.id === 'all') && (
+                  <CountText isSelected={selectedCategoryId === category.id}>
+                    {category.id === 'all'
+                      ? totalCount
+                      : counts[category.id] || 0}
+                  </CountText>
+                )}
             </CategoryButton>
           );
 
           if (category.id === 'all') {
-            return <React.Fragment key={category.id}>{pillContent}</React.Fragment>;
+            return (
+              <React.Fragment key={category.id}>{pillContent}</React.Fragment>
+            );
           }
 
           return (
@@ -291,11 +337,7 @@ export const CategorySelector: React.FC<CategorySelectorProps> = ({
           }}
           activeOpacity={0.7}
         >
-          <Ionicons
-            name="add"
-            size={24}
-            color={theme.colors.textSecondary}
-          />
+          <Ionicons name="add" size={24} color={theme.colors.textSecondary} />
         </CreateCategoryButton>
       </ScrollContainer>
 

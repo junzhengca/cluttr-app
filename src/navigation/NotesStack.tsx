@@ -16,4 +16,3 @@ export const NotesStack: React.FC = () => {
     </Stack.Navigator>
   );
 };
-

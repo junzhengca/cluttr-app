@@ -1,4 +1,13 @@
-import { call, put, select, takeLatest, takeEvery, delay, fork, cancel } from 'redux-saga/effects';
+import {
+  call,
+  put,
+  select,
+  takeLatest,
+  takeEvery,
+  delay,
+  fork,
+  cancel,
+} from 'redux-saga/effects';
 import type { Task } from 'redux-saga';
 import type { RootState } from '../types';
 import {
@@ -31,16 +40,29 @@ const UPDATE_ITEM_BATCHES = 'inventory/UPDATE_ITEM_BATCHES';
 
 // Action creators
 export const loadItems = () => ({ type: LOAD_ITEMS });
-export const createItemAction = (item: Omit<InventoryItem, 'id' | 'homeId' | 'createdAt' | 'updatedAt'>) => ({
+export const createItemAction = (
+  item: Omit<InventoryItem, 'id' | 'homeId' | 'createdAt' | 'updatedAt'>
+) => ({
   type: CREATE_ITEM,
   payload: item,
 });
-export const deleteItemAction = (id: string) => ({ type: DELETE_ITEM, payload: id });
-export const updateItemAction = (id: string, updates: Partial<Omit<InventoryItem, 'id' | 'homeId' | 'createdAt' | 'updatedAt'>>) => ({
+export const deleteItemAction = (id: string) => ({
+  type: DELETE_ITEM,
+  payload: id,
+});
+export const updateItemAction = (
+  id: string,
+  updates: Partial<
+    Omit<InventoryItem, 'id' | 'homeId' | 'createdAt' | 'updatedAt'>
+  >
+) => ({
   type: UPDATE_ITEM,
   payload: { id, updates },
 });
-export const updateItemBatchesAction = (id: string, batches: InventoryItem['batches']) => ({
+export const updateItemBatchesAction = (
+  id: string,
+  batches: InventoryItem['batches']
+) => ({
   type: UPDATE_ITEM_BATCHES,
   payload: { id, batches },
 });
@@ -69,8 +91,13 @@ function* createItemSaga(action: {
 
     // Latency-compensated write: the local snapshot delivers the new item
     // immediately, even offline.
-    const newItem = inventoryService.createInventoryItem(homeId, action.payload);
-    sagaLogger.verbose(`Item created: id=${newItem.id}, name="${newItem.name}"`);
+    const newItem = inventoryService.createInventoryItem(
+      homeId,
+      action.payload
+    );
+    sagaLogger.verbose(
+      `Item created: id=${newItem.id}, name="${newItem.name}"`
+    );
   } catch (error) {
     yield call(handleSagaError, error, {
       logMessage: 'Error creating item',
@@ -137,7 +164,12 @@ function* debouncedUpdateForId(id: string): Generator<unknown, void, unknown> {
  */
 function* updateItemDebounceSaga(action: {
   type: string;
-  payload: { id: string; updates: Partial<Omit<InventoryItem, 'id' | 'homeId' | 'createdAt' | 'updatedAt'>> };
+  payload: {
+    id: string;
+    updates: Partial<
+      Omit<InventoryItem, 'id' | 'homeId' | 'createdAt' | 'updatedAt'>
+    >;
+  };
 }): Generator<unknown, void, unknown> {
   const { id, updates } = action.payload;
 
@@ -191,7 +223,7 @@ function* updateItemBatchesSaga(action: {
           ...currentItem,
           batches,
           updatedAt: new Date().toISOString(),
-        }),
+        })
       );
     }
 

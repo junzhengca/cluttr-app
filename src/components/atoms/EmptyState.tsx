@@ -17,7 +17,8 @@ const IconContainer = styled(View)`
   width: 120px;
   height: 120px;
   border-radius: 60px;
-  background-color: ${({ theme }: StyledProps) => theme.colors.primaryExtraLight};
+  background-color: ${({ theme }: StyledProps) =>
+    theme.colors.primaryExtraLight};
   align-items: center;
   justify-content: center;
   margin-bottom: ${({ theme }: StyledProps) => theme.spacing.lg}px;
@@ -39,7 +40,8 @@ const Description = styled(Text)`
   font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.md}px;
   color: ${({ theme }: StyledProps) => theme.colors.textSecondary};
   text-align: center;
-  line-height: ${({ theme }: StyledProps) => theme.typography.lineHeight.relaxed * theme.typography.fontSize.md}px;
+  line-height: ${({ theme }: StyledProps) =>
+    theme.typography.lineHeight.relaxed * theme.typography.fontSize.md}px;
   max-width: 280px;
 `;
 
@@ -49,7 +51,11 @@ export interface EmptyStateProps {
   description: string;
 }
 
-export const EmptyState: React.FC<EmptyStateProps> = ({ icon, title, description }) => {
+export const EmptyState: React.FC<EmptyStateProps> = ({
+  icon,
+  title,
+  description,
+}) => {
   return (
     <Container>
       <IconContainer>
@@ -60,4 +66,3 @@ export const EmptyState: React.FC<EmptyStateProps> = ({ icon, title, description
     </Container>
   );
 };
-

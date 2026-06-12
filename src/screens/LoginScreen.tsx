@@ -1,13 +1,13 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import {
-    View,
-    Text,
-    ScrollView,
-    KeyboardAvoidingView,
-    Platform,
-    TouchableOpacity,
-    TextInput,
-    Image,
+  View,
+  Text,
+  ScrollView,
+  KeyboardAvoidingView,
+  Platform,
+  TouchableOpacity,
+  TextInput,
+  Image,
 } from 'react-native';
 import styled from 'styled-components/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -30,11 +30,11 @@ const Container = styled(View)`
 `;
 
 const ScrollContent = styled(ScrollView).attrs({
-    contentContainerStyle: {
-        flexGrow: 1,
-        justifyContent: 'center',
-    },
-    keyboardShouldPersistTaps: 'handled',
+  contentContainerStyle: {
+    flexGrow: 1,
+    justifyContent: 'center',
+  },
+  keyboardShouldPersistTaps: 'handled',
 })`
   flex: 1;
 `;
@@ -90,7 +90,8 @@ const ForgotPasswordRow = styled(View)`
 const ForgotPasswordText = styled(Text)`
   font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.sm}px;
   color: ${({ theme }: StyledProps) => theme.colors.primary};
-  font-weight: ${({ theme }: StyledProps) => theme.typography.fontWeight.medium};
+  font-weight: ${({ theme }: StyledProps) =>
+    theme.typography.fontWeight.medium};
 `;
 
 const ButtonContainer = styled(View)`
@@ -156,175 +157,196 @@ const SocialButton = styled(TouchableOpacity)`
 `;
 
 export const LoginScreen: React.FC = () => {
-    const { t } = useTranslation();
-    const theme = useTheme();
-    const insets = useSafeAreaInsets();
-    const dispatch = useAppDispatch();
-    const navigation = useNavigation<NativeStackNavigationProp<AuthStackParamList>>();
-    const { settings } = useSettings();
-    const isDark = settings?.darkMode;
-    const { login, googleLogin, appleLogin, error: authError, isLoading: authLoading } = useAuth();
+  const { t } = useTranslation();
+  const theme = useTheme();
+  const insets = useSafeAreaInsets();
+  const dispatch = useAppDispatch();
+  const navigation =
+    useNavigation<NativeStackNavigationProp<AuthStackParamList>>();
+  const { settings } = useSettings();
+  const isDark = settings?.darkMode;
+  const {
+    login,
+    googleLogin,
+    appleLogin,
+    error: authError,
+    isLoading: authLoading,
+  } = useAuth();
 
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-    const [localError, setLocalError] = useState<string | null>(null);
-    const [loginAttempted, setLoginAttempted] = useState(false);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [localError, setLocalError] = useState<string | null>(null);
+  const [loginAttempted, setLoginAttempted] = useState(false);
 
-    const passwordRef = useRef<TextInput>(null);
+  const passwordRef = useRef<TextInput>(null);
 
-    const handleEmailChange = useCallback(
-        (text: string) => {
-            setEmail(text);
-            if (localError || authError) {
-                setLocalError(null);
-                dispatch(setError(null));
-            }
-        },
-        [localError, authError, dispatch],
-    );
-
-    const handlePasswordChange = useCallback(
-        (text: string) => {
-            setPassword(text);
-            if (localError || authError) {
-                setLocalError(null);
-                dispatch(setError(null));
-            }
-        },
-        [localError, authError, dispatch],
-    );
-
-    const handleSubmit = useCallback(() => {
-        if (!email.trim() || !password.trim()) {
-            setLocalError(t('login.errors.emptyFields'));
-            return;
-        }
-
+  const handleEmailChange = useCallback(
+    (text: string) => {
+      setEmail(text);
+      if (localError || authError) {
         setLocalError(null);
-        setLoginAttempted(true);
-        login(email.trim(), password);
-    }, [email, password, login, t]);
+        dispatch(setError(null));
+      }
+    },
+    [localError, authError, dispatch]
+  );
 
-    // Watch for login success
-    useEffect(() => {
-        if (loginAttempted && !authLoading) {
-            if (!authError) {
-                // Login successful - navigation handled by _layout.tsx
-            }
-        }
-    }, [loginAttempted, authLoading, authError]);
+  const handlePasswordChange = useCallback(
+    (text: string) => {
+      setPassword(text);
+      if (localError || authError) {
+        setLocalError(null);
+        dispatch(setError(null));
+      }
+    },
+    [localError, authError, dispatch]
+  );
 
-    const handleGoogleLogin = useCallback(() => {
-        googleLogin();
-    }, [googleLogin]);
+  const handleSubmit = useCallback(() => {
+    if (!email.trim() || !password.trim()) {
+      setLocalError(t('login.errors.emptyFields'));
+      return;
+    }
 
-    const handleAppleLogin = useCallback(() => {
-        appleLogin();
-    }, [appleLogin]);
+    setLocalError(null);
+    setLoginAttempted(true);
+    login(email.trim(), password);
+  }, [email, password, login, t]);
 
-    const displayError = localError || authError;
+  // Watch for login success
+  useEffect(() => {
+    if (loginAttempted && !authLoading) {
+      if (!authError) {
+        // Login successful - navigation handled by _layout.tsx
+      }
+    }
+  }, [loginAttempted, authLoading, authError]);
 
-    return (
-        <Container>
-            <StatusBar style={isDark ? 'light' : 'dark'} />
-            <KeyboardAvoidingView
-                style={{ flex: 1 }}
-                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-            >
-                <ScrollContent
-                    contentContainerStyle={{
-                        flexGrow: 1,
-                        justifyContent: 'center',
-                        paddingTop: insets.top + 20,
-                        paddingBottom: insets.bottom + 20,
-                    }}
+  const handleGoogleLogin = useCallback(() => {
+    googleLogin();
+  }, [googleLogin]);
+
+  const handleAppleLogin = useCallback(() => {
+    appleLogin();
+  }, [appleLogin]);
+
+  const displayError = localError || authError;
+
+  return (
+    <Container>
+      <StatusBar style={isDark ? 'light' : 'dark'} />
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      >
+        <ScrollContent
+          contentContainerStyle={{
+            flexGrow: 1,
+            justifyContent: 'center',
+            paddingTop: insets.top + 20,
+            paddingBottom: insets.bottom + 20,
+          }}
+        >
+          <Content>
+            <LogoContainer>
+              <MascotPlaceholder>
+                <Image
+                  source={require('../../assets/logo-transparent.png')}
+                  style={{ width: 80, height: 80 }}
+                  resizeMode="contain"
+                />
+              </MascotPlaceholder>
+              <TitleText>{t('onboarding.joinTitle')}</TitleText>
+              <SubtitleText>{t('onboarding.joinSubtitle')}</SubtitleText>
+            </LogoContainer>
+
+            <FormContainer>
+              <InputSpacing>
+                <AuthTextInput
+                  icon="mail-outline"
+                  placeholder={t('login.placeholders.email')}
+                  value={email}
+                  onChangeText={handleEmailChange}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  returnKeyType="next"
+                  onSubmitEditing={() => passwordRef.current?.focus()}
+                />
+              </InputSpacing>
+
+              <InputSpacing>
+                <AuthTextInput
+                  ref={passwordRef}
+                  icon="lock-closed-outline"
+                  placeholder={t('login.placeholders.password')}
+                  value={password}
+                  onChangeText={handlePasswordChange}
+                  secureTextEntry
+                  returnKeyType="go"
+                  onSubmitEditing={handleSubmit}
+                  error={!!displayError}
+                  errorMessage={displayError || undefined}
+                />
+              </InputSpacing>
+
+              <ForgotPasswordRow>
+                <TouchableOpacity
+                  onPress={() => navigation.navigate('ForgotPassword', {})}
                 >
-                    <Content>
-                        <LogoContainer>
-                            <MascotPlaceholder>
-                                <Image
-                                    source={require('../../assets/logo-transparent.png')}
-                                    style={{ width: 80, height: 80 }}
-                                    resizeMode="contain"
-                                />
-                            </MascotPlaceholder>
-                            <TitleText>{t('onboarding.joinTitle')}</TitleText>
-                            <SubtitleText>{t('onboarding.joinSubtitle')}</SubtitleText>
-                        </LogoContainer>
+                  <ForgotPasswordText>
+                    {t('login.forgotPassword')}
+                  </ForgotPasswordText>
+                </TouchableOpacity>
+              </ForgotPasswordRow>
 
-                        <FormContainer>
-                            <InputSpacing>
-                                <AuthTextInput
-                                    icon="mail-outline"
-                                    placeholder={t('login.placeholders.email')}
-                                    value={email}
-                                    onChangeText={handleEmailChange}
-                                    keyboardType="email-address"
-                                    autoCapitalize="none"
-                                    returnKeyType="next"
-                                    onSubmitEditing={() => passwordRef.current?.focus()}
-                                />
-                            </InputSpacing>
+              <ButtonContainer>
+                <GlassButton
+                  text={t('login.submit')}
+                  onPress={handleSubmit}
+                  icon="arrow-forward"
+                  loading={authLoading}
+                  tintColor={theme.colors.primary}
+                  textColor={theme.colors.surface}
+                  disabled={authLoading}
+                  style={{ width: '100%' }}
+                />
+              </ButtonContainer>
 
-                            <InputSpacing>
-                                <AuthTextInput
-                                    ref={passwordRef}
-                                    icon="lock-closed-outline"
-                                    placeholder={t('login.placeholders.password')}
-                                    value={password}
-                                    onChangeText={handlePasswordChange}
-                                    secureTextEntry
-                                    returnKeyType="go"
-                                    onSubmitEditing={handleSubmit}
-                                    error={!!displayError}
-                                    errorMessage={displayError || undefined}
-                                />
-                            </InputSpacing>
+              <SwitchRow>
+                <SwitchText>{t('login.switchToSignup')}</SwitchText>
+                <TouchableOpacity onPress={() => navigation.navigate('Signup')}>
+                  <SwitchLinkText>
+                    {t('login.switchToSignupLink')}
+                  </SwitchLinkText>
+                </TouchableOpacity>
+              </SwitchRow>
 
-                            <ForgotPasswordRow>
-                                <TouchableOpacity onPress={() => navigation.navigate('ForgotPassword', {})}>
-                                    <ForgotPasswordText>{t('login.forgotPassword')}</ForgotPasswordText>
-                                </TouchableOpacity>
-                            </ForgotPasswordRow>
+              <DividerRow>
+                <DividerLine />
+                <DividerText>{t('login.socialDivider')}</DividerText>
+                <DividerLine />
+              </DividerRow>
 
-                            <ButtonContainer>
-                                <GlassButton
-                                    text={t('login.submit')}
-                                    onPress={handleSubmit}
-                                    icon="arrow-forward"
-                                    loading={authLoading}
-                                    tintColor={theme.colors.primary}
-                                    textColor={theme.colors.surface}
-                                    disabled={authLoading}
-                                    style={{ width: '100%' }}
-                                />
-                            </ButtonContainer>
-
-                            <SwitchRow>
-                                <SwitchText>{t('login.switchToSignup')}</SwitchText>
-                                <TouchableOpacity onPress={() => navigation.navigate('Signup')}>
-                                    <SwitchLinkText>{t('login.switchToSignupLink')}</SwitchLinkText>
-                                </TouchableOpacity>
-                            </SwitchRow>
-
-                            <DividerRow>
-                                <DividerLine />
-                                <DividerText>{t('login.socialDivider')}</DividerText>
-                                <DividerLine />
-                            </DividerRow>
-
-                            <SocialRow>
-                                <SocialButton onPress={handleGoogleLogin}>
-                                    <Ionicons name="logo-google" size={22} color={theme.colors.text} />
-                                </SocialButton>
-                                <SocialButton onPress={handleAppleLogin}>
-                                    <Ionicons name="logo-apple" size={22} color={theme.colors.text} />
-                                </SocialButton>
-                            </SocialRow>
-                        </FormContainer>
-                    </Content>
-                </ScrollContent>
-            </KeyboardAvoidingView>
-        </Container>
-    );
+              <SocialRow>
+                <SocialButton onPress={handleGoogleLogin}>
+                  <Ionicons
+                    name="logo-google"
+                    size={22}
+                    color={theme.colors.text}
+                  />
+                </SocialButton>
+                <SocialButton onPress={handleAppleLogin}>
+                  <Ionicons
+                    name="logo-apple"
+                    size={22}
+                    color={theme.colors.text}
+                  />
+                </SocialButton>
+              </SocialRow>
+            </FormContainer>
+          </Content>
+        </ScrollContent>
+      </KeyboardAvoidingView>
+    </Container>
+  );
 };

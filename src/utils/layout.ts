@@ -39,4 +39,3 @@ export const calculateBottomActionBarPadding = (
 ): number => {
   return buttonHeight + topPadding + bottomPadding + bottomInset + extraSpacing;
 };
-

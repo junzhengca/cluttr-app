@@ -1,13 +1,23 @@
 import React, { useCallback, useState, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Keyboard, TextInput } from 'react-native';
-import { BottomSheetModal, BottomSheetBackdrop, BottomSheetView, BottomSheetBackdropProps } from '@gorhom/bottom-sheet';
+import {
+  BottomSheetModal,
+  BottomSheetBackdrop,
+  BottomSheetView,
+  BottomSheetBackdropProps,
+} from '@gorhom/bottom-sheet';
 import styled from 'styled-components/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../../theme/ThemeProvider';
 import { useHome } from '../../../hooks/useHome';
 import { useAuth } from '../../../store/hooks';
-import { BottomSheetHeader, GlassButton, FormSection, UncontrolledInput } from '../../atoms';
+import {
+  BottomSheetHeader,
+  GlassButton,
+  FormSection,
+  UncontrolledInput,
+} from '../../atoms';
 import { StyledProps } from '../../../utils/styledComponents';
 import { useKeyboardVisibility } from '../../../hooks/useKeyboardVisibility';
 import { Home } from '../../../types/home';
@@ -34,141 +44,159 @@ const ErrorText = styled.Text`
 `;
 
 interface EditHomeBottomSheetProps {
-    bottomSheetRef: React.RefObject<BottomSheetModal | null>;
-    home: Home | null;
-    onHomeUpdated?: () => void;
+  bottomSheetRef: React.RefObject<BottomSheetModal | null>;
+  home: Home | null;
+  onHomeUpdated?: () => void;
 }
 
 export const EditHomeBottomSheet: React.FC<EditHomeBottomSheetProps> = ({
-    bottomSheetRef,
-    home,
-    onHomeUpdated,
+  bottomSheetRef,
+  home,
+  onHomeUpdated,
 }) => {
-    const { t } = useTranslation();
-    const theme = useTheme();
-    const insets = useSafeAreaInsets();
-    const { updateHome, loadingState } = useHome();
-    const { isAuthenticated } = useAuth();
-    const { isKeyboardVisible } = useKeyboardVisibility();
-    const [name, setName] = useState('');
-    const [address, setAddress] = useState('');
+  const { t } = useTranslation();
+  const theme = useTheme();
+  const insets = useSafeAreaInsets();
+  const { updateHome, loadingState } = useHome();
+  const { isAuthenticated } = useAuth();
+  const { isKeyboardVisible } = useKeyboardVisibility();
+  const [name, setName] = useState('');
+  const [address, setAddress] = useState('');
 
-    const nameInputRef = useRef<TextInput>(null);
-    const addressInputRef = useRef<TextInput>(null);
+  const nameInputRef = useRef<TextInput>(null);
+  const addressInputRef = useRef<TextInput>(null);
 
-    useEffect(() => {
-        if (home) {
-            setName(home.name);
-            setAddress(home.address || '');
+  useEffect(() => {
+    if (home) {
+      setName(home.name);
+      setAddress(home.address || '');
+    }
+  }, [home]);
+
+  const handleClose = useCallback(() => {
+    Keyboard.dismiss();
+    bottomSheetRef.current?.dismiss();
+  }, [bottomSheetRef]);
+
+  const renderBackdrop = useCallback(
+    (props: BottomSheetBackdropProps) => (
+      <BottomSheetBackdrop
+        {...props}
+        disappearsOnIndex={-1}
+        appearsOnIndex={0}
+        opacity={0.5}
+      />
+    ),
+    []
+  );
+
+  const isLoading =
+    loadingState.operation === 'update' && loadingState.isLoading;
+  const error = loadingState.operation === 'update' ? loadingState.error : null;
+
+  const renderFooter = useCallback(() => {
+    const handleSubmit = async () => {
+      if (!name.trim() || !home) return;
+
+      if (!isAuthenticated) {
+        uiLogger.error('Cannot update home: user not authenticated');
+        return;
+      }
+
+      try {
+        const success = await updateHome(home.id, { name, address });
+
+        if (success) {
+          handleClose();
+          onHomeUpdated?.();
         }
-    }, [home]);
-
-    const handleClose = useCallback(() => {
-        Keyboard.dismiss();
-        bottomSheetRef.current?.dismiss();
-    }, [bottomSheetRef]);
-
-    const renderBackdrop = useCallback(
-        (props: BottomSheetBackdropProps) => (
-            <BottomSheetBackdrop
-                {...props}
-                disappearsOnIndex={-1}
-                appearsOnIndex={0}
-                opacity={0.5}
-            />
-        ),
-        []
-    );
-
-    const isLoading = loadingState.operation === 'update' && loadingState.isLoading;
-    const error = loadingState.operation === 'update' ? loadingState.error : null;
-
-    const renderFooter = useCallback(() => {
-        const handleSubmit = async () => {
-            if (!name.trim() || !home) return;
-
-            if (!isAuthenticated) {
-                uiLogger.error('Cannot update home: user not authenticated');
-                return;
-            }
-
-            try {
-                const success = await updateHome(home.id, { name, address });
-
-                if (success) {
-                    handleClose();
-                    onHomeUpdated?.();
-                }
-            } catch (error) {
-                uiLogger.error('Failed to update home', error);
-            }
-        };
-
-        return (
-            <FooterContainer bottomInset={insets.bottom} showSafeArea={!isKeyboardVisible}>
-                {error && (
-                    <ErrorBanner style={{ marginBottom: 8 }}>
-                        <ErrorText>{error}</ErrorText>
-                    </ErrorBanner>
-                )}
-                <GlassButton
-                    text={isLoading ? t('common.saving') : t('home.edit.submit')}
-                    onPress={handleSubmit}
-                    tintColor={theme.colors.primary}
-                    textColor={theme.colors.surface}
-                    disabled={!name.trim() || isLoading}
-                    loading={isLoading}
-                    style={{ width: '100%' }}
-                />
-            </FooterContainer>
-        );
-    }, [insets.bottom, isKeyboardVisible, isAuthenticated, updateHome, home, name, address, error, isLoading, handleClose, onHomeUpdated, t, theme]);
-
-    const footerHeight = 82 + (isKeyboardVisible ? 0 : insets.bottom);
+      } catch (error) {
+        uiLogger.error('Failed to update home', error);
+      }
+    };
 
     return (
-        <BottomSheetModal
-            ref={bottomSheetRef}
-            enableDynamicSizing={true}
-            backdropComponent={renderBackdrop}
-            enablePanDownToClose
-            handleComponent={null}
-            android_keyboardInputMode="adjustResize"
-            backgroundStyle={{ backgroundColor: theme.colors.background }}
-            footerComponent={renderFooter}
-            onDismiss={() => Keyboard.dismiss()}
-        >
-            <ContentContainer>
-                <BottomSheetView style={{ paddingBottom: footerHeight }}>
-                    <BottomSheetHeader
-                        title={t('home.edit.title')}
-                        subtitle={t('home.edit.subtitle')}
-                        onClose={handleClose}
-                    />
-                    <FormContainer>
-                        <FormSection label={t('home.create.nicknameLabel')}>
-                            <UncontrolledInput
-                                ref={nameInputRef}
-                                defaultValue={name}
-                                onChangeText={setName}
-                                onBlur={() => { }}
-                                placeholder={t('home.create.nicknamePlaceholder')}
-                                placeholderTextColor={theme.colors.textLight}
-                            />
-                        </FormSection>
-                        <FormSection label={t('home.create.addressLabel')}>
-                            <UncontrolledInput
-                                ref={addressInputRef}
-                                defaultValue={address}
-                                onChangeText={setAddress}
-                                onBlur={() => { }}
-                                placeholder={t('home.create.addressPlaceholder')}
-                                placeholderTextColor={theme.colors.textLight}
-                            />
-                        </FormSection>
-                    </FormContainer>
-                </BottomSheetView>
-            </ContentContainer>
-        </BottomSheetModal>
+      <FooterContainer
+        bottomInset={insets.bottom}
+        showSafeArea={!isKeyboardVisible}
+      >
+        {error && (
+          <ErrorBanner style={{ marginBottom: 8 }}>
+            <ErrorText>{error}</ErrorText>
+          </ErrorBanner>
+        )}
+        <GlassButton
+          text={isLoading ? t('common.saving') : t('home.edit.submit')}
+          onPress={handleSubmit}
+          tintColor={theme.colors.primary}
+          textColor={theme.colors.surface}
+          disabled={!name.trim() || isLoading}
+          loading={isLoading}
+          style={{ width: '100%' }}
+        />
+      </FooterContainer>
     );
+  }, [
+    insets.bottom,
+    isKeyboardVisible,
+    isAuthenticated,
+    updateHome,
+    home,
+    name,
+    address,
+    error,
+    isLoading,
+    handleClose,
+    onHomeUpdated,
+    t,
+    theme,
+  ]);
+
+  const footerHeight = 82 + (isKeyboardVisible ? 0 : insets.bottom);
+
+  return (
+    <BottomSheetModal
+      ref={bottomSheetRef}
+      enableDynamicSizing={true}
+      backdropComponent={renderBackdrop}
+      enablePanDownToClose
+      handleComponent={null}
+      android_keyboardInputMode="adjustResize"
+      backgroundStyle={{ backgroundColor: theme.colors.background }}
+      footerComponent={renderFooter}
+      onDismiss={() => Keyboard.dismiss()}
+    >
+      <ContentContainer>
+        <BottomSheetView style={{ paddingBottom: footerHeight }}>
+          <BottomSheetHeader
+            title={t('home.edit.title')}
+            subtitle={t('home.edit.subtitle')}
+            onClose={handleClose}
+          />
+          <FormContainer>
+            <FormSection label={t('home.create.nicknameLabel')}>
+              <UncontrolledInput
+                ref={nameInputRef}
+                defaultValue={name}
+                onChangeText={setName}
+                onBlur={() => {}}
+                placeholder={t('home.create.nicknamePlaceholder')}
+                placeholderTextColor={theme.colors.textLight}
+              />
+            </FormSection>
+            <FormSection label={t('home.create.addressLabel')}>
+              <UncontrolledInput
+                ref={addressInputRef}
+                defaultValue={address}
+                onChangeText={setAddress}
+                onBlur={() => {}}
+                placeholder={t('home.create.addressPlaceholder')}
+                placeholderTextColor={theme.colors.textLight}
+              />
+            </FormSection>
+          </FormContainer>
+        </BottomSheetView>
+      </ContentContainer>
+    </BottomSheetModal>
+  );
 };

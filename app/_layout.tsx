@@ -7,304 +7,327 @@ import { Stack } from 'expo-router';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import * as SplashScreen from 'expo-splash-screen';
-import { BottomSheetModalProvider, BottomSheetModal } from '@gorhom/bottom-sheet';
+import {
+  BottomSheetModalProvider,
+  BottomSheetModal,
+} from '@gorhom/bottom-sheet';
 import { I18nextProvider } from 'react-i18next';
 import { Provider } from 'react-redux';
 import { ThemeProvider } from '../src/theme/ThemeProvider';
 import { dataInitializationService } from '../src/services/DataInitializationService';
-import { ErrorBottomSheet, SetupNicknameBottomSheet, ToastProvider, InvitationBottomSheet, OfflineBadge, OfflineExplanationBottomSheet } from '../src/components';
+import {
+  ErrorBottomSheet,
+  SetupNicknameBottomSheet,
+  ToastProvider,
+  InvitationBottomSheet,
+  OfflineBadge,
+  OfflineExplanationBottomSheet,
+} from '../src/components';
 import { AuthNavigator } from '../src/navigation/AuthNavigator';
 import { ContextMenuProvider } from '../src/components/organisms/ContextMenu/ContextMenuProvider';
 import { UnitPickerProvider } from '../src/components/organisms/UnitPicker/UnitPickerContext';
 import { ErrorDetails } from '../src/types/errors';
 import i18n from '../src/i18n/i18n';
 import { store } from '../src/store';
-import { initializeAuth, setGlobalErrorHandler } from '../src/store/sagas/authSaga';
+import {
+  initializeAuth,
+  setGlobalErrorHandler,
+} from '../src/store/sagas/authSaga';
 import { loadSettings } from '../src/store/sagas/settingsSaga';
 import { useAppDispatch, useAppSelector } from '../src/store/hooks';
 import { setShowNicknameSetup } from '../src/store/slices/authSlice';
 import { logger } from '../src/utils/Logger';
 import {
-    setBackgroundMessageHandler,
-    requestNotificationPermission,
-    getFCMToken,
-    onForegroundMessage,
-    onNotificationOpenedApp,
-    getInitialNotification,
-    onTokenRefresh,
+  setBackgroundMessageHandler,
+  requestNotificationPermission,
+  getFCMToken,
+  onForegroundMessage,
+  onNotificationOpenedApp,
+  getInitialNotification,
+  onTokenRefresh,
 } from '../src/services/FirebaseService';
 
 // Register background message handler before the app renders
 setBackgroundMessageHandler(async (_message) => {
-    // Background messages are handled silently; FCM shows the notification automatically
+  // Background messages are handled silently; FCM shows the notification automatically
 });
 
 const appLogger = logger.scoped('general');
 
 // Keep the splash screen visible while we fetch resources
 SplashScreen.preventAutoHideAsync().catch(() => {
-    // Ignore error if splash screen was already hidden
+  // Ignore error if splash screen was already hidden
 });
 
 // Inner component to handle initialization
 function AppInner() {
-    const dispatch = useAppDispatch();
-    const errorBottomSheetRef = useRef<BottomSheetModal | null>(null);
-    const setupNicknameBottomSheetRef = useRef<BottomSheetModal | null>(null);
-    const invitationBottomSheetRef = useRef<BottomSheetModal | null>(null);
-    const offlineExplanationBottomSheetRef = useRef<BottomSheetModal>(null);
-    const [inviteCode, setInviteCode] = useState<string | null>(null);
-    const [errorDetails, setErrorDetails] = useState<ErrorDetails | null>(null);
-    const [homeSynced, setHomeSynced] = useState(false);
-    const showNicknameSetup = useAppSelector((state) => state.auth.showNicknameSetup);
-    const isAuthenticated = useAppSelector((state) => state.auth.isAuthenticated);
-    const isLoading = useAppSelector((state) => state.auth.isLoading);
-    const darkMode = useAppSelector((state) => state.settings.settings?.darkMode);
+  const dispatch = useAppDispatch();
+  const errorBottomSheetRef = useRef<BottomSheetModal | null>(null);
+  const setupNicknameBottomSheetRef = useRef<BottomSheetModal | null>(null);
+  const invitationBottomSheetRef = useRef<BottomSheetModal | null>(null);
+  const offlineExplanationBottomSheetRef = useRef<BottomSheetModal>(null);
+  const [inviteCode, setInviteCode] = useState<string | null>(null);
+  const [errorDetails, setErrorDetails] = useState<ErrorDetails | null>(null);
+  const [homeSynced, setHomeSynced] = useState(false);
+  const showNicknameSetup = useAppSelector(
+    (state) => state.auth.showNicknameSetup
+  );
+  const isAuthenticated = useAppSelector((state) => state.auth.isAuthenticated);
+  const isLoading = useAppSelector((state) => state.auth.isLoading);
+  const darkMode = useAppSelector((state) => state.settings.settings?.darkMode);
 
-    // Deep Link Handling for Invitations
-    useEffect(() => {
-        const handleDeepLink = (event: Linking.EventType) => {
-            try {
-                const url = event.url;
-                const parsedUrl = Linking.parse(url);
+  // Deep Link Handling for Invitations
+  useEffect(() => {
+    const handleDeepLink = (event: Linking.EventType) => {
+      try {
+        const url = event.url;
+        const parsedUrl = Linking.parse(url);
 
-                if (parsedUrl.queryParams?.inviteCode) {
-                    const code = parsedUrl.queryParams.inviteCode as string;
+        if (parsedUrl.queryParams?.inviteCode) {
+          const code = parsedUrl.queryParams.inviteCode as string;
 
-                    setInviteCode(code);
-                    // Small delay to ensure state updates
-                    setTimeout(() => {
-                        invitationBottomSheetRef.current?.present();
-                    }, 100);
-                }
-            } catch (error) {
-                appLogger.error('Error handling deep link', error);
-            }
-        };
-
-        // Add listener
-        const subscription = Linking.addEventListener('url', handleDeepLink);
-
-        // Handle cold start
-        Linking.getInitialURL().then((url) => {
-            if (url) {
-                handleDeepLink({ url } as Linking.EventType);
-            }
-        });
-
-        return () => {
-            subscription.remove();
-        };
-    }, []);
-
-    // Set up global error handler
-    useEffect(() => {
-        const handleError = (details: ErrorDetails) => {
-            setErrorDetails(details);
-            errorBottomSheetRef.current?.present();
-        };
-
-        setGlobalErrorHandler(handleError);
-
-        return () => {
-            setGlobalErrorHandler(() => { });
-        };
-    }, []);
-
-    // Initialize auth on mount (Firebase session restore + Firestore listeners)
-    useEffect(() => {
-        dispatch(initializeAuth());
-    }, [dispatch]);
-
-    // Indicate that home service init has completed and we can proceed
-    useEffect(() => {
-        setHomeSynced(true);
-    }, []);
-
-    // Load settings immediately after home sync (settings are global, don't require auth)
-    useEffect(() => {
-        if (!homeSynced) return;
-        dispatch(loadSettings());
-    }, [dispatch, homeSynced]);
-
-    // Sync system appearance to prevent flashing
-    useEffect(() => {
-        if (darkMode !== undefined) {
-            Appearance.setColorScheme(darkMode ? 'dark' : 'light');
-            SystemUI.setBackgroundColorAsync(darkMode ? '#000000' : '#ffffff');
+          setInviteCode(code);
+          // Small delay to ensure state updates
+          setTimeout(() => {
+            invitationBottomSheetRef.current?.present();
+          }, 100);
         }
-    }, [darkMode]);
-
-    // Track initialization to hide splash screen
-    useEffect(() => {
-        if (!isLoading) {
-            // Give React Navigation a tiny moment to mount the layout
-            const hideTimer = setTimeout(async () => {
-                try {
-                    await SplashScreen.hideAsync();
-                } catch (e) {
-                    appLogger.warn('Error hiding splash screen', e);
-                }
-            }, 50);
-            return () => clearTimeout(hideTimer);
-        }
-    }, [isLoading]);
-
-    const handleErrorDismiss = () => {
-        setErrorDetails(null);
+      } catch (error) {
+        appLogger.error('Error handling deep link', error);
+      }
     };
 
-    // Show setup nickname bottom sheet when needed
-    useEffect(() => {
-        if (showNicknameSetup && isAuthenticated) {
-            // Small delay to ensure UI is ready
-            const timer = setTimeout(() => {
-                setupNicknameBottomSheetRef.current?.present();
-            }, 500);
-            return () => clearTimeout(timer);
-        }
-    }, [showNicknameSetup, isAuthenticated]);
+    // Add listener
+    const subscription = Linking.addEventListener('url', handleDeepLink);
 
-    const handleNicknameSet = useCallback(async () => {
-        dispatch(setShowNicknameSetup(false));
-    }, [dispatch]);
+    // Handle cold start
+    Linking.getInitialURL().then((url) => {
+      if (url) {
+        handleDeepLink({ url } as Linking.EventType);
+      }
+    });
 
-    const handleOfflineBadgePress = useCallback(() => {
-        offlineExplanationBottomSheetRef.current?.present();
-    }, []);
+    return () => {
+      subscription.remove();
+    };
+  }, []);
 
-    // Push notification setup (runs once user is authenticated)
-    useEffect(() => {
-        if (!isAuthenticated) return;
+  // Set up global error handler
+  useEffect(() => {
+    const handleError = (details: ErrorDetails) => {
+      setErrorDetails(details);
+      errorBottomSheetRef.current?.present();
+    };
 
-        let unsubscribeForeground: (() => void) | undefined;
-        let unsubscribeOpenedApp: (() => void) | undefined;
-        let unsubscribeTokenRefresh: (() => void) | undefined;
+    setGlobalErrorHandler(handleError);
 
-        const setupPushNotifications = async () => {
-            const granted = await requestNotificationPermission();
-            if (!granted) return;
+    return () => {
+      setGlobalErrorHandler(() => {});
+    };
+  }, []);
 
-            await getFCMToken();
+  // Initialize auth on mount (Firebase session restore + Firestore listeners)
+  useEffect(() => {
+    dispatch(initializeAuth());
+  }, [dispatch]);
 
-            unsubscribeForeground = onForegroundMessage((message) => {
-                appLogger.info('Foreground FCM message received', message.messageId);
-            });
+  // Indicate that home service init has completed and we can proceed
+  useEffect(() => {
+    setHomeSynced(true);
+  }, []);
 
-            unsubscribeOpenedApp = onNotificationOpenedApp((message) => {
-                appLogger.info('App opened from background notification', message.messageId);
-            });
+  // Load settings immediately after home sync (settings are global, don't require auth)
+  useEffect(() => {
+    if (!homeSynced) return;
+    dispatch(loadSettings());
+  }, [dispatch, homeSynced]);
 
-            unsubscribeTokenRefresh = onTokenRefresh((token) => {
-                appLogger.info('FCM token refreshed', token);
-            });
-
-            const initialNotification = await getInitialNotification();
-            if (initialNotification) {
-                appLogger.info('App opened from quit-state notification', initialNotification.messageId);
-            }
-        };
-
-        setupPushNotifications();
-
-        return () => {
-            unsubscribeForeground?.();
-            unsubscribeOpenedApp?.();
-            unsubscribeTokenRefresh?.();
-        };
-    }, [isAuthenticated]);
-
-    if (!isAuthenticated) {
-        return (
-            <>
-                <AuthNavigator />
-                <StatusBar style={darkMode ? 'light' : 'dark'} />
-                <ErrorBottomSheet
-                    bottomSheetRef={errorBottomSheetRef}
-                    errorDetails={errorDetails}
-                    onDismiss={handleErrorDismiss}
-                />
-            </>
-        );
+  // Sync system appearance to prevent flashing
+  useEffect(() => {
+    if (darkMode !== undefined) {
+      Appearance.setColorScheme(darkMode ? 'dark' : 'light');
+      SystemUI.setBackgroundColorAsync(darkMode ? '#000000' : '#ffffff');
     }
+  }, [darkMode]);
 
+  // Track initialization to hide splash screen
+  useEffect(() => {
+    if (!isLoading) {
+      // Give React Navigation a tiny moment to mount the layout
+      const hideTimer = setTimeout(async () => {
+        try {
+          await SplashScreen.hideAsync();
+        } catch (e) {
+          appLogger.warn('Error hiding splash screen', e);
+        }
+      }, 50);
+      return () => clearTimeout(hideTimer);
+    }
+  }, [isLoading]);
+
+  const handleErrorDismiss = () => {
+    setErrorDetails(null);
+  };
+
+  // Show setup nickname bottom sheet when needed
+  useEffect(() => {
+    if (showNicknameSetup && isAuthenticated) {
+      // Small delay to ensure UI is ready
+      const timer = setTimeout(() => {
+        setupNicknameBottomSheetRef.current?.present();
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [showNicknameSetup, isAuthenticated]);
+
+  const handleNicknameSet = useCallback(async () => {
+    dispatch(setShowNicknameSetup(false));
+  }, [dispatch]);
+
+  const handleOfflineBadgePress = useCallback(() => {
+    offlineExplanationBottomSheetRef.current?.present();
+  }, []);
+
+  // Push notification setup (runs once user is authenticated)
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
+    let unsubscribeForeground: (() => void) | undefined;
+    let unsubscribeOpenedApp: (() => void) | undefined;
+    let unsubscribeTokenRefresh: (() => void) | undefined;
+
+    const setupPushNotifications = async () => {
+      const granted = await requestNotificationPermission();
+      if (!granted) return;
+
+      await getFCMToken();
+
+      unsubscribeForeground = onForegroundMessage((message) => {
+        appLogger.info('Foreground FCM message received', message.messageId);
+      });
+
+      unsubscribeOpenedApp = onNotificationOpenedApp((message) => {
+        appLogger.info(
+          'App opened from background notification',
+          message.messageId
+        );
+      });
+
+      unsubscribeTokenRefresh = onTokenRefresh((token) => {
+        appLogger.info('FCM token refreshed', token);
+      });
+
+      const initialNotification = await getInitialNotification();
+      if (initialNotification) {
+        appLogger.info(
+          'App opened from quit-state notification',
+          initialNotification.messageId
+        );
+      }
+    };
+
+    setupPushNotifications();
+
+    return () => {
+      unsubscribeForeground?.();
+      unsubscribeOpenedApp?.();
+      unsubscribeTokenRefresh?.();
+    };
+  }, [isAuthenticated]);
+
+  if (!isAuthenticated) {
     return (
-        <>
-            <Stack screenOptions={{ headerShown: false }}>
-                <Stack.Screen name="(tabs)" />
-                <Stack.Screen name="ItemDetails" />
-                <Stack.Screen name="Profile" />
-            </Stack>
-            <OfflineBadge onPress={handleOfflineBadgePress} />
-            <StatusBar style={darkMode ? 'light' : 'dark'} />
-            <ErrorBottomSheet
-                bottomSheetRef={errorBottomSheetRef}
-                errorDetails={errorDetails}
-                onDismiss={handleErrorDismiss}
-            />
-            <SetupNicknameBottomSheet
-                bottomSheetRef={setupNicknameBottomSheetRef}
-                onNicknameSet={handleNicknameSet}
-            />
-            <InvitationBottomSheet
-                bottomSheetRef={invitationBottomSheetRef}
-                inviteCode={inviteCode}
-                onDismiss={() => setInviteCode(null)}
-            />
-            <OfflineExplanationBottomSheet
-                bottomSheetRef={offlineExplanationBottomSheetRef}
-            />
-        </>
+      <>
+        <AuthNavigator />
+        <StatusBar style={darkMode ? 'light' : 'dark'} />
+        <ErrorBottomSheet
+          bottomSheetRef={errorBottomSheetRef}
+          errorDetails={errorDetails}
+          onDismiss={handleErrorDismiss}
+        />
+      </>
     );
+  }
+
+  return (
+    <>
+      <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="(tabs)" />
+        <Stack.Screen name="ItemDetails" />
+        <Stack.Screen name="Profile" />
+      </Stack>
+      <OfflineBadge onPress={handleOfflineBadgePress} />
+      <StatusBar style={darkMode ? 'light' : 'dark'} />
+      <ErrorBottomSheet
+        bottomSheetRef={errorBottomSheetRef}
+        errorDetails={errorDetails}
+        onDismiss={handleErrorDismiss}
+      />
+      <SetupNicknameBottomSheet
+        bottomSheetRef={setupNicknameBottomSheetRef}
+        onNicknameSet={handleNicknameSet}
+      />
+      <InvitationBottomSheet
+        bottomSheetRef={invitationBottomSheetRef}
+        inviteCode={inviteCode}
+        onDismiss={() => setInviteCode(null)}
+      />
+      <OfflineExplanationBottomSheet
+        bottomSheetRef={offlineExplanationBottomSheetRef}
+      />
+    </>
+  );
 }
 
 export default function RootLayout() {
-    const [isInitialized, setIsInitialized] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
 
-    useEffect(() => {
-        const init = async () => {
-            try {
-                await dataInitializationService.initializeDataFiles();
-                setIsInitialized(true);
-            } catch (error) {
-                appLogger.error('Failed to initialize data files', error);
-                // Still set initialized to true to allow app to continue
-                setIsInitialized(true);
-            }
-        };
+  useEffect(() => {
+    const init = async () => {
+      try {
+        await dataInitializationService.initializeDataFiles();
+        setIsInitialized(true);
+      } catch (error) {
+        appLogger.error('Failed to initialize data files', error);
+        // Still set initialized to true to allow app to continue
+        setIsInitialized(true);
+      }
+    };
 
-        init();
-    }, []);
+    init();
+  }, []);
 
-    if (!isInitialized) {
-        return (
-            <SafeAreaProvider>
-                <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-                    <ActivityIndicator size="large" />
-                </View>
-            </SafeAreaProvider>
-        );
-    }
-
+  if (!isInitialized) {
     return (
-        <GestureHandlerRootView style={{ flex: 1 }}>
-            <SafeAreaProvider>
-                <Provider store={store}>
-                    <I18nextProvider i18n={i18n}>
-                        <ThemeProvider>
-                            <ToastProvider>
-                                <ContextMenuProvider>
-                                    <UnitPickerProvider>
-                                        <BottomSheetModalProvider>
-                                            <AppInner />
-                                        </BottomSheetModalProvider>
-                                    </UnitPickerProvider>
-                                </ContextMenuProvider>
-                            </ToastProvider>
-                        </ThemeProvider>
-                    </I18nextProvider>
-                </Provider>
-            </SafeAreaProvider>
-        </GestureHandlerRootView>
+      <SafeAreaProvider>
+        <View
+          style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}
+        >
+          <ActivityIndicator size="large" />
+        </View>
+      </SafeAreaProvider>
     );
+  }
+
+  return (
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <SafeAreaProvider>
+        <Provider store={store}>
+          <I18nextProvider i18n={i18n}>
+            <ThemeProvider>
+              <ToastProvider>
+                <ContextMenuProvider>
+                  <UnitPickerProvider>
+                    <BottomSheetModalProvider>
+                      <AppInner />
+                    </BottomSheetModalProvider>
+                  </UnitPickerProvider>
+                </ContextMenuProvider>
+              </ToastProvider>
+            </ThemeProvider>
+          </I18nextProvider>
+        </Provider>
+      </SafeAreaProvider>
+    </GestureHandlerRootView>
+  );
 }

@@ -6,24 +6,28 @@ import { createCrudService } from './createCrudService';
 type CreateLocationInput = { name: string; icon?: string };
 type UpdateLocationInput = { name?: string; icon?: string };
 
-const crud = createCrudService<Location, CreateLocationInput, UpdateLocationInput>({
-    collection: locationsCol,
-    generateId: generateLocationId,
-    entityLabel: 'location',
-    buildCreate: (input, { id, homeId, now }) => ({
-        docData: {
-            name: input.name.trim(),
-            icon: input.icon,
-        },
-        entity: {
-            id,
-            homeId,
-            name: input.name.trim(),
-            icon: input.icon as Location['icon'],
-            createdAt: now,
-            updatedAt: now,
-        },
-    }),
+const crud = createCrudService<
+  Location,
+  CreateLocationInput,
+  UpdateLocationInput
+>({
+  collection: locationsCol,
+  generateId: generateLocationId,
+  entityLabel: 'location',
+  buildCreate: (input, { id, homeId, now }) => ({
+    docData: {
+      name: input.name.trim(),
+      icon: input.icon,
+    },
+    entity: {
+      id,
+      homeId,
+      name: input.name.trim(),
+      icon: input.icon as Location['icon'],
+      createdAt: now,
+      updatedAt: now,
+    },
+  }),
 });
 
 /**
@@ -33,17 +37,21 @@ const crud = createCrudService<Location, CreateLocationInput, UpdateLocationInpu
  * live snapshots managed by locationSaga.
  */
 class LocationService {
-    createLocation(homeId: string, input: CreateLocationInput): Location {
-        return crud.create(homeId, input);
-    }
+  createLocation(homeId: string, input: CreateLocationInput): Location {
+    return crud.create(homeId, input);
+  }
 
-    updateLocation(homeId: string, locationId: string, updates: UpdateLocationInput): void {
-        crud.update(homeId, locationId, updates);
-    }
+  updateLocation(
+    homeId: string,
+    locationId: string,
+    updates: UpdateLocationInput
+  ): void {
+    crud.update(homeId, locationId, updates);
+  }
 
-    deleteLocation(homeId: string, locationId: string): void {
-        crud.remove(homeId, locationId);
-    }
+  deleteLocation(homeId: string, locationId: string): void {
+    crud.remove(homeId, locationId);
+  }
 }
 
 export const locationService = new LocationService();

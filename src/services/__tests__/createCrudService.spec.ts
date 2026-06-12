@@ -8,10 +8,7 @@
  * - buildCreate hook: receives input + ctx, its output is respected
  */
 
-import {
-  createCrudService,
-  CrudServiceConfig,
-} from '../createCrudService';
+import { createCrudService, CrudServiceConfig } from '../createCrudService';
 import { fireWrite, isoNow } from '../firebase/firestoreRefs';
 
 jest.mock('../firebase/firestoreRefs', () => ({
@@ -73,7 +70,10 @@ type Mocks = ReturnType<typeof makeFirestoreMocks>;
 const makeService = (mocks: Mocks) => {
   const generateId = jest.fn().mockReturnValue('generated-id-1');
   const buildCreate = jest.fn(
-    (input: TestCreateInput, ctx: { id: string; homeId: string; now: string }) => ({
+    (
+      input: TestCreateInput,
+      ctx: { id: string; homeId: string; now: string }
+    ) => ({
       docData: { name: input.name.trim() },
       entity: {
         id: ctx.id,
@@ -82,7 +82,7 @@ const makeService = (mocks: Mocks) => {
         createdAt: ctx.now,
         updatedAt: ctx.now,
       },
-    }),
+    })
   );
   const config: CrudServiceConfig<TestEntity, TestCreateInput> = {
     collection: mocks.collection as unknown as CrudServiceConfig<
@@ -93,9 +93,11 @@ const makeService = (mocks: Mocks) => {
     entityLabel: 'widget',
     buildCreate,
   };
-  const service = createCrudService<TestEntity, TestCreateInput, TestUpdateInput>(
-    config,
-  );
+  const service = createCrudService<
+    TestEntity,
+    TestCreateInput,
+    TestUpdateInput
+  >(config);
   return { service, generateId, buildCreate };
 };
 
@@ -144,7 +146,7 @@ describe('createCrudService', () => {
       expect(mockedFireWrite).toHaveBeenCalledTimes(1);
       expect(mockedFireWrite).toHaveBeenCalledWith(
         mocks.setPromise,
-        'Failed to create widget',
+        'Failed to create widget'
       );
     });
 
@@ -162,7 +164,11 @@ describe('createCrudService', () => {
         docData: { name: 'From hook', extra: 42 },
         entity: customEntity,
       }));
-      const service2 = createCrudService<TestEntity, TestCreateInput, TestUpdateInput>({
+      const service2 = createCrudService<
+        TestEntity,
+        TestCreateInput,
+        TestUpdateInput
+      >({
         collection: mocks.collection as unknown as CrudServiceConfig<
           TestEntity,
           TestCreateInput
@@ -212,7 +218,7 @@ describe('createCrudService', () => {
       });
       expect(mockedFireWrite).toHaveBeenCalledWith(
         mocks.updatePromise,
-        'Failed to update widget',
+        'Failed to update widget'
       );
       expect(mocks.docRef.set).not.toHaveBeenCalled();
       expect(mocks.docRef.delete).not.toHaveBeenCalled();
@@ -231,7 +237,7 @@ describe('createCrudService', () => {
       expect(mocks.docRef.delete).toHaveBeenCalledTimes(1);
       expect(mockedFireWrite).toHaveBeenCalledWith(
         mocks.deletePromise,
-        'Failed to delete widget',
+        'Failed to delete widget'
       );
       expect(mocks.docRef.set).not.toHaveBeenCalled();
       expect(mocks.docRef.update).not.toHaveBeenCalled();

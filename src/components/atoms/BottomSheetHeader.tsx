@@ -17,7 +17,6 @@ const HeaderContainer = styled(View)`
   background-color: ${({ theme }: StyledProps) => theme.colors.background};
 `;
 
-
 const TitleContainer = styled(View)`
   flex: 1;
   justify-content: center;
@@ -58,12 +57,7 @@ export const BottomSheetHeader: React.FC<BottomSheetHeaderProps> = ({
         <Title>{title}</Title>
         <Subtitle numberOfLines={1}>{subtitle}</Subtitle>
       </TitleContainer>
-      {onClose && (
-        <GlassButton
-          onPress={onClose}
-          icon={closeIcon}
-        />
-      )}
-    </HeaderContainer >
+      {onClose && <GlassButton onPress={onClose} icon={closeIcon} />}
+    </HeaderContainer>
   );
 };

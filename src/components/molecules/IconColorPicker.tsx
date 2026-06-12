@@ -1,9 +1,11 @@
-import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react';
-import {
-  TouchableOpacity,
-  View,
-  Keyboard,
-} from 'react-native';
+import React, {
+  useState,
+  useCallback,
+  useMemo,
+  useRef,
+  useEffect,
+} from 'react';
+import { TouchableOpacity, View, Keyboard } from 'react-native';
 import styled from 'styled-components/native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
@@ -26,11 +28,12 @@ const PickerTrigger = styled(TouchableOpacity)`
   justify-content: center;
 `;
 
-const IconContainer = styled(View) <{ backgroundColor: string }>`
+const IconContainer = styled(View)<{ backgroundColor: string }>`
   width: 50px;
   height: 50px;
   border-radius: 25px;
-  background-color: ${({ backgroundColor }: { backgroundColor: string }) => backgroundColor};
+  background-color: ${({ backgroundColor }: { backgroundColor: string }) =>
+    backgroundColor};
   align-items: center;
   justify-content: center;
   border-width: 1px;
@@ -44,8 +47,10 @@ const Backdrop = styled(BottomSheetBackdrop)`
 const ContentContainer = styled.View`
   flex: 1;
   background-color: ${({ theme }: StyledProps) => theme.colors.background};
-  border-top-left-radius: ${({ theme }: StyledProps) => theme.borderRadius.xl}px;
-  border-top-right-radius: ${({ theme }: StyledProps) => theme.borderRadius.xl}px;
+  border-top-left-radius: ${({ theme }: StyledProps) =>
+    theme.borderRadius.xl}px;
+  border-top-right-radius: ${({ theme }: StyledProps) =>
+    theme.borderRadius.xl}px;
   overflow: hidden;
 `;
 
@@ -55,7 +60,8 @@ const Section = styled(View)`
 
 const SectionLabel = styled.Text`
   font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.md}px;
-  font-weight: ${({ theme }: StyledProps) => theme.typography.fontWeight.medium};
+  font-weight: ${({ theme }: StyledProps) =>
+    theme.typography.fontWeight.medium};
   color: ${({ theme }: StyledProps) => theme.colors.textSecondary};
   margin-bottom: ${({ theme }: StyledProps) => theme.spacing.sm}px;
 `;
@@ -64,9 +70,15 @@ const FooterContainer = styled.View<{ bottomInset: number }>`
   background-color: ${({ theme }: StyledProps) => theme.colors.background};
   padding-horizontal: ${({ theme }: StyledProps) => theme.spacing.lg}px;
   padding-top: ${({ theme }: StyledProps) => theme.spacing.md}px;
-  padding-bottom: ${({ bottomInset, theme }: { bottomInset: number } & StyledProps) => bottomInset + theme.spacing.md}px;
-  border-bottom-left-radius: ${({ theme }: StyledProps) => theme.borderRadius.xl}px;
-  border-bottom-right-radius: ${({ theme }: StyledProps) => theme.borderRadius.xl}px;
+  padding-bottom: ${({
+    bottomInset,
+    theme,
+  }: { bottomInset: number } & StyledProps) =>
+    bottomInset + theme.spacing.md}px;
+  border-bottom-left-radius: ${({ theme }: StyledProps) =>
+    theme.borderRadius.xl}px;
+  border-bottom-right-radius: ${({ theme }: StyledProps) =>
+    theme.borderRadius.xl}px;
   shadow-color: #000;
   shadow-offset: 0px -2px;
   shadow-opacity: 0.03;
@@ -96,7 +108,8 @@ export const IconColorPicker: React.FC<IconColorPickerProps> = ({
   const bottomSheetModalRef = useRef<BottomSheetModal | null>(null);
 
   // Temporary state for selections (only applied on save)
-  const [tempIcon, setTempIcon] = useState<keyof typeof Ionicons.glyphMap>(icon);
+  const [tempIcon, setTempIcon] =
+    useState<keyof typeof Ionicons.glyphMap>(icon);
   const [tempColor, setTempColor] = useState<string>(color);
 
   // Sync with props when they change from outside
@@ -150,9 +163,12 @@ export const IconColorPicker: React.FC<IconColorPickerProps> = ({
     handleClose();
   }, [tempIcon, tempColor, onIconSelect, onColorSelect, handleClose]);
 
-  const handleIconSelect = useCallback((selectedIcon: keyof typeof Ionicons.glyphMap) => {
-    setTempIcon(selectedIcon);
-  }, []);
+  const handleIconSelect = useCallback(
+    (selectedIcon: keyof typeof Ionicons.glyphMap) => {
+      setTempIcon(selectedIcon);
+    },
+    []
+  );
 
   const handleColorSelect = useCallback((selectedColor: string) => {
     setTempColor(selectedColor);

@@ -41,4 +41,3 @@ export type { RootState } from './types';
 
 // Infer the `AppDispatch` type from the store itself
 export type AppDispatch = typeof store.dispatch;
-

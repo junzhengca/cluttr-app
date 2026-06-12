@@ -64,7 +64,9 @@ export interface BatchDetailsFormSectionProps {
  * Form fields for item batch details: Quantity, Price, Vendor.
  * Each uses a normal FormSection label like other inputs (no "Batch Details" heading).
  */
-export const BatchDetailsFormSection: React.FC<BatchDetailsFormSectionProps> = ({
+export const BatchDetailsFormSection: React.FC<
+  BatchDetailsFormSectionProps
+> = ({
   defaultPrice,
   defaultAmount,
   defaultUnit,
@@ -117,7 +119,10 @@ export const BatchDetailsFormSection: React.FC<BatchDetailsFormSectionProps> = (
 
       <Row>
         <PriceColumn>
-          <FormSection compact={compact} label={`${t('createItem.fields.price')} (${currencySymbol})`}>
+          <FormSection
+            compact={compact}
+            label={`${t('createItem.fields.price')} (${currencySymbol})`}
+          >
             <UncontrolledInput
               ref={priceInputRef}
               defaultValue={defaultPrice}

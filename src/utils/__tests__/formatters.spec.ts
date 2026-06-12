@@ -4,7 +4,12 @@
  * Covers: formatLocation, formatDate, formatPrice, formatCurrency
  */
 
-import { formatLocation, formatDate, formatPrice, formatCurrency } from '../formatters';
+import {
+  formatLocation,
+  formatDate,
+  formatPrice,
+  formatCurrency,
+} from '../formatters';
 import type { LocationTranslateFn } from '../locationI18n';
 
 // Simple translation stub: returns a mapped value, then defaultValue, then the key
@@ -35,17 +40,21 @@ describe('formatLocation', () => {
   });
 
   it('uses the resolved name for custom locations', () => {
-    expect(formatLocation('abc123-custom-id', undefined, t, 'Wine Cellar')).toBe('Wine Cellar');
+    expect(
+      formatLocation('abc123-custom-id', undefined, t, 'Wine Cellar')
+    ).toBe('Wine Cellar');
   });
 
   it('falls back to the raw id for custom locations without a name', () => {
-    expect(formatLocation('abc123-custom-id', undefined, t)).toBe('abc123-custom-id');
+    expect(formatLocation('abc123-custom-id', undefined, t)).toBe(
+      'abc123-custom-id'
+    );
   });
 
   it('appends detailed location to custom location names', () => {
-    expect(formatLocation('abc123-custom-id', 'Top shelf', t, 'Wine Cellar')).toBe(
-      'Wine Cellar • Top shelf'
-    );
+    expect(
+      formatLocation('abc123-custom-id', 'Top shelf', t, 'Wine Cellar')
+    ).toBe('Wine Cellar • Top shelf');
   });
 });
 
@@ -86,8 +95,12 @@ describe('formatDate', () => {
   });
 
   it('uses the translated fallback when t is provided', () => {
-    expect(formatDate(null, 'zh-CN', (key) => translations[key] ?? key)).toBe('Not set');
-    expect(formatDate('garbage', 'zh-CN', (key) => translations[key] ?? key)).toBe('Not set');
+    expect(formatDate(null, 'zh-CN', (key) => translations[key] ?? key)).toBe(
+      'Not set'
+    );
+    expect(
+      formatDate('garbage', 'zh-CN', (key) => translations[key] ?? key)
+    ).toBe('Not set');
   });
 });
 
@@ -120,7 +133,9 @@ describe('formatCurrency', () => {
     });
 
     it('does not shorten large values', () => {
-      expect(formatCurrency(2000000, '$')).toBe(`$ ${(2000000).toLocaleString()}`);
+      expect(formatCurrency(2000000, '$')).toBe(
+        `$ ${(2000000).toLocaleString()}`
+      );
     });
   });
 

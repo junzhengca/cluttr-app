@@ -23,7 +23,9 @@ const inventorySlice = createSlice({
       state.items = action.payload;
     },
     updateItem: (state, action: PayloadAction<InventoryItem>) => {
-      const index = state.items.findIndex((item) => item.id === action.payload.id);
+      const index = state.items.findIndex(
+        (item) => item.id === action.payload.id
+      );
       if (index !== -1) {
         state.items[index] = action.payload;
       }
@@ -53,17 +55,22 @@ export const {
 } = inventorySlice.actions;
 
 // Selectors
-const selectItems = (state: { inventory: InventoryState }) => state.inventory.items;
+const selectItems = (state: { inventory: InventoryState }) =>
+  state.inventory.items;
 
 export const selectItemById = createSelector(
-  [selectItems, (_state: { inventory: InventoryState }, itemId: string) => itemId],
+  [
+    selectItems,
+    (_state: { inventory: InventoryState }, itemId: string) => itemId,
+  ],
   (items, itemId) => items.find((item) => item.id === itemId) || null
 );
 
 export const selectIsItemUpdating = createSelector(
   [(_state: { inventory: InventoryState }, itemId: string) => itemId],
   (_itemId) => {
-    return (state: { inventory: InventoryState }) => state.inventory.updatingItemIds.has(_itemId);
+    return (state: { inventory: InventoryState }) =>
+      state.inventory.updatingItemIds.has(_itemId);
   }
 );
 

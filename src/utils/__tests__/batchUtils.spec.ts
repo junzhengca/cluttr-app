@@ -55,7 +55,11 @@ describe('getTotalValue', () => {
   });
 
   it('treats missing prices as 0', () => {
-    const batches = [makeBatch({ price: undefined }), makeBatch({ price: 10 }), makeBatch({})];
+    const batches = [
+      makeBatch({ price: undefined }),
+      makeBatch({ price: 10 }),
+      makeBatch({}),
+    ];
     expect(getTotalValue(batches)).toBe(10);
   });
 
@@ -99,7 +103,9 @@ describe('getEarliestExpiry', () => {
   });
 
   it('handles a single batch', () => {
-    expect(getEarliestExpiry([makeBatch({ expiryDate: '2025-01-01' })])).toBe('2025-01-01');
+    expect(getEarliestExpiry([makeBatch({ expiryDate: '2025-01-01' })])).toBe(
+      '2025-01-01'
+    );
   });
 });
 
@@ -132,6 +138,8 @@ describe('getLatestPurchase', () => {
   });
 
   it('handles a single batch', () => {
-    expect(getLatestPurchase([makeBatch({ purchaseDate: '2024-05-05' })])).toBe('2024-05-05');
+    expect(getLatestPurchase([makeBatch({ purchaseDate: '2024-05-05' })])).toBe(
+      '2024-05-05'
+    );
   });
 });

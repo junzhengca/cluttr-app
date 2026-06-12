@@ -19,4 +19,3 @@ export const rootReducer = combineReducers({
   ui: uiReducer,
   refresh: refreshReducer,
 });
-

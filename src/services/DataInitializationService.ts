@@ -17,7 +17,6 @@ interface TodosData {
 }
 
 class DataInitializationService {
-
   /**
    * Initialize data files.
    * Global files (settings) are initialized here.
@@ -28,7 +27,10 @@ class DataInitializationService {
     try {
       // Initialize settings (Global)
       if (!(await fileSystemService.fileExists(SETTINGS_FILE))) {
-        await fileSystemService.writeFile<Settings>(SETTINGS_FILE, defaultSettings);
+        await fileSystemService.writeFile<Settings>(
+          SETTINGS_FILE,
+          defaultSettings
+        );
         storageLogger.info('Settings file initialized');
       }
 
@@ -51,24 +53,31 @@ class DataInitializationService {
       // Initialize items for this home
       const itemsFile = ITEMS_FILE;
       if (!(await fileSystemService.fileExists(itemsFile, homeId))) {
-        await fileSystemService.writeFile<ItemsData>(itemsFile, {
-          items: [],
-        }, homeId);
+        await fileSystemService.writeFile<ItemsData>(
+          itemsFile,
+          {
+            items: [],
+          },
+          homeId
+        );
         storageLogger.info(`Items file initialized for home ${homeId}`);
       }
 
       // Initialize todos for this home
       const todosFile = TODOS_FILE;
       if (!(await fileSystemService.fileExists(todosFile, homeId))) {
-        await fileSystemService.writeFile<TodosData>(todosFile, {
-          todos: [],
-        }, homeId);
+        await fileSystemService.writeFile<TodosData>(
+          todosFile,
+          {
+            todos: [],
+          },
+          homeId
+        );
         storageLogger.info(`Todos file initialized for home ${homeId}`);
       }
 
       // Note: Todo categories and locations are managed via CRUD API, not file storage
       // They are NOT initialized here and do not have default values
-
     } catch (error) {
       storageLogger.error(`Error initializing home data for ${homeId}:`, error);
       throw error;

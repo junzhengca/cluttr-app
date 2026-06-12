@@ -73,11 +73,11 @@ The providers listed in `firebase.json` must also be **manually enabled** in the
 1. Open [Firebase Console](https://console.firebase.google.com/) → your project → **Authentication** → **Sign-in method**
 2. Enable the following providers:
 
-| Provider | Notes |
-|----------|-------|
-| **Email/Password** | Enable; password-reset emails are sent by Firebase automatically |
-| **Google** | Enable; copy the **Web client ID** (shown after enabling) — needed for `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID` |
-| **Apple** | Enable; requires an Apple Developer account with Sign in with Apple configured |
+| Provider           | Notes                                                                                                     |
+| ------------------ | --------------------------------------------------------------------------------------------------------- |
+| **Email/Password** | Enable; password-reset emails are sent by Firebase automatically                                          |
+| **Google**         | Enable; copy the **Web client ID** (shown after enabling) — needed for `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID` |
+| **Apple**          | Enable; requires an Apple Developer account with Sign in with Apple configured                            |
 
 > Any future provider additions must also be reflected in `firebase.json`. See [`agents.md`](agents.md) for the full IaC convention.
 
@@ -85,10 +85,10 @@ The providers listed in `firebase.json` must also be **manually enabled** in the
 
 Firebase SDKs require platform-specific config files that are **not** committed to the repository:
 
-| Platform | File | Where to get it |
-|----------|------|-----------------|
-| iOS | `GoogleService-Info.plist` | Firebase Console → Project settings → iOS app → Download config |
-| Android | `google-services.json` | Firebase Console → Project settings → Android app → Download config |
+| Platform | File                       | Where to get it                                                     |
+| -------- | -------------------------- | ------------------------------------------------------------------- |
+| iOS      | `GoogleService-Info.plist` | Firebase Console → Project settings → iOS app → Download config     |
+| Android  | `google-services.json`     | Firebase Console → Project settings → Android app → Download config |
 
 Place both files in the project root. They are referenced by `app.json` and are already listed in `.gitignore`.
 
@@ -171,6 +171,7 @@ make install-eas
 ```
 
 After installation, authenticate with:
+
 ```bash
 eas login
 ```
@@ -201,6 +202,7 @@ This will create an iOS build that can be installed on physical iOS devices or s
    - Drag and drop the `.app` bundle into the simulator
 
 **Note:** For physical iOS devices, you may need to:
+
 - Register your device's UDID in your Apple Developer account
 - Configure code signing with your development certificate
 - Trust the developer certificate on your device (Settings > General > VPN & Device Management)
@@ -244,6 +246,7 @@ npm start
 ```
 
 Or use platform-specific commands:
+
 - `npm run ios` - Start iOS simulator
 - `npm run android` - Start Android emulator
 - `npm run web` - Start web version
@@ -294,11 +297,13 @@ If you encounter build errors:
 ### Installation Issues
 
 **iOS:**
+
 - Ensure your device is registered in your Apple Developer account
 - Check that code signing certificates are valid
 - Verify the device trusts your developer certificate
 
 **Android:**
+
 - Ensure USB debugging is enabled for physical devices
 - Check that "Install from unknown sources" is enabled
 - Verify ADB is properly configured and can detect your device
@@ -306,4 +311,3 @@ If you encounter build errors:
 ## License
 
 Private project.
-

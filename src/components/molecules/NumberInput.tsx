@@ -1,18 +1,33 @@
-import React, { memo, useCallback, useRef, useImperativeHandle, useState, useEffect } from 'react';
-import { TouchableOpacity, TextInput, View, type ViewStyle } from 'react-native';
+import React, {
+  memo,
+  useCallback,
+  useRef,
+  useImperativeHandle,
+  useState,
+  useEffect,
+} from 'react';
+import {
+  TouchableOpacity,
+  TextInput,
+  View,
+  type ViewStyle,
+} from 'react-native';
 import styled from 'styled-components/native';
 import { Ionicons } from '@expo/vector-icons';
 import type { StyledProps } from '../../utils/styledComponents';
 import { UncontrolledInput, MemoizedInput, UnitPicker } from '../atoms';
 
-const ContainerWrapper = styled(View) <{ hasError: boolean }>`
+const ContainerWrapper = styled(View)<{ hasError: boolean }>`
   position: relative;
 `;
 
-const Container = styled(View) <{ hasError: boolean }>`
+const Container = styled(View)<{ hasError: boolean }>`
   flex-direction: row;
   align-items: center;
-  background-color: ${({ theme, hasError }: StyledProps & { hasError: boolean }) =>
+  background-color: ${({
+    theme,
+    hasError,
+  }: StyledProps & { hasError: boolean }) =>
     hasError ? theme.colors.errorLight : theme.colors.surface};
   border-width: 1px;
   border-color: ${({ theme, hasError }: StyledProps & { hasError: boolean }) =>
@@ -21,7 +36,10 @@ const Container = styled(View) <{ hasError: boolean }>`
   overflow: hidden;
 `;
 
-const Button = styled(TouchableOpacity) <{ disabled?: boolean; hasError?: boolean }>`
+const Button = styled(TouchableOpacity)<{
+  disabled?: boolean;
+  hasError?: boolean;
+}>`
   width: 44px;
   height: 48px;
   align-items: center;
@@ -62,7 +80,8 @@ const ErrorIconSmall = styled(View)`
 const ErrorText = styled.Text`
   font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.sm}px;
   color: ${({ theme }: StyledProps) => theme.colors.error};
-  line-height: ${({ theme }: StyledProps) => theme.typography.fontSize.sm * theme.typography.lineHeight.normal}px;
+  line-height: ${({ theme }: StyledProps) =>
+    theme.typography.fontSize.sm * theme.typography.lineHeight.normal}px;
   flex: 1;
 `;
 
@@ -257,7 +276,7 @@ export const NumberInput = memo(
                   <MemoizedInput
                     value={value || ''}
                     onChangeText={handleChangeText}
-                    onBlur={onBlur ?? (() => { })}
+                    onBlur={onBlur ?? (() => {})}
                     placeholder={placeholder}
                     placeholderTextColor={placeholderTextColor}
                     keyboardType={keyboardType}
@@ -271,7 +290,7 @@ export const NumberInput = memo(
                     ref={inputRef}
                     defaultValue={defaultValue || ''}
                     onChangeText={handleChangeText}
-                    onBlur={onBlur ?? (() => { })}
+                    onBlur={onBlur ?? (() => {})}
                     placeholder={placeholder}
                     placeholderTextColor={placeholderTextColor}
                     keyboardType={keyboardType}

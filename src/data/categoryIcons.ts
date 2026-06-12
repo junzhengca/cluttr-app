@@ -13,7 +13,7 @@ export const categoryIcons: (keyof typeof Ionicons.glyphMap)[] = [
   'gift-outline',
   'diamond-outline',
   'flash-outline',
-  
+
   // Categories
   'home-outline',
   'restaurant-outline',
@@ -47,4 +47,3 @@ export const categoryIcons: (keyof typeof Ionicons.glyphMap)[] = [
   'basket-outline',
   'cart-outline',
 ];
-

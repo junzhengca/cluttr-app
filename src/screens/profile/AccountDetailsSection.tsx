@@ -23,7 +23,8 @@ const InfoLabel = styled(Text)`
 
 const InfoValue = styled(Text)`
   font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.md}px;
-  font-weight: ${({ theme }: StyledProps) => theme.typography.fontWeight.medium};
+  font-weight: ${({ theme }: StyledProps) =>
+    theme.typography.fontWeight.medium};
   color: ${({ theme }: StyledProps) => theme.colors.text};
 `;
 
@@ -31,16 +32,23 @@ interface AccountDetailsSectionProps {
   user: User;
 }
 
-export const AccountDetailsSection: React.FC<AccountDetailsSectionProps> = ({ user }) => {
+export const AccountDetailsSection: React.FC<AccountDetailsSectionProps> = ({
+  user,
+}) => {
   const { t } = useTranslation();
 
   const getLocale = useCallback(() => {
-    return i18n.language === 'zh' || i18n.language === 'zh-CN' ? 'zh-CN' : 'en-US';
+    return i18n.language === 'zh' || i18n.language === 'zh-CN'
+      ? 'zh-CN'
+      : 'en-US';
   }, []);
 
   return (
     <SectionWrapper>
-      <SectionTitle title={t('profile.accountInfo', 'Account Information')} icon="information-circle-outline" />
+      <SectionTitle
+        title={t('profile.accountInfo', 'Account Information')}
+        icon="information-circle-outline"
+      />
       <SettingsSectionCard>
         {user.nickname && (
           <>
@@ -60,7 +68,9 @@ export const AccountDetailsSection: React.FC<AccountDetailsSectionProps> = ({ us
             <HorizontalSplitter />
             <InfoRow>
               <InfoLabel>{t('profile.memberSince')}</InfoLabel>
-              <InfoValue>{formatDate(user.createdAt, getLocale(), t)}</InfoValue>
+              <InfoValue>
+                {formatDate(user.createdAt, getLocale(), t)}
+              </InfoValue>
             </InfoRow>
           </>
         )}
@@ -69,7 +79,9 @@ export const AccountDetailsSection: React.FC<AccountDetailsSectionProps> = ({ us
             <HorizontalSplitter />
             <InfoRow>
               <InfoLabel>{t('profile.lastUpdated')}</InfoLabel>
-              <InfoValue>{formatDate(user.updatedAt, getLocale(), t)}</InfoValue>
+              <InfoValue>
+                {formatDate(user.updatedAt, getLocale(), t)}
+              </InfoValue>
             </InfoRow>
           </>
         )}

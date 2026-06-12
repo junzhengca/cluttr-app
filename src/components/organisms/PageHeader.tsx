@@ -25,7 +25,7 @@ export interface PageHeaderProps {
   showRightButtons?: boolean;
 }
 
-const HeaderContainer = styled(View) <{ topInset: number }>`
+const HeaderContainer = styled(View)<{ topInset: number }>`
   background-color: ${({ theme }: StyledProps) => theme.colors.primaryLightest};
   padding-top: ${({ topInset }: { topInset: number }) => topInset + 10}px;
   padding-horizontal: ${({ theme }: StyledProps) => theme.spacing.md}px;

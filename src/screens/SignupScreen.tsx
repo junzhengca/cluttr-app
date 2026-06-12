@@ -1,13 +1,13 @@
 import React, { useState, useCallback, useRef } from 'react';
 import {
-    View,
-    Text,
-    ScrollView,
-    KeyboardAvoidingView,
-    Platform,
-    TouchableOpacity,
-    TextInput,
-    Image,
+  View,
+  Text,
+  ScrollView,
+  KeyboardAvoidingView,
+  Platform,
+  TouchableOpacity,
+  TextInput,
+  Image,
 } from 'react-native';
 import styled from 'styled-components/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -29,11 +29,11 @@ const Container = styled(View)`
 `;
 
 const ScrollContent = styled(ScrollView).attrs({
-    contentContainerStyle: {
-        flexGrow: 1,
-        justifyContent: 'center',
-    },
-    keyboardShouldPersistTaps: 'handled',
+  contentContainerStyle: {
+    flexGrow: 1,
+    justifyContent: 'center',
+  },
+  keyboardShouldPersistTaps: 'handled',
 })`
   flex: 1;
 `;
@@ -145,156 +145,167 @@ const SocialButton = styled(TouchableOpacity)`
 `;
 
 export const SignupScreen: React.FC = () => {
-    const { t } = useTranslation();
-    const theme = useTheme();
-    const insets = useSafeAreaInsets();
-    const navigation = useNavigation<NativeStackNavigationProp<AuthStackParamList>>();
-    const { settings } = useSettings();
-    const isDark = settings?.darkMode;
-    const { signup, googleLogin, appleLogin } = useAuth();
+  const { t } = useTranslation();
+  const theme = useTheme();
+  const insets = useSafeAreaInsets();
+  const navigation =
+    useNavigation<NativeStackNavigationProp<AuthStackParamList>>();
+  const { settings } = useSettings();
+  const isDark = settings?.darkMode;
+  const { signup, googleLogin, appleLogin } = useAuth();
 
-    const [nickname, setNickname] = useState('');
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-    const [error, setError] = useState<string | null>(null);
-    const [isLoading, setIsLoading] = useState(false);
+  const [nickname, setNickname] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
-    const emailRef = useRef<TextInput>(null);
-    const passwordRef = useRef<TextInput>(null);
+  const emailRef = useRef<TextInput>(null);
+  const passwordRef = useRef<TextInput>(null);
 
-    const handleSubmit = useCallback(async () => {
-        if (!email.trim() || !password.trim()) {
-            setError(t('signup.errors.emptyFields'));
-            return;
-        }
+  const handleSubmit = useCallback(async () => {
+    if (!email.trim() || !password.trim()) {
+      setError(t('signup.errors.emptyFields'));
+      return;
+    }
 
-        if (password.length < 6) {
-            setError(t('signup.errors.passwordTooShort'));
-            return;
-        }
+    if (password.length < 6) {
+      setError(t('signup.errors.passwordTooShort'));
+      return;
+    }
 
-        setIsLoading(true);
-        setError(null);
+    setIsLoading(true);
+    setError(null);
 
-        try {
-            await signup(email.trim(), password);
-            // Navigation handled by _layout.tsx on auth state change
-        } catch (err) {
-            const errorMessage =
-                err instanceof Error ? err.message : t('signup.errors.failed');
-            setError(errorMessage);
-        } finally {
-            setIsLoading(false);
-        }
-    }, [email, password, signup, t]);
+    try {
+      await signup(email.trim(), password);
+      // Navigation handled by _layout.tsx on auth state change
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error ? err.message : t('signup.errors.failed');
+      setError(errorMessage);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [email, password, signup, t]);
 
-    return (
-        <Container>
-            <StatusBar style={isDark ? 'light' : 'dark'} />
-            <KeyboardAvoidingView
-                style={{ flex: 1 }}
-                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-            >
-                <ScrollContent
-                    contentContainerStyle={{
-                        flexGrow: 1,
-                        justifyContent: 'center',
-                        paddingTop: insets.top + 20,
-                        paddingBottom: insets.bottom + 20,
-                    }}
-                >
-                    <Content>
-                        <LogoContainer>
-                            <MascotPlaceholder>
-                                <Image
-                                    source={require('../../assets/logo-transparent.png')}
-                                    style={{ width: 80, height: 80 }}
-                                    resizeMode="contain"
-                                />
-                            </MascotPlaceholder>
-                            <TitleText>{t('onboarding.joinTitle')}</TitleText>
-                            <SubtitleText>{t('onboarding.joinSubtitle')}</SubtitleText>
-                        </LogoContainer>
+  return (
+    <Container>
+      <StatusBar style={isDark ? 'light' : 'dark'} />
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      >
+        <ScrollContent
+          contentContainerStyle={{
+            flexGrow: 1,
+            justifyContent: 'center',
+            paddingTop: insets.top + 20,
+            paddingBottom: insets.bottom + 20,
+          }}
+        >
+          <Content>
+            <LogoContainer>
+              <MascotPlaceholder>
+                <Image
+                  source={require('../../assets/logo-transparent.png')}
+                  style={{ width: 80, height: 80 }}
+                  resizeMode="contain"
+                />
+              </MascotPlaceholder>
+              <TitleText>{t('onboarding.joinTitle')}</TitleText>
+              <SubtitleText>{t('onboarding.joinSubtitle')}</SubtitleText>
+            </LogoContainer>
 
-                        <FormContainer>
-                            <InputSpacing>
-                                <AuthTextInput
-                                    icon="person-outline"
-                                    placeholder={t('signup.fields.nickname')}
-                                    value={nickname}
-                                    onChangeText={setNickname}
-                                    autoCapitalize="words"
-                                    returnKeyType="next"
-                                    onSubmitEditing={() => emailRef.current?.focus()}
-                                />
-                            </InputSpacing>
+            <FormContainer>
+              <InputSpacing>
+                <AuthTextInput
+                  icon="person-outline"
+                  placeholder={t('signup.fields.nickname')}
+                  value={nickname}
+                  onChangeText={setNickname}
+                  autoCapitalize="words"
+                  returnKeyType="next"
+                  onSubmitEditing={() => emailRef.current?.focus()}
+                />
+              </InputSpacing>
 
-                            <InputSpacing>
-                                <AuthTextInput
-                                    ref={emailRef}
-                                    icon="mail-outline"
-                                    placeholder={t('signup.placeholders.email')}
-                                    value={email}
-                                    onChangeText={setEmail}
-                                    keyboardType="email-address"
-                                    autoCapitalize="none"
-                                    returnKeyType="next"
-                                    onSubmitEditing={() => passwordRef.current?.focus()}
-                                />
-                            </InputSpacing>
+              <InputSpacing>
+                <AuthTextInput
+                  ref={emailRef}
+                  icon="mail-outline"
+                  placeholder={t('signup.placeholders.email')}
+                  value={email}
+                  onChangeText={setEmail}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  returnKeyType="next"
+                  onSubmitEditing={() => passwordRef.current?.focus()}
+                />
+              </InputSpacing>
 
-                            <InputSpacing>
-                                <AuthTextInput
-                                    ref={passwordRef}
-                                    icon="lock-closed-outline"
-                                    placeholder={t('signup.placeholders.password')}
-                                    value={password}
-                                    onChangeText={setPassword}
-                                    secureTextEntry
-                                    returnKeyType="go"
-                                    onSubmitEditing={handleSubmit}
-                                    error={!!error}
-                                    errorMessage={error || undefined}
-                                />
-                            </InputSpacing>
+              <InputSpacing>
+                <AuthTextInput
+                  ref={passwordRef}
+                  icon="lock-closed-outline"
+                  placeholder={t('signup.placeholders.password')}
+                  value={password}
+                  onChangeText={setPassword}
+                  secureTextEntry
+                  returnKeyType="go"
+                  onSubmitEditing={handleSubmit}
+                  error={!!error}
+                  errorMessage={error || undefined}
+                />
+              </InputSpacing>
 
-                            <ButtonContainer>
-                                <GlassButton
-                                    text={t('signup.submit')}
-                                    onPress={handleSubmit}
-                                    icon="arrow-forward"
-                                    loading={isLoading}
-                                    disabled={isLoading}
-                                    tintColor={theme.colors.primary}
-                                    textColor={theme.colors.surface}
-                                />
-                            </ButtonContainer>
+              <ButtonContainer>
+                <GlassButton
+                  text={t('signup.submit')}
+                  onPress={handleSubmit}
+                  icon="arrow-forward"
+                  loading={isLoading}
+                  disabled={isLoading}
+                  tintColor={theme.colors.primary}
+                  textColor={theme.colors.surface}
+                />
+              </ButtonContainer>
 
-                            <SwitchRow>
-                                <SwitchText>{t('signup.switchToLogin')}</SwitchText>
-                                <TouchableOpacity onPress={() => navigation.navigate('Login')}>
-                                    <SwitchLinkText>{t('signup.switchToLoginLink')}</SwitchLinkText>
-                                </TouchableOpacity>
-                            </SwitchRow>
+              <SwitchRow>
+                <SwitchText>{t('signup.switchToLogin')}</SwitchText>
+                <TouchableOpacity onPress={() => navigation.navigate('Login')}>
+                  <SwitchLinkText>
+                    {t('signup.switchToLoginLink')}
+                  </SwitchLinkText>
+                </TouchableOpacity>
+              </SwitchRow>
 
-                            <DividerRow>
-                                <DividerLine />
-                                <DividerText>{t('login.socialDivider')}</DividerText>
-                                <DividerLine />
-                            </DividerRow>
+              <DividerRow>
+                <DividerLine />
+                <DividerText>{t('login.socialDivider')}</DividerText>
+                <DividerLine />
+              </DividerRow>
 
-                            <SocialRow>
-                                <SocialButton onPress={() => googleLogin()}>
-                                    <Ionicons name="logo-google" size={22} color={theme.colors.text} />
-                                </SocialButton>
-                                <SocialButton onPress={() => appleLogin()}>
-                                    <Ionicons name="logo-apple" size={22} color={theme.colors.text} />
-                                </SocialButton>
-                            </SocialRow>
-                        </FormContainer>
-                    </Content>
-                </ScrollContent>
-            </KeyboardAvoidingView>
-        </Container>
-    );
+              <SocialRow>
+                <SocialButton onPress={() => googleLogin()}>
+                  <Ionicons
+                    name="logo-google"
+                    size={22}
+                    color={theme.colors.text}
+                  />
+                </SocialButton>
+                <SocialButton onPress={() => appleLogin()}>
+                  <Ionicons
+                    name="logo-apple"
+                    size={22}
+                    color={theme.colors.text}
+                  />
+                </SocialButton>
+              </SocialRow>
+            </FormContainer>
+          </Content>
+        </ScrollContent>
+      </KeyboardAvoidingView>
+    </Container>
+  );
 };

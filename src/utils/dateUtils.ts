@@ -15,7 +15,8 @@ export const isExpiringSoon = (
   if (!expiryDate) return false;
 
   try {
-    const expiry = typeof expiryDate === 'string' ? new Date(expiryDate) : expiryDate;
+    const expiry =
+      typeof expiryDate === 'string' ? new Date(expiryDate) : expiryDate;
     const now = new Date();
     const futureDate = new Date(now.getTime() + days * 24 * 60 * 60 * 1000);
 
@@ -38,7 +39,9 @@ export const isExpiringSoon = (
  * @param days - Number of days to check ahead (default: 7)
  * @returns Number of items expiring soon
  */
-export const countExpiringItems = <T extends { batches?: { expiryDate?: string | null }[] }>(
+export const countExpiringItems = <
+  T extends { batches?: { expiryDate?: string | null }[] },
+>(
   items: T[],
   days: number = 7
 ): number => {
@@ -51,5 +54,3 @@ export const countExpiringItems = <T extends { batches?: { expiryDate?: string |
     return expiryDates.length > 0 && isExpiringSoon(expiryDates[0], days);
   }).length;
 };
-
-

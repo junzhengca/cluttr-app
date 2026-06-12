@@ -14,25 +14,26 @@ Cluttr: React Native home inventory app with Expo (expo-router, entry `app/_layo
 
 **Any change that enables, disables, or reconfigures a Firebase service MUST be accompanied by an update to the configuration files listed below.** These files serve as the Infrastructure-as-Code (IaC) source of truth so that Firebase project state can be reproduced from the repository.
 
-| File | Purpose |
-|------|---------|
-| `firebase.json` | Declares enabled services, Auth providers, Firestore rules/indexes, Storage rules |
-| `.firebaserc` | Maps environment aliases (`default`, `staging`, `production`) to Firebase project IDs |
-| `firestore.rules` | Firestore security rules — the entire authorization model (roles, sharing toggles, invitations) lives here |
+| File                     | Purpose                                                                                                                                  |
+| ------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| `firebase.json`          | Declares enabled services, Auth providers, Firestore rules/indexes, Storage rules                                                        |
+| `.firebaserc`            | Maps environment aliases (`default`, `staging`, `production`) to Firebase project IDs                                                    |
+| `firestore.rules`        | Firestore security rules — the entire authorization model (roles, sharing toggles, invitations) lives here                               |
 | `firestore.indexes.json` | Composite indexes (currently empty — the only query is a single `array-contains`; adding `orderBy` to the homes query would require one) |
-| `storage.rules` | Storage security rules (avatars, home-scoped media) |
+| `storage.rules`          | Storage security rules (avatars, home-scoped media)                                                                                      |
 
 ### Auth Providers
 
 Currently enabled (see `firebase.json`):
 
-| Provider | Notes |
-|----------|-------|
-| Email / Password | Standard sign-in; password-reset emails sent by Firebase |
-| Google | Uses `@react-native-google-signin/google-signin` on the client; requires `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID` in `.env` |
-| Apple | iOS 13+ only; uses `expo-apple-authentication` + Firebase Apple credential |
+| Provider         | Notes                                                                                                                 |
+| ---------------- | --------------------------------------------------------------------------------------------------------------------- |
+| Email / Password | Standard sign-in; password-reset emails sent by Firebase                                                              |
+| Google           | Uses `@react-native-google-signin/google-signin` on the client; requires `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID` in `.env` |
+| Apple            | iOS 13+ only; uses `expo-apple-authentication` + Firebase Apple credential                                            |
 
 To add a new provider:
+
 1. Enable it in Firebase Console → Authentication → Sign-in method.
 2. Add the provider entry under `auth.providers` in `firebase.json`.
 3. Implement the sign-in flow in `src/services/FirebaseAuthService.ts`.
@@ -88,21 +89,21 @@ Components use atomic design: `src/components/{atoms,molecules,organisms}`.
 
 ## WHERE TO LOOK
 
-| Task                | Location                                                                             | Notes                                            |
-| ------------------- | ------------------------------------------------------------------------------------ | ------------------------------------------------ |
-| Redux state/actions | `src/store/slices/*.ts`, `src/store/sagas/*.ts`                                      | Use domain hooks from `src/store/hooks.ts`       |
-| Firestore refs/converters/channels | `src/services/firebase/firestoreRefs.ts`                              | Collection refs, doc⇄domain converters, `createSnapshotChannel`, `fireWrite` |
-| Data writes         | `src/services/{Inventory,Todo,Location,InventoryCategory,TodoCategory}Service.ts`     | Slim write helpers built on `createCrudService.ts`; import singletons directly |
-| Homes/members       | `src/services/HomeService.ts`                                                        | Snapshot-fed; cascade delete, leave/remove member |
-| Invitations         | `src/services/InvitationService.ts`                                                  | Code create/validate/accept (rules-validated)    |
-| User profiles       | `src/services/UserService.ts`                                                        | `users/{uid}` docs: ensure, update, member join  |
-| Navigation          | `src/navigation/RootStack.tsx`, `src/navigation/TabNavigator.tsx`                    | 2-level: RootStack (modals) + MainTabs (screens) |
-| Form patterns       | `src/components/organisms/bottom-sheets/ItemFormBottomSheet.tsx`                     | IME-safe uncontrolled inputs (create + edit modes) |
-| Sheet lifecycle     | `src/hooks/useBottomSheetLifecycle.ts`, `src/components/organisms/bottom-sheets/shared/sheetPrimitives.tsx` | Open/close/reset lifecycle + shared sheet styled primitives |
-| Swipe actions       | `src/components/molecules/SwipeableRow.tsx`                                          | Shared iOS-style swipe-to-edit/delete; used by HomeScreen, ItemDetailsScreen, NotesScreen, MemberCard |
-| Styling             | `src/theme/ThemeProvider.tsx`, `src/utils/styledComponents.ts`                       | Theme via `useTheme()`, styled via `StyledProps` |
-| Firebase auth       | `src/services/FirebaseAuthService.ts`                                                | Email/Google/Apple sign-in, password reset       |
-| Security rules      | `firestore.rules`, `storage.rules`                                                   | The entire authorization model                   |
+| Task                               | Location                                                                                                    | Notes                                                                                                 |
+| ---------------------------------- | ----------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| Redux state/actions                | `src/store/slices/*.ts`, `src/store/sagas/*.ts`                                                             | Use domain hooks from `src/store/hooks.ts`                                                            |
+| Firestore refs/converters/channels | `src/services/firebase/firestoreRefs.ts`                                                                    | Collection refs, doc⇄domain converters, `createSnapshotChannel`, `fireWrite`                          |
+| Data writes                        | `src/services/{Inventory,Todo,Location,InventoryCategory,TodoCategory}Service.ts`                           | Slim write helpers built on `createCrudService.ts`; import singletons directly                        |
+| Homes/members                      | `src/services/HomeService.ts`                                                                               | Snapshot-fed; cascade delete, leave/remove member                                                     |
+| Invitations                        | `src/services/InvitationService.ts`                                                                         | Code create/validate/accept (rules-validated)                                                         |
+| User profiles                      | `src/services/UserService.ts`                                                                               | `users/{uid}` docs: ensure, update, member join                                                       |
+| Navigation                         | `src/navigation/RootStack.tsx`, `src/navigation/TabNavigator.tsx`                                           | 2-level: RootStack (modals) + MainTabs (screens)                                                      |
+| Form patterns                      | `src/components/organisms/bottom-sheets/ItemFormBottomSheet.tsx`                                            | IME-safe uncontrolled inputs (create + edit modes)                                                    |
+| Sheet lifecycle                    | `src/hooks/useBottomSheetLifecycle.ts`, `src/components/organisms/bottom-sheets/shared/sheetPrimitives.tsx` | Open/close/reset lifecycle + shared sheet styled primitives                                           |
+| Swipe actions                      | `src/components/molecules/SwipeableRow.tsx`                                                                 | Shared iOS-style swipe-to-edit/delete; used by HomeScreen, ItemDetailsScreen, NotesScreen, MemberCard |
+| Styling                            | `src/theme/ThemeProvider.tsx`, `src/utils/styledComponents.ts`                                              | Theme via `useTheme()`, styled via `StyledProps`                                                      |
+| Firebase auth                      | `src/services/FirebaseAuthService.ts`                                                                       | Email/Google/Apple sign-in, password reset                                                            |
+| Security rules                     | `firestore.rules`, `storage.rules`                                                                          | The entire authorization model                                                                        |
 
 ## CONVENTIONS
 
@@ -125,7 +126,7 @@ Components use atomic design: `src/components/{atoms,molecules,organisms}`.
 - **NEVER** change the Firestore schema or membership model without updating `firestore.rules` in the same change (IaC rule above)
 - **NEVER** use controlled inputs (`value` prop) in bottom sheet modals - breaks IME composition
 - **NEVER** use the deprecated `Swipeable` from `react-native-gesture-handler` or hand-roll swipe-action UI — use the `SwipeableRow` molecule (built on `ReanimatedSwipeable`; legacy usages fully migrated 2026-06-11)
-- **NEVER** use Web OAuth client IDs for authentication - only iOS (`EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID`) and Android (`EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID`). *Note: `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID` is used for Firebase Auth configuration only.*
+- **NEVER** use Web OAuth client IDs for authentication - only iOS (`EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID`) and Android (`EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID`). _Note: `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID` is used for Firebase Auth configuration only._
 - **NEVER** use `console.log()` - use Logger from `src/utils/Logger.ts`
 - **NEVER** suppress type errors with `as any` or `@ts-ignore`
 - **ALWAYS** run `npm run lint` after edits (enforced by `.cursor/rules/eslint-ensure.mdc`)
@@ -199,6 +200,7 @@ make build-ios-production-local      # Local production build (auto-increments b
 **Canonical loop**: edit code → Fast Refresh applies automatically (use `reload` after .env/i18n changes) → `screenshot` / `ui` / `logs` to observe → `tap`/`type` to interact.
 
 **Harness tips (learned in practice):**
+
 - RN `TextInput` placeholders show up as TextField **values**, not labels, in the accessibility tree — tap inputs by coordinates from `ui` frames; tap a field first, then `type`.
 - Some buttons (e.g. styled Touchables) expose no accessibility label — fall back to coordinate taps. Frames in `ui` are in points and match screenshot pixels ÷ 3.
 - Stray typing with no focused field can open the Expo dev menu — close it via `tap --label "Close"`.
@@ -207,6 +209,7 @@ make build-ios-production-local      # Local production build (auto-increments b
 - Swipe a row left to reveal swipe actions: `swipe --start-x 360 --start-y <rowY> --end-x 100 --end-y <rowY>`. Pill labels ("Modify"/"Delete") can collide with other on-screen buttons — tap by coordinates when ambiguous (more in E2E_TESTS.md §2.3).
 
 **Test accounts** (Firebase email/password, created via the signup UI):
+
 - Primary: `juncapersonal+cluttr-ai-test@gmail.com` / `Cluttr-AI-e16c71d6e9f2` (UID `LhiZ0HUZIIYL4NdA56Ce55jt4Wo1`, nickname "Cluttr Tester")
 - Secondary (for sharing/invitation tests): `juncapersonal+cluttr-ai-test2@gmail.com` / `Cluttr-AI-e16c71d6e9f2` (nickname "Tester Two", member of the primary account's "My Home")
 

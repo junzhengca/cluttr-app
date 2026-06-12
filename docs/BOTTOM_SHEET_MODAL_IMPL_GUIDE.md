@@ -23,9 +23,11 @@ All bottom sheets should use the `BottomSheetModal` component from `@gorhom/bott
 ## 2. Layout Structure
 
 ### Main Wrapper
+
 Use `BottomSheetView` (not `ScrollView` unless content is very long) to wrap your content. This correctly communicates content size to the modal.
 
 ### Content Padding
+
 **CRITICAL**: You must add `paddingBottom` to your main content container to account for the fixed footer height. Otherwise, the last form fields will be hidden behind the button.
 
 ```tsx
@@ -45,6 +47,7 @@ const footerHeight = 82 + (isKeyboardVisible ? 0 : insets.bottom);
 Use a fixed footer for primary actions (e.g., "Done", "Save").
 
 ### Styling
+
 The footer must handle safe area insets dynamically. When the keyboard is open, the bottom safe area padding should be **removed** so the button sits flush with the keyboard.
 
 ```tsx
@@ -54,7 +57,7 @@ const FooterContainer = styled.View<{
 }>`
   background-color: ${({ theme }) => theme.colors.background};
   // ... shadow and fixed padding ...
-  
+
   // Conditional bottom padding
   padding-bottom: ${({ bottomInset, showSafeArea, theme }) =>
     showSafeArea ? bottomInset + theme.spacing.md : theme.spacing.md}px;
@@ -62,14 +65,15 @@ const FooterContainer = styled.View<{
 ```
 
 ### Implementation
+
 Use the `useKeyboardVisibility` hook to control the padding.
 
 ```tsx
 const { isKeyboardVisible } = useKeyboardVisibility();
 
 const renderFooter = useCallback(() => (
-    <FooterContainer 
-        bottomInset={insets.bottom} 
+    <FooterContainer
+        bottomInset={insets.bottom}
         showSafeArea={!isKeyboardVisible} // Remove safe area when keyboard is up
     >
         <Button label="Done" fullWidth ... />
@@ -80,28 +84,31 @@ const renderFooter = useCallback(() => (
 ## 4. Input Handling (IME & Clearing)
 
 ### Uncontrolled Inputs
+
 To support Chinese/Japanese input methods (IME), use `UncontrolledInput` with `defaultValue`. Standard controlled inputs (`value` prop) will interrupt composition.
 
 ### Programmatic Clearing
+
 Since visual state is uncontrolled, you must use `refs` to clear inputs after successful submission.
 
 ```tsx
 const nameInputRef = useRef<TextInput>(null);
 
 const handleSubmit = async () => {
-    await createItem();
-    
-    // 1. Reset state
-    setName('');
-    
-    // 2. Clear visual input
-    nameInputRef.current?.clear();
-    
-    handleClose();
+  await createItem();
+
+  // 1. Reset state
+  setName('');
+
+  // 2. Clear visual input
+  nameInputRef.current?.clear();
+
+  handleClose();
 };
 ```
 
 ### Spacing
+
 Keep form spacing tight. Use `gap: theme.spacing.sm` (approx 8px) or `md` between related fields. Avoid large gaps (`lg`) inside standard forms.
 
 ```tsx
@@ -116,9 +123,9 @@ const FormContainer = styled.View`
 
 Always use the existing atomic components to ensure visual consistency:
 
-*   **Header**: `<BottomSheetHeader title="..." subtitle="..." onClose={...} />`
-*   **Button**: `<Button variant="primary" fullWidth ... />`
-*   **Inputs**: `<UncontrolledInput ... />` wrapped in `<FormSection label="...">`
+- **Header**: `<BottomSheetHeader title="..." subtitle="..." onClose={...} />`
+- **Button**: `<Button variant="primary" fullWidth ... />`
+- **Inputs**: `<UncontrolledInput ... />` wrapped in `<FormSection label="...">`
 
 ## Summary Checklist
 

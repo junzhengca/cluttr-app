@@ -17,7 +17,9 @@ export const useNotesTodoActions = ({
 
   const [newTodoText, setNewTodoText] = useState('');
   const [newTodoNote, setNewTodoNote] = useState('');
-  const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(
+    null
+  );
   const [showNotesField, setShowNotesField] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
 
@@ -32,7 +34,11 @@ export const useNotesTodoActions = ({
 
   const handleAddTodo = async () => {
     if (newTodoText.trim()) {
-      await addTodo(newTodoText.trim(), newTodoNote.trim() || undefined, selectedCategoryId || undefined);
+      await addTodo(
+        newTodoText.trim(),
+        newTodoNote.trim() || undefined,
+        selectedCategoryId || undefined
+      );
       setNewTodoText('');
       setNewTodoNote('');
       setShowNotesField(false);

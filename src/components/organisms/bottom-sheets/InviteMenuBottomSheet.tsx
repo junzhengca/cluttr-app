@@ -1,6 +1,10 @@
 import React, { useCallback, useMemo } from 'react';
 import { View, TouchableOpacity, Share } from 'react-native';
-import { BottomSheetModal, BottomSheetBackdrop, BottomSheetScrollView } from '@gorhom/bottom-sheet';
+import {
+  BottomSheetModal,
+  BottomSheetBackdrop,
+  BottomSheetScrollView,
+} from '@gorhom/bottom-sheet';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import styled from 'styled-components/native';
@@ -25,7 +29,8 @@ const IconContainer = styled(View)`
   width: 48px;
   height: 48px;
   border-radius: 24px;
-  background-color: ${({ theme }: StyledProps) => theme.colors.primaryExtraLight};
+  background-color: ${({ theme }: StyledProps) =>
+    theme.colors.primaryExtraLight};
   align-items: center;
   justify-content: center;
   margin-right: ${({ theme }: StyledProps) => theme.spacing.md}px;
@@ -135,7 +140,11 @@ export const InviteMenuBottomSheet: React.FC<InviteMenuBottomSheetProps> = ({
     >
       <ContentContainer>
         <BottomSheetHeader
-          title={showQRCode ? t('share.invite.qrCode.title') : t('share.invite.title')}
+          title={
+            showQRCode
+              ? t('share.invite.qrCode.title')
+              : t('share.invite.title')
+          }
           subtitle={
             showQRCode
               ? t('share.invite.qrCode.subtitle')
@@ -155,29 +164,52 @@ export const InviteMenuBottomSheet: React.FC<InviteMenuBottomSheetProps> = ({
             <>
               <OptionContainer onPress={handleShowQRCode} activeOpacity={0.8}>
                 <IconContainer>
-                  <Ionicons name="qr-code-outline" size={24} color={theme.colors.primary} />
+                  <Ionicons
+                    name="qr-code-outline"
+                    size={24}
+                    color={theme.colors.primary}
+                  />
                 </IconContainer>
                 <OptionTextContainer>
                   <OptionTitle>{t('share.invite.showQRCode')}</OptionTitle>
-                  <OptionDescription>{t('share.invite.showQRCodeDescription')}</OptionDescription>
+                  <OptionDescription>
+                    {t('share.invite.showQRCodeDescription')}
+                  </OptionDescription>
                 </OptionTextContainer>
-                <Ionicons name="chevron-forward" size={20} color={theme.colors.textSecondary} />
+                <Ionicons
+                  name="chevron-forward"
+                  size={20}
+                  color={theme.colors.textSecondary}
+                />
               </OptionContainer>
 
               <OptionContainer onPress={handleShareLink} activeOpacity={0.8}>
                 <IconContainer>
-                  <Ionicons name="share-outline" size={24} color={theme.colors.primary} />
+                  <Ionicons
+                    name="share-outline"
+                    size={24}
+                    color={theme.colors.primary}
+                  />
                 </IconContainer>
                 <OptionTextContainer>
                   <OptionTitle>{t('share.invite.shareLink')}</OptionTitle>
-                  <OptionDescription>{t('share.invite.shareLinkDescription')}</OptionDescription>
+                  <OptionDescription>
+                    {t('share.invite.shareLinkDescription')}
+                  </OptionDescription>
                 </OptionTextContainer>
-                <Ionicons name="chevron-forward" size={20} color={theme.colors.textSecondary} />
+                <Ionicons
+                  name="chevron-forward"
+                  size={20}
+                  color={theme.colors.textSecondary}
+                />
               </OptionContainer>
             </>
           ) : (
             <QRCodeViewContainer>
-              <QRCodeDisplay invitationCode={invitationCode} invitationLink={invitationLink} />
+              <QRCodeDisplay
+                invitationCode={invitationCode}
+                invitationLink={invitationLink}
+              />
             </QRCodeViewContainer>
           )}
         </BottomSheetScrollView>

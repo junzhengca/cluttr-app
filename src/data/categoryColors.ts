@@ -19,4 +19,3 @@ export const categoryColors: string[] = [
   '#8E44AD', // Dark Purple
   '#C0392B', // Dark Red
 ];
-

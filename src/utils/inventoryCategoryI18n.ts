@@ -39,7 +39,9 @@ export function getInventoryCategoryDisplayName(
   t: InventoryCategoryTranslateFn
 ): string {
   if (DEFAULT_INVENTORY_CATEGORY_IDS.has(category.id)) {
-    return t(`inventoryCategories.${category.id}`, { defaultValue: category.name });
+    return t(`inventoryCategories.${category.id}`, {
+      defaultValue: category.name,
+    });
   }
   return category.name;
 }

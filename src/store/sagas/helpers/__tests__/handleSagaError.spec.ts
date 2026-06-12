@@ -56,7 +56,10 @@ describe('handleSagaError', () => {
     // First next: logs synchronously, then yields the put effect.
     const first = gen.next();
     expect(sagaLogger.error).toHaveBeenCalledTimes(1);
-    expect(sagaLogger.error).toHaveBeenCalledWith('Failed to create item', error);
+    expect(sagaLogger.error).toHaveBeenCalledWith(
+      'Failed to create item',
+      error
+    );
     expect(first.done).toBe(false);
     expect(first.value).toEqual(put(setError('boom')));
 
@@ -84,7 +87,7 @@ describe('handleSagaError', () => {
     expect(mockedT).toHaveBeenCalledTimes(1);
     expect(mockedT).toHaveBeenCalledWith(
       'errors.createItemFailed',
-      'Failed to create item',
+      'Failed to create item'
     );
     expect(first.value).toEqual(put(setError('Translated fallback')));
 
@@ -104,7 +107,7 @@ describe('handleSagaError', () => {
     // setError was still dispatched and the logger still ran.
     expect(sagaLogger.error).toHaveBeenCalledWith(
       'Failed to create item',
-      expect.any(Error),
+      expect.any(Error)
     );
   });
 });

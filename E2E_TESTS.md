@@ -11,21 +11,21 @@ validated the same day after `SwipeableRow` shipped), iPhone 16 Pro simulator.
 
 ## 1. PREREQUISITES
 
-| Requirement | Check |
-|---|---|
-| Dev client installed & Metro healthy | `./scripts/harness.sh doctor` |
-| App boots | `./scripts/harness.sh up` (auto-boots sim, starts Metro, launches app) |
-| Firebase CLI authed (only needed for admin verification/mutation steps) | `firebase projects:list` shows `cluttr-app-f3c18 (current)` |
-| Firestore rules deployed | `firebase deploy --only firestore` (rules live in `firestore.rules`) |
-| Storage rules deployed | `firebase deploy --only storage` |
-| Native deps unchanged since last build | If `package.json` native deps or `app.json` plugins changed: `./scripts/harness.sh build` (slow) |
+| Requirement                                                             | Check                                                                                            |
+| ----------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| Dev client installed & Metro healthy                                    | `./scripts/harness.sh doctor`                                                                    |
+| App boots                                                               | `./scripts/harness.sh up` (auto-boots sim, starts Metro, launches app)                           |
+| Firebase CLI authed (only needed for admin verification/mutation steps) | `firebase projects:list` shows `cluttr-app-f3c18 (current)`                                      |
+| Firestore rules deployed                                                | `firebase deploy --only firestore` (rules live in `firestore.rules`)                             |
+| Storage rules deployed                                                  | `firebase deploy --only storage`                                                                 |
+| Native deps unchanged since last build                                  | If `package.json` native deps or `app.json` plugins changed: `./scripts/harness.sh build` (slow) |
 
 **Test accounts** (Firebase email/password — also documented in AGENTS.md):
 
-| | Email | Password | Notes |
-|---|---|---|---|
-| **A (primary)** | `juncapersonal+cluttr-ai-test@gmail.com` | `Cluttr-AI-e16c71d6e9f2` | UID `LhiZ0HUZIIYL4NdA56Ce55jt4Wo1`, nickname "Cluttr Tester", owner of "My Home" |
-| **B (member)** | `juncapersonal+cluttr-ai-test2@gmail.com` | `Cluttr-AI-e16c71d6e9f2` | Nickname "Tester Two", member of A's home + owns its own "My Home" |
+|                 | Email                                     | Password                 | Notes                                                                            |
+| --------------- | ----------------------------------------- | ------------------------ | -------------------------------------------------------------------------------- |
+| **A (primary)** | `juncapersonal+cluttr-ai-test@gmail.com`  | `Cluttr-AI-e16c71d6e9f2` | UID `LhiZ0HUZIIYL4NdA56Ce55jt4Wo1`, nickname "Cluttr Tester", owner of "My Home" |
+| **B (member)**  | `juncapersonal+cluttr-ai-test2@gmail.com` | `Cluttr-AI-e16c71d6e9f2` | Nickname "Tester Two", member of A's home + owns its own "My Home"               |
 
 ---
 
@@ -68,7 +68,7 @@ xcrun simctl openurl booted "com.cluttrapp.cluttr://?inviteCode=<CODE>"         
 3. **RN TextInput placeholders appear as the field's `AXValue`** — a field "containing" its
    placeholder text is actually empty.
 4. **Uncontrolled inputs with `defaultValue`** (nickname setup): typing inserts at the cursor
-   *inside* the default text. To replace: tap the right end of the field, then
+   _inside_ the default text. To replace: tap the right end of the field, then
    `for i in $(seq 1 50); do ./scripts/harness.sh key 42 >/dev/null 2>&1; done`, then `type`.
 5. **System dialogs (notifications, Save Password, photo permission) are NOT in the app AX tree.**
    Tap them by screenshot coordinates. Standard two-button alert: buttons sit ≈ 60% of width
@@ -93,6 +93,7 @@ xcrun simctl openurl booted "com.cluttrapp.cluttr://?inviteCode=<CODE>"         
 ### 2.4 Reading results
 
 For every test case, verify through up to three lenses:
+
 - **UI**: `screenshot` + Read the PNG.
 - **Logs**: `./scripts/harness.sh logs -n 40 | grep -viE "deprecat"` — look for
   `[SAGA]`/`[AUTH]` lines and the absence of `permission-denied` (except where expected).
@@ -130,6 +131,7 @@ fetch('https://oauth2.googleapis.com/token', {
 ```
 
 Common operations:
+
 - **Read a doc**: `GET {base}/homes/{homeId}` or `.../homes/{homeId}/inventory/{itemId}`
 - **List a collection**: `GET {base}/homes/{homeId}/inventory`
 - **Patch one field** (used for real-time tests):
@@ -138,6 +140,7 @@ Common operations:
 - **Delete a doc**: `DELETE {base}/.../{doc}`
 
 Firestore schema (full details in AGENTS.md → FIREBASE):
+
 ```
 users/{uid}                                     invitations/{code}
 homes/{homeId}            (members map, memberIds[], settings, invitationCode)
@@ -148,12 +151,12 @@ homes/{homeId}/inventory|inventoryCategories|locations|todos|todoCategories/{id}
 
 ## 4. STATE RESET PROCEDURES
 
-| Goal | Procedure |
-|---|---|
-| Reset in-memory app state | `./scripts/harness.sh reload` (Firebase session persists) |
-| Sign out | Avatar (top-right) → Profile → scroll down → "Log Out" → confirm |
-| Reset a form mid-test | Close the sheet (X button) and reopen, or `reload` |
-| Delete test data created by a run | Admin REST `DELETE` on the docs you created (preferred), or delete via app UI |
+| Goal                                  | Procedure                                                                                                                |
+| ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| Reset in-memory app state             | `./scripts/harness.sh reload` (Firebase session persists)                                                                |
+| Sign out                              | Avatar (top-right) → Profile → scroll down → "Log Out" → confirm                                                         |
+| Reset a form mid-test                 | Close the sheet (X button) and reopen, or `reload`                                                                       |
+| Delete test data created by a run     | Admin REST `DELETE` on the docs you created (preferred), or delete via app UI                                            |
 | Nuke and re-install app (last resort) | `xcrun simctl uninstall booted com.cluttrapp.cluttr && ./scripts/harness.sh up` — Firebase session is lost; log in again |
 
 **Convention:** prefix names created during automated runs with `E2E-` (e.g. `E2E-Test Item`) so
@@ -173,6 +176,7 @@ Run order matters only where stated. Each test case lists **Pre** (preconditions
 ### CUJ-1 — AUTHENTICATION & SESSION
 
 #### TC-1.1 Email/password login
+
 - **Pre:** App on Login screen (if logged in, log out first).
 - **Steps:**
   1. `ui` → get TextField frames (email ≈ y 396, password ≈ y 464 in points).
@@ -187,23 +191,27 @@ Run order matters only where stated. Each test case lists **Pre** (preconditions
 - **Failure modes:** error banner on login screen (check logs for `auth/...` codes).
 
 #### TC-1.2 Session restore (cold start / reload)
+
 - **Pre:** Logged in as A.
 - **Steps:** `./scripts/harness.sh reload` → wait ~6 s → screenshot.
 - **Expect:** Lands on the main screen WITHOUT showing Login. Logs:
   `Firebase user found, restoring session` → `Homes snapshot: ...`.
 
 #### TC-1.3 Wrong password rejected
+
 - **Pre:** Login screen.
 - **Steps:** As TC-1.1 but password `wrong-password-123`.
 - **Expect:** Stays on Login with an error message; logs show `Login error`. No crash.
 
 #### TC-1.4 Logout
+
 - **Pre:** Logged in.
 - **Steps:** Avatar (top-right, ≈ 359, 96) → Profile → swipe up → tap "Log Out" row → confirm "Log Out" in alert.
 - **Expect:** Returns to Login screen. Logs: `Clearing auth data`, `Closing homes subscription`.
   Re-`reload` should still show Login (session actually cleared).
 
 #### TC-1.5 Signup (creates real Firebase users — use a fresh `+suffix` email, e.g. `juncapersonal+cluttr-e2e-<timestamp>@gmail.com`)
+
 - **Pre:** Login screen.
 - **Steps:**
   1. Tap "Register now" (≈ 271, 633).
@@ -216,6 +224,7 @@ Run order matters only where stated. Each test case lists **Pre** (preconditions
 - **Cleanup:** Delete the user in Firebase Console → Authentication (or leave; harmless), and admin-delete its home doc + `users/{uid}` doc.
 
 #### TC-1.6 Password reset email (smoke)
+
 - **Steps:** Login screen → "Forgot your password?" → enter account A email → submit.
 - **Expect:** Success toast ("Reset email sent"); no crash. (Email content not verifiable here.)
 
@@ -224,6 +233,7 @@ Run order matters only where stated. Each test case lists **Pre** (preconditions
 ### CUJ-2 — INVENTORY CRUD
 
 #### TC-2.1 Create item (with location dependency)
+
 - **Pre:** Logged in as A, Home tab.
 - **Steps:**
   1. Tap FAB `+` (≈ 358, 711) → tap "Manually Add" row (visible label; ≈ 282, 648).
@@ -237,6 +247,7 @@ Run order matters only where stated. Each test case lists **Pre** (preconditions
 - **Cleanup:** TC-2.4 deletes it.
 
 #### TC-2.2 Edit item fields (debounced write)
+
 - **Pre:** `E2E-Test Item` exists.
 - **Steps:**
   1. Tap the item card → ItemDetails screen.
@@ -247,21 +258,25 @@ Run order matters only where stated. Each test case lists **Pre** (preconditions
   `updatedAt` change once).
 
 #### TC-2.3 Batches (quantity) update
+
 - **Pre:** On ItemDetails of `E2E-Test Item`.
 - **Steps:** Add/edit a batch (quantity +1) via the batch UI.
 - **Expect:** UI updates instantly; admin REST: `batches` array reflects the change atomically on the item doc.
 
 #### TC-2.4 Delete item
+
 - **Steps:** From the item's context menu (long-press the card on Home), the swipe Delete pill
   (TC-2.6), or ItemDetails → delete → confirm.
 - **Expect:** Item disappears immediately; count decrements; admin REST: doc gone.
 
 #### TC-2.5 Filters smoke
+
 - **Steps:** Home tab → "Filter" → filter by location "Kitchen" → screenshot → clear filter.
 - **Expect:** Only Kitchen items listed; clearing restores the full list. (Pre-existing nit: cards
   display raw location IDs like `loc-...` for custom locations — NOT a failure.)
 
 #### TC-2.6 Swipe actions on item cards (SwipeableRow)
+
 - **Pre:** Home tab, ≥ 2 items (create `E2E-` items as needed).
 - **Steps:**
   1. `ui` → get a card's frame, compute center y. Swipe left:
@@ -277,6 +292,7 @@ Run order matters only where stated. Each test case lists **Pre** (preconditions
   long-press still opens the ContextMenu on the same cards.
 
 #### TC-2.7 Swipe actions on batch cards (ItemDetails)
+
 - **Pre:** ItemDetails of an item; add a disposable batch first (Add Batch → set Vendor `E2E` →
   Save) so the delete step doesn't touch baseline data.
 - **Steps:**
@@ -294,25 +310,30 @@ Run order matters only where stated. Each test case lists **Pre** (preconditions
 ### CUJ-3 — TODOS
 
 #### TC-3.1 Add todo
+
 - **Pre:** Logged in as A → Notes tab (`tap --label "Notes"`).
 - **Steps:** Tap "Add a new todo..." input (≈ 150, 260) → `type 'E2E-Buy eggs'` → `key 40` (return).
 - **Expect:** Todo appears under "Pending (n)" immediately; admin REST: doc in `homes/{homeId}/todos` with `completed: false`.
 
 #### TC-3.2 Toggle completion
+
 - **Steps:** Tap the todo's circle checkbox (left edge of the row, ≈ x 40).
 - **Expect:** Row moves to "Completed (n)" with strikethrough; doc has `completed: true` and a `completedAt` ISO string. Toggle back → returns to Pending, `completedAt` null.
 
 #### TC-3.3 Edit todo text
+
 - **Steps:** Tap the todo row to open edit → change text → save.
 - **Expect:** Updated text in list and in Firestore.
 
 #### TC-3.4 Delete todo (swipe)
+
 - **Steps:** Swipe the todo row left (TC-2.6 syntax) → red "Delete" pill (icon + label, sized to
   the row) → tap it → "Delete Todo" alert (row closes behind it) → confirm.
 - **Expect:** Gone from UI and Firestore. Tapping the row's checkbox/text still toggles/edits
   (swipe wrapper must not eat taps).
 
 #### TC-3.5 Todo categories smoke
+
 - **Steps:** Via the category UI on Notes (Planning List header area): create category `E2E-Cat`, assign it, then delete the category.
 - **Expect:** Category appears/disappears live; docs in `homes/{homeId}/todoCategories` match.
 
@@ -321,10 +342,12 @@ Run order matters only where stated. Each test case lists **Pre** (preconditions
 ### CUJ-4 — LOCATIONS & INVENTORY CATEGORIES
 
 #### TC-4.1 Create location (inline from Add-Item sheet)
+
 - **Steps:** Add-Item sheet → `+` under Location (≈ 56, 306) → "Create Location" sheet → tap name field → `type 'E2E-Garage'` → optionally tap an icon → tap "Create Location" (≈ 200, 803).
 - **Expect:** Returns to Add-Item sheet; new chip appears **immediately** (live listener). Admin REST: doc in `homes/{homeId}/locations`.
 
 #### TC-4.2 Inventory category create/delete
+
 - **Steps:** Add-Item sheet → `+` under Category → create `E2E-Cleaning` → verify chip; then delete it via the category management UI (ItemDetails/category selector context menu).
 - **Expect:** Live appearance/removal; `homes/{homeId}/inventoryCategories` matches.
 
@@ -333,18 +356,22 @@ Run order matters only where stated. Each test case lists **Pre** (preconditions
 ### CUJ-5 — HOMES (MULTI-HOME, SETTINGS, DELETE)
 
 #### TC-5.1 Create + switch home
+
 - **Steps:** Tap "My Home ˅" header (≈ 75, 104) → "Add New Property" → name `E2E-Home` → submit. Then use the switcher to flip between homes.
 - **Expect:** New home selected automatically after creation; switching re-subscribes listeners — logs show fresh snapshots per domain, item list swaps content. **A transient retried permission-denied right after creation is acceptable; a permanent one is a FAIL.**
 
 #### TC-5.2 Edit home name
+
 - **Steps:** Settings tab → "Edit Home" → change name to `E2E-Home v2` → save.
 - **Expect:** Header + switcher show the new name (optimistic + snapshot); home doc updated.
 
 #### TC-5.3 Sharing toggles (owner)
+
 - **Steps:** Settings → flip "Item Library" toggle off, then on.
 - **Expect:** Success toast each time; home doc `settings.canShareInventory` flips in Firestore. (Member-side effect tested in TC-6.5.)
 
 #### TC-5.4 Delete home (CASCADE — destructive; only ever delete `E2E-` homes!)
+
 - **Pre:** Switched to `E2E-Home v2`; add one item + one todo to it first so the cascade has work.
 - **Steps:** Settings → "Delete Home" → confirm.
 - **Expect:**
@@ -361,6 +388,7 @@ Run order matters only where stated. Each test case lists **Pre** (preconditions
 > logout/login switches — budget time accordingly.
 
 #### TC-6.1 Invitation code creation (lazy)
+
 - **Pre:** Logged in as A, Settings tab.
 - **Steps:** Tap "Invite family members to join" (≈ 200, 315).
 - **Expect:** "Invite Members" sheet (QR / Share Link). Admin REST: home doc has `invitationCode`,
@@ -368,12 +396,14 @@ Run order matters only where stated. Each test case lists **Pre** (preconditions
   the home's settings** (rules enforce equality).
 
 #### TC-6.2 Validate invitation (non-member preview)
+
 - **Pre:** Logged in as B (any home). Get `<CODE>` from admin REST (`homes/{A's homeId}` → `invitationCode`).
 - **Steps:** `xcrun simctl openurl booted "com.cluttrapp.cluttr://?inviteCode=<CODE>"`.
 - **Expect:** Invitation sheet shows owner nickname/email and Shared Scope rows — proving a
   non-member can `get` the invitation doc but nothing else.
 
 #### TC-6.3 Accept invitation (rules-only join)
+
 - **Pre:** TC-6.2 sheet is open, B is NOT yet a member (if B is already a member from a previous
   run, first remove B via TC-6.6 or use a fresh account).
 - **Steps:** Tap "Accept Home Invitation" (≈ 200, 787).
@@ -382,10 +412,12 @@ Run order matters only where stated. Each test case lists **Pre** (preconditions
   with `role: 'member'`, `inviteCode: <CODE>`; `memberIds` includes B.
 
 #### TC-6.4 Invalid code rejected
+
 - **Steps:** Open deep link with code `NOPE12345678`.
 - **Expect:** Sheet shows "Invalid invitation code" error state; Close works.
 
 #### TC-6.5 Live permission gating (member)
+
 - **Pre:** B logged in, viewing A's home (Item list visible).
 - **Steps:**
   1. Admin REST PATCH A's home: `settings.canShareInventory = false` (keep `canShareTodos: true`) — simulates the owner toggling on another device.
@@ -397,6 +429,7 @@ Run order matters only where stated. Each test case lists **Pre** (preconditions
   enter a deny/retry loop (check logs stay quiet after ~10 s).
 
 #### TC-6.6 Owner removes member
+
 - **Pre:** A logged in, Settings tab; B is a member (and ideally B's session is live on A's home to observe the kick).
 - **Steps:** Member list → swipe the "Tester Two" row left → red "Delete" pill → tap → "Remove
   Member" alert → confirm. (Swipe is owner-gated: when logged in as a MEMBER the rows don't swipe
@@ -408,12 +441,14 @@ Run order matters only where stated. Each test case lists **Pre** (preconditions
 - **Cleanup:** Re-invite B (TC-6.1→6.3) to restore the documented baseline state.
 
 #### TC-6.7 Member leaves home
+
 - **Pre:** B logged in, viewing A's home, member.
 - **Steps:** Settings → "Leave Home" → confirm.
 - **Expect:** Success toast; B auto-switches to own home; A's home doc no longer lists B.
 - **Cleanup:** Re-invite B to restore baseline.
 
 #### TC-6.8 Regenerate invitation code (if UI exposes it)
+
 - **Steps:** As A, regenerate the code from the invite UI.
 - **Expect:** Old `invitations/{old}` doc deleted, new one created, home doc `invitationCode`
   updated. Old code now fails TC-6.4-style.
@@ -423,6 +458,7 @@ Run order matters only where stated. Each test case lists **Pre** (preconditions
 ### CUJ-7 — REAL-TIME SYNC
 
 #### TC-7.1 External edit appears live
+
 - **Pre:** A logged in, Home tab visible, ≥ 1 item.
 - **Steps:**
   1. Admin REST: list `homes/{homeId}/inventory`, pick a doc, PATCH `name` to `<name> (LIVE-<n>)`.
@@ -431,11 +467,13 @@ Run order matters only where stated. Each test case lists **Pre** (preconditions
 - **Cleanup:** PATCH the name back.
 
 #### TC-7.2 External create/delete appears live
+
 - **Steps:** Admin REST: create a doc in `homes/{homeId}/todos` (fields: `text`, `completed:false`,
   `position:0`, ISO `createdAt`/`updatedAt`) → watch Notes tab; then DELETE it → watch it vanish.
 - **Expect:** Appears/disappears live; counts update.
 
 #### TC-7.3 Two-session propagation (gold standard, slower)
+
 - **Steps:** With B logged in on A's home, have A's data changed via admin REST (proxy for A's
   device). Member sees changes live (covered implicitly by TC-6.5/7.1 — run explicitly only for
   release-level verification).
@@ -445,12 +483,14 @@ Run order matters only where stated. Each test case lists **Pre** (preconditions
 ### CUJ-8 — PROFILE & AVATAR
 
 #### TC-8.1 Edit nickname
+
 - **Steps:** Avatar → Profile → pencil icon next to name → clear field (gotcha 2.3.4) →
   `type 'Cluttr Tester'` → save.
 - **Expect:** Name updates on Profile immediately; `users/{uid}` doc `nickname` updated;
   Settings member list reflects it (may require the home doc to change or a screen revisit).
 
 #### TC-8.2 Avatar upload (Firebase Storage)
+
 - **Pre:** Profile screen.
 - **Steps:**
   1. Tap the avatar circle (≈ 200, 263).
@@ -471,16 +511,19 @@ Run order matters only where stated. Each test case lists **Pre** (preconditions
 > consent) and always restore it.
 
 #### TC-9.1 Offline create (latency compensation)
+
 - **Steps:** Cut network → create an item → it must appear in the list instantly → restore
   network → within ~30 s admin REST shows the doc committed.
 - **Expect:** No error toast while offline (writes are fire-and-forget); data syncs on reconnect.
 
 #### TC-9.2 Offline cold start
+
 - **Steps:** Cut network → `reload`.
 - **Expect:** Session restores from cache; home + data render from Firestore's local cache
   (`fromCache=true` in homes snapshot log). No crash, no logout.
 
 #### TC-9.3 Listener error resilience (automated proxy)
+
 - Covered by TC-5.1/TC-6.5 retry expectations — a single `listener permission-denied, retrying`
   warning that resolves is PASS; repeated unresolved denials are FAIL.
 
@@ -504,13 +547,13 @@ Full regression = CUJ-1 through CUJ-8 (CUJ-9 when network control available).
 
 ## 7. KNOWN ISSUES / NON-FAILURES
 
-| Symptom | Status |
-|---|---|
-| RNFB "namespaced API deprecated" WARNs flooding logs | Pre-existing; ignore |
-| Item cards show raw `loc-...` IDs for custom locations | Pre-existing display nit, not a regression |
+| Symptom                                                                            | Status                                               |
+| ---------------------------------------------------------------------------------- | ---------------------------------------------------- |
+| RNFB "namespaced API deprecated" WARNs flooding logs                               | Pre-existing; ignore                                 |
+| Item cards show raw `loc-...` IDs for custom locations                             | Pre-existing display nit, not a regression           |
 | One `listener permission-denied, retrying` right after home creation/invite accept | Expected (server commit race); retried automatically |
-| Settings member list shows email until first home-doc change | Minor staleness; refreshes on next home snapshot |
-| Signup form's nickname field doesn't pre-populate the Setup Profile sheet | Pre-existing flow quirk |
+| Settings member list shows email until first home-doc change                       | Minor staleness; refreshes on next home snapshot     |
+| Signup form's nickname field doesn't pre-populate the Setup Profile sheet          | Pre-existing flow quirk                              |
 
 ## 8. REPORTING TEMPLATE
 

@@ -1,7 +1,4 @@
 {
-    "makefile.configureOnOpen": false,
-    "i18n-ally.localesPaths": [
-        "src/i18n",
-        "src/i18n/locales"
-    ]
+  "makefile.configureOnOpen": false,
+  "i18n-ally.localesPaths": ["src/i18n", "src/i18n/locales"]
 }

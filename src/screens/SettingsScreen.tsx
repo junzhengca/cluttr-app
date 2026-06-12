@@ -40,7 +40,8 @@ const Content = styled(ScrollView)`
 
 const VersionText = styled(Text)`
   font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.sm}px;
-  font-weight: ${({ theme }: StyledProps) => theme.typography.fontWeight.regular};
+  font-weight: ${({ theme }: StyledProps) =>
+    theme.typography.fontWeight.regular};
   color: ${({ theme }: StyledProps) => theme.colors.textLight};
   text-align: center;
   margin-top: ${({ theme }: StyledProps) => theme.spacing.lg}px;
@@ -83,7 +84,7 @@ export const SettingsScreen: React.FC = () => {
     try {
       const memberList = await userService.listMembers(
         currentHome.members,
-        currentHome.ownerId,
+        currentHome.ownerId
       );
       setMembers(memberList);
     } catch (error) {
@@ -105,11 +106,20 @@ export const SettingsScreen: React.FC = () => {
     async (memberUserId: string) => {
       if (!currentHome?.id) return;
 
-      const success = await homeService.removeMember(currentHome.id, memberUserId);
+      const success = await homeService.removeMember(
+        currentHome.id,
+        memberUserId
+      );
       if (success) {
-        toast.showToast(t('share.members.removeSuccess', 'Member removed successfully'), 'success');
+        toast.showToast(
+          t('share.members.removeSuccess', 'Member removed successfully'),
+          'success'
+        );
       } else {
-        toast.showToast(t('share.members.removeError', 'Failed to remove member'), 'error');
+        toast.showToast(
+          t('share.members.removeError', 'Failed to remove member'),
+          'error'
+        );
       }
     },
     [currentHome?.id, toast, t]
@@ -139,9 +149,15 @@ export const SettingsScreen: React.FC = () => {
       canShareInventory: !canShareInventory,
     });
     if (success) {
-      toast.showToast(t('share.settings.updateSuccess', 'Settings updated'), 'success');
+      toast.showToast(
+        t('share.settings.updateSuccess', 'Settings updated'),
+        'success'
+      );
     } else {
-      toast.showToast(t('share.settings.updateError', 'Failed to update settings'), 'error');
+      toast.showToast(
+        t('share.settings.updateError', 'Failed to update settings'),
+        'error'
+      );
     }
   }, [canShareInventory, currentHome?.id, updateHomeSettings, toast, t]);
 
@@ -152,9 +168,15 @@ export const SettingsScreen: React.FC = () => {
       canShareTodos: !canShareTodos,
     });
     if (success) {
-      toast.showToast(t('share.settings.updateSuccess', 'Settings updated'), 'success');
+      toast.showToast(
+        t('share.settings.updateSuccess', 'Settings updated'),
+        'success'
+      );
     } else {
-      toast.showToast(t('share.settings.updateError', 'Failed to update settings'), 'error');
+      toast.showToast(
+        t('share.settings.updateError', 'Failed to update settings'),
+        'error'
+      );
     }
   }, [canShareTodos, currentHome?.id, updateHomeSettings, toast, t]);
 
@@ -163,7 +185,10 @@ export const SettingsScreen: React.FC = () => {
 
     Alert.alert(
       t('share.members.leaveConfirm.title', 'Leave Home'),
-      t('share.members.leaveConfirm.message', 'Are you sure you want to leave this home?'),
+      t(
+        'share.members.leaveConfirm.message',
+        'Are you sure you want to leave this home?'
+      ),
       [
         {
           text: t('common.cancel', 'Cancel'),
@@ -176,13 +201,22 @@ export const SettingsScreen: React.FC = () => {
             try {
               const success = await deleteHome(currentHome.id);
               if (success) {
-                toast.showToast(t('share.members.leaveSuccess', 'Left home successfully'), 'success');
+                toast.showToast(
+                  t('share.members.leaveSuccess', 'Left home successfully'),
+                  'success'
+                );
               } else {
-                toast.showToast(t('share.members.leaveError', 'Failed to leave home'), 'error');
+                toast.showToast(
+                  t('share.members.leaveError', 'Failed to leave home'),
+                  'error'
+                );
               }
             } catch (error) {
               uiLogger.error('Error leaving home', error);
-              toast.showToast(t('share.members.leaveError', 'Failed to leave home'), 'error');
+              toast.showToast(
+                t('share.members.leaveError', 'Failed to leave home'),
+                'error'
+              );
             }
           },
         },

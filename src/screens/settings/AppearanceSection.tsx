@@ -41,14 +41,16 @@ const TextContainer = styled(View)`
 
 const ItemLabel = styled(Text)`
   font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.md}px;
-  font-weight: ${({ theme }: StyledProps) => theme.typography.fontWeight.medium};
+  font-weight: ${({ theme }: StyledProps) =>
+    theme.typography.fontWeight.medium};
   color: ${({ theme }: StyledProps) => theme.colors.text};
   margin-bottom: ${({ theme }: StyledProps) => theme.spacing.xs}px;
 `;
 
 const ItemDescription = styled(Text)`
   font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.sm}px;
-  font-weight: ${({ theme }: StyledProps) => theme.typography.fontWeight.regular};
+  font-weight: ${({ theme }: StyledProps) =>
+    theme.typography.fontWeight.regular};
   color: ${({ theme }: StyledProps) => theme.colors.textLight};
 `;
 
@@ -71,7 +73,10 @@ export const AppearanceSection: React.FC<AppearanceSectionProps> = ({
 
   return (
     <SectionWrapper>
-      <SectionTitle title={t('settings.appearance')} icon="color-palette-outline" />
+      <SectionTitle
+        title={t('settings.appearance')}
+        icon="color-palette-outline"
+      />
       <SettingsSectionCard>
         <ThemeChooser
           selectedThemeId={settings.theme}
@@ -90,7 +95,9 @@ export const AppearanceSection: React.FC<AppearanceSectionProps> = ({
             <IconContainer icon="moon-outline" />
             <TextContainer>
               <ItemLabel>{t('settings.darkMode')}</ItemLabel>
-              <ItemDescription>{t('settings.darkModeDescription')}</ItemDescription>
+              <ItemDescription>
+                {t('settings.darkModeDescription')}
+              </ItemDescription>
             </TextContainer>
           </LeftSection>
           <Toggle

@@ -1,11 +1,16 @@
 import React from 'react';
 import { TouchableOpacity, View, ViewStyle } from 'react-native';
 import styled from 'styled-components/native';
-import type { StyledProps, StyledPropsWith } from '../../utils/styledComponents';
+import type {
+  StyledProps,
+  StyledPropsWith,
+} from '../../utils/styledComponents';
 
-const CardContainer = styled(View) <{ compact?: boolean; square?: boolean }>`
-  flex-direction: ${({ square }: { square?: boolean }) => (square ? 'column' : 'row')};
-  align-items: ${({ square }: { square?: boolean }) => (square ? 'stretch' : 'center')};
+const CardContainer = styled(View)<{ compact?: boolean; square?: boolean }>`
+  flex-direction: ${({ square }: { square?: boolean }) =>
+    square ? 'column' : 'row'};
+  align-items: ${({ square }: { square?: boolean }) =>
+    square ? 'stretch' : 'center'};
   ${({ square }: { square?: boolean }) => (square ? 'aspect-ratio: 1;' : '')}
   background-color: ${({ theme }: StyledProps) => theme.colors.surface};
   border-radius: ${({ theme }: StyledProps) => theme.borderRadius.xxl}px;
@@ -14,9 +19,14 @@ const CardContainer = styled(View) <{ compact?: boolean; square?: boolean }>`
   position: relative;
 `;
 
-const TouchableCardContainer = styled(TouchableOpacity) <{ compact?: boolean; square?: boolean }>`
-  flex-direction: ${({ square }: { square?: boolean }) => (square ? 'column' : 'row')};
-  align-items: ${({ square }: { square?: boolean }) => (square ? 'stretch' : 'center')};
+const TouchableCardContainer = styled(TouchableOpacity)<{
+  compact?: boolean;
+  square?: boolean;
+}>`
+  flex-direction: ${({ square }: { square?: boolean }) =>
+    square ? 'column' : 'row'};
+  align-items: ${({ square }: { square?: boolean }) =>
+    square ? 'stretch' : 'center'};
   ${({ square }: { square?: boolean }) => (square ? 'aspect-ratio: 1;' : '')}
   background-color: ${({ theme }: StyledProps) => theme.colors.surface};
   border-radius: ${({ theme }: StyledProps) => theme.borderRadius.xxl}px;
@@ -46,7 +56,7 @@ export const BaseCard: React.FC<BaseCardProps> = ({
   activeOpacity = 0.8,
   style,
   compact = false,
-  square = false
+  square = false,
 }) => {
   if (onPress) {
     return (
@@ -68,4 +78,3 @@ export const BaseCard: React.FC<BaseCardProps> = ({
     </CardContainer>
   );
 };
-

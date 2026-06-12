@@ -31,4 +31,3 @@ export const LocationFilter: React.FC<LocationFilterProps> = ({
     </FilterContainer>
   );
 };
-

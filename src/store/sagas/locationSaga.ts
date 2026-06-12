@@ -1,4 +1,13 @@
-import { call, put, select, takeLatest, takeEvery, delay, fork, cancel } from 'redux-saga/effects';
+import {
+  call,
+  put,
+  select,
+  takeLatest,
+  takeEvery,
+  delay,
+  fork,
+  cancel,
+} from 'redux-saga/effects';
 import type { Task } from 'redux-saga';
 import type { RootState } from '../types';
 import {
@@ -41,7 +50,11 @@ export const deleteLocationAction = (id: string) => ({
   type: DELETE_LOCATION,
   payload: id,
 });
-export const updateLocationAction = (id: string, name: string, icon?: string) => ({
+export const updateLocationAction = (
+  id: string,
+  name: string,
+  icon?: string
+) => ({
   type: UPDATE_LOCATION,
   payload: { id, name, icon },
 });
@@ -75,7 +88,9 @@ function* addLocationSaga(action: {
     yield put(setError(null));
 
     const newLocation = locationService.createLocation(homeId, { name, icon });
-    sagaLogger.verbose(`Location created: id=${newLocation.id}, name="${newLocation.name}"`);
+    sagaLogger.verbose(
+      `Location created: id=${newLocation.id}, name="${newLocation.name}"`
+    );
   } catch (error) {
     sagaLogger.error('Error adding location', error);
     const errorMessage =
@@ -141,7 +156,10 @@ function* updateLocationDebounceSaga(action: {
   const previousLocation = state.location.locations.find((l) => l.id === id);
   if (!previousLocation) {
     sagaLogger.error('updateLocationSaga: location not found', id);
-    const errorMessage = i18n.t('location.updateError', 'Failed to save location');
+    const errorMessage = i18n.t(
+      'location.updateError',
+      'Failed to save location'
+    );
     yield put(setError(errorMessage));
     const toast = getGlobalToast();
     if (toast) toast(errorMessage, 'error');
@@ -151,7 +169,10 @@ function* updateLocationDebounceSaga(action: {
   const optimisticLocation: Location = {
     ...previousLocation,
     name: name.trim(),
-    icon: icon !== undefined ? (icon as keyof typeof Ionicons.glyphMap) : previousLocation.icon,
+    icon:
+      icon !== undefined
+        ? (icon as keyof typeof Ionicons.glyphMap)
+        : previousLocation.icon,
   };
   yield put(updateLocationSlice(optimisticLocation));
   yield put(addUpdatingLocationId(id));
@@ -167,7 +188,10 @@ function* updateLocationDebounceSaga(action: {
 
 // Watcher
 export function* locationSaga(): Generator<unknown, void, unknown> {
-  yield takeLatest([setActiveHomeId.type, LOAD_LOCATIONS], subscribeLocationsSaga);
+  yield takeLatest(
+    [setActiveHomeId.type, LOAD_LOCATIONS],
+    subscribeLocationsSaga
+  );
   yield takeLatest(ADD_LOCATION, addLocationSaga);
   yield takeEvery(DELETE_LOCATION, deleteLocationSaga);
   yield takeEvery(UPDATE_LOCATION, updateLocationDebounceSaga);

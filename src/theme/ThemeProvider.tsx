@@ -8,7 +8,9 @@ interface ThemeContextType {
   theme: Theme;
 }
 
-export const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
+export const ThemeContext = createContext<ThemeContextType | undefined>(
+  undefined
+);
 
 interface ThemeProviderProps {
   children: ReactNode;
@@ -24,9 +26,7 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
 
   return (
     <ThemeContext.Provider value={{ theme }}>
-      <StyledThemeProvider theme={theme}>
-        {children}
-      </StyledThemeProvider>
+      <StyledThemeProvider theme={theme}>{children}</StyledThemeProvider>
     </ThemeContext.Provider>
   );
 };
@@ -38,4 +38,3 @@ export const useTheme = (): Theme => {
   }
   return context.theme;
 };
-

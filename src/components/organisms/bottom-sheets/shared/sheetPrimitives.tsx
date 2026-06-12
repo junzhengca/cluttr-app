@@ -20,8 +20,10 @@ export const Backdrop = styled(BottomSheetBackdrop)`
 
 export const ContentContainer = styled.View`
   flex: 1;
-  border-top-left-radius: ${({ theme }: StyledProps) => theme.borderRadius.xxl}px;
-  border-top-right-radius: ${({ theme }: StyledProps) => theme.borderRadius.xxl}px;
+  border-top-left-radius: ${({ theme }: StyledProps) =>
+    theme.borderRadius.xxl}px;
+  border-top-right-radius: ${({ theme }: StyledProps) =>
+    theme.borderRadius.xxl}px;
   overflow: hidden;
 `;
 
@@ -33,10 +35,10 @@ export const FooterContainer = styled.View<{
   padding-horizontal: ${({ theme }: StyledProps) => theme.spacing.lg}px;
   padding-top: ${({ theme }: StyledProps) => theme.spacing.md}px;
   padding-bottom: ${({
-  bottomInset,
-  showSafeArea,
-  theme,
-}: StyledProps & { bottomInset: number; showSafeArea: boolean }) =>
+    bottomInset,
+    showSafeArea,
+    theme,
+  }: StyledProps & { bottomInset: number; showSafeArea: boolean }) =>
     showSafeArea ? bottomInset + theme.spacing.md : theme.spacing.md}px;
   shadow-color: #000;
   shadow-offset: 0px -2px;
@@ -63,7 +65,7 @@ export const SectionDivider = styled.View`
  * needed at call sites).
  */
 export const renderStandardBackdrop = (
-  props: BottomSheetBackdropProps,
+  props: BottomSheetBackdropProps
 ): React.ReactElement => (
   <Backdrop {...props} disappearsOnIndex={-1} appearsOnIndex={0} />
 );

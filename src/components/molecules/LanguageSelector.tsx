@@ -2,7 +2,10 @@ import React from 'react';
 import { TouchableOpacity, ScrollView, View, Text } from 'react-native';
 import styled, { useTheme } from 'styled-components/native';
 import { useTranslation } from 'react-i18next';
-import type { StyledProps, StyledPropsWith } from '../../utils/styledComponents';
+import type {
+  StyledProps,
+  StyledPropsWith,
+} from '../../utils/styledComponents';
 import type { Theme } from '../../theme/types';
 import { SectionTitle } from '../atoms';
 
@@ -28,7 +31,11 @@ const Container = styled(View)`
  * proper spacing while allowing content to scroll to the screen edges.
  */
 const ScrollContainer = styled(View)<{ horizontalPadding: number }>`
-  margin-horizontal: -${({ horizontalPadding }: { horizontalPadding: number }) => horizontalPadding}px;
+  margin-horizontal: -${({
+      horizontalPadding,
+    }: {
+      horizontalPadding: number;
+    }) => horizontalPadding}px;
 `;
 
 const LanguageScrollView = styled(ScrollView)`
@@ -41,13 +48,16 @@ const OptionsContainer = styled(View)`
   gap: ${({ theme }: StyledProps) => theme.spacing.md}px;
 `;
 
-const LanguageButton = styled(TouchableOpacity) <{ isSelected: boolean }>`
+const LanguageButton = styled(TouchableOpacity)<{ isSelected: boolean }>`
   padding-vertical: ${({ theme }: StyledProps) => theme.spacing.md}px;
   padding-horizontal: ${({ theme }: StyledProps) => theme.spacing.lg}px;
   border-radius: ${({ theme }: StyledProps) => theme.borderRadius.xl}px;
   background-color: ${({ theme }: StyledProps) => theme.colors.surface};
   border-width: 2px;
-  border-color: ${({ theme, isSelected }: StyledPropsWith<{ isSelected: boolean }>) =>
+  border-color: ${({
+    theme,
+    isSelected,
+  }: StyledPropsWith<{ isSelected: boolean }>) =>
     isSelected ? theme.colors.primary : theme.colors.borderLight};
   flex-direction: row;
   align-items: center;
@@ -66,7 +76,7 @@ const FlagText = styled(Text)`
   font-size: 18px;
 `;
 
-const LanguageButtonText = styled(Text) <{ isSelected: boolean }>`
+const LanguageButtonText = styled(Text)<{ isSelected: boolean }>`
   font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.sm}px;
   font-weight: ${({ theme }: StyledProps) => theme.typography.fontWeight.bold};
   color: ${({ theme, isSelected }: StyledPropsWith<{ isSelected: boolean }>) =>
@@ -115,7 +125,9 @@ export const LanguageSelector: React.FC<LanguageSelectorProps> = ({
                     <FlagText>{language.flag}</FlagText>
                   </FlagContainer>
                 )}
-                <LanguageButtonText isSelected={selectedLanguageId === language.id}>
+                <LanguageButtonText
+                  isSelected={selectedLanguageId === language.id}
+                >
                   {language.name}
                 </LanguageButtonText>
               </LanguageButton>
@@ -126,4 +138,3 @@ export const LanguageSelector: React.FC<LanguageSelectorProps> = ({
     </Container>
   );
 };
-

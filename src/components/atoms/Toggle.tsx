@@ -2,7 +2,10 @@ import React from 'react';
 import { Switch, SwitchProps } from 'react-native';
 import { useTheme } from '../../theme/ThemeProvider';
 
-export interface ToggleProps extends Omit<SwitchProps, 'trackColor' | 'thumbColor'> {
+export interface ToggleProps extends Omit<
+  SwitchProps,
+  'trackColor' | 'thumbColor'
+> {
   value: boolean;
   onValueChange: (value: boolean) => void;
   disabled?: boolean;
@@ -12,7 +15,12 @@ export interface ToggleProps extends Omit<SwitchProps, 'trackColor' | 'thumbColo
  * Toggle - A custom toggle component that respects the theme system
  * Wraps the native Switch component with theme-aware colors
  */
-export const Toggle: React.FC<ToggleProps> = ({ value, onValueChange, disabled = false, ...props }) => {
+export const Toggle: React.FC<ToggleProps> = ({
+  value,
+  onValueChange,
+  disabled = false,
+  ...props
+}) => {
   const theme = useTheme();
 
   return (
@@ -30,4 +38,3 @@ export const Toggle: React.FC<ToggleProps> = ({ value, onValueChange, disabled =
     />
   );
 };
-

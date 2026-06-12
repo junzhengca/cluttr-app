@@ -1,5 +1,12 @@
 import React, { useCallback, useState } from 'react';
-import { ActivityIndicator, View, Text, Alert, TouchableOpacity, Platform } from 'react-native';
+import {
+  ActivityIndicator,
+  View,
+  Text,
+  Alert,
+  TouchableOpacity,
+  Platform,
+} from 'react-native';
 import styled from 'styled-components/native';
 import { useTranslation } from 'react-i18next';
 import { Ionicons } from '@expo/vector-icons';
@@ -56,7 +63,10 @@ interface AvatarSectionProps {
   onEditNickname: (currentNickname: string) => void;
 }
 
-export const AvatarSection: React.FC<AvatarSectionProps> = ({ user, onEditNickname }) => {
+export const AvatarSection: React.FC<AvatarSectionProps> = ({
+  user,
+  onEditNickname,
+}) => {
   const dispatch = useAppDispatch();
   const { t } = useTranslation();
   const theme = useTheme();
@@ -66,7 +76,8 @@ export const AvatarSection: React.FC<AvatarSectionProps> = ({ user, onEditNickna
     try {
       // Request permissions
       if (Platform.OS !== 'web') {
-        const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+        const { status } =
+          await ImagePicker.requestMediaLibraryPermissionsAsync();
         if (status !== 'granted') {
           Alert.alert(
             t('profile.avatar.uploadError.title'),
@@ -109,7 +120,9 @@ export const AvatarSection: React.FC<AvatarSectionProps> = ({ user, onEditNickna
 
       // Upload to Firebase Storage. A unique filename per upload ensures the
       // new download URL busts the image cache.
-      const avatarRef = storage().ref(`avatars/${user.id}/avatar-${Date.now()}.jpg`);
+      const avatarRef = storage().ref(
+        `avatars/${user.id}/avatar-${Date.now()}.jpg`
+      );
       await avatarRef.putFile(manipulatedImage.uri);
       const downloadUrl = await avatarRef.getDownloadURL();
 
@@ -141,11 +154,23 @@ export const AvatarSection: React.FC<AvatarSectionProps> = ({ user, onEditNickna
         <ProfileCardContent>
           <AvatarContainer onPress={handleAvatarPress} disabled={isUploading}>
             {isUploading ? (
-              <View style={{ width: '100%', height: '100%', justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.5)' }}>
+              <View
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  backgroundColor: 'rgba(0,0,0,0.5)',
+                }}
+              >
                 <ActivityIndicator size="small" color="white" />
               </View>
             ) : user.avatarUrl ? (
-              <AvatarImage source={{ uri: user.avatarUrl }} contentFit="cover" cachePolicy="memory-disk" />
+              <AvatarImage
+                source={{ uri: user.avatarUrl }}
+                contentFit="cover"
+                cachePolicy="memory-disk"
+              />
             ) : (
               <AvatarPlaceholder>
                 <Text style={{ fontSize: 40, color: 'white' }}>👤</Text>
@@ -154,12 +179,22 @@ export const AvatarSection: React.FC<AvatarSectionProps> = ({ user, onEditNickna
           </AvatarContainer>
           <UserNameContainer>
             <UserName>{user.nickname || user.email}</UserName>
-            <EditNicknameButton onPress={() => onEditNickname(user.nickname || '')}>
-              <Ionicons name="create-outline" size={20} color={theme.colors.primary} />
+            <EditNicknameButton
+              onPress={() => onEditNickname(user.nickname || '')}
+            >
+              <Ionicons
+                name="create-outline"
+                size={20}
+                color={theme.colors.primary}
+              />
             </EditNicknameButton>
           </UserNameContainer>
           {user.nickname && <UserEmail>{user.email}</UserEmail>}
-          {user.id && <UserId>{t('profile.userId')}: {user.id}</UserId>}
+          {user.id && (
+            <UserId>
+              {t('profile.userId')}: {user.id}
+            </UserId>
+          )}
         </ProfileCardContent>
       </SettingsSectionCard>
     </>

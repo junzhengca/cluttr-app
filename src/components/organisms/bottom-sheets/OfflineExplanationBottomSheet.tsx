@@ -46,56 +46,60 @@ const Description = styled(RNText)`
 `;
 
 interface OfflineExplanationBottomSheetProps {
-    bottomSheetRef: React.RefObject<BottomSheetModal | null>;
-    onDismiss?: () => void;
+  bottomSheetRef: React.RefObject<BottomSheetModal | null>;
+  onDismiss?: () => void;
 }
 
-export const OfflineExplanationBottomSheet = forwardRef<BottomSheetModal, OfflineExplanationBottomSheetProps>(
-    ({ bottomSheetRef, onDismiss }, _ref) => {
-        const theme = useTheme();
-        const { t } = useTranslation();
-        const snapPoints = useMemo(() => ['45%'], []);
+export const OfflineExplanationBottomSheet = forwardRef<
+  BottomSheetModal,
+  OfflineExplanationBottomSheetProps
+>(({ bottomSheetRef, onDismiss }, _ref) => {
+  const theme = useTheme();
+  const { t } = useTranslation();
+  const snapPoints = useMemo(() => ['45%'], []);
 
-        const handleClose = () => {
-            bottomSheetRef.current?.dismiss();
-            onDismiss?.();
-        };
+  const handleClose = () => {
+    bottomSheetRef.current?.dismiss();
+    onDismiss?.();
+  };
 
-        return (
-            <BottomSheetModal
-                ref={bottomSheetRef}
-                snapPoints={snapPoints}
-                enablePanDownToClose
-                backgroundStyle={{ backgroundColor: theme.colors.background }}
-                handleIndicatorStyle={{ backgroundColor: theme.colors.textSecondary }}
-            >
-                <Container>
-                    <IconContainer>
-                        <MaterialCommunityIcons
-                            name="cloud-off-outline"
-                            size={40}
-                            color={theme.colors.error}
-                        />
-                    </IconContainer>
+  return (
+    <BottomSheetModal
+      ref={bottomSheetRef}
+      snapPoints={snapPoints}
+      enablePanDownToClose
+      backgroundStyle={{ backgroundColor: theme.colors.background }}
+      handleIndicatorStyle={{ backgroundColor: theme.colors.textSecondary }}
+    >
+      <Container>
+        <IconContainer>
+          <MaterialCommunityIcons
+            name="cloud-off-outline"
+            size={40}
+            color={theme.colors.error}
+          />
+        </IconContainer>
 
-                    <ContentContainer>
-                        <Title>{t('offline.title', 'You are Offline')}</Title>
-                        <Description>
-                            {t('offline.description', 'Changes you make will be saved locally on your device and automatically synced when you are back online.')}
-                        </Description>
-                    </ContentContainer>
+        <ContentContainer>
+          <Title>{t('offline.title', 'You are Offline')}</Title>
+          <Description>
+            {t(
+              'offline.description',
+              'Changes you make will be saved locally on your device and automatically synced when you are back online.'
+            )}
+          </Description>
+        </ContentContainer>
 
-                    <GlassButton
-                        onPress={handleClose}
-                        text={t('common.gotIt', 'Got it')}
-                        tintColor={theme.colors.primary}
-                        textColor={theme.colors.surface}
-                        style={{ width: '100%' }}
-                    />
-                </Container>
-            </BottomSheetModal>
-        );
-    }
-);
+        <GlassButton
+          onPress={handleClose}
+          text={t('common.gotIt', 'Got it')}
+          tintColor={theme.colors.primary}
+          textColor={theme.colors.surface}
+          style={{ width: '100%' }}
+        />
+      </Container>
+    </BottomSheetModal>
+  );
+});
 
 OfflineExplanationBottomSheet.displayName = 'OfflineExplanationBottomSheet';

@@ -16,4 +16,3 @@ export const filterItemCategories = (categories: Category[]): Category[] => {
   // Exclude 'all' which is used as a filter option, not a category
   return categories.filter((category) => category.id !== 'all');
 };
-

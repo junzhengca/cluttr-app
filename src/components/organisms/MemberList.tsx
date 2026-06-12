@@ -70,7 +70,8 @@ export const MemberList: React.FC<MemberListProps> = ({
   const handleRemoveMember = useCallback(
     (memberId: string) => {
       const member = members.find((m) => m.userId === memberId);
-      const memberName = member?.nickname || member?.email || t('share.members.unknownMember');
+      const memberName =
+        member?.nickname || member?.email || t('share.members.unknownMember');
 
       Alert.alert(
         t('share.members.removeConfirm.title'),

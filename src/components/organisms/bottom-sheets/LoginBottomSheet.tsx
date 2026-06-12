@@ -1,7 +1,17 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
-import { TouchableOpacity, View, Text, Keyboard, TextInput } from 'react-native';
+import {
+  TouchableOpacity,
+  View,
+  Text,
+  Keyboard,
+  TextInput,
+} from 'react-native';
 import styled from 'styled-components/native';
-import { BottomSheetModal, BottomSheetBackdrop, BottomSheetView } from '@gorhom/bottom-sheet';
+import {
+  BottomSheetModal,
+  BottomSheetBackdrop,
+  BottomSheetView,
+} from '@gorhom/bottom-sheet';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../../theme/ThemeProvider';
@@ -9,7 +19,12 @@ import type { StyledProps } from '../../../utils/styledComponents';
 import { useAuth, useAppDispatch } from '../../../store/hooks';
 import { useKeyboardVisibility } from '../../../hooks/useKeyboardVisibility';
 import { setError } from '../../../store/slices/authSlice';
-import { BottomSheetHeader, UncontrolledInput, FormSection, GlassButton } from '../../atoms';
+import {
+  BottomSheetHeader,
+  UncontrolledInput,
+  FormSection,
+  GlassButton,
+} from '../../atoms';
 import { ContentContainer } from './shared/sheetPrimitives';
 
 interface FooterContainerProps {
@@ -18,11 +33,15 @@ interface FooterContainerProps {
   theme: StyledProps['theme'];
 }
 
-const FooterContainer = styled(View) <FooterContainerProps>`
+const FooterContainer = styled(View)<FooterContainerProps>`
   background-color: ${({ theme }: StyledProps) => theme.colors.background};
   padding: ${({ theme }: StyledProps) => theme.spacing.md}px;
   padding-top: ${({ theme }: StyledProps) => theme.spacing.md}px;
-  padding-bottom: ${({ bottomInset, showSafeArea, theme }: FooterContainerProps) =>
+  padding-bottom: ${({
+    bottomInset,
+    showSafeArea,
+    theme,
+  }: FooterContainerProps) =>
     showSafeArea ? bottomInset + theme.spacing.md : theme.spacing.md}px;
   border-top-width: 1px;
   border-top-color: ${({ theme }: StyledProps) => theme.colors.borderLight};
@@ -44,8 +63,6 @@ const LinkButton = styled(TouchableOpacity)`
   margin-top: ${({ theme }: StyledProps) => theme.spacing.md}px;
   margin-bottom: ${({ theme }: StyledProps) => theme.spacing.md}px;
 `;
-
-
 
 export interface LoginBottomSheetProps {
   bottomSheetRef: React.RefObject<BottomSheetModal | null>;
@@ -95,21 +112,27 @@ export const LoginBottomSheet: React.FC<LoginBottomSheetProps> = ({
   }, [bottomSheetRef]);
 
   // Stable onChangeText handlers to prevent IME composition interruption
-  const handleEmailChange = useCallback((text: string) => {
-    setEmail(text);
-    if (localError || authError) {
-      setLocalError(null);
-      dispatch(setError(null));
-    }
-  }, [localError, authError, dispatch]);
+  const handleEmailChange = useCallback(
+    (text: string) => {
+      setEmail(text);
+      if (localError || authError) {
+        setLocalError(null);
+        dispatch(setError(null));
+      }
+    },
+    [localError, authError, dispatch]
+  );
 
-  const handlePasswordChange = useCallback((text: string) => {
-    setPassword(text);
-    if (localError || authError) {
-      setLocalError(null);
-      dispatch(setError(null));
-    }
-  }, [localError, authError, dispatch]);
+  const handlePasswordChange = useCallback(
+    (text: string) => {
+      setPassword(text);
+      if (localError || authError) {
+        setLocalError(null);
+        dispatch(setError(null));
+      }
+    },
+    [localError, authError, dispatch]
+  );
 
   const handleSubmit = useCallback(() => {
     if (!email.trim() || !password.trim()) {
@@ -195,14 +218,12 @@ export const LoginBottomSheet: React.FC<LoginBottomSheetProps> = ({
           />
 
           <View style={{ paddingHorizontal: theme.spacing.md }}>
-
-
             <FormSection label={t('login.fields.email')}>
               <UncontrolledInput
                 ref={emailInputRef}
                 defaultValue={email}
                 onChangeText={handleEmailChange}
-                onBlur={() => { }}
+                onBlur={() => {}}
                 placeholder={t('login.placeholders.email')}
                 placeholderTextColor={theme.colors.textSecondary}
                 keyboardType="email-address"
@@ -214,7 +235,7 @@ export const LoginBottomSheet: React.FC<LoginBottomSheetProps> = ({
                 ref={passwordInputRef}
                 defaultValue={password}
                 onChangeText={handlePasswordChange}
-                onBlur={() => { }}
+                onBlur={() => {}}
                 onSubmitEditing={handleSubmit}
                 placeholder={t('login.placeholders.password')}
                 placeholderTextColor={theme.colors.textSecondary}
@@ -234,4 +255,3 @@ export const LoginBottomSheet: React.FC<LoginBottomSheetProps> = ({
     </BottomSheetModal>
   );
 };
-

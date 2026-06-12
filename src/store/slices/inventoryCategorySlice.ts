@@ -20,7 +20,10 @@ const inventoryCategorySlice = createSlice({
     setCategories: (state, action: PayloadAction<InventoryCategory[]>) => {
       state.categories = action.payload;
     },
-    silentSetCategories: (state, action: PayloadAction<InventoryCategory[]>) => {
+    silentSetCategories: (
+      state,
+      action: PayloadAction<InventoryCategory[]>
+    ) => {
       // Silent update - only updates categories, does not touch loading state
       state.categories = action.payload;
     },

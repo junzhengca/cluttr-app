@@ -14,4 +14,3 @@ export const defaultSettings: Omit<Settings, 'createdAt' | 'updatedAt'> = {
   language: 'en',
   darkMode: false,
 };
-

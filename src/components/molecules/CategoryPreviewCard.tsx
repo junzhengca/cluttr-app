@@ -10,11 +10,12 @@ import type { StyledProps } from '../../utils/styledComponents';
 import { BaseCard } from '../atoms';
 import { useTheme } from '../../theme/ThemeProvider';
 
-const IconContainer = styled(View) <{ backgroundColor: string }>`
+const IconContainer = styled(View)<{ backgroundColor: string }>`
   width: 48px;
   height: 48px;
   border-radius: ${({ theme }: StyledProps) => theme.borderRadius.lg}px;
-  background-color: ${({ backgroundColor }: { backgroundColor: string }) => backgroundColor};
+  background-color: ${({ backgroundColor }: { backgroundColor: string }) =>
+    backgroundColor};
   align-items: center;
   justify-content: center;
   margin-right: ${({ theme }: StyledProps) => theme.spacing.sm}px;
@@ -65,7 +66,9 @@ export const CategoryPreviewCard: React.FC<CategoryPreviewCardProps> = ({
     <BaseCard compact>
       <IconContainer backgroundColor={getLightColor(theme.colors.primary)}>
         <Ionicons
-          name={(category.icon || 'cube-outline') as keyof typeof Ionicons.glyphMap}
+          name={
+            (category.icon || 'cube-outline') as keyof typeof Ionicons.glyphMap
+          }
           size={24}
           color={theme.colors.primary}
         />
@@ -79,12 +82,23 @@ export const CategoryPreviewCard: React.FC<CategoryPreviewCardProps> = ({
         <ActionsContainer>
           {onEdit && (
             <ActionButton onPress={() => onEdit(category)} activeOpacity={0.7}>
-              <Ionicons name="create-outline" size={18} color={theme.colors.primary} />
+              <Ionicons
+                name="create-outline"
+                size={18}
+                color={theme.colors.primary}
+              />
             </ActionButton>
           )}
           {onDelete && (
-            <ActionButton onPress={() => onDelete(category.id)} activeOpacity={0.7}>
-              <Ionicons name="trash-outline" size={18} color={theme.colors.error} />
+            <ActionButton
+              onPress={() => onDelete(category.id)}
+              activeOpacity={0.7}
+            >
+              <Ionicons
+                name="trash-outline"
+                size={18}
+                color={theme.colors.error}
+              />
             </ActionButton>
           )}
         </ActionsContainer>
@@ -92,4 +106,3 @@ export const CategoryPreviewCard: React.FC<CategoryPreviewCardProps> = ({
     </BaseCard>
   );
 };
-

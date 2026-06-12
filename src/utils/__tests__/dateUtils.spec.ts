@@ -103,7 +103,14 @@ describe('countExpiringItems', () => {
   });
 
   it('does not count items whose earliest expiry is in the past', () => {
-    const items = [{ batches: [{ expiryDate: daysFromNow(-2) }, { expiryDate: daysFromNow(3) }] }];
+    const items = [
+      {
+        batches: [
+          { expiryDate: daysFromNow(-2) },
+          { expiryDate: daysFromNow(3) },
+        ],
+      },
+    ];
     // Earliest (past) date is used, and past dates are not "expiring soon"
     expect(countExpiringItems(items)).toBe(0);
   });

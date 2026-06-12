@@ -90,7 +90,10 @@ describe('todoSlice reducer', () => {
 
   describe('updateTodo', () => {
     it('replaces the todo at the matching index', () => {
-      const todos = [makeTodo({ id: 'a', text: 'A' }), makeTodo({ id: 'b', text: 'B' })];
+      const todos = [
+        makeTodo({ id: 'a', text: 'A' }),
+        makeTodo({ id: 'b', text: 'B' }),
+      ];
       const withTodos = reducer(getInitialState(), setTodos(todos));
 
       const updated = makeTodo({ id: 'b', text: 'B updated', completed: true });
@@ -152,13 +155,19 @@ describe('todoSlice reducer', () => {
 
   describe('setTodoCategories', () => {
     it('replaces the categories array', () => {
-      const categories = [makeCategory({ id: 'c1' }), makeCategory({ id: 'c2' })];
+      const categories = [
+        makeCategory({ id: 'c1' }),
+        makeCategory({ id: 'c2' }),
+      ];
       const state = reducer(getInitialState(), setTodoCategories(categories));
       expect(state.categories).toEqual(categories);
     });
 
     it('replaces existing categories with an empty array', () => {
-      const withCategories = reducer(getInitialState(), setTodoCategories([makeCategory()]));
+      const withCategories = reducer(
+        getInitialState(),
+        setTodoCategories([makeCategory()])
+      );
       const state = reducer(withCategories, setTodoCategories([]));
       expect(state.categories).toEqual([]);
     });
@@ -166,14 +175,33 @@ describe('todoSlice reducer', () => {
 });
 
 describe('todoSlice selectors', () => {
-  const pendingOld = makeTodo({ id: 'p1', completed: false, createdAt: '2024-01-01T00:00:00.000Z' });
-  const pendingNew = makeTodo({ id: 'p2', completed: false, createdAt: '2024-03-01T00:00:00.000Z' });
-  const completedOld = makeTodo({ id: 'c1', completed: true, createdAt: '2024-02-01T00:00:00.000Z' });
-  const completedNew = makeTodo({ id: 'c2', completed: true, createdAt: '2024-04-01T00:00:00.000Z' });
+  const pendingOld = makeTodo({
+    id: 'p1',
+    completed: false,
+    createdAt: '2024-01-01T00:00:00.000Z',
+  });
+  const pendingNew = makeTodo({
+    id: 'p2',
+    completed: false,
+    createdAt: '2024-03-01T00:00:00.000Z',
+  });
+  const completedOld = makeTodo({
+    id: 'c1',
+    completed: true,
+    createdAt: '2024-02-01T00:00:00.000Z',
+  });
+  const completedNew = makeTodo({
+    id: 'c2',
+    completed: true,
+    createdAt: '2024-04-01T00:00:00.000Z',
+  });
 
   const buildState = () =>
     makeRootState(
-      reducer(getInitialState(), setTodos([pendingOld, completedNew, pendingNew, completedOld]))
+      reducer(
+        getInitialState(),
+        setTodos([pendingOld, completedNew, pendingNew, completedOld])
+      )
     );
 
   describe('selectPendingTodos', () => {
@@ -191,7 +219,9 @@ describe('todoSlice selectors', () => {
 
     it('handles todos with missing createdAt', () => {
       const noDate = makeTodo({ id: 'nd', completed: false, createdAt: '' });
-      const state = makeRootState(reducer(getInitialState(), setTodos([noDate, pendingNew])));
+      const state = makeRootState(
+        reducer(getInitialState(), setTodos([noDate, pendingNew]))
+      );
       expect(selectPendingTodos(state).map((t) => t.id)).toEqual(['p2', 'nd']);
     });
 
@@ -230,7 +260,9 @@ describe('todoSlice selectors', () => {
     });
 
     it('returns an empty array when no todos are completed', () => {
-      const state = makeRootState(reducer(getInitialState(), setTodos([pendingOld, pendingNew])));
+      const state = makeRootState(
+        reducer(getInitialState(), setTodos([pendingOld, pendingNew]))
+      );
       expect(selectCompletedTodos(state)).toEqual([]);
     });
 

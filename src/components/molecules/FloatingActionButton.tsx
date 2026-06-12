@@ -31,14 +31,15 @@ const FABContainer = styled(View)`
   pointer-events: box-none;
 `;
 
-const Backdrop = styled(Pressable) <{ visible: boolean }>`
+const Backdrop = styled(Pressable)<{ visible: boolean }>`
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
   background-color: rgba(0, 0, 0, 0.3);
-  pointer-events: ${({ visible }: { visible: boolean }) => (visible ? 'auto' : 'none')};
+  pointer-events: ${({ visible }: { visible: boolean }) =>
+    visible ? 'auto' : 'none'};
 `;
 
 const ActionsContainer = styled(Animated.View)`
@@ -68,9 +69,11 @@ const ActionContent = styled(View)`
 
 const ActionLabelText = styled(Text)`
   font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.md}px;
-  font-weight: ${({ theme }: StyledProps) => theme.typography.fontWeight.medium};
+  font-weight: ${({ theme }: StyledProps) =>
+    theme.typography.fontWeight.medium};
   color: ${({ theme }: StyledProps) => theme.colors.text};
-  line-height: ${({ theme }: StyledProps) => theme.typography.fontSize.md * 1.4}px;
+  line-height: ${({ theme }: StyledProps) =>
+    theme.typography.fontSize.md * 1.4}px;
   margin-right: ${({ theme }: StyledProps) => theme.spacing.sm}px;
 `;
 
@@ -201,7 +204,12 @@ export const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({
 
   return (
     <FABContainer>
-      <Animated.View style={[backdropStyle, { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }]}>
+      <Animated.View
+        style={[
+          backdropStyle,
+          { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 },
+        ]}
+      >
         <Backdrop visible={isExpanded} onPress={handleBackdropPress} />
       </Animated.View>
 
@@ -218,9 +226,15 @@ export const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({
           >
             <TouchableOpacity onPress={handleManualAdd} activeOpacity={0.7}>
               <ActionContent>
-                <ActionLabelText>{t('fab.manuallyAdd', 'Manually Add')}</ActionLabelText>
+                <ActionLabelText>
+                  {t('fab.manuallyAdd', 'Manually Add')}
+                </ActionLabelText>
                 <ActionIconContainer>
-                  <Ionicons name="create-outline" size={20} color={theme.colors.primary} />
+                  <Ionicons
+                    name="create-outline"
+                    size={20}
+                    color={theme.colors.primary}
+                  />
                 </ActionIconContainer>
               </ActionContent>
             </TouchableOpacity>
@@ -241,16 +255,23 @@ export const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({
             glassEffectStyle="regular"
             isInteractive={true}
           >
-            <TouchableOpacity
-              onPress={toggleExpanded}
-              activeOpacity={0.8}
-            >
+            <TouchableOpacity onPress={toggleExpanded} activeOpacity={0.8}>
               <MainFABContent>
-                <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-                  <Animated.View style={[{ position: 'absolute' }, addIconOpacity]}>
+                <View
+                  style={{
+                    flex: 1,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <Animated.View
+                    style={[{ position: 'absolute' }, addIconOpacity]}
+                  >
                     <Ionicons name="add" size={32} color={iconColor} />
                   </Animated.View>
-                  <Animated.View style={[{ position: 'absolute' }, closeIconOpacity]}>
+                  <Animated.View
+                    style={[{ position: 'absolute' }, closeIconOpacity]}
+                  >
                     <Ionicons name="close" size={32} color={iconColor} />
                   </Animated.View>
                 </View>

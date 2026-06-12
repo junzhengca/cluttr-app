@@ -25,20 +25,26 @@
 
 import Constants from 'expo-constants';
 
-export type LogLevel = 'silent' | 'error' | 'warn' | 'info' | 'debug' | 'verbose';
+export type LogLevel =
+  | 'silent'
+  | 'error'
+  | 'warn'
+  | 'info'
+  | 'debug'
+  | 'verbose';
 
 export type LogCategory =
-  | 'api'       // API client requests/responses
-  | 'auth'      // Authentication operations
-  | 'storage'   // Local storage/file operations
+  | 'api' // API client requests/responses
+  | 'auth' // Authentication operations
+  | 'storage' // Local storage/file operations
   | 'navigation' // Navigation events
-  | 'ui'        // UI events and interactions
-  | 'redux'     // Redux state changes
-  | 'saga'      // Redux saga operations
-  | 'network'   // Network status and connectivity
-  | 'image'     // Image processing and uploads
-  | 'ai'        // AI recognition operations
-  | 'general';  // General logging
+  | 'ui' // UI events and interactions
+  | 'redux' // Redux state changes
+  | 'saga' // Redux saga operations
+  | 'network' // Network status and connectivity
+  | 'image' // Image processing and uploads
+  | 'ai' // AI recognition operations
+  | 'general'; // General logging
 
 interface LogLevelConfig {
   level: LogLevel;
@@ -48,26 +54,26 @@ interface LogLevelConfig {
 }
 
 const LOG_LEVELS: Record<LogLevel, LogLevelConfig> = {
-  silent:  { level: 'silent',  priority: 0,  emoji: '',              color: '' },
-  error:   { level: 'error',   priority: 1,  emoji: '🚨',            color: '\x1b[31m' }, // Red
-  warn:    { level: 'warn',    priority: 2,  emoji: '⚠️',            color: '\x1b[33m' }, // Yellow
-  info:    { level: 'info',    priority: 3,  emoji: 'ℹ️',            color: '\x1b[36m' }, // Cyan
-  debug:   { level: 'debug',   priority: 4,  emoji: '🔍',            color: '\x1b[35m' }, // Magenta
-  verbose: { level: 'verbose', priority: 5,  emoji: '🔬',            color: '\x1b[34m' }, // Blue
+  silent: { level: 'silent', priority: 0, emoji: '', color: '' },
+  error: { level: 'error', priority: 1, emoji: '🚨', color: '\x1b[31m' }, // Red
+  warn: { level: 'warn', priority: 2, emoji: '⚠️', color: '\x1b[33m' }, // Yellow
+  info: { level: 'info', priority: 3, emoji: 'ℹ️', color: '\x1b[36m' }, // Cyan
+  debug: { level: 'debug', priority: 4, emoji: '🔍', color: '\x1b[35m' }, // Magenta
+  verbose: { level: 'verbose', priority: 5, emoji: '🔬', color: '\x1b[34m' }, // Blue
 };
 
 const CATEGORY_EMOJIS: Record<LogCategory, string> = {
-  api:        '🌐',
-  auth:       '🔐',
-  storage:    '💾',
+  api: '🌐',
+  auth: '🔐',
+  storage: '💾',
   navigation: '🧭',
-  ui:         '🎨',
-  redux:      '🗂️',
-  saga:       '⚙️',
-  network:    '📡',
-  image:      '🖼️',
-  ai:         '🤖',
-  general:    '📝',
+  ui: '🎨',
+  redux: '🗂️',
+  saga: '⚙️',
+  network: '📡',
+  image: '🖼️',
+  ai: '🤖',
+  general: '📝',
 };
 
 /**
@@ -76,7 +82,10 @@ const CATEGORY_EMOJIS: Record<LogCategory, string> = {
 function getEnvVar(key: string, defaultValue: string): string {
   // Try Constants.expoConfig.extra first (Expo SDK 46+), then Constants.manifest.extra
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const extras = (Constants.expoConfig as any)?.extra || (Constants.manifest as any)?.extra || {};
+  const extras =
+    (Constants.expoConfig as any)?.extra ||
+    (Constants.manifest as any)?.extra ||
+    {};
   const value = extras[key];
   return value !== undefined ? String(value) : defaultValue;
 }
@@ -109,8 +118,12 @@ function getEnabledCategories(): Set<LogCategory> | null {
   if (!categoriesStr || categoriesStr === '' || categoriesStr === '*') {
     return null; // null means all categories enabled
   }
-  const categories = categoriesStr.split(',').map(c => c.trim().toLowerCase()) as LogCategory[];
-  const validCategories = categories.filter(c => c in CATEGORY_EMOJIS || c === 'general');
+  const categories = categoriesStr
+    .split(',')
+    .map((c) => c.trim().toLowerCase()) as LogCategory[];
+  const validCategories = categories.filter(
+    (c) => c in CATEGORY_EMOJIS || c === 'general'
+  );
   return new Set(validCategories);
 }
 
@@ -136,22 +149,53 @@ interface ILogger {
   separator(category?: LogCategory, char?: string): void;
   header(title: string, category?: LogCategory): void;
   subHeader(title: string, category?: LogCategory): void;
-  start(operation: string, category?: LogCategory, details?: Record<string, unknown>): void;
+  start(
+    operation: string,
+    category?: LogCategory,
+    details?: Record<string, unknown>
+  ): void;
   end(operation: string, category?: LogCategory, durationMs?: number): void;
   fail(operation: string, error: Error | unknown, category?: LogCategory): void;
-  step(step: string, stepNumber?: number, totalSteps?: number, category?: LogCategory): void;
-  request(method: string, url: string, category?: LogCategory, details?: Record<string, unknown>): void;
-  response(status: number, url: string, category?: LogCategory, durationMs?: number, details?: Record<string, unknown>): void;
-  retry(attempt: number, maxRetries: number, delayMs: number, category?: LogCategory): void;
+  step(
+    step: string,
+    stepNumber?: number,
+    totalSteps?: number,
+    category?: LogCategory
+  ): void;
+  request(
+    method: string,
+    url: string,
+    category?: LogCategory,
+    details?: Record<string, unknown>
+  ): void;
+  response(
+    status: number,
+    url: string,
+    category?: LogCategory,
+    durationMs?: number,
+    details?: Record<string, unknown>
+  ): void;
+  retry(
+    attempt: number,
+    maxRetries: number,
+    delayMs: number,
+    category?: LogCategory
+  ): void;
   dataSize(label: string, bytes: number, category?: LogCategory): void;
-  table(data: Record<string, unknown> | unknown[], category?: LogCategory): void;
+  table(
+    data: Record<string, unknown> | unknown[],
+    category?: LogCategory
+  ): void;
 }
 
 /**
  * Scoped Logger - pre-configured for a specific category
  */
 class ScopedLogger {
-  constructor(private logger: ILogger, private category: LogCategory) {}
+  constructor(
+    private logger: ILogger,
+    private category: LogCategory
+  ) {}
 
   error(message: string, data?: unknown): void {
     this.logger.error(message, this.category, data);
@@ -201,11 +245,20 @@ class ScopedLogger {
     this.logger.step(step, stepNumber, totalSteps, this.category);
   }
 
-  request(method: string, url: string, details?: Record<string, unknown>): void {
+  request(
+    method: string,
+    url: string,
+    details?: Record<string, unknown>
+  ): void {
     this.logger.request(method, url, this.category, details);
   }
 
-  response(status: number, url: string, durationMs?: number, details?: Record<string, unknown>): void {
+  response(
+    status: number,
+    url: string,
+    durationMs?: number,
+    details?: Record<string, unknown>
+  ): void {
     this.logger.response(status, url, this.category, durationMs, details);
   }
 
@@ -242,7 +295,10 @@ class Logger {
     }
 
     if (category && this.config.enabledCategories) {
-      return this.config.enabledCategories.has(category) || this.config.enabledCategories.has('general');
+      return (
+        this.config.enabledCategories.has(category) ||
+        this.config.enabledCategories.has('general')
+      );
     }
 
     return true;
@@ -276,7 +332,8 @@ class Logger {
 
     // Category emoji
     if (this.config.showEmojis && category) {
-      const categoryEmoji = CATEGORY_EMOJIS[category] || CATEGORY_EMOJIS.general;
+      const categoryEmoji =
+        CATEGORY_EMOJIS[category] || CATEGORY_EMOJIS.general;
       parts.push(categoryEmoji);
     }
 
@@ -317,7 +374,10 @@ class Logger {
 
     console.error(`${color}${formatted}${reset}`);
     if (data !== undefined) {
-      console.error(`${color}${this.formatMessage('error', category, 'Data:', '')}${reset}`, data);
+      console.error(
+        `${color}${this.formatMessage('error', category, 'Data:', '')}${reset}`,
+        data
+      );
     }
   }
 
@@ -333,7 +393,10 @@ class Logger {
 
     console.warn(`${color}${formatted}${reset}`);
     if (data !== undefined) {
-      console.warn(`${color}${this.formatMessage('warn', category, 'Data:', '')}${reset}`, data);
+      console.warn(
+        `${color}${this.formatMessage('warn', category, 'Data:', '')}${reset}`,
+        data
+      );
     }
   }
 
@@ -349,7 +412,10 @@ class Logger {
 
     console.log(`${color}${formatted}${reset}`);
     if (data !== undefined) {
-      console.log(`${color}${this.formatMessage('info', category, 'Data:', '')}${reset}`, data);
+      console.log(
+        `${color}${this.formatMessage('info', category, 'Data:', '')}${reset}`,
+        data
+      );
     }
   }
 
@@ -365,7 +431,10 @@ class Logger {
 
     console.log(`${color}${formatted}${reset}`);
     if (data !== undefined) {
-      console.log(`${color}${this.formatMessage('debug', category, 'Data:', '')}${reset}`, data);
+      console.log(
+        `${color}${this.formatMessage('debug', category, 'Data:', '')}${reset}`,
+        data
+      );
     }
   }
 
@@ -381,7 +450,10 @@ class Logger {
 
     console.log(`${color}${formatted}${reset}`);
     if (data !== undefined) {
-      console.log(`${color}${this.formatMessage('verbose', category, 'Data:', '')}${reset}`, data);
+      console.log(
+        `${color}${this.formatMessage('verbose', category, 'Data:', '')}${reset}`,
+        data
+      );
     }
   }
 
@@ -421,7 +493,11 @@ class Logger {
   /**
    * Log the start of an operation
    */
-  start(operation: string, category?: LogCategory, details?: Record<string, unknown>): void {
+  start(
+    operation: string,
+    category?: LogCategory,
+    details?: Record<string, unknown>
+  ): void {
     if (!this.shouldLog('info', category)) return;
 
     const emoji = this.config.showEmojis ? '▶️' : '';
@@ -448,7 +524,11 @@ class Logger {
   /**
    * Log the failure of an operation
    */
-  fail(operation: string, error: Error | unknown, category?: LogCategory): void {
+  fail(
+    operation: string,
+    error: Error | unknown,
+    category?: LogCategory
+  ): void {
     if (!this.shouldLog('error', category)) return;
 
     const emoji = this.config.showEmojis ? '❌' : '';
@@ -460,20 +540,31 @@ class Logger {
   /**
    * Log a step in a multi-step operation
    */
-  step(step: string, stepNumber?: number, totalSteps?: number, category?: LogCategory): void {
+  step(
+    step: string,
+    stepNumber?: number,
+    totalSteps?: number,
+    category?: LogCategory
+  ): void {
     if (!this.shouldLog('debug', category)) return;
 
     const emoji = this.config.showEmojis ? '📍' : '';
-    const stepInfo = stepNumber !== undefined && totalSteps !== undefined
-      ? ` [${stepNumber}/${totalSteps}]`
-      : '';
+    const stepInfo =
+      stepNumber !== undefined && totalSteps !== undefined
+        ? ` [${stepNumber}/${totalSteps}]`
+        : '';
     this.debug(`${emoji}${stepInfo} ${step}`, category);
   }
 
   /**
    * Log an incoming request
    */
-  request(method: string, url: string, category: LogCategory = 'api', details?: Record<string, unknown>): void {
+  request(
+    method: string,
+    url: string,
+    category: LogCategory = 'api',
+    details?: Record<string, unknown>
+  ): void {
     if (!this.shouldLog('debug', category)) return;
 
     const emoji = this.config.showEmojis ? '⬆️' : '';
@@ -483,22 +574,40 @@ class Logger {
   /**
    * Log an incoming response
    */
-  response(status: number, url: string, category: LogCategory = 'api', durationMs?: number, details?: Record<string, unknown>): void {
+  response(
+    status: number,
+    url: string,
+    category: LogCategory = 'api',
+    durationMs?: number,
+    details?: Record<string, unknown>
+  ): void {
     if (!this.shouldLog('debug', category)) return;
 
     const emoji = this.config.showEmojis ? '⬇️' : '';
     const duration = durationMs !== undefined ? ` (${durationMs}ms)` : '';
-    this.debug(`${emoji} RESPONSE: ${status} ${url}${duration}`, category, details);
+    this.debug(
+      `${emoji} RESPONSE: ${status} ${url}${duration}`,
+      category,
+      details
+    );
   }
 
   /**
    * Log network retry
    */
-  retry(attempt: number, maxRetries: number, delayMs: number, category: LogCategory = 'api'): void {
+  retry(
+    attempt: number,
+    maxRetries: number,
+    delayMs: number,
+    category: LogCategory = 'api'
+  ): void {
     if (!this.shouldLog('warn', category)) return;
 
     const emoji = this.config.showEmojis ? '🔁' : '';
-    this.warn(`${emoji} RETRY: Attempt ${attempt}/${maxRetries} in ${delayMs.toFixed(0)}ms`, category);
+    this.warn(
+      `${emoji} RETRY: Attempt ${attempt}/${maxRetries} in ${delayMs.toFixed(0)}ms`,
+      category
+    );
   }
 
   /**
@@ -515,7 +624,10 @@ class Logger {
   /**
    * Log a table of data (if available)
    */
-  table(data: Record<string, unknown> | unknown[], category?: LogCategory): void {
+  table(
+    data: Record<string, unknown> | unknown[],
+    category?: LogCategory
+  ): void {
     if (!this.shouldLog('debug', category)) return;
 
     if (typeof console.table === 'function') {

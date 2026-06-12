@@ -1,7 +1,17 @@
 import React, { useState, useCallback, useMemo } from 'react';
-import { TouchableOpacity, View, Text, Alert, type TextStyle } from 'react-native';
+import {
+  TouchableOpacity,
+  View,
+  Text,
+  Alert,
+  type TextStyle,
+} from 'react-native';
 import styled from 'styled-components/native';
-import { BottomSheetModal, BottomSheetBackdrop, BottomSheetScrollView } from '@gorhom/bottom-sheet';
+import {
+  BottomSheetModal,
+  BottomSheetBackdrop,
+  BottomSheetScrollView,
+} from '@gorhom/bottom-sheet';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
@@ -50,12 +60,14 @@ const ContentContainer = styled(View)`
 `;
 
 const ErrorSection = styled(View)`
-  background-color: ${({ theme }: StyledProps) => theme.colors.errorLight || theme.colors.primaryLightest};
+  background-color: ${({ theme }: StyledProps) =>
+    theme.colors.errorLight || theme.colors.primaryLightest};
   border-radius: ${({ theme }: StyledProps) => theme.borderRadius.md}px;
   padding: ${({ theme }: StyledProps) => theme.spacing.md}px;
   margin-bottom: ${({ theme }: StyledProps) => theme.spacing.md}px;
   border-width: 1px;
-  border-color: ${({ theme }: StyledProps) => theme.colors.error || theme.colors.primary};
+  border-color: ${({ theme }: StyledProps) =>
+    theme.colors.error || theme.colors.primary};
 `;
 
 const ErrorHeader = styled(View)`
@@ -68,7 +80,8 @@ const ErrorIconContainer = styled(View)`
   width: 36px;
   height: 36px;
   border-radius: ${({ theme }: StyledProps) => theme.borderRadius.full}px;
-  background-color: ${({ theme }: StyledProps) => theme.colors.error || theme.colors.primary};
+  background-color: ${({ theme }: StyledProps) =>
+    theme.colors.error || theme.colors.primary};
   align-items: center;
   justify-content: center;
   margin-right: ${({ theme }: StyledProps) => theme.spacing.md}px;
@@ -85,7 +98,8 @@ const ErrorTitle = styled(Text)`
 const ErrorMessage = styled(Text)`
   font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.sm}px;
   color: ${({ theme }: StyledProps) => theme.colors.text};
-  line-height: ${({ theme }: StyledProps) => theme.typography.fontSize.sm * 1.4}px;
+  line-height: ${({ theme }: StyledProps) =>
+    theme.typography.fontSize.sm * 1.4}px;
   margin-bottom: ${({ theme }: StyledProps) => theme.spacing.sm}px;
 `;
 
@@ -112,12 +126,14 @@ const DetailText = styled(Text)`
   font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.sm}px;
   color: ${({ theme }: StyledProps) => theme.colors.text};
   font-family: monospace;
-  line-height: ${({ theme }: StyledProps) => theme.typography.fontSize.sm * 1.5}px;
+  line-height: ${({ theme }: StyledProps) =>
+    theme.typography.fontSize.sm * 1.5}px;
 `;
 
 const DetailLabel = styled(Text)`
   font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.sm}px;
-  font-weight: ${({ theme }: StyledProps) => theme.typography.fontWeight.medium};
+  font-weight: ${({ theme }: StyledProps) =>
+    theme.typography.fontWeight.medium};
   color: ${({ theme }: StyledProps) => theme.colors.textSecondary};
   margin-bottom: ${({ theme }: StyledProps) => theme.spacing.xs}px;
 `;
@@ -261,7 +277,10 @@ export const ErrorBottomSheet: React.FC<ErrorBottomSheetProps> = ({
       <ContentContainer>
         <BottomSheetScrollView
           style={{ flex: 1 }}
-          contentContainerStyle={{ padding: theme.spacing.lg, paddingBottom: theme.spacing.lg }}
+          contentContainerStyle={{
+            padding: theme.spacing.lg,
+            paddingBottom: theme.spacing.lg,
+          }}
           showsVerticalScrollIndicator={false}
           enableOnPanDownToDismiss={false}
         >
@@ -284,15 +303,22 @@ export const ErrorBottomSheet: React.FC<ErrorBottomSheetProps> = ({
             </ErrorHeader>
             <ErrorMessage>{errorDetails.errorMessage}</ErrorMessage>
             <DetailText>
-              {t('errorBottomSheet.errorType')}: {errorDetails.errorType === 'network' ? t('errorBottomSheet.errorTypes.network') : t('errorBottomSheet.errorTypes.server')}
+              {t('errorBottomSheet.errorType')}:{' '}
+              {errorDetails.errorType === 'network'
+                ? t('errorBottomSheet.errorTypes.network')
+                : t('errorBottomSheet.errorTypes.server')}
             </DetailText>
           </ErrorSection>
 
           <Section>
-            <SectionTitle>{t('errorBottomSheet.sections.request')}</SectionTitle>
+            <SectionTitle>
+              {t('errorBottomSheet.sections.request')}
+            </SectionTitle>
             <DetailContainer>
               <DetailRow>
-                <DetailLabel>{t('errorBottomSheet.fields.endpoint')}</DetailLabel>
+                <DetailLabel>
+                  {t('errorBottomSheet.fields.endpoint')}
+                </DetailLabel>
                 <DetailText>{errorDetails.endpoint}</DetailText>
               </DetailRow>
               <DetailRow>
@@ -301,44 +327,105 @@ export const ErrorBottomSheet: React.FC<ErrorBottomSheetProps> = ({
               </DetailRow>
               {errorDetails.requestHeaders && (
                 <DetailRow>
-                  <DetailLabel>{t('errorBottomSheet.fields.headers')}</DetailLabel>
-                  <Text style={{ fontFamily: 'monospace', fontSize: theme.typography.fontSize.sm, color: theme.colors.text, lineHeight: theme.typography.fontSize.sm * 1.5 }}>
+                  <DetailLabel>
+                    {t('errorBottomSheet.fields.headers')}
+                  </DetailLabel>
+                  <Text
+                    style={{
+                      fontFamily: 'monospace',
+                      fontSize: theme.typography.fontSize.sm,
+                      color: theme.colors.text,
+                      lineHeight: theme.typography.fontSize.sm * 1.5,
+                    }}
+                  >
                     {JSON.stringify(errorDetails.requestHeaders, null, 2)}
                   </Text>
                 </DetailRow>
               )}
               {errorDetails.requestBody != null && (
                 <View style={{ marginBottom: 0 }}>
-                  <Text style={{ fontSize: theme.typography.fontSize.sm, fontWeight: '500' as TextStyle['fontWeight'], color: theme.colors.textSecondary, marginBottom: theme.typography.fontSize.sm }}>
+                  <Text
+                    style={{
+                      fontSize: theme.typography.fontSize.sm,
+                      fontWeight: '500' as TextStyle['fontWeight'],
+                      color: theme.colors.textSecondary,
+                      marginBottom: theme.typography.fontSize.sm,
+                    }}
+                  >
                     {t('errorBottomSheet.fields.body')}
                   </Text>
-                  <Text style={{ fontFamily: 'monospace', fontSize: theme.typography.fontSize.sm, color: theme.colors.text, lineHeight: theme.typography.fontSize.sm * 1.5 }}>
-                    {JSON.stringify(errorDetails.requestBody, null, 2) as React.ReactNode}
+                  <Text
+                    style={{
+                      fontFamily: 'monospace',
+                      fontSize: theme.typography.fontSize.sm,
+                      color: theme.colors.text,
+                      lineHeight: theme.typography.fontSize.sm * 1.5,
+                    }}
+                  >
+                    {
+                      JSON.stringify(
+                        errorDetails.requestBody,
+                        null,
+                        2
+                      ) as React.ReactNode
+                    }
                   </Text>
                 </View>
               )}
             </DetailContainer>
           </Section>
 
-          {(errorDetails.status != null || errorDetails.responseBody != null) && (
+          {(errorDetails.status != null ||
+            errorDetails.responseBody != null) && (
             <Section>
-              <SectionTitle>{t('errorBottomSheet.sections.response')}</SectionTitle>
+              <SectionTitle>
+                {t('errorBottomSheet.sections.response')}
+              </SectionTitle>
               <DetailContainer>
                 {errorDetails.status && (
                   <DetailRow>
-                    <DetailLabel>{t('errorBottomSheet.fields.status')}</DetailLabel>
-                    <Text style={{ fontFamily: 'monospace', fontSize: theme.typography.fontSize.sm, color: theme.colors.text, lineHeight: theme.typography.fontSize.sm * 1.5 }}>
+                    <DetailLabel>
+                      {t('errorBottomSheet.fields.status')}
+                    </DetailLabel>
+                    <Text
+                      style={{
+                        fontFamily: 'monospace',
+                        fontSize: theme.typography.fontSize.sm,
+                        color: theme.colors.text,
+                        lineHeight: theme.typography.fontSize.sm * 1.5,
+                      }}
+                    >
                       {errorDetails.status} {errorDetails.statusText || ''}
                     </Text>
                   </DetailRow>
                 )}
                 {errorDetails.responseBody != null && (
                   <View style={{ marginBottom: 0 }}>
-                    <Text style={{ fontSize: theme.typography.fontSize.sm, fontWeight: '500' as TextStyle['fontWeight'], color: theme.colors.textSecondary, marginBottom: theme.typography.fontSize.sm }}>
+                    <Text
+                      style={{
+                        fontSize: theme.typography.fontSize.sm,
+                        fontWeight: '500' as TextStyle['fontWeight'],
+                        color: theme.colors.textSecondary,
+                        marginBottom: theme.typography.fontSize.sm,
+                      }}
+                    >
                       {t('errorBottomSheet.fields.responseBody')}
                     </Text>
-                    <Text style={{ fontFamily: 'monospace', fontSize: theme.typography.fontSize.sm, color: theme.colors.text, lineHeight: theme.typography.fontSize.sm * 1.5 }}>
-                      {JSON.stringify(errorDetails.responseBody, null, 2) as React.ReactNode}
+                    <Text
+                      style={{
+                        fontFamily: 'monospace',
+                        fontSize: theme.typography.fontSize.sm,
+                        color: theme.colors.text,
+                        lineHeight: theme.typography.fontSize.sm * 1.5,
+                      }}
+                    >
+                      {
+                        JSON.stringify(
+                          errorDetails.responseBody,
+                          null,
+                          2
+                        ) as React.ReactNode
+                      }
                     </Text>
                   </View>
                 )}
@@ -348,7 +435,9 @@ export const ErrorBottomSheet: React.FC<ErrorBottomSheetProps> = ({
 
           {errorDetails.retryAttempts.length > 0 && (
             <Section>
-              <SectionTitle>{t('errorBottomSheet.sections.retryHistory')}</SectionTitle>
+              <SectionTitle>
+                {t('errorBottomSheet.sections.retryHistory')}
+              </SectionTitle>
               <DetailContainer>
                 {errorDetails.retryAttempts.map((attempt, index) => (
                   <RetryAttemptItem key={index}>
@@ -367,14 +456,22 @@ export const ErrorBottomSheet: React.FC<ErrorBottomSheetProps> = ({
           )}
 
           <Section>
-            <SectionTitle>{t('errorBottomSheet.sections.metadata')}</SectionTitle>
+            <SectionTitle>
+              {t('errorBottomSheet.sections.metadata')}
+            </SectionTitle>
             <DetailContainer>
               <DetailRow>
-                <DetailLabel>{t('errorBottomSheet.fields.timestamp')}</DetailLabel>
-                <DetailText>{new Date(errorDetails.timestamp).toLocaleString()}</DetailText>
+                <DetailLabel>
+                  {t('errorBottomSheet.fields.timestamp')}
+                </DetailLabel>
+                <DetailText>
+                  {new Date(errorDetails.timestamp).toLocaleString()}
+                </DetailText>
               </DetailRow>
               <DetailRowLast>
-                <DetailLabel>{t('errorBottomSheet.fields.totalDuration')}</DetailLabel>
+                <DetailLabel>
+                  {t('errorBottomSheet.fields.totalDuration')}
+                </DetailLabel>
                 <DetailText>{errorDetails.totalDuration}ms</DetailText>
               </DetailRowLast>
             </DetailContainer>
@@ -384,4 +481,3 @@ export const ErrorBottomSheet: React.FC<ErrorBottomSheetProps> = ({
     </BottomSheetModal>
   );
 };
-

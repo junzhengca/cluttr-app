@@ -26,7 +26,8 @@ const QRCodeContainer = styled(View)`
 
 const CodeText = styled(Text)`
   font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.md}px;
-  font-weight: ${({ theme }: StyledProps) => theme.typography.fontWeight.medium};
+  font-weight: ${({ theme }: StyledProps) =>
+    theme.typography.fontWeight.medium};
   color: ${({ theme }: StyledProps) => theme.colors.text};
   margin-bottom: ${({ theme }: StyledProps) => theme.spacing.md}px;
   text-align: center;
@@ -44,7 +45,8 @@ const CopyButton = styled(TouchableOpacity)`
 
 const CopyButtonText = styled(Text)`
   font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.md}px;
-  font-weight: ${({ theme }: StyledProps) => theme.typography.fontWeight.medium};
+  font-weight: ${({ theme }: StyledProps) =>
+    theme.typography.fontWeight.medium};
   color: white;
   margin-left: ${({ theme }: StyledProps) => theme.spacing.sm}px;
 `;
@@ -93,7 +95,9 @@ export const QRCodeDisplay: React.FC<QRCodeDisplayProps> = ({
           color="white"
         />
         <CopyButtonText>
-          {copied ? t('share.invite.qrCode.copied') : t('share.invite.qrCode.copy')}
+          {copied
+            ? t('share.invite.qrCode.copied')
+            : t('share.invite.qrCode.copy')}
         </CopyButtonText>
       </CopyButton>
     </Container>

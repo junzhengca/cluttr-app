@@ -16,4 +16,3 @@ export const HomeStack: React.FC = () => {
     </Stack.Navigator>
   );
 };
-

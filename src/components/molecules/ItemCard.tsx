@@ -81,7 +81,8 @@ const ItemName = styled(Text)`
  */
 const MetadataText = styled(Text)`
   font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.sm}px;
-  font-weight: ${({ theme }: StyledProps) => theme.typography.fontWeight.regular};
+  font-weight: ${({ theme }: StyledProps) =>
+    theme.typography.fontWeight.regular};
   color: ${({ theme }: StyledProps) => theme.colors.textSecondary};
   text-align: left;
   line-height: 18px;
@@ -125,9 +126,10 @@ const WarningTag = styled.View<{ $variant: WarningTagVariant }>`
     $variant === 'restock' ? '#FFB74D' : '#EF5350'};
 `;
 
-const WarningTagText = styled(Text) <{ $variant: WarningTagVariant }>`
+const WarningTagText = styled(Text)<{ $variant: WarningTagVariant }>`
   font-size: 10px;
-  font-weight: ${({ theme }: StyledProps) => theme.typography.fontWeight.medium};
+  font-weight: ${({ theme }: StyledProps) =>
+    theme.typography.fontWeight.medium};
   color: ${({ $variant }: { $variant: WarningTagVariant }) =>
     $variant === 'restock' ? '#E65100' : '#C62828'};
   line-height: 14px;
@@ -151,7 +153,8 @@ const StatusBadge = styled(View)`
 
 const StatusBadgeText = styled(Text)`
   font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.xs}px;
-  font-weight: ${({ theme }: StyledProps) => theme.typography.fontWeight.medium};
+  font-weight: ${({ theme }: StyledProps) =>
+    theme.typography.fontWeight.medium};
   color: ${({ theme }: StyledProps) => theme.colors.textSecondary};
   line-height: 16px;
 `;
@@ -168,7 +171,7 @@ export const ItemCard: React.FC<ItemCardProps> = ({ item, onPress }) => {
   // Find category by ID from Redux state
   const category = useMemo(() => {
     if (item.categoryId) {
-      return categories.find(c => c.id === item.categoryId) || null;
+      return categories.find((c) => c.id === item.categoryId) || null;
     }
     return null;
   }, [item.categoryId, categories]);
@@ -192,13 +195,13 @@ export const ItemCard: React.FC<ItemCardProps> = ({ item, onPress }) => {
     : null;
 
   const metadataParts = [categoryName, locationText].filter(Boolean);
-  const metadataText = metadataParts.length > 0 ? metadataParts.join(' · ') : locationText;
+  const metadataText =
+    metadataParts.length > 0 ? metadataParts.join(' · ') : locationText;
 
   // Warning checks
   const totalAmount = getTotalAmount(item.batches || []);
   const needsRestock =
-    totalAmount !== undefined &&
-    totalAmount <= (item.warningThreshold ?? 0);
+    totalAmount !== undefined && totalAmount <= (item.warningThreshold ?? 0);
   const earliestExpiry = getEarliestExpiry(item.batches || []);
   const isExpiring = earliestExpiry ? isExpiringSoon(earliestExpiry, 7) : false;
 

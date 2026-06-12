@@ -47,27 +47,25 @@ export const ProfileScreen: React.FC = () => {
   const loginBottomSheetRef = useRef<BottomSheetModal | null>(null);
   const signupBottomSheetRef = useRef<BottomSheetModal | null>(null);
   const editNicknameBottomSheetModalRef = useRef<BottomSheetModal | null>(null);
-  const editNicknameBottomSheetRef = useRef<EditNicknameBottomSheetRef | null>(null);
+  const editNicknameBottomSheetRef = useRef<EditNicknameBottomSheetRef | null>(
+    null
+  );
 
   const handleLogout = () => {
-    Alert.alert(
-      t('settings.logout.title'),
-      t('settings.logout.message'),
-      [
-        {
-          text: t('settings.logout.cancel'),
-          style: 'cancel',
+    Alert.alert(t('settings.logout.title'), t('settings.logout.message'), [
+      {
+        text: t('settings.logout.cancel'),
+        style: 'cancel',
+      },
+      {
+        text: t('settings.logout.confirm'),
+        style: 'destructive',
+        onPress: async () => {
+          await logout();
+          navigation.goBack();
         },
-        {
-          text: t('settings.logout.confirm'),
-          style: 'destructive',
-          onPress: async () => {
-            await logout();
-            navigation.goBack();
-          },
-        },
-      ]
-    );
+      },
+    ]);
   };
 
   const handleLoginPress = useCallback(() => {
@@ -97,13 +95,20 @@ export const ProfileScreen: React.FC = () => {
     if (error && !isLoading) {
       // Check if error is related to Google login (409 conflict or other auth errors)
       let errorMessage = error;
-      let errorTitle = t('login.errors.googleLoginFailed.title') || 'Google Login Failed';
+      let errorTitle =
+        t('login.errors.googleLoginFailed.title') || 'Google Login Failed';
 
       if (error.includes('Email already registered with email/password')) {
-        errorMessage = t('login.errors.emailAlreadyRegistered.message') || 'Email already registered with email/password. Please login with email and password.';
-        errorTitle = t('login.errors.emailAlreadyRegistered.title') || 'Account Already Exists';
+        errorMessage =
+          t('login.errors.emailAlreadyRegistered.message') ||
+          'Email already registered with email/password. Please login with email and password.';
+        errorTitle =
+          t('login.errors.emailAlreadyRegistered.title') ||
+          'Account Already Exists';
       } else if (error.includes('Invalid Google account')) {
-        errorMessage = t('login.errors.invalidGoogleAccount.message') || 'Invalid Google account. Please try again.';
+        errorMessage =
+          t('login.errors.invalidGoogleAccount.message') ||
+          'Invalid Google account. Please try again.';
       }
 
       Alert.alert(errorTitle, errorMessage);
@@ -150,7 +155,10 @@ export const ProfileScreen: React.FC = () => {
             <AccountDetailsSection user={user} />
 
             <SectionWrapper>
-              <SectionTitle title={t('settings.actions', 'Actions')} icon="options-outline" />
+              <SectionTitle
+                title={t('settings.actions', 'Actions')}
+                icon="options-outline"
+              />
               <SettingsSectionCard>
                 <SettingsTextButton
                   label={t('settings.logout.title')}

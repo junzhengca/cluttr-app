@@ -40,8 +40,11 @@ const BadgesAndQuantityRow = styled(View)`
   align-items: center;
 `;
 
-const Badge = styled(View) <{ color?: string, isSelected?: boolean }>`
-  background-color: ${({ isSelected, theme }: StyledProps & { isSelected?: boolean }) =>
+const Badge = styled(View)<{ color?: string; isSelected?: boolean }>`
+  background-color: ${({
+    isSelected,
+    theme,
+  }: StyledProps & { isSelected?: boolean }) =>
     isSelected ? theme.colors.primary : theme.colors.borderLight};
   padding-horizontal: 10px;
   padding-vertical: 5px;
@@ -51,14 +54,14 @@ const Badge = styled(View) <{ color?: string, isSelected?: boolean }>`
   align-items: center;
 `;
 
-const BadgeText = styled(Text) <{ isSelected?: boolean }>`
+const BadgeText = styled(Text)<{ isSelected?: boolean }>`
   color: ${({ theme, isSelected }: StyledProps & { isSelected?: boolean }) =>
     isSelected ? 'white' : theme.colors.textSecondary};
   font-size: 11px;
   font-weight: 600;
 `;
 
-const ColorDot = styled(View) <{ color: string }>`
+const ColorDot = styled(View)<{ color: string }>`
   width: 8px;
   height: 8px;
   border-radius: 4px;
@@ -124,9 +127,14 @@ export const ItemInfoCard: React.FC<ItemInfoCardProps> = ({
         </BadgesContainer>
 
         <TotalAmountRow>
-          <TotalAmountLabel>{t('itemDetails.fields.quantity')} : </TotalAmountLabel>
+          <TotalAmountLabel>
+            {t('itemDetails.fields.quantity')} :{' '}
+          </TotalAmountLabel>
           <TotalAmountValue>
-            {totalAmount}{item.batches && item.batches.length > 0 && item.batches[0].unit ? ` ${item.batches[0].unit}` : ''}
+            {totalAmount}
+            {item.batches && item.batches.length > 0 && item.batches[0].unit
+              ? ` ${item.batches[0].unit}`
+              : ''}
           </TotalAmountValue>
         </TotalAmountRow>
       </BadgesAndQuantityRow>

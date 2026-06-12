@@ -18,21 +18,20 @@ module.exports = {
   moduleDirectories: ['node_modules', '<rootDir>/src'],
 
   // Test match patterns
-  testMatch: [
-    '**/*.spec.ts',
-    '**/*.test.ts',
-    '**/__tests__/**/*.ts',
-  ],
+  testMatch: ['**/*.spec.ts', '**/*.test.ts', '**/__tests__/**/*.ts'],
 
   // Transform configuration
   transform: {
-    '^.+\\.(ts|tsx)$': ['ts-jest', {
-      tsconfig: {
-        jsx: 'react',
-        esModuleInterop: true,
-        allowSyntheticDefaultImports: true,
+    '^.+\\.(ts|tsx)$': [
+      'ts-jest',
+      {
+        tsconfig: {
+          jsx: 'react',
+          esModuleInterop: true,
+          allowSyntheticDefaultImports: true,
+        },
       },
-    }],
+    ],
   },
 
   // Module name mapper for mocking
@@ -52,10 +51,7 @@ module.exports = {
   ],
 
   // Ignore patterns
-  testPathIgnorePatterns: [
-    '/node_modules/',
-    '/dist/',
-  ],
+  testPathIgnorePatterns: ['/node_modules/', '/dist/'],
 
   // Clear mocks between tests
   clearMocks: true,

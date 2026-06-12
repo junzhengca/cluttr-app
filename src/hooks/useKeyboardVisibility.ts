@@ -49,7 +49,9 @@ export const useKeyboardVisibility = (): KeyboardVisibilityReturn => {
     ];
 
     return () => {
-      [...showSubscriptions, ...hideSubscriptions].forEach((sub) => sub.remove());
+      [...showSubscriptions, ...hideSubscriptions].forEach((sub) =>
+        sub.remove()
+      );
     };
   }, []);
 

@@ -71,7 +71,6 @@ Home Inventory Sync Server API
   - [GET Get handler metadata for debug UI](#debug-get-debugz-api)
 - [Invitations](#invitations)
 
-
 ---
 
 ## Todo Items
@@ -92,9 +91,9 @@ Retrieves a list of all todo items for a home. User must be a member of home. Op
 
 #### Path Parameters
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| `homeId` | string | Yes | The home ID to get todo items from |
+| Name     | Type   | Required | Description                        |
+| -------- | ------ | -------- | ---------------------------------- |
+| `homeId` | string | Yes      | The home ID to get todo items from |
 
 #### Response (200)
 
@@ -222,9 +221,9 @@ Creates a new todo item in a home. The user must be a member of home. Each todo 
 
 #### Path Parameters
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| `homeId` | string | Yes | The home ID to create the todo item in |
+| Name     | Type   | Required | Description                            |
+| -------- | ------ | -------- | -------------------------------------- |
+| `homeId` | string | Yes      | The home ID to create the todo item in |
 
 #### Request Body
 
@@ -429,10 +428,10 @@ Updates specific fields of an existing todo item. User must be a member of the h
 
 #### Path Parameters
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| `homeId` | string | Yes | The home ID that contains the todo item |
-| `todoId` | string | Yes | The unique identifier of the todo item |
+| Name     | Type   | Required | Description                             |
+| -------- | ------ | -------- | --------------------------------------- |
+| `homeId` | string | Yes      | The home ID that contains the todo item |
+| `todoId` | string | Yes      | The unique identifier of the todo item  |
 
 #### Request Body
 
@@ -635,10 +634,10 @@ Retrieves detailed information about a specific todo item. User must be a member
 
 #### Path Parameters
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| `homeId` | string | Yes | The home ID that contains the todo item |
-| `todoId` | string | Yes | The unique identifier of the todo item |
+| Name     | Type   | Required | Description                             |
+| -------- | ------ | -------- | --------------------------------------- |
+| `homeId` | string | Yes      | The home ID that contains the todo item |
+| `todoId` | string | Yes      | The unique identifier of the todo item  |
 
 #### Response (200)
 
@@ -794,10 +793,10 @@ Soft deletes a todo item by setting deletedAt and deletedBy fields. User must be
 
 #### Path Parameters
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| `homeId` | string | Yes | The home ID that contains the todo item |
-| `todoId` | string | Yes | The unique identifier of the todo item |
+| Name     | Type   | Required | Description                             |
+| -------- | ------ | -------- | --------------------------------------- |
+| `homeId` | string | Yes      | The home ID that contains the todo item |
+| `todoId` | string | Yes      | The unique identifier of the todo item  |
 
 #### Response (200)
 
@@ -925,7 +924,6 @@ An unexpected error occurred on server
 - [`todo_items.get`](#todo-items-get)
 - [`todo_items.update`](#todo-items-update)
 
-
 ---
 
 ## Todo Categories
@@ -946,10 +944,10 @@ Soft deletes a todo category by setting deletedAt and deletedBy fields. User mus
 
 #### Path Parameters
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| `homeId` | string | Yes | The home ID that contains the category |
-| `categoryId` | string | Yes | The unique identifier of the todo category |
+| Name         | Type   | Required | Description                                |
+| ------------ | ------ | -------- | ------------------------------------------ |
+| `homeId`     | string | Yes      | The home ID that contains the category     |
+| `categoryId` | string | Yes      | The unique identifier of the todo category |
 
 #### Response (200)
 
@@ -1092,10 +1090,10 @@ Updates specific fields of an existing todo category. User must be a member of t
 
 #### Path Parameters
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| `homeId` | string | Yes | The home ID that contains the category |
-| `categoryId` | string | Yes | The unique identifier of the todo category |
+| Name         | Type   | Required | Description                                |
+| ------------ | ------ | -------- | ------------------------------------------ |
+| `homeId`     | string | Yes      | The home ID that contains the category     |
+| `categoryId` | string | Yes      | The unique identifier of the todo category |
 
 #### Request Body
 
@@ -1328,9 +1326,9 @@ Retrieves a list of all todo categories for a home. User must be a member of the
 
 #### Path Parameters
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| `homeId` | string | Yes | The home ID to get todo categories from |
+| Name     | Type   | Required | Description                             |
+| -------- | ------ | -------- | --------------------------------------- |
+| `homeId` | string | Yes      | The home ID to get todo categories from |
 
 #### Response (200)
 
@@ -1458,9 +1456,9 @@ Creates a new todo category in a home. The user must be a member of the home. Ea
 
 #### Path Parameters
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| `homeId` | string | Yes | The home ID to create the todo category in |
+| Name     | Type   | Required | Description                                |
+| -------- | ------ | -------- | ------------------------------------------ |
+| `homeId` | string | Yes      | The home ID to create the todo category in |
 
 #### Request Body
 
@@ -1683,10 +1681,10 @@ Retrieves detailed information about a specific todo category. User must be a me
 
 #### Path Parameters
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| `homeId` | string | Yes | The home ID that contains the category |
-| `categoryId` | string | Yes | The unique identifier of the todo category |
+| Name         | Type   | Required | Description                                |
+| ------------ | ------ | -------- | ------------------------------------------ |
+| `homeId`     | string | Yes      | The home ID that contains the category     |
+| `categoryId` | string | Yes      | The unique identifier of the todo category |
 
 #### Response (200)
 
@@ -1825,7 +1823,6 @@ An unexpected error occurred on server
 - [`todo_categories.list`](#todo-categories-list)
 - [`todo_categories.update`](#todo-categories-update)
 - [`todo_categories.delete`](#todo-categories-delete)
-
 
 ---
 
@@ -2063,9 +2060,9 @@ Updates the authenticated user profile. Supports updating nickname, avatar URL, 
 
 #### Headers
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| `Authorization` | string | Yes | JWT bearer token \(format: Bearer <token>\) |
+| Name            | Type   | Required | Description                                 |
+| --------------- | ------ | -------- | ------------------------------------------- |
+| `Authorization` | string | Yes      | JWT bearer token \(format: Bearer <token>\) |
 
 #### Request Body
 
@@ -2177,6 +2174,7 @@ An unexpected error occurred on the server
 Sends a 6-digit password reset code to the specified email address. The code expires after 5 minutes. This endpoint does not require authentication. All users can request a password reset, including OAuth users who may want to set a password for email/password login.
 
 **Rate Limits:**
+
 - Maximum 3 requests per hour per email address
 
 **Security Note:** This endpoint returns the same response regardless of whether the email exists in the system, preventing email enumeration attacks.
@@ -2280,9 +2278,9 @@ Retrieves information about the currently authenticated user. The user is identi
 
 #### Headers
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| `Authorization` | string | Yes | JWT bearer token \(format: Bearer <token>\) |
+| Name            | Type   | Required | Description                                 |
+| --------------- | ------ | -------- | ------------------------------------------- |
+| `Authorization` | string | Yes      | JWT bearer token \(format: Bearer <token>\) |
 
 #### Response (200)
 
@@ -2357,6 +2355,7 @@ An unexpected error occurred on the server
 Resends a verification code to the user's email. Can be used with authentication (uses the authenticated user's email) or without authentication (requires email in request body).
 
 **Rate Limits:**
+
 - Maximum 3 requests per hour per email address
 
 **Note:** This endpoint returns the same response regardless of whether the email exists in the system, preventing email enumeration attacks.
@@ -2497,13 +2496,16 @@ An error occurred while sending the email
 Verifies a 6-digit password reset code and updates the user password. The code must have been previously requested via the password reset request endpoint. Codes expire after 5 minutes and have a maximum of 5 verification attempts.
 
 **Rate Limits:**
+
 - Maximum 5 verification attempts per code
 - Maximum 5 attempts per 15 minutes per email address
 
 **Password Requirements:**
+
 - Minimum 6 characters
 
 **Security Notes:**
+
 - Uses constant-time comparison to prevent timing attacks
 - Code is deleted after successful reset or after max attempts exceeded
 - OAuth users (Google/Apple) can also set a password to enable email/password login
@@ -2660,6 +2662,7 @@ Maximum verification attempts exceeded \(5\)\. Please request a new code\.
 Sends a 6-digit verification code to the specified email address. The code expires after 15 minutes. This endpoint does not require authentication and can be used before or after account registration.
 
 **Rate Limits:**
+
 - Maximum 3 requests per hour per email address
 
 **Note:** This endpoint returns the same response regardless of whether the email exists in the system, preventing email enumeration attacks.
@@ -2837,6 +2840,7 @@ An unexpected error occurred on the server
 Verifies the 6-digit code sent to the user's email and marks the email as verified. Upon successful verification, returns a JWT access token and user data.
 
 **Rate Limits:**
+
 - Maximum 5 verification attempts per code
 
 If the maximum attempts are exceeded, the code is invalidated and a new code must be requested.
@@ -3085,7 +3089,6 @@ An unexpected error occurred on the server
 - [`auth.login`](#auth-login)
 - [`auth.google_login`](#auth-google-login)
 
-
 ---
 
 ## Images
@@ -3181,7 +3184,6 @@ An error occurred while uploading to B2 storage
   "message": "Failed to upload image"
 }
 ```
-
 
 ---
 
@@ -3286,9 +3288,9 @@ Updates the name and/or address of a home. Only the home owner can update home d
 
 #### Path Parameters
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| `homeId` | string | Yes | The unique identifier of the home |
+| Name     | Type   | Required | Description                       |
+| -------- | ------ | -------- | --------------------------------- |
+| `homeId` | string | Yes      | The unique identifier of the home |
 
 #### Request Body
 
@@ -3465,10 +3467,10 @@ Removes a member from a home. The home owner can remove any member except themse
 
 #### Path Parameters
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| `homeId` | string | Yes | The unique identifier of the home |
-| `userId` | string | Yes | The ID of the user to remove \(or self when leaving\) |
+| Name     | Type   | Required | Description                                           |
+| -------- | ------ | -------- | ----------------------------------------------------- |
+| `homeId` | string | Yes      | The unique identifier of the home                     |
+| `userId` | string | Yes      | The ID of the user to remove \(or self when leaving\) |
 
 #### Response (200)
 
@@ -3639,9 +3641,9 @@ Retrieves the invitation code, sharing settings, member count, and basic home in
 
 #### Path Parameters
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| `homeId` | string | Yes | The unique identifier of the home |
+| Name     | Type   | Required | Description                       |
+| -------- | ------ | -------- | --------------------------------- |
+| `homeId` | string | Yes      | The unique identifier of the home |
 
 #### Response (200)
 
@@ -3761,9 +3763,9 @@ Soft deletes a home. Only the home owner can delete their home. The home is mark
 
 #### Path Parameters
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| `homeId` | string | Yes | The unique identifier of the home to delete |
+| Name     | Type   | Required | Description                                 |
+| -------- | ------ | -------- | ------------------------------------------- |
+| `homeId` | string | Yes      | The unique identifier of the home to delete |
 
 #### Response (200)
 
@@ -3876,9 +3878,9 @@ Retrieves detailed information about a specific home, including owner info, sett
 
 #### Path Parameters
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| `homeId` | string | Yes | The unique identifier of the home |
+| Name     | Type   | Required | Description                       |
+| -------- | ------ | -------- | --------------------------------- |
+| `homeId` | string | Yes      | The unique identifier of the home |
 
 #### Response (200)
 
@@ -4008,9 +4010,9 @@ Updates the sharing permissions for a home. Controls whether members can share i
 
 #### Path Parameters
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| `homeId` | string | Yes | The unique identifier of the home |
+| Name     | Type   | Required | Description                       |
+| -------- | ------ | -------- | --------------------------------- |
+| `homeId` | string | Yes      | The unique identifier of the home |
 
 #### Request Body
 
@@ -4141,9 +4143,9 @@ Generates a new random 16-character invitation code for the home, invalidating t
 
 #### Path Parameters
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| `homeId` | string | Yes | The unique identifier of the home |
+| Name     | Type   | Required | Description                       |
+| -------- | ------ | -------- | --------------------------------- |
+| `homeId` | string | Yes      | The unique identifier of the home |
 
 #### Response (200)
 
@@ -4457,15 +4459,15 @@ Retrieves a list of all members of a home, including the owner and regular membe
 
 #### Path Parameters
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| `homeId` | string | Yes | The unique identifier of the home |
+| Name     | Type   | Required | Description                       |
+| -------- | ------ | -------- | --------------------------------- |
+| `homeId` | string | Yes      | The unique identifier of the home |
 
 #### Query Parameters
 
-| Name | Type | Required | Default | Description |
-|------|------|----------|---------|-------------|
-| `includePending` | boolean | No | - | Whether to include pending members \(reserved for future use\) |
+| Name             | Type    | Required | Default | Description                                                    |
+| ---------------- | ------- | -------- | ------- | -------------------------------------------------------------- |
+| `includePending` | boolean | No       | -       | Whether to include pending members \(reserved for future use\) |
 
 #### Response (200)
 
@@ -4578,7 +4580,6 @@ An unexpected error occurred on the server
 - [`homes.remove_member`](#homes-remove-member)
 - [`homes.get`](#homes-get)
 
-
 ---
 
 ## Inventory Items
@@ -4599,10 +4600,10 @@ Retrieves detailed information about a specific inventory item. User must be a m
 
 #### Path Parameters
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| `homeId` | string | Yes | The home ID that contains the inventory item |
-| `inventoryId` | string | Yes | The unique identifier of the inventory item |
+| Name          | Type   | Required | Description                                  |
+| ------------- | ------ | -------- | -------------------------------------------- |
+| `homeId`      | string | Yes      | The home ID that contains the inventory item |
+| `inventoryId` | string | Yes      | The unique identifier of the inventory item  |
 
 #### Response (200)
 
@@ -4766,10 +4767,10 @@ Updates specific fields of an existing inventory item. User must be a member of 
 
 #### Path Parameters
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| `homeId` | string | Yes | The home ID that contains the inventory item |
-| `inventoryId` | string | Yes | The unique identifier of the inventory item |
+| Name          | Type   | Required | Description                                  |
+| ------------- | ------ | -------- | -------------------------------------------- |
+| `homeId`      | string | Yes      | The home ID that contains the inventory item |
+| `inventoryId` | string | Yes      | The unique identifier of the inventory item  |
 
 #### Request Body
 
@@ -5012,10 +5013,10 @@ Soft deletes an inventory item by setting deletedAt and deletedBy fields. User m
 
 #### Path Parameters
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| `homeId` | string | Yes | The home ID that contains the inventory item |
-| `inventoryId` | string | Yes | The unique identifier of the inventory item |
+| Name          | Type   | Required | Description                                  |
+| ------------- | ------ | -------- | -------------------------------------------- |
+| `homeId`      | string | Yes      | The home ID that contains the inventory item |
+| `inventoryId` | string | Yes      | The unique identifier of the inventory item  |
 
 #### Response (200)
 
@@ -5159,9 +5160,9 @@ Retrieves a list of all inventory items for a home. User must be a member of hom
 
 #### Path Parameters
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| `homeId` | string | Yes | The home ID to get inventory items from |
+| Name     | Type   | Required | Description                             |
+| -------- | ------ | -------- | --------------------------------------- |
+| `homeId` | string | Yes      | The home ID to get inventory items from |
 
 #### Response (200)
 
@@ -5297,9 +5298,9 @@ Creates a new inventory item in a home. The user must be a member of home. Each 
 
 #### Path Parameters
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| `homeId` | string | Yes | The home ID to create the inventory item in |
+| Name     | Type   | Required | Description                                 |
+| -------- | ------ | -------- | ------------------------------------------- |
+| `homeId` | string | Yes      | The home ID to create the inventory item in |
 
 #### Request Body
 
@@ -5520,7 +5521,6 @@ An unexpected error occurred on server
 - [`inventory_items.update`](#inventory-items-update)
 - [`inventory_items.delete`](#inventory-items-delete)
 
-
 ---
 
 ## Ai
@@ -5628,7 +5628,6 @@ An unexpected error occurred on the server
 }
 ```
 
-
 ---
 
 ## Locations
@@ -5649,9 +5648,9 @@ Creates a new location in a home. The user must be a member of home. Each locati
 
 #### Path Parameters
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| `homeId` | string | Yes | The home ID to create the location in |
+| Name     | Type   | Required | Description                           |
+| -------- | ------ | -------- | ------------------------------------- |
+| `homeId` | string | Yes      | The home ID to create the location in |
 
 #### Request Body
 
@@ -5857,9 +5856,9 @@ Retrieves a list of all locations for a home, sorted by creation date (oldest fi
 
 #### Path Parameters
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| `homeId` | string | Yes | The home ID to get locations from |
+| Name     | Type   | Required | Description                       |
+| -------- | ------ | -------- | --------------------------------- |
+| `homeId` | string | Yes      | The home ID to get locations from |
 
 #### Response (200)
 
@@ -5986,10 +5985,10 @@ Soft deletes a location by setting deletedAt and deletedBy fields. User must be 
 
 #### Path Parameters
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| `homeId` | string | Yes | The home ID that contains the location |
-| `locationId` | string | Yes | The unique identifier of the location |
+| Name         | Type   | Required | Description                            |
+| ------------ | ------ | -------- | -------------------------------------- |
+| `homeId`     | string | Yes      | The home ID that contains the location |
+| `locationId` | string | Yes      | The unique identifier of the location  |
 
 #### Response (200)
 
@@ -6133,10 +6132,10 @@ Updates specific fields of an existing location. User must be a member of the ho
 
 #### Path Parameters
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| `homeId` | string | Yes | The home ID that contains the location |
-| `locationId` | string | Yes | The unique identifier of the location |
+| Name         | Type   | Required | Description                            |
+| ------------ | ------ | -------- | -------------------------------------- |
+| `homeId`     | string | Yes      | The home ID that contains the location |
+| `locationId` | string | Yes      | The unique identifier of the location  |
 
 #### Request Body
 
@@ -6339,10 +6338,10 @@ Retrieves detailed information about a specific location. User must be a member 
 
 #### Path Parameters
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| `homeId` | string | Yes | The home ID that contains the location |
-| `locationId` | string | Yes | The unique identifier of the location |
+| Name         | Type   | Required | Description                            |
+| ------------ | ------ | -------- | -------------------------------------- |
+| `homeId`     | string | Yes      | The home ID that contains the location |
+| `locationId` | string | Yes      | The unique identifier of the location  |
 
 #### Response (200)
 
@@ -6481,7 +6480,6 @@ An unexpected error occurred on server
 - [`locations.update`](#locations-update)
 - [`locations.delete`](#locations-delete)
 
-
 ---
 
 ## Inventory Categories
@@ -6502,10 +6500,10 @@ Soft deletes an inventory category. The category is marked as deleted but remain
 
 #### Path Parameters
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| `homeId` | string | Yes | The home ID |
-| `categoryId` | string | Yes | The inventory category ID to delete |
+| Name         | Type   | Required | Description                         |
+| ------------ | ------ | -------- | ----------------------------------- |
+| `homeId`     | string | Yes      | The home ID                         |
+| `categoryId` | string | Yes      | The inventory category ID to delete |
 
 #### Response (200)
 
@@ -6648,10 +6646,10 @@ Retrieves a specific inventory category by categoryId. User must be a member of 
 
 #### Path Parameters
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| `homeId` | string | Yes | The home ID |
-| `categoryId` | string | Yes | The inventory category ID |
+| Name         | Type   | Required | Description               |
+| ------------ | ------ | -------- | ------------------------- |
+| `homeId`     | string | Yes      | The home ID               |
+| `categoryId` | string | Yes      | The inventory category ID |
 
 #### Response (200)
 
@@ -6806,10 +6804,10 @@ Updates an existing inventory category. All fields are optional. User must be a 
 
 #### Path Parameters
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| `homeId` | string | Yes | The home ID |
-| `categoryId` | string | Yes | The inventory category ID to update |
+| Name         | Type   | Required | Description                         |
+| ------------ | ------ | -------- | ----------------------------------- |
+| `homeId`     | string | Yes      | The home ID                         |
+| `categoryId` | string | Yes      | The inventory category ID to update |
 
 #### Request Body
 
@@ -6968,9 +6966,9 @@ Creates a new inventory category in a home. The user must be a member of the hom
 
 #### Path Parameters
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| `homeId` | string | Yes | The home ID to create the inventory category in |
+| Name     | Type   | Required | Description                                     |
+| -------- | ------ | -------- | ----------------------------------------------- |
+| `homeId` | string | Yes      | The home ID to create the inventory category in |
 
 #### Request Body
 
@@ -7191,9 +7189,9 @@ Retrieves a list of all inventory categories for a home. User must be a member o
 
 #### Path Parameters
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| `homeId` | string | Yes | The home ID to get inventory categories from |
+| Name     | Type   | Required | Description                                  |
+| -------- | ------ | -------- | -------------------------------------------- |
+| `homeId` | string | Yes      | The home ID to get inventory categories from |
 
 #### Response (200)
 
@@ -7304,7 +7302,6 @@ An unexpected error occurred on server
 - [`inventory_categories.update`](#inventory-categories-update)
 - [`inventory_categories.delete`](#inventory-categories-delete)
 
-
 ---
 
 ## Debug
@@ -7359,10 +7356,10 @@ Proxies requests from the debug UI to actual API endpoints. Allows testing endpo
 
 #### Query Parameters
 
-| Name | Type | Required | Default | Description |
-|------|------|----------|---------|-------------|
-| `method` | string | No | - | HTTP method to use \(default: GET\) |
-| `path` | string | Yes | - | API endpoint path to proxy to |
+| Name     | Type   | Required | Default | Description                         |
+| -------- | ------ | -------- | ------- | ----------------------------------- |
+| `method` | string | No       | -       | HTTP method to use \(default: GET\) |
+| `path`   | string | Yes      | -       | API endpoint path to proxy to       |
 
 #### Request Body
 
@@ -7451,14 +7448,12 @@ The debug endpoint is disabled in production mode
 
 - [`debug.get_debugz`](#debug-get-debugz)
 
-
 ---
 
 ## Invitations
 
-
 ---
 
 ---
 
-*Documentation generated from 51 endpoints*
+_Documentation generated from 51 endpoints_

@@ -5,10 +5,10 @@ import { Ionicons } from '@expo/vector-icons';
 import type { StyledProps } from '../../utils/styledComponents';
 
 export interface SettingsItemProps {
-    label: string;
-    icon?: keyof typeof Ionicons.glyphMap;
-    onPress: () => void;
-    variant?: 'default' | 'destructive';
+  label: string;
+  icon?: keyof typeof Ionicons.glyphMap;
+  onPress: () => void;
+  variant?: 'default' | 'destructive';
 }
 
 const Button = styled(TouchableOpacity)`
@@ -35,16 +35,25 @@ const IconContainer = styled(View)`
   justify-content: center;
 `;
 
-const Icon = styled(Ionicons) <{ variant?: 'default' | 'destructive' }>`
-  color: ${({ theme, variant }: StyledProps & { variant?: 'default' | 'destructive' }) =>
-        variant === 'destructive' ? theme.colors.error : theme.colors.textSecondary};
+const Icon = styled(Ionicons)<{ variant?: 'default' | 'destructive' }>`
+  color: ${({
+    theme,
+    variant,
+  }: StyledProps & { variant?: 'default' | 'destructive' }) =>
+    variant === 'destructive'
+      ? theme.colors.error
+      : theme.colors.textSecondary};
 `;
 
-const ButtonText = styled(Text) <{ variant?: 'default' | 'destructive' }>`
+const ButtonText = styled(Text)<{ variant?: 'default' | 'destructive' }>`
   font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.md}px;
-  font-weight: ${({ theme }: StyledProps) => theme.typography.fontWeight.medium};
-  color: ${({ theme, variant }: StyledProps & { variant?: 'default' | 'destructive' }) =>
-        variant === 'destructive' ? theme.colors.error : theme.colors.text};
+  font-weight: ${({ theme }: StyledProps) =>
+    theme.typography.fontWeight.medium};
+  color: ${({
+    theme,
+    variant,
+  }: StyledProps & { variant?: 'default' | 'destructive' }) =>
+    variant === 'destructive' ? theme.colors.error : theme.colors.text};
   flex: 1;
 `;
 
@@ -53,20 +62,20 @@ const Chevron = styled(Ionicons)`
 `;
 
 export const SettingsItem: React.FC<SettingsItemProps> = ({
-    label,
-    icon,
-    onPress,
-    variant = 'default',
+  label,
+  icon,
+  onPress,
+  variant = 'default',
 }) => {
-    return (
-        <Button onPress={onPress}>
-            {icon && (
-                <IconContainer>
-                    <Icon name={icon} size={20} variant={variant} />
-                </IconContainer>
-            )}
-            <ButtonText variant={variant}>{label}</ButtonText>
-            <Chevron name="chevron-forward" size={20} />
-        </Button>
-    );
+  return (
+    <Button onPress={onPress}>
+      {icon && (
+        <IconContainer>
+          <Icon name={icon} size={20} variant={variant} />
+        </IconContainer>
+      )}
+      <ButtonText variant={variant}>{label}</ButtonText>
+      <Chevron name="chevron-forward" size={20} />
+    </Button>
+  );
 };

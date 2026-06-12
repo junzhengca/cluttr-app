@@ -104,10 +104,7 @@ export const BatchListSection: React.FC<BatchListSectionProps> = ({
               style={{ marginBottom: 12 }}
             >
               <ContextMenu items={batchMenuOptions}>
-                <BatchItemCard
-                  batch={batch}
-                  currencySymbol={currencySymbol}
-                />
+                <BatchItemCard batch={batch} currencySymbol={currencySymbol} />
               </ContextMenu>
             </SwipeableRow>
           );

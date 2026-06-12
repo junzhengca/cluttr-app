@@ -34,7 +34,8 @@ export const {
 } = refreshSlice.actions;
 
 // Selector to get the refresh timestamp
-export const selectCategoryRefreshTimestamp = (state: { refresh: RefreshState }) =>
-  state.refresh.categoryRefreshTimestamp;
+export const selectCategoryRefreshTimestamp = (state: {
+  refresh: RefreshState;
+}) => state.refresh.categoryRefreshTimestamp;
 
 export default refreshSlice.reducer;

@@ -4,10 +4,13 @@ import styled, { useTheme } from 'styled-components/native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { categoryColors } from '../../data/categoryColors';
-import type { StyledProps, StyledPropsWith } from '../../utils/styledComponents';
+import type {
+  StyledProps,
+  StyledPropsWith,
+} from '../../utils/styledComponents';
 import type { Theme } from '../../theme/types';
 
-const Container = styled(View) <{ edgeToEdge?: boolean }>`
+const Container = styled(View)<{ edgeToEdge?: boolean }>`
   /* No margin-bottom - parent FormSection handles spacing */
   ${({ edgeToEdge, theme }: StyledProps & { edgeToEdge?: boolean }) =>
     edgeToEdge ? `margin-horizontal: -${theme.spacing.md}px;` : ''}
@@ -15,7 +18,8 @@ const Container = styled(View) <{ edgeToEdge?: boolean }>`
 
 const Label = styled(Text)`
   font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.md}px;
-  font-weight: ${({ theme }: StyledProps) => theme.typography.fontWeight.medium};
+  font-weight: ${({ theme }: StyledProps) =>
+    theme.typography.fontWeight.medium};
   color: ${({ theme }: StyledProps) => theme.colors.text};
   margin-bottom: ${({ theme }: StyledProps) => theme.spacing.sm}px;
 `;
@@ -30,13 +34,20 @@ const ColorContainer = styled(View)`
   align-items: center;
 `;
 
-const ColorButton = styled(TouchableOpacity) <{ isSelected: boolean; color: string }>`
+const ColorButton = styled(TouchableOpacity)<{
+  isSelected: boolean;
+  color: string;
+}>`
   width: 44px;
   height: 44px;
   border-radius: 22px;
   background-color: ${({ color }: { color: string }) => color};
   border-width: 3px;
-  border-color: ${({ theme, isSelected, color }: StyledPropsWith<{ isSelected: boolean; color: string }>) =>
+  border-color: ${({
+    theme,
+    isSelected,
+    color,
+  }: StyledPropsWith<{ isSelected: boolean; color: string }>) =>
     isSelected ? color : theme.colors.borderLight};
   align-items: center;
   justify-content: center;
@@ -82,10 +93,22 @@ export const ColorPalette: React.FC<ColorPaletteProps> = ({
 
   return (
     <Container edgeToEdge={edgeToEdge}>
-      {showLabel && <Label style={edgeToEdge ? { paddingHorizontal: theme.spacing?.md || 16 } : {}}>{t('colorPalette.label')}</Label>}
+      {showLabel && (
+        <Label
+          style={
+            edgeToEdge ? { paddingHorizontal: theme.spacing?.md || 16 } : {}
+          }
+        >
+          {t('colorPalette.label')}
+        </Label>
+      )}
       <ColorScroll
         ref={scrollViewRef}
-        contentContainerStyle={edgeToEdge ? { paddingHorizontal: theme.spacing?.md || 16 } : { paddingRight: 16 }}
+        contentContainerStyle={
+          edgeToEdge
+            ? { paddingHorizontal: theme.spacing?.md || 16 }
+            : { paddingRight: 16 }
+        }
       >
         <ColorContainer>
           {categoryColors.map((color) => {
@@ -112,4 +135,3 @@ export const ColorPalette: React.FC<ColorPaletteProps> = ({
     </Container>
   );
 };
-

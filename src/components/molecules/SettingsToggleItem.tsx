@@ -1,5 +1,10 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, GestureResponderEvent } from 'react-native';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  GestureResponderEvent,
+} from 'react-native';
 import styled from 'styled-components/native';
 import type { StyledProps } from '../../utils/styledComponents';
 import { Toggle } from '../atoms';
@@ -22,13 +27,15 @@ const LabelContainer = styled(View)`
 
 const Label = styled(Text)`
   font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.md}px;
-  font-weight: ${({ theme }: StyledProps) => theme.typography.fontWeight.medium};
+  font-weight: ${({ theme }: StyledProps) =>
+    theme.typography.fontWeight.medium};
   color: ${({ theme }: StyledProps) => theme.colors.text};
 `;
 
 const Description = styled(Text)`
   font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.sm}px;
-  font-weight: ${({ theme }: StyledProps) => theme.typography.fontWeight.regular};
+  font-weight: ${({ theme }: StyledProps) =>
+    theme.typography.fontWeight.regular};
   color: ${({ theme }: StyledProps) => theme.colors.textLight};
   margin-top: ${({ theme }: StyledProps) => theme.spacing.xs}px;
 `;

@@ -2,7 +2,10 @@ import React from 'react';
 import { TouchableOpacity, ScrollView, View, Text } from 'react-native';
 import styled, { useTheme } from 'styled-components/native';
 import { useTranslation } from 'react-i18next';
-import type { StyledProps, StyledPropsWith } from '../../utils/styledComponents';
+import type {
+  StyledProps,
+  StyledPropsWith,
+} from '../../utils/styledComponents';
 import type { Theme } from '../../theme/types';
 import { SectionTitle } from '../atoms';
 
@@ -28,7 +31,11 @@ const Container = styled(View)`
  * proper spacing while allowing content to scroll to the screen edges.
  */
 const ScrollContainer = styled(View)<{ horizontalPadding: number }>`
-  margin-horizontal: -${({ horizontalPadding }: { horizontalPadding: number }) => horizontalPadding}px;
+  margin-horizontal: -${({
+      horizontalPadding,
+    }: {
+      horizontalPadding: number;
+    }) => horizontalPadding}px;
 `;
 
 const OptionsScroll = styled(ScrollView)`
@@ -41,22 +48,30 @@ const OptionsContainer = styled(View)`
   gap: ${({ theme }: StyledProps) => theme.spacing.md}px;
 `;
 
-const CurrencyButton = styled(TouchableOpacity) <{ isSelected: boolean }>`
+const CurrencyButton = styled(TouchableOpacity)<{ isSelected: boolean }>`
   width: 50px;
   height: 50px;
   border-radius: 25px;
   background-color: ${({ theme }: StyledProps) => theme.colors.surface};
   border-width: 2px;
-  border-color: ${({ theme, isSelected }: StyledPropsWith<{ isSelected: boolean }>) =>
+  border-color: ${({
+    theme,
+    isSelected,
+  }: StyledPropsWith<{ isSelected: boolean }>) =>
     isSelected ? theme.colors.primary : theme.colors.borderLight};
   align-items: center;
   justify-content: center;
 `;
 
-const CurrencyButtonText = styled(Text) <{ isSelected: boolean }>`
+const CurrencyButtonText = styled(Text)<{ isSelected: boolean }>`
   font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.lg}px;
-  font-weight: ${({ theme, isSelected }: StyledPropsWith<{ isSelected: boolean }>) =>
-    isSelected ? theme.typography.fontWeight.bold : theme.typography.fontWeight.bold};
+  font-weight: ${({
+    theme,
+    isSelected,
+  }: StyledPropsWith<{ isSelected: boolean }>) =>
+    isSelected
+      ? theme.typography.fontWeight.bold
+      : theme.typography.fontWeight.bold};
   color: ${({ theme, isSelected }: StyledPropsWith<{ isSelected: boolean }>) =>
     isSelected ? theme.colors.primary : theme.colors.textLight};
 `;
@@ -125,7 +140,8 @@ export const CurrencySelector: React.FC<CurrencySelectorProps> = ({
         >
           <OptionsContainer>
             {uniqueCurrencies.map((currency) => {
-              const isSelected = getCurrencySymbol(selectedCurrencyId) === currency.symbol;
+              const isSelected =
+                getCurrencySymbol(selectedCurrencyId) === currency.symbol;
               return (
                 <CurrencyButton
                   key={currency.symbol}
@@ -145,4 +161,3 @@ export const CurrencySelector: React.FC<CurrencySelectorProps> = ({
     </Container>
   );
 };
-

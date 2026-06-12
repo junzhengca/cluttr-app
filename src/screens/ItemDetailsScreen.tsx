@@ -6,7 +6,14 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { BottomSheetModal } from '@gorhom/bottom-sheet';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
-import { useInventory, useSettings, useAppSelector, useInventoryCategories, useLocations, useAppDispatch } from '../store/hooks';
+import {
+  useInventory,
+  useSettings,
+  useAppSelector,
+  useInventoryCategories,
+  useLocations,
+  useAppDispatch,
+} from '../store/hooks';
 import { selectItemById } from '../store/slices/inventorySlice';
 import { updateItemAction } from '../store/sagas/inventorySaga';
 import { RootStackParamList } from '../navigation/types';
@@ -75,7 +82,6 @@ const ErrorText = styled(Text)`
   margin-bottom: ${({ theme }: StyledProps) => theme.spacing.lg}px;
 `;
 
-
 export const ItemDetailsScreen: React.FC = () => {
   const { settings } = useSettings();
   const { confirmDelete } = useItemActions();
@@ -90,12 +96,16 @@ export const ItemDetailsScreen: React.FC = () => {
   const { t } = useTranslation();
 
   // Get item from Redux store
-  const itemFromRedux = useAppSelector((state) => selectItemById(state, itemId));
+  const itemFromRedux = useAppSelector((state) =>
+    selectItemById(state, itemId)
+  );
   const [item, setItem] = useState<InventoryItem | null>(itemFromRedux);
   const [isLoading, setIsLoading] = useState(!itemFromRedux && itemsLoading);
   const [locationName, setLocationName] = useState<string>('');
   const [categoryName, setCategoryName] = useState<string>('');
-  const [categoryColor, setCategoryColor] = useState<string | undefined>(undefined);
+  const [categoryColor, setCategoryColor] = useState<string | undefined>(
+    undefined
+  );
   const bottomSheetModalRef = useRef<BottomSheetModal>(null);
   const addBatchBottomSheetRef = useRef<BottomSheetModal>(null);
   const editBottomSheetRef = useRef<ItemFormBottomSheetRef>(null);
@@ -125,22 +135,34 @@ export const ItemDetailsScreen: React.FC = () => {
       try {
         if (!currentHomeId) {
           setIsLoading(false);
-          Alert.alert(t('itemDetails.error.title'), t('itemDetails.error.noHome'));
+          Alert.alert(
+            t('itemDetails.error.title'),
+            t('itemDetails.error.noHome')
+          );
           navigation.goBack();
           return;
         }
-        const itemData = await inventoryService.getItemById(currentHomeId, itemId);
+        const itemData = await inventoryService.getItemById(
+          currentHomeId,
+          itemId
+        );
         if (itemData) {
           setItem(itemData);
           // Trigger a reload of items to sync Redux
           loadItems();
         } else {
-          Alert.alert(t('itemDetails.error.title'), t('itemDetails.error.itemNotFound'));
+          Alert.alert(
+            t('itemDetails.error.title'),
+            t('itemDetails.error.itemNotFound')
+          );
           navigation.goBack();
         }
       } catch (error) {
         uiLogger.error('Error loading item', error);
-        Alert.alert(t('itemDetails.error.title'), t('itemDetails.error.loadFailed'));
+        Alert.alert(
+          t('itemDetails.error.title'),
+          t('itemDetails.error.loadFailed')
+        );
         navigation.goBack();
       } finally {
         setIsLoading(false);
@@ -148,7 +170,15 @@ export const ItemDetailsScreen: React.FC = () => {
     };
 
     loadItem();
-  }, [itemFromRedux, currentHomeId, itemId, itemsLoading, loadItems, navigation, t]);
+  }, [
+    itemFromRedux,
+    currentHomeId,
+    itemId,
+    itemsLoading,
+    loadItems,
+    navigation,
+    t,
+  ]);
 
   // Load locations on mount
   useEffect(() => {
@@ -159,11 +189,13 @@ export const ItemDetailsScreen: React.FC = () => {
   useEffect(() => {
     if (item) {
       const location = locations.find((loc) => loc.id === item.location);
-      setLocationName(location ? getLocationDisplayName(location, t) : item.location);
+      setLocationName(
+        location ? getLocationDisplayName(location, t) : item.location
+      );
 
       // Load category if exists
       if (item.categoryId) {
-        const category = categories.find(c => c.id === item.categoryId);
+        const category = categories.find((c) => c.id === item.categoryId);
         if (category) {
           setCategoryName(getInventoryCategoryDisplayName(category, t));
           setCategoryColor(category.color);
@@ -208,24 +240,31 @@ export const ItemDetailsScreen: React.FC = () => {
     // Item will be updated in Redux
   };
 
-  const handleDeleteBatch = useCallback((batchId: string) => {
-    Alert.alert(
-      t('itemDetails.batch.deleteTitle', { defaultValue: 'Delete Batch' }),
-      t('itemDetails.batch.deleteConfirmation', { defaultValue: 'Are you sure you want to delete this batch?' }),
-      [
-        { text: t('common.cancel'), style: 'cancel' },
-        {
-          text: t('common.delete'),
-          style: 'destructive',
-          onPress: () => {
-            if (!item) return;
-            const updatedBatches = (item.batches || []).filter(b => b.id !== batchId);
-            dispatch(updateItemAction(item.id, { batches: updatedBatches }));
-          }
-        }
-      ]
-    );
-  }, [item, dispatch, t]);
+  const handleDeleteBatch = useCallback(
+    (batchId: string) => {
+      Alert.alert(
+        t('itemDetails.batch.deleteTitle', { defaultValue: 'Delete Batch' }),
+        t('itemDetails.batch.deleteConfirmation', {
+          defaultValue: 'Are you sure you want to delete this batch?',
+        }),
+        [
+          { text: t('common.cancel'), style: 'cancel' },
+          {
+            text: t('common.delete'),
+            style: 'destructive',
+            onPress: () => {
+              if (!item) return;
+              const updatedBatches = (item.batches || []).filter(
+                (b) => b.id !== batchId
+              );
+              dispatch(updateItemAction(item.id, { batches: updatedBatches }));
+            },
+          },
+        ]
+      );
+    },
+    [item, dispatch, t]
+  );
 
   const handleEditBatch = (batchId: string) => {
     if (!item) return;
@@ -286,7 +325,6 @@ export const ItemDetailsScreen: React.FC = () => {
 
       <ScrollContainer>
         <Content contentContainerStyle={{ paddingBottom: bottomPadding }}>
-
           {/* Item Header Card */}
           <ItemInfoCard
             item={item}

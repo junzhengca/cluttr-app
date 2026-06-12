@@ -1,12 +1,14 @@
-import firestore, { FirebaseFirestoreTypes } from '@react-native-firebase/firestore';
+import firestore, {
+  FirebaseFirestoreTypes,
+} from '@react-native-firebase/firestore';
 import { eventChannel, EventChannel } from 'redux-saga';
 import { Ionicons } from '@expo/vector-icons';
 import {
-    InventoryItem,
-    InventoryCategory,
-    Location,
-    TodoItem,
-    TodoCategory,
+  InventoryItem,
+  InventoryCategory,
+  Location,
+  TodoItem,
+  TodoCategory,
 } from '../../types/inventory';
 import { Home, HomeMemberEntry } from '../../types/home';
 import { User } from '../../types/user';
@@ -23,21 +25,26 @@ type QuerySnapshot = FirebaseFirestoreTypes.QuerySnapshot;
 
 // ─── Collection refs ──────────────────────────────────────────────────────────
 
-export const userRef = (uid: string) => firestore().collection('users').doc(uid);
+export const userRef = (uid: string) =>
+  firestore().collection('users').doc(uid);
 export const homesCol = () => firestore().collection('homes');
 export const homeRef = (homeId: string) => homesCol().doc(homeId);
-export const invitationRef = (code: string) => firestore().collection('invitations').doc(code);
+export const invitationRef = (code: string) =>
+  firestore().collection('invitations').doc(code);
 
-export const inventoryCol = (homeId: string) => homeRef(homeId).collection('inventory');
+export const inventoryCol = (homeId: string) =>
+  homeRef(homeId).collection('inventory');
 export const inventoryCategoriesCol = (homeId: string) =>
-    homeRef(homeId).collection('inventoryCategories');
-export const locationsCol = (homeId: string) => homeRef(homeId).collection('locations');
+  homeRef(homeId).collection('inventoryCategories');
+export const locationsCol = (homeId: string) =>
+  homeRef(homeId).collection('locations');
 export const todosCol = (homeId: string) => homeRef(homeId).collection('todos');
-export const todoCategoriesCol = (homeId: string) => homeRef(homeId).collection('todoCategories');
+export const todoCategoriesCol = (homeId: string) =>
+  homeRef(homeId).collection('todoCategories');
 
 /** Live query for every home the user belongs to. */
 export const homesQueryForUser = (uid: string) =>
-    homesCol().where('memberIds', 'array-contains', uid);
+  homesCol().where('memberIds', 'array-contains', uid);
 
 // ─── Converters (RNFB has no withConverter) ──────────────────────────────────
 // Timestamps are stored as ISO strings, matching the domain model.
@@ -45,113 +52,122 @@ export const homesQueryForUser = (uid: string) =>
 const isoNow = () => new Date().toISOString();
 
 function baseFields(doc: DocSnapshot, homeId: string) {
-    const data = doc.data() ?? {};
-    return {
-        id: doc.id,
-        homeId,
-        createdAt: (data.createdAt as string) || isoNow(),
-        updatedAt: (data.updatedAt as string) || isoNow(),
-    };
+  const data = doc.data() ?? {};
+  return {
+    id: doc.id,
+    homeId,
+    createdAt: (data.createdAt as string) || isoNow(),
+    updatedAt: (data.updatedAt as string) || isoNow(),
+  };
 }
 
-export function inventoryItemFromDoc(doc: DocSnapshot, homeId: string): InventoryItem {
-    const data = doc.data() ?? {};
-    return {
-        ...baseFields(doc, homeId),
-        name: (data.name as string) || '',
-        location: (data.location as string) || '',
-        detailedLocation: (data.detailedLocation as string) || '',
-        status: (data.status as string) || '',
-        icon: (data.icon as keyof typeof Ionicons.glyphMap) || 'cube',
-        iconColor: (data.iconColor as string) || '#3B82F6',
-        warningThreshold: data.warningThreshold as number | undefined,
-        batches: (data.batches as InventoryItem['batches']) || [],
-        categoryId: data.categoryId as string | undefined,
-    };
+export function inventoryItemFromDoc(
+  doc: DocSnapshot,
+  homeId: string
+): InventoryItem {
+  const data = doc.data() ?? {};
+  return {
+    ...baseFields(doc, homeId),
+    name: (data.name as string) || '',
+    location: (data.location as string) || '',
+    detailedLocation: (data.detailedLocation as string) || '',
+    status: (data.status as string) || '',
+    icon: (data.icon as keyof typeof Ionicons.glyphMap) || 'cube',
+    iconColor: (data.iconColor as string) || '#3B82F6',
+    warningThreshold: data.warningThreshold as number | undefined,
+    batches: (data.batches as InventoryItem['batches']) || [],
+    categoryId: data.categoryId as string | undefined,
+  };
 }
 
-export function inventoryCategoryFromDoc(doc: DocSnapshot, homeId: string): InventoryCategory {
-    const data = doc.data() ?? {};
-    return {
-        ...baseFields(doc, homeId),
-        name: (data.name as string) || '',
-        description: data.description as string | undefined,
-        icon: data.icon as string | undefined,
-        color: data.color as string | undefined,
-    };
+export function inventoryCategoryFromDoc(
+  doc: DocSnapshot,
+  homeId: string
+): InventoryCategory {
+  const data = doc.data() ?? {};
+  return {
+    ...baseFields(doc, homeId),
+    name: (data.name as string) || '',
+    description: data.description as string | undefined,
+    icon: data.icon as string | undefined,
+    color: data.color as string | undefined,
+  };
 }
 
 export function locationFromDoc(doc: DocSnapshot, homeId: string): Location {
-    const data = doc.data() ?? {};
-    return {
-        ...baseFields(doc, homeId),
-        name: (data.name as string) || '',
-        icon: data.icon as Location['icon'],
-    };
+  const data = doc.data() ?? {};
+  return {
+    ...baseFields(doc, homeId),
+    name: (data.name as string) || '',
+    icon: data.icon as Location['icon'],
+  };
 }
 
 export function todoItemFromDoc(doc: DocSnapshot, homeId: string): TodoItem {
-    const data = doc.data() ?? {};
-    return {
-        ...baseFields(doc, homeId),
-        text: (data.text as string) || '',
-        completed: Boolean(data.completed),
-        completedAt: data.completedAt as string | null | undefined,
-        position: data.position as number | undefined,
-        note: data.note as string | undefined,
-        categoryId: data.categoryId as string | undefined,
-    };
+  const data = doc.data() ?? {};
+  return {
+    ...baseFields(doc, homeId),
+    text: (data.text as string) || '',
+    completed: Boolean(data.completed),
+    completedAt: data.completedAt as string | null | undefined,
+    position: data.position as number | undefined,
+    note: data.note as string | undefined,
+    categoryId: data.categoryId as string | undefined,
+  };
 }
 
-export function todoCategoryFromDoc(doc: DocSnapshot, homeId: string): TodoCategory {
-    const data = doc.data() ?? {};
-    return {
-        ...baseFields(doc, homeId),
-        name: (data.name as string) || '',
-        description: data.description as string | undefined,
-        color: data.color as string | undefined,
-        icon: data.icon as string | undefined,
-        position: data.position as number | undefined,
-    };
+export function todoCategoryFromDoc(
+  doc: DocSnapshot,
+  homeId: string
+): TodoCategory {
+  const data = doc.data() ?? {};
+  return {
+    ...baseFields(doc, homeId),
+    name: (data.name as string) || '',
+    description: data.description as string | undefined,
+    color: data.color as string | undefined,
+    icon: data.icon as string | undefined,
+    position: data.position as number | undefined,
+  };
 }
 
 export function homeFromDoc(doc: DocSnapshot, uid: string): Home {
-    const data = doc.data() ?? {};
-    const members = (data.members as Record<string, HomeMemberEntry>) || {};
-    const ownerId = (data.ownerId as string) || '';
-    return {
-        id: doc.id,
-        name: (data.name as string) || '',
-        address: data.address as string | undefined,
-        ownerId,
-        members,
-        role: ownerId === uid ? 'owner' : 'member',
-        isOwner: ownerId === uid,
-        settings: data.settings as Home['settings'],
-        invitationCode: data.invitationCode as string | undefined,
-        memberCount: Object.keys(members).length,
-        createdAt: (data.createdAt as string) || isoNow(),
-        updatedAt: (data.updatedAt as string) || isoNow(),
-    };
+  const data = doc.data() ?? {};
+  const members = (data.members as Record<string, HomeMemberEntry>) || {};
+  const ownerId = (data.ownerId as string) || '';
+  return {
+    id: doc.id,
+    name: (data.name as string) || '',
+    address: data.address as string | undefined,
+    ownerId,
+    members,
+    role: ownerId === uid ? 'owner' : 'member',
+    isOwner: ownerId === uid,
+    settings: data.settings as Home['settings'],
+    invitationCode: data.invitationCode as string | undefined,
+    memberCount: Object.keys(members).length,
+    createdAt: (data.createdAt as string) || isoNow(),
+    updatedAt: (data.updatedAt as string) || isoNow(),
+  };
 }
 
 export function userFromDoc(doc: DocSnapshot): User {
-    const data = doc.data() ?? {};
-    return {
-        id: doc.id,
-        email: (data.email as string) || '',
-        nickname: data.nickname as string | undefined,
-        avatarUrl: data.avatarUrl as string | undefined,
-        createdAt: data.createdAt as string | undefined,
-        updatedAt: data.updatedAt as string | undefined,
-    };
+  const data = doc.data() ?? {};
+  return {
+    id: doc.id,
+    email: (data.email as string) || '',
+    nickname: data.nickname as string | undefined,
+    avatarUrl: data.avatarUrl as string | undefined,
+    createdAt: data.createdAt as string | undefined,
+    updatedAt: data.updatedAt as string | undefined,
+  };
 }
 
 // ─── Saga snapshot channel ────────────────────────────────────────────────────
 
 export interface SnapshotEvent {
-    snapshot?: QuerySnapshot;
-    error?: Error & { code?: string };
+  snapshot?: QuerySnapshot;
+  error?: Error & { code?: string };
 }
 
 /**
@@ -160,19 +176,19 @@ export interface SnapshotEvent {
  * underlying onSnapshot listener is detached.
  */
 export function createSnapshotChannel(
-    query: FirebaseFirestoreTypes.Query,
+  query: FirebaseFirestoreTypes.Query
 ): EventChannel<SnapshotEvent> {
-    return eventChannel<SnapshotEvent>((emit) => {
-        const unsubscribe = query.onSnapshot(
-            (snapshot) => emit({ snapshot }),
-            (error) => emit({ error: error as SnapshotEvent['error'] }),
-        );
-        return unsubscribe;
-    });
+  return eventChannel<SnapshotEvent>((emit) => {
+    const unsubscribe = query.onSnapshot(
+      (snapshot) => emit({ snapshot }),
+      (error) => emit({ error: error as SnapshotEvent['error'] })
+    );
+    return unsubscribe;
+  });
 }
 
 export function isPermissionDenied(error?: { code?: string }): boolean {
-    return error?.code === 'firestore/permission-denied';
+  return error?.code === 'firestore/permission-denied';
 }
 
 // ─── Write error handling ─────────────────────────────────────────────────────
@@ -183,12 +199,15 @@ export function isPermissionDenied(error?: { code?: string }): boolean {
  * (awaiting would hang while offline). Errors are logged and surfaced as a
  * toast — the next snapshot already shows the authoritative state.
  */
-export function fireWrite(promise: Promise<unknown>, errorMessage: string): void {
-    promise.catch((error) => {
-        storageLogger.error(errorMessage, error);
-        const toast = getGlobalToast();
-        if (toast) toast(errorMessage, 'error');
-    });
+export function fireWrite(
+  promise: Promise<unknown>,
+  errorMessage: string
+): void {
+  promise.catch((error) => {
+    storageLogger.error(errorMessage, error);
+    const toast = getGlobalToast();
+    if (toast) toast(errorMessage, 'error');
+  });
 }
 
 export { isoNow };

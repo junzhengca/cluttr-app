@@ -1,7 +1,12 @@
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { View, Text, ActivityIndicator } from 'react-native';
 import styled from 'styled-components/native';
-import { BottomSheetModal, BottomSheetBackdrop, BottomSheetView, BottomSheetBackdropProps } from '@gorhom/bottom-sheet';
+import {
+  BottomSheetModal,
+  BottomSheetBackdrop,
+  BottomSheetView,
+  BottomSheetBackdropProps,
+} from '@gorhom/bottom-sheet';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../../theme/ThemeProvider';
@@ -11,9 +16,11 @@ import { useToast } from '../../../hooks/useToast';
 import type { StyledProps } from '../../../utils/styledComponents';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { uiLogger } from '../../../utils/Logger';
-import { invitationService, InvitationPreview } from '../../../services/InvitationService';
+import {
+  invitationService,
+  InvitationPreview,
+} from '../../../services/InvitationService';
 import { ContentContainer } from './shared/sheetPrimitives';
-
 
 const ErrorRow = styled(View)`
   flex-direction: row;
@@ -101,214 +108,279 @@ const LoadingContainer = styled(View)`
 `;
 
 interface InvitationBottomSheetProps {
-    bottomSheetRef: React.RefObject<BottomSheetModal | null>;
-    inviteCode: string | null;
-    onDismiss?: () => void;
+  bottomSheetRef: React.RefObject<BottomSheetModal | null>;
+  inviteCode: string | null;
+  onDismiss?: () => void;
 }
 
 export const InvitationBottomSheet: React.FC<InvitationBottomSheetProps> = ({
-    bottomSheetRef,
-    inviteCode,
-    onDismiss,
+  bottomSheetRef,
+  inviteCode,
+  onDismiss,
 }) => {
-    const { t } = useTranslation();
-    const theme = useTheme();
-    const insets = useSafeAreaInsets();
-    const currentUser = useAppSelector((state) => state.auth.user);
+  const { t } = useTranslation();
+  const theme = useTheme();
+  const insets = useSafeAreaInsets();
+  const currentUser = useAppSelector((state) => state.auth.user);
 
-    const { showToast } = useToast();
+  const { showToast } = useToast();
 
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
-    const [invitationData, setInvitationData] = useState<InvitationPreview | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [invitationData, setInvitationData] =
+    useState<InvitationPreview | null>(null);
 
-    // Use dynamic sizing or a calculated snap point
-    const isOwnHome = useMemo(() => {
-        if (!invitationData || !currentUser?.email || !invitationData.home) return false;
-        return invitationData.home.owner.email?.toLowerCase() === currentUser.email.toLowerCase();
-    }, [invitationData, currentUser]);
-
-    const fetchInvitationDetails = useCallback(async (code: string) => {
-        setLoading(true);
-        setError(null);
-        setInvitationData(null);
-
-        try {
-            const data = await invitationService.validate(code);
-            if (data.valid) {
-                setInvitationData(data);
-            } else {
-                setError(data.message || 'Invalid invitation code');
-            }
-        } catch (err: unknown) {
-            setError(err instanceof Error ? err.message : 'Failed to validate home invitation');
-            uiLogger.error('Validate home invitation error', err);
-        } finally {
-            setLoading(false);
-        }
-    }, []);
-
-    const processAccept = useCallback(async () => {
-        if (!inviteCode || !currentUser) return;
-        setLoading(true);
-        uiLogger.info(`Accepting home invitation: ${inviteCode}`);
-        try {
-            const result = await invitationService.accept(inviteCode, currentUser.id);
-            if (!result.success) {
-                throw new Error(result.message || t('share.invite.acceptError'));
-            }
-
-            // The live homes snapshot delivers the new home automatically
-            showToast(t('share.invite.acceptSuccess'), 'success');
-
-            // Dismiss and clear state
-            onDismiss?.();
-            bottomSheetRef.current?.dismiss();
-
-        } catch (err: unknown) {
-            uiLogger.error('Accept home invitation error', err);
-            showToast(err instanceof Error ? err.message : t('share.invite.acceptError'), 'error');
-        } finally {
-            setLoading(false);
-        }
-    }, [inviteCode, currentUser, t, showToast, onDismiss, bottomSheetRef]);
-
-    useEffect(() => {
-        if (inviteCode) {
-            fetchInvitationDetails(inviteCode);
-        }
-    }, [inviteCode, fetchInvitationDetails]);
-
-    const handleAccept = useCallback(async () => {
-        if (!inviteCode) return;
-
-        await processAccept();
-    }, [inviteCode, processAccept]);
-
-    const handleClose = useCallback(() => {
-        bottomSheetRef.current?.dismiss();
-        onDismiss?.();
-    }, [bottomSheetRef, onDismiss]);
-
-    const renderBackdrop = useCallback(
-        (props: BottomSheetBackdropProps) => (
-            <BottomSheetBackdrop
-                {...props}
-                disappearsOnIndex={-1}
-                appearsOnIndex={0}
-                opacity={0.5}
-            />
-        ),
-        []
-    );
-
+  // Use dynamic sizing or a calculated snap point
+  const isOwnHome = useMemo(() => {
+    if (!invitationData || !currentUser?.email || !invitationData.home)
+      return false;
     return (
-        <BottomSheetModal
-            ref={bottomSheetRef}
-            enableDynamicSizing={true}
-            enablePanDownToClose={true}
-            backdropComponent={renderBackdrop}
-            onDismiss={onDismiss}
-            handleComponent={null}
-            backgroundStyle={{
-                backgroundColor: theme.colors.background,
-            }}
-        >
-            <ContentContainer>
-                <BottomSheetView style={{ paddingBottom: insets.bottom + theme.spacing.xl }}>
-                    <BottomSheetHeader
-                        title=""
-                        subtitle=""
-                        onClose={handleClose}
-                    />
-
-                    <View style={{ paddingHorizontal: theme.spacing.lg }}>
-                        {loading ? (
-                            <LoadingContainer>
-                                <ActivityIndicator size="large" color={theme.colors.primary} />
-                            </LoadingContainer>
-                        ) : error ? (
-                            <>
-                                <ErrorText>{error}</ErrorText>
-                                <GlassButton
-                                    text={t('common.close')}
-                                    onPress={handleClose}
-                                    tintColor={theme.colors.borderLight}
-                                    textColor={theme.colors.text}
-                                    style={{ width: '100%' }}
-                                />
-                            </>
-                        ) : invitationData && invitationData.home ? (
-                            <View>
-                                <View style={{ alignItems: 'center' }}>
-                                    <AvatarContainer>
-                                        <View style={{
-                                            width: 80, height: 80,
-                                            backgroundColor: theme.colors.primaryLight, borderRadius: 40,
-                                            alignItems: 'center', justifyContent: 'center'
-                                        }}>
-                                            <Text style={{ fontSize: 32, color: theme.colors.primary, fontWeight: 'bold' }}>
-                                                {(invitationData.home.owner.nickname || invitationData.home.owner.email || '?').charAt(0).toUpperCase()}
-                                            </Text>
-                                        </View>
-                                        <EnvelopeIcon>
-                                            <Ionicons name="mail" size={16} color={theme.colors.text} />
-                                        </EnvelopeIcon>
-                                    </AvatarContainer>
-                                </View>
-
-                                <Subtitle>{t('share.invite.receivedSubtitle')}</Subtitle>
-                                <InviteTitle>
-                                    {t('share.invite.receivedTitle', { name: invitationData.home.owner.nickname || invitationData.home.owner.email })}
-                                </InviteTitle>
-                                {invitationData.home.owner.nickname && invitationData.home.owner.email && (
-                                    <InviterEmail>({invitationData.home.owner.email})</InviterEmail>
-                                )}
-                                {isOwnHome && (
-                                    <ErrorRow>
-                                        <Ionicons name="alert-circle" size={20} color={theme.colors.error} />
-                                        <ErrorText>{t('share.invite.errors.ownHome')}</ErrorText>
-                                    </ErrorRow>
-                                )}
-
-                                <ScopeSection>
-                                    <ScopeTitle>{t('share.invite.receivedScope')}</ScopeTitle>
-                                    <ScopeRow>
-                                        <Ionicons
-                                            name={invitationData.permissions?.canShareInventory ? "checkmark-circle" : "lock-closed"}
-                                            size={20}
-                                            color={invitationData.permissions?.canShareInventory ? theme.colors.success : theme.colors.textSecondary}
-                                        />
-                                        <ScopeText>
-                                            {t('share.invite.inventory')} ({invitationData.permissions?.canShareInventory ? t('share.invite.visibleToAll') : t('share.invite.private')})
-                                        </ScopeText>
-                                    </ScopeRow>
-                                    <ScopeRow>
-                                        <Ionicons
-                                            name={invitationData.permissions?.canShareTodos ? "checkmark-circle" : "lock-closed"}
-                                            size={20}
-                                            color={invitationData.permissions?.canShareTodos ? theme.colors.success : theme.colors.textSecondary}
-                                        />
-                                        <ScopeText>
-                                            {t('share.invite.shoppingList')} ({invitationData.permissions?.canShareTodos ? t('share.invite.visibleToAll') : t('share.invite.private')})
-                                        </ScopeText>
-                                    </ScopeRow>
-                                </ScopeSection>
-
-                                <GlassButton
-                                    text={loading ? t('common.saving') : t('share.invite.accept')}
-                                    onPress={handleAccept}
-                                    tintColor={theme.colors.primary}
-                                    textColor={theme.colors.surface}
-                                    disabled={loading || isOwnHome}
-                                    loading={loading}
-                                    style={{ width: '100%' }}
-                                />
-                            </View>
-                        ) : null}
-                    </View>
-                </BottomSheetView>
-            </ContentContainer>
-        </BottomSheetModal>
+      invitationData.home.owner.email?.toLowerCase() ===
+      currentUser.email.toLowerCase()
     );
+  }, [invitationData, currentUser]);
+
+  const fetchInvitationDetails = useCallback(async (code: string) => {
+    setLoading(true);
+    setError(null);
+    setInvitationData(null);
+
+    try {
+      const data = await invitationService.validate(code);
+      if (data.valid) {
+        setInvitationData(data);
+      } else {
+        setError(data.message || 'Invalid invitation code');
+      }
+    } catch (err: unknown) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : 'Failed to validate home invitation'
+      );
+      uiLogger.error('Validate home invitation error', err);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const processAccept = useCallback(async () => {
+    if (!inviteCode || !currentUser) return;
+    setLoading(true);
+    uiLogger.info(`Accepting home invitation: ${inviteCode}`);
+    try {
+      const result = await invitationService.accept(inviteCode, currentUser.id);
+      if (!result.success) {
+        throw new Error(result.message || t('share.invite.acceptError'));
+      }
+
+      // The live homes snapshot delivers the new home automatically
+      showToast(t('share.invite.acceptSuccess'), 'success');
+
+      // Dismiss and clear state
+      onDismiss?.();
+      bottomSheetRef.current?.dismiss();
+    } catch (err: unknown) {
+      uiLogger.error('Accept home invitation error', err);
+      showToast(
+        err instanceof Error ? err.message : t('share.invite.acceptError'),
+        'error'
+      );
+    } finally {
+      setLoading(false);
+    }
+  }, [inviteCode, currentUser, t, showToast, onDismiss, bottomSheetRef]);
+
+  useEffect(() => {
+    if (inviteCode) {
+      fetchInvitationDetails(inviteCode);
+    }
+  }, [inviteCode, fetchInvitationDetails]);
+
+  const handleAccept = useCallback(async () => {
+    if (!inviteCode) return;
+
+    await processAccept();
+  }, [inviteCode, processAccept]);
+
+  const handleClose = useCallback(() => {
+    bottomSheetRef.current?.dismiss();
+    onDismiss?.();
+  }, [bottomSheetRef, onDismiss]);
+
+  const renderBackdrop = useCallback(
+    (props: BottomSheetBackdropProps) => (
+      <BottomSheetBackdrop
+        {...props}
+        disappearsOnIndex={-1}
+        appearsOnIndex={0}
+        opacity={0.5}
+      />
+    ),
+    []
+  );
+
+  return (
+    <BottomSheetModal
+      ref={bottomSheetRef}
+      enableDynamicSizing={true}
+      enablePanDownToClose={true}
+      backdropComponent={renderBackdrop}
+      onDismiss={onDismiss}
+      handleComponent={null}
+      backgroundStyle={{
+        backgroundColor: theme.colors.background,
+      }}
+    >
+      <ContentContainer>
+        <BottomSheetView
+          style={{ paddingBottom: insets.bottom + theme.spacing.xl }}
+        >
+          <BottomSheetHeader title="" subtitle="" onClose={handleClose} />
+
+          <View style={{ paddingHorizontal: theme.spacing.lg }}>
+            {loading ? (
+              <LoadingContainer>
+                <ActivityIndicator size="large" color={theme.colors.primary} />
+              </LoadingContainer>
+            ) : error ? (
+              <>
+                <ErrorText>{error}</ErrorText>
+                <GlassButton
+                  text={t('common.close')}
+                  onPress={handleClose}
+                  tintColor={theme.colors.borderLight}
+                  textColor={theme.colors.text}
+                  style={{ width: '100%' }}
+                />
+              </>
+            ) : invitationData && invitationData.home ? (
+              <View>
+                <View style={{ alignItems: 'center' }}>
+                  <AvatarContainer>
+                    <View
+                      style={{
+                        width: 80,
+                        height: 80,
+                        backgroundColor: theme.colors.primaryLight,
+                        borderRadius: 40,
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}
+                    >
+                      <Text
+                        style={{
+                          fontSize: 32,
+                          color: theme.colors.primary,
+                          fontWeight: 'bold',
+                        }}
+                      >
+                        {(
+                          invitationData.home.owner.nickname ||
+                          invitationData.home.owner.email ||
+                          '?'
+                        )
+                          .charAt(0)
+                          .toUpperCase()}
+                      </Text>
+                    </View>
+                    <EnvelopeIcon>
+                      <Ionicons
+                        name="mail"
+                        size={16}
+                        color={theme.colors.text}
+                      />
+                    </EnvelopeIcon>
+                  </AvatarContainer>
+                </View>
+
+                <Subtitle>{t('share.invite.receivedSubtitle')}</Subtitle>
+                <InviteTitle>
+                  {t('share.invite.receivedTitle', {
+                    name:
+                      invitationData.home.owner.nickname ||
+                      invitationData.home.owner.email,
+                  })}
+                </InviteTitle>
+                {invitationData.home.owner.nickname &&
+                  invitationData.home.owner.email && (
+                    <InviterEmail>
+                      ({invitationData.home.owner.email})
+                    </InviterEmail>
+                  )}
+                {isOwnHome && (
+                  <ErrorRow>
+                    <Ionicons
+                      name="alert-circle"
+                      size={20}
+                      color={theme.colors.error}
+                    />
+                    <ErrorText>{t('share.invite.errors.ownHome')}</ErrorText>
+                  </ErrorRow>
+                )}
+
+                <ScopeSection>
+                  <ScopeTitle>{t('share.invite.receivedScope')}</ScopeTitle>
+                  <ScopeRow>
+                    <Ionicons
+                      name={
+                        invitationData.permissions?.canShareInventory
+                          ? 'checkmark-circle'
+                          : 'lock-closed'
+                      }
+                      size={20}
+                      color={
+                        invitationData.permissions?.canShareInventory
+                          ? theme.colors.success
+                          : theme.colors.textSecondary
+                      }
+                    />
+                    <ScopeText>
+                      {t('share.invite.inventory')} (
+                      {invitationData.permissions?.canShareInventory
+                        ? t('share.invite.visibleToAll')
+                        : t('share.invite.private')}
+                      )
+                    </ScopeText>
+                  </ScopeRow>
+                  <ScopeRow>
+                    <Ionicons
+                      name={
+                        invitationData.permissions?.canShareTodos
+                          ? 'checkmark-circle'
+                          : 'lock-closed'
+                      }
+                      size={20}
+                      color={
+                        invitationData.permissions?.canShareTodos
+                          ? theme.colors.success
+                          : theme.colors.textSecondary
+                      }
+                    />
+                    <ScopeText>
+                      {t('share.invite.shoppingList')} (
+                      {invitationData.permissions?.canShareTodos
+                        ? t('share.invite.visibleToAll')
+                        : t('share.invite.private')}
+                      )
+                    </ScopeText>
+                  </ScopeRow>
+                </ScopeSection>
+
+                <GlassButton
+                  text={loading ? t('common.saving') : t('share.invite.accept')}
+                  onPress={handleAccept}
+                  tintColor={theme.colors.primary}
+                  textColor={theme.colors.surface}
+                  disabled={loading || isOwnHome}
+                  loading={loading}
+                  style={{ width: '100%' }}
+                />
+              </View>
+            ) : null}
+          </View>
+        </BottomSheetView>
+      </ContentContainer>
+    </BottomSheetModal>
+  );
 };

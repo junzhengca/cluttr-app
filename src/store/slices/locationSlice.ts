@@ -65,12 +65,16 @@ export const {
 } = locationSlice.actions;
 
 // Selectors
-const selectLocations = (state: { location: LocationState }) => state.location.locations;
-const selectLoading = (state: { location: LocationState }) => state.location.loading;
-const selectAddingLocation = (state: { location: LocationState }) => state.location.addingLocation;
+const selectLocations = (state: { location: LocationState }) =>
+  state.location.locations;
+const selectLoading = (state: { location: LocationState }) =>
+  state.location.loading;
+const selectAddingLocation = (state: { location: LocationState }) =>
+  state.location.addingLocation;
 const selectUpdatingLocationIds = (state: { location: LocationState }) =>
   state.location.updatingLocationIds;
-const selectError = (state: { location: LocationState }) => state.location.error;
+const selectError = (state: { location: LocationState }) =>
+  state.location.error;
 
 export {
   selectLocations,

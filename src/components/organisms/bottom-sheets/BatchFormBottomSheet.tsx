@@ -63,8 +63,7 @@ interface BatchFormBottomSheetBaseProps {
   bottomSheetRef: React.RefObject<BottomSheetModal | null>;
 }
 
-export interface BatchFormBottomSheetAddProps
-  extends BatchFormBottomSheetBaseProps {
+export interface BatchFormBottomSheetAddProps extends BatchFormBottomSheetBaseProps {
   mode: 'add';
   /** The item the new batch is appended to. */
   item: InventoryItem;
@@ -72,8 +71,7 @@ export interface BatchFormBottomSheetAddProps
   onSheetClose?: () => void;
 }
 
-export interface BatchFormBottomSheetEditProps
-  extends BatchFormBottomSheetBaseProps {
+export interface BatchFormBottomSheetEditProps extends BatchFormBottomSheetBaseProps {
   mode: 'edit';
   onBatchUpdated?: () => void;
 }
@@ -110,7 +108,8 @@ export const BatchFormBottomSheet = forwardRef<
   const addItem = props.mode === 'add' ? props.item : undefined;
   const onBatchAdded = props.mode === 'add' ? props.onBatchAdded : undefined;
   const onSheetClose = props.mode === 'add' ? props.onSheetClose : undefined;
-  const onBatchUpdated = props.mode === 'edit' ? props.onBatchUpdated : undefined;
+  const onBatchUpdated =
+    props.mode === 'edit' ? props.onBatchUpdated : undefined;
 
   const theme = useTheme();
   const insets = useSafeAreaInsets();
@@ -243,7 +242,7 @@ export const BatchFormBottomSheet = forwardRef<
         updatedBatches = [...(targetItem.batches || []), newBatch];
       } else {
         updatedBatches = (targetItem.batches || []).map((batch) =>
-          batch.id === batchId ? { ...batch, ...batchFields } : batch,
+          batch.id === batchId ? { ...batch, ...batchFields } : batch
         );
       }
 
@@ -259,7 +258,7 @@ export const BatchFormBottomSheet = forwardRef<
     } catch (error) {
       uiLogger.error(
         mode === 'add' ? 'Error adding batch' : 'Error updating batch',
-        error,
+        error
       );
       Alert.alert(t('common.error'), t('itemDetails.error.updateFailed'));
     } finally {
@@ -310,7 +309,7 @@ export const BatchFormBottomSheet = forwardRef<
         }, 0);
       },
     }),
-    [store, bottomSheetRef],
+    [store, bottomSheetRef]
   );
 
   // --- Render helpers ---------------------------------------------------------
@@ -333,7 +332,15 @@ export const BatchFormBottomSheet = forwardRef<
         />
       </FooterContainer>
     ),
-    [handleSubmit, isLoading, isFormValid, isKeyboardVisible, insets.bottom, t, theme],
+    [
+      handleSubmit,
+      isLoading,
+      isFormValid,
+      isKeyboardVisible,
+      insets.bottom,
+      t,
+      theme,
+    ]
   );
 
   return (
@@ -353,9 +360,9 @@ export const BatchFormBottomSheet = forwardRef<
           title={t(
             mode === 'add'
               ? 'itemDetails.batch.addBatch'
-              : 'itemDetails.batch.editBatch',
+              : 'itemDetails.batch.editBatch'
           )}
-          subtitle={mode === 'add' ? addItem?.name ?? '' : currentItemName}
+          subtitle={mode === 'add' ? (addItem?.name ?? '') : currentItemName}
           onClose={handleClose}
         />
         <BottomSheetScrollView

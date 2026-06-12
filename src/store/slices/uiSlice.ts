@@ -20,4 +20,3 @@ const uiSlice = createSlice({
 
 export const { setHomeCategory } = uiSlice.actions;
 export default uiSlice.reducer;
-

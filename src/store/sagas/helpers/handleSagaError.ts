@@ -21,7 +21,7 @@ export function* handleSagaError(
     setError: SetErrorActionCreator;
     fallbackKey: string;
     fallbackText: string;
-  },
+  }
 ): Generator<unknown, void, unknown> {
   sagaLogger.error(config.logMessage, error);
   const errorMessage =

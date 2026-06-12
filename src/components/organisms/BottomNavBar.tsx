@@ -14,7 +14,8 @@ const NavBarContainer = styled(View)<{ bottomInset: number }>`
   left: 0;
   right: 0;
   background-color: transparent;
-  padding-bottom: ${({ bottomInset }: { bottomInset: number }) => bottomInset + 16}px;
+  padding-bottom: ${({ bottomInset }: { bottomInset: number }) =>
+    bottomInset + 16}px;
   align-items: center;
   justify-content: center;
   pointer-events: box-none;
@@ -57,11 +58,17 @@ const VerticalDivider = styled(View)`
   margin: 0 ${({ theme }: StyledProps) => theme.spacing.sm}px;
 `;
 
-export const BottomNavBar: React.FC<BottomTabBarProps> = ({ state, navigation }) => {
+export const BottomNavBar: React.FC<BottomTabBarProps> = ({
+  state,
+  navigation,
+}) => {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
 
-  const handleTabPress = (routeName: keyof TabParamList, isFocused: boolean) => {
+  const handleTabPress = (
+    routeName: keyof TabParamList,
+    isFocused: boolean
+  ) => {
     const event = navigation.emit({
       type: 'tabPress',
       target: routeName,
@@ -81,11 +88,15 @@ export const BottomNavBar: React.FC<BottomTabBarProps> = ({ state, navigation })
             const isFocused = state.index === index;
             const routeName = route.name as keyof TabParamList;
 
-            let iconName: keyof typeof Ionicons.glyphMap | keyof typeof MaterialCommunityIcons.glyphMap = 'home-outline';
-            let IconComponent: typeof Ionicons | typeof MaterialCommunityIcons = Ionicons;
+            let iconName:
+              | keyof typeof Ionicons.glyphMap
+              | keyof typeof MaterialCommunityIcons.glyphMap = 'home-outline';
+            let IconComponent: typeof Ionicons | typeof MaterialCommunityIcons =
+              Ionicons;
 
             if (routeName === 'NotesTab') {
-              iconName = 'notebook-edit-outline' as keyof typeof MaterialCommunityIcons.glyphMap;
+              iconName =
+                'notebook-edit-outline' as keyof typeof MaterialCommunityIcons.glyphMap;
               IconComponent = MaterialCommunityIcons;
             } else if (routeName === 'SettingsTab') {
               iconName = 'settings-outline';
@@ -98,9 +109,14 @@ export const BottomNavBar: React.FC<BottomTabBarProps> = ({ state, navigation })
                   onPress={() => handleTabPress(routeName, isFocused)}
                 >
                   <IconComponent
-                    name={iconName as keyof typeof Ionicons.glyphMap & keyof typeof MaterialCommunityIcons.glyphMap}
+                    name={
+                      iconName as keyof typeof Ionicons.glyphMap &
+                        keyof typeof MaterialCommunityIcons.glyphMap
+                    }
                     size={24}
-                    color={isFocused ? theme.colors.primary : theme.colors.textLight}
+                    color={
+                      isFocused ? theme.colors.primary : theme.colors.textLight
+                    }
                   />
                 </TabButton>
                 {index === 1 && <VerticalDivider />}
@@ -112,4 +128,3 @@ export const BottomNavBar: React.FC<BottomTabBarProps> = ({ state, navigation })
     </NavBarContainer>
   );
 };
-

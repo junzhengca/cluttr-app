@@ -15,25 +15,41 @@ export interface SettingsTextButtonProps {
   noMarginBottom?: boolean;
 }
 
-const Button = styled(TouchableOpacity)<{ compactBottom?: boolean; noMarginBottom?: boolean }>`
+const Button = styled(TouchableOpacity)<{
+  compactBottom?: boolean;
+  noMarginBottom?: boolean;
+}>`
   flex-direction: row;
   align-items: center;
   padding-vertical: ${({ theme }: StyledProps) => theme.spacing.sm}px;
   padding-horizontal: ${({ theme }: StyledProps) => theme.spacing.xs}px;
-  margin-bottom: ${({ theme, compactBottom, noMarginBottom }: StyledProps & { compactBottom?: boolean; noMarginBottom?: boolean }) =>
+  margin-bottom: ${({
+    theme,
+    compactBottom,
+    noMarginBottom,
+  }: StyledProps & { compactBottom?: boolean; noMarginBottom?: boolean }) =>
     noMarginBottom ? 0 : compactBottom ? theme.spacing.sm : theme.spacing.md}px;
 `;
 
 const Icon = styled(Ionicons)<{ variant?: 'default' | 'destructive' }>`
-  color: ${({ theme, variant }: StyledProps & { variant?: 'default' | 'destructive' }) =>
-    variant === 'destructive' ? theme.colors.error : theme.colors.textSecondary};
+  color: ${({
+    theme,
+    variant,
+  }: StyledProps & { variant?: 'default' | 'destructive' }) =>
+    variant === 'destructive'
+      ? theme.colors.error
+      : theme.colors.textSecondary};
   margin-right: ${({ theme }: StyledProps) => theme.spacing.sm}px;
 `;
 
 const ButtonText = styled(Text)<{ variant?: 'default' | 'destructive' }>`
   font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.md}px;
-  font-weight: ${({ theme }: StyledProps) => theme.typography.fontWeight.regular};
-  color: ${({ theme, variant }: StyledProps & { variant?: 'default' | 'destructive' }) =>
+  font-weight: ${({ theme }: StyledProps) =>
+    theme.typography.fontWeight.regular};
+  color: ${({
+    theme,
+    variant,
+  }: StyledProps & { variant?: 'default' | 'destructive' }) =>
     variant === 'destructive' ? theme.colors.error : theme.colors.text};
 `;
 
@@ -46,7 +62,12 @@ export const SettingsTextButton: React.FC<SettingsTextButtonProps> = ({
   noMarginBottom = false,
 }) => {
   return (
-    <Button onPress={onPress} activeOpacity={0.7} compactBottom={compactBottom} noMarginBottom={noMarginBottom}>
+    <Button
+      onPress={onPress}
+      activeOpacity={0.7}
+      compactBottom={compactBottom}
+      noMarginBottom={noMarginBottom}
+    >
       {icon && <Icon name={icon} size={20} variant={variant} />}
       <ButtonText variant={variant}>{label}</ButtonText>
     </Button>

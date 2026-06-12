@@ -16,7 +16,7 @@ const StatusContainer = styled(View)`
   padding-horizontal: ${({ theme }: StyledProps) => theme.spacing.md}px;
 `;
 
-const StatusButton = styled(TouchableOpacity) <{ isSelected: boolean }>`
+const StatusButton = styled(TouchableOpacity)<{ isSelected: boolean }>`
   padding-horizontal: 8px;
   padding-vertical: 8px;
   border-radius: 30px;
@@ -24,25 +24,28 @@ const StatusButton = styled(TouchableOpacity) <{ isSelected: boolean }>`
   align-items: center;
   justify-content: center;
   background-color: ${({
-  theme,
-  isSelected,
-}: StyledPropsWith<{ isSelected: boolean }>) =>
+    theme,
+    isSelected,
+  }: StyledPropsWith<{ isSelected: boolean }>) =>
     isSelected ? theme.colors.primary : 'transparent'};
   flex: 1;
 
   /* Elevation for Android */
-  elevation: ${({ isSelected }: { isSelected: boolean }) => (isSelected ? 4 : 0)};
+  elevation: ${({ isSelected }: { isSelected: boolean }) =>
+    isSelected ? 4 : 0};
 
   /* Shadow for iOS */
   shadow-color: #000;
   shadow-offset: 0px 2px;
-  shadow-opacity: ${({ isSelected }: { isSelected: boolean }) => (isSelected ? 0.1 : 0)};
+  shadow-opacity: ${({ isSelected }: { isSelected: boolean }) =>
+    isSelected ? 0.1 : 0};
   shadow-radius: 2px;
 `;
 
 const StatusText = styled.Text<{ isSelected: boolean }>`
   font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.md}px;
-  font-weight: ${({ theme }: StyledProps) => theme.typography.fontWeight.medium};
+  font-weight: ${({ theme }: StyledProps) =>
+    theme.typography.fontWeight.medium};
   color: ${({ theme, isSelected }: StyledPropsWith<{ isSelected: boolean }>) =>
     isSelected ? theme.colors.surface : theme.colors.text};
 `;
@@ -72,7 +75,10 @@ export const StatusFilter: React.FC<StatusFilterProps> = ({
 }) => {
   const { t } = useTranslation();
 
-  const totalCount = Object.values(counts).reduce((sum, count) => sum + count, 0);
+  const totalCount = Object.values(counts).reduce(
+    (sum, count) => sum + count,
+    0
+  );
 
   // We only show All, Out of Stock, Expiring, and En Route to fit in one row as per request
   const displayStatuses = [

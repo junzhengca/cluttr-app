@@ -71,7 +71,10 @@ class FileSystemService {
       const content = await FileSystem.readAsStringAsync(filePath);
       return JSON.parse(content) as T;
     } catch (error) {
-      storageLogger.error(`Error reading file ${filename} (user: ${userId || 'default'}):`, error);
+      storageLogger.error(
+        `Error reading file ${filename} (user: ${userId || 'default'}):`,
+        error
+      );
       return null;
     }
   }
@@ -79,7 +82,11 @@ class FileSystemService {
   /**
    * Write data to a JSON file
    */
-  async writeFile<T>(filename: string, data: T, userId?: string): Promise<boolean> {
+  async writeFile<T>(
+    filename: string,
+    data: T,
+    userId?: string
+  ): Promise<boolean> {
     try {
       await this.ensureDirectoryExists();
       const filePath = this.getDataFilePath(filename, userId);
@@ -87,7 +94,10 @@ class FileSystemService {
       await FileSystem.writeAsStringAsync(filePath, content);
       return true;
     } catch (error) {
-      storageLogger.error(`Error writing file ${filename} (user: ${userId || 'default'}):`, error);
+      storageLogger.error(
+        `Error writing file ${filename} (user: ${userId || 'default'}):`,
+        error
+      );
       return false;
     }
   }
@@ -126,7 +136,7 @@ class FileSystemService {
 
       const files = await FileSystem.readDirectoryAsync(dataDir);
       // Filter to only JSON files
-      return files.filter(file => file.endsWith('.json'));
+      return files.filter((file) => file.endsWith('.json'));
     } catch (error) {
       storageLogger.error('Error listing JSON files:', error);
       return [];
@@ -139,9 +149,13 @@ class FileSystemService {
   async deleteHomeFiles(homeId: string): Promise<void> {
     try {
       const files = await this.listJsonFiles();
-      const filesToDelete = files.filter(file => file.endsWith(`_${homeId}.json`));
+      const filesToDelete = files.filter((file) =>
+        file.endsWith(`_${homeId}.json`)
+      );
 
-      storageLogger.info(`Deleting ${filesToDelete.length} files for home ${homeId}`);
+      storageLogger.info(
+        `Deleting ${filesToDelete.length} files for home ${homeId}`
+      );
 
       for (const file of filesToDelete) {
         await this.deleteFile(file);

@@ -41,7 +41,8 @@ const makeItem = (overrides: Partial<InventoryItem> = {}): InventoryItem => ({
 
 type InventoryState = ReturnType<typeof reducer>;
 
-const getInitialState = (): InventoryState => reducer(undefined, { type: '@@INIT' });
+const getInitialState = (): InventoryState =>
+  reducer(undefined, { type: '@@INIT' });
 
 const makeRootState = (inventory: InventoryState) => ({ inventory });
 
@@ -71,7 +72,10 @@ describe('inventorySlice reducer', () => {
 
   describe('updateItem', () => {
     it('replaces the item at the matching index', () => {
-      const items = [makeItem({ id: 'a', name: 'A' }), makeItem({ id: 'b', name: 'B' })];
+      const items = [
+        makeItem({ id: 'a', name: 'A' }),
+        makeItem({ id: 'b', name: 'B' }),
+      ];
       const withItems = reducer(getInitialState(), setItems(items));
 
       const updated = makeItem({ id: 'b', name: 'B updated' });
@@ -170,12 +174,16 @@ describe('inventorySlice selectors', () => {
   describe('selectItemById', () => {
     it('returns the matching item', () => {
       const item = makeItem({ id: 'a' });
-      const state = makeRootState(reducer(getInitialState(), setItems([item, makeItem({ id: 'b' })])));
+      const state = makeRootState(
+        reducer(getInitialState(), setItems([item, makeItem({ id: 'b' })]))
+      );
       expect(selectItemById(state, 'a')).toEqual(item);
     });
 
     it('returns null when no item matches', () => {
-      const state = makeRootState(reducer(getInitialState(), setItems([makeItem({ id: 'a' })])));
+      const state = makeRootState(
+        reducer(getInitialState(), setItems([makeItem({ id: 'a' })]))
+      );
       expect(selectItemById(state, 'missing')).toBeNull();
     });
 

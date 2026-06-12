@@ -9,7 +9,10 @@ import { Member } from '../../types/user';
 import { SwipeableRow } from './SwipeableRow';
 
 const CardWrapper = styled(View)<{ noMarginBottom?: boolean }>`
-  margin-bottom: ${({ theme, noMarginBottom }: StyledProps & { noMarginBottom?: boolean }) =>
+  margin-bottom: ${({
+    theme,
+    noMarginBottom,
+  }: StyledProps & { noMarginBottom?: boolean }) =>
     noMarginBottom ? 0 : theme.spacing.lg}px;
 `;
 

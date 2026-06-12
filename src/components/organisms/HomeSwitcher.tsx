@@ -1,6 +1,15 @@
 import React, { useRef, useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { View, Text, TouchableOpacity, Modal, FlatList, TouchableWithoutFeedback, StyleSheet, ActivityIndicator } from 'react-native';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  Modal,
+  FlatList,
+  TouchableWithoutFeedback,
+  StyleSheet,
+  ActivityIndicator,
+} from 'react-native';
 import styled from 'styled-components/native';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, {
@@ -12,7 +21,7 @@ import Animated, {
   runOnJS,
   useAnimatedRef,
   measure,
-  runOnUI
+  runOnUI,
 } from 'react-native-reanimated';
 import { useHome } from '../../hooks/useHome';
 import { StyledProps } from '../../utils/styledComponents';
@@ -70,7 +79,7 @@ const HeaderText = styled(Text)`
   margin-bottom: 8px;
 `;
 
-const HomeItem = styled(TouchableOpacity) <{ isSelected: boolean }>`
+const HomeItem = styled(TouchableOpacity)<{ isSelected: boolean }>`
   flex-direction: row;
   align-items: center;
   justify-content: space-between;
@@ -128,7 +137,14 @@ export const HomeSwitcher: React.FC = () => {
 
   // Animation related
   const triggerRef = useAnimatedRef<View>();
-  const [menuLayout, setMenuLayout] = useState<{ x: number, y: number, width: number, height: number, pageX: number, pageY: number } | null>(null);
+  const [menuLayout, setMenuLayout] = useState<{
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+    pageX: number;
+    pageY: number;
+  } | null>(null);
   const animation = useSharedValue(0);
 
   // Automatically open create home modal if user has no homes
@@ -142,11 +158,14 @@ export const HomeSwitcher: React.FC = () => {
     }
   }, [homes.length]);
 
-  const SPRING_CONFIG = useMemo(() => ({
-    damping: 25,
-    stiffness: 300,
-    mass: 0.8,
-  }), []);
+  const SPRING_CONFIG = useMemo(
+    () => ({
+      damping: 25,
+      stiffness: 300,
+      mass: 0.8,
+    }),
+    []
+  );
 
   useEffect(() => {
     if (modalVisible) {
@@ -197,7 +216,12 @@ export const HomeSwitcher: React.FC = () => {
   const menuStyle = useAnimatedStyle(() => {
     if (!menuLayout) return { opacity: 0 };
 
-    const scale = interpolate(animation.value, [0, 1], [0.8, 1], Extrapolate.CLAMP);
+    const scale = interpolate(
+      animation.value,
+      [0, 1],
+      [0.8, 1],
+      Extrapolate.CLAMP
+    );
     const opacity = animation.value;
 
     // Position logic
@@ -223,9 +247,15 @@ export const HomeSwitcher: React.FC = () => {
           <ContentWrapper>
             <ManagedLabel>{t('home.switcher.currentlyManaging')}</ManagedLabel>
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-              <HomeNameString>{currentHome?.name || t('home.switcher.defaultName')}</HomeNameString>
+              <HomeNameString>
+                {currentHome?.name || t('home.switcher.defaultName')}
+              </HomeNameString>
               <IconWrapper>
-                <Ionicons name="chevron-down" size={20} color={theme.colors.text} />
+                <Ionicons
+                  name="chevron-down"
+                  size={20}
+                  color={theme.colors.text}
+                />
               </IconWrapper>
             </View>
           </ContentWrapper>
@@ -240,26 +270,38 @@ export const HomeSwitcher: React.FC = () => {
       >
         <View style={StyleSheet.absoluteFill}>
           <TouchableWithoutFeedback onPress={handleClose}>
-            <Animated.View style={[styles.backdrop, backdropStyle, { backgroundColor: '#000' }]} />
+            <Animated.View
+              style={[
+                styles.backdrop,
+                backdropStyle,
+                { backgroundColor: '#000' },
+              ]}
+            />
           </TouchableWithoutFeedback>
 
           {menuLayout && (
-            <Animated.View style={[
-              styles.menuContainer,
-              menuStyle,
-              { backgroundColor: theme.colors.surface }
-            ]}>
+            <Animated.View
+              style={[
+                styles.menuContainer,
+                menuStyle,
+                { backgroundColor: theme.colors.surface },
+              ]}
+            >
               <TouchableWithoutFeedback>
                 <View>
                   <HeaderText>{t('home.switcher.title')}</HeaderText>
-                  {loadingState.isLoading && loadingState.operation === 'list' ? (
+                  {loadingState.isLoading &&
+                  loadingState.operation === 'list' ? (
                     <View style={{ paddingVertical: 20, alignItems: 'center' }}>
-                      <ActivityIndicator size="small" color={theme.colors.primary} />
+                      <ActivityIndicator
+                        size="small"
+                        color={theme.colors.primary}
+                      />
                     </View>
                   ) : (
                     <FlatList
                       data={homes}
-                      keyExtractor={item => item.id}
+                      keyExtractor={(item) => item.id}
                       scrollEnabled={false}
                       renderItem={({ item }) => (
                         <HomeItem
@@ -267,13 +309,17 @@ export const HomeSwitcher: React.FC = () => {
                           onPress={() => handleSwitch(item.id)}
                         >
                           <HomeItemInfo>
-                            <HomeItemName>
-                              {item.name}
-                            </HomeItemName>
-                            <HomeItemAddress>{item.address || t('home.switcher.noAddress')}</HomeItemAddress>
+                            <HomeItemName>{item.name}</HomeItemName>
+                            <HomeItemAddress>
+                              {item.address || t('home.switcher.noAddress')}
+                            </HomeItemAddress>
                           </HomeItemInfo>
                           {item.id === currentHome?.id && (
-                            <Ionicons name="checkmark" size={20} color={theme.colors.primary} />
+                            <Ionicons
+                              name="checkmark"
+                              size={20}
+                              color={theme.colors.primary}
+                            />
                           )}
                         </HomeItem>
                       )}
@@ -281,9 +327,15 @@ export const HomeSwitcher: React.FC = () => {
                   )}
                   <AddButton onPress={handleOpenAdd}>
                     <AddIconContainer>
-                      <Ionicons name="add" size={20} color={theme.colors.primary} />
+                      <Ionicons
+                        name="add"
+                        size={20}
+                        color={theme.colors.primary}
+                      />
                     </AddIconContainer>
-                    <AddButtonText>{t('home.switcher.addProperty')}</AddButtonText>
+                    <AddButtonText>
+                      {t('home.switcher.addProperty')}
+                    </AddButtonText>
                   </AddButton>
                 </View>
               </TouchableWithoutFeedback>
@@ -292,7 +344,10 @@ export const HomeSwitcher: React.FC = () => {
         </View>
       </Modal>
 
-      <AddHomeBottomSheet bottomSheetRef={addHomeSheetRef} isRequired={homes.length === 0} />
+      <AddHomeBottomSheet
+        bottomSheetRef={addHomeSheetRef}
+        isRequired={homes.length === 0}
+      />
     </>
   );
 };

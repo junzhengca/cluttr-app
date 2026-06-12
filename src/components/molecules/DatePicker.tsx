@@ -1,5 +1,14 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
-import { TouchableOpacity, View, Text, Modal, Platform, Pressable, Animated, Easing } from 'react-native';
+import {
+  TouchableOpacity,
+  View,
+  Text,
+  Modal,
+  Platform,
+  Pressable,
+  Animated,
+  Easing,
+} from 'react-native';
 import styled from 'styled-components/native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Ionicons } from '@expo/vector-icons';
@@ -14,7 +23,8 @@ const DatePickerContainer = styled(View)`
   border-width: 1px;
   border-color: ${({ theme }: StyledProps) => theme.colors.border};
   border-radius: ${({ theme }: StyledProps) => theme.borderRadius.md}px;
-  padding: ${({ theme }: StyledProps) => `${theme.spacing.sm}px ${theme.spacing.xl}px ${theme.spacing.sm}px ${theme.spacing.md}px`};
+  padding: ${({ theme }: StyledProps) =>
+    `${theme.spacing.sm}px ${theme.spacing.xl}px ${theme.spacing.sm}px ${theme.spacing.md}px`};
   height: 48px;
   flex-direction: row;
   align-items: center;
@@ -47,8 +57,10 @@ const ModalOverlay = styled(Animated.View)`
 
 const ModalContent = styled(Animated.View)`
   background-color: ${({ theme }: StyledProps) => theme.colors.surface};
-  border-top-left-radius: ${({ theme }: StyledProps) => theme.borderRadius.xl}px;
-  border-top-right-radius: ${({ theme }: StyledProps) => theme.borderRadius.xl}px;
+  border-top-left-radius: ${({ theme }: StyledProps) =>
+    theme.borderRadius.xl}px;
+  border-top-right-radius: ${({ theme }: StyledProps) =>
+    theme.borderRadius.xl}px;
   padding: ${({ theme }: StyledProps) => theme.spacing.lg}px;
   padding-bottom: ${({ theme }: StyledProps) => theme.spacing.xl}px;
 `;
@@ -62,7 +74,8 @@ const ModalHeader = styled(View)`
 
 const ModalTitle = styled(Text)`
   font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.lg}px;
-  font-weight: ${({ theme }: StyledProps) => theme.typography.fontWeight.medium};
+  font-weight: ${({ theme }: StyledProps) =>
+    theme.typography.fontWeight.medium};
   color: ${({ theme }: StyledProps) => theme.colors.text};
 `;
 
@@ -202,9 +215,15 @@ export const DatePicker: React.FC<DatePickerProps> = ({
   return (
     <>
       <DatePickerContainer>
-        <DateText>{value ? formatDate(value, getLocale(), t) : getPlaceholderText()}</DateText>
+        <DateText>
+          {value ? formatDate(value, getLocale(), t) : getPlaceholderText()}
+        </DateText>
         <DatePickerButton onPress={handleOpen} activeOpacity={0.7}>
-          <Ionicons name="calendar-outline" size={20} color={theme.colors.primary} />
+          <Ionicons
+            name="calendar-outline"
+            size={20}
+            color={theme.colors.primary}
+          />
         </DatePickerButton>
       </DatePickerContainer>
 
@@ -287,4 +306,3 @@ export const DatePicker: React.FC<DatePickerProps> = ({
     </>
   );
 };
-

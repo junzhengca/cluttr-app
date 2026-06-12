@@ -31,7 +31,9 @@ const StyledAnimatedContainer = styled.View<StyledProps>`
 `;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const AnimatedContainer = Animated.createAnimatedComponent(StyledAnimatedContainer) as unknown as React.ComponentType<any>;
+const AnimatedContainer = Animated.createAnimatedComponent(
+  StyledAnimatedContainer
+) as unknown as React.ComponentType<any>;
 
 const ToastContainer = styled.View<StyledProps & { type: ToastType }>`
   background-color: ${({ theme, type }: StyledProps & { type: ToastType }) => {

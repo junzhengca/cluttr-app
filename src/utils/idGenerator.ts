@@ -10,11 +10,11 @@
 export const generateId = (prefix?: string): string => {
   const timestamp = Date.now().toString();
   const randomStr = Math.random().toString(36).substring(2, 11);
-  
+
   if (prefix) {
     return `${prefix}-${timestamp}-${randomStr}`;
   }
-  
+
   return `${timestamp}${randomStr}`;
 };
 
@@ -49,4 +49,3 @@ export const generateCategoryId = (): string => {
 export const generateLocationId = (): string => {
   return generateId('loc');
 };
-

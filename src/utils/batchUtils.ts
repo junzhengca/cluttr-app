@@ -8,14 +8,14 @@ import type { ItemBatch } from '../types/inventory';
  * Get total amount across all batches
  */
 export const getTotalAmount = (batches: ItemBatch[]): number => {
-    return batches.reduce((sum, b) => sum + b.amount, 0);
+  return batches.reduce((sum, b) => sum + b.amount, 0);
 };
 
 /**
  * Get total value (sum of prices) across all batches
  */
 export const getTotalValue = (batches: ItemBatch[]): number => {
-    return batches.reduce((sum, b) => sum + (b.price ?? 0), 0);
+  return batches.reduce((sum, b) => sum + (b.price ?? 0), 0);
 };
 
 /**
@@ -23,11 +23,11 @@ export const getTotalValue = (batches: ItemBatch[]): number => {
  * Returns undefined if no batches have an expiry date
  */
 export const getEarliestExpiry = (batches: ItemBatch[]): string | undefined => {
-    const expiryDates = batches
-        .filter((b) => b.expiryDate)
-        .map((b) => b.expiryDate!)
-        .sort();
-    return expiryDates.length > 0 ? expiryDates[0] : undefined;
+  const expiryDates = batches
+    .filter((b) => b.expiryDate)
+    .map((b) => b.expiryDate!)
+    .sort();
+  return expiryDates.length > 0 ? expiryDates[0] : undefined;
 };
 
 /**
@@ -35,10 +35,10 @@ export const getEarliestExpiry = (batches: ItemBatch[]): string | undefined => {
  * Returns undefined if no batches have a purchase date
  */
 export const getLatestPurchase = (batches: ItemBatch[]): string | undefined => {
-    const purchaseDates = batches
-        .filter((b) => b.purchaseDate)
-        .map((b) => b.purchaseDate!)
-        .sort()
-        .reverse();
-    return purchaseDates.length > 0 ? purchaseDates[0] : undefined;
+  const purchaseDates = batches
+    .filter((b) => b.purchaseDate)
+    .map((b) => b.purchaseDate!)
+    .sort()
+    .reverse();
+  return purchaseDates.length > 0 ? purchaseDates[0] : undefined;
 };

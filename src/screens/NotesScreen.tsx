@@ -45,15 +45,15 @@ const Content = styled(ScrollView)`
   padding: ${({ theme }: StyledProps) => theme.spacing.md}px;
 `;
 
-const AddTodoContainer = styled(View) <{ isFocused: boolean }>`
+const AddTodoContainer = styled(View)<{ isFocused: boolean }>`
   background-color: ${({ theme }: StyledProps) => theme.colors.surface};
   border-radius: ${({ theme }: StyledProps) => theme.borderRadius.xl}px;
   margin-bottom: ${({ theme }: StyledProps) => theme.spacing.md}px;
   border-width: 1.5px;
   border-color: ${({
-  theme,
-  isFocused,
-}: StyledPropsWith<{ isFocused: boolean }>) =>
+    theme,
+    isFocused,
+  }: StyledPropsWith<{ isFocused: boolean }>) =>
     isFocused ? theme.colors.inputFocus : theme.colors.borderLight};
   overflow: hidden;
 `;
@@ -73,11 +73,11 @@ const TodoInput = styled(TextInput)`
   padding-vertical: 0;
 `;
 
-const ToggleNotesButton = styled(TouchableOpacity) <{ isActive: boolean }>`
+const ToggleNotesButton = styled(TouchableOpacity)<{ isActive: boolean }>`
   background-color: ${({
-  theme,
-  isActive,
-}: StyledPropsWith<{ isActive: boolean }>) =>
+    theme,
+    isActive,
+  }: StyledPropsWith<{ isActive: boolean }>) =>
     isActive ? theme.colors.primary : theme.colors.borderLight};
   border-radius: ${({ theme }: StyledProps) => theme.borderRadius.md}px;
   margin-left: ${({ theme }: StyledProps) => theme.spacing.sm}px;
@@ -87,8 +87,11 @@ const ToggleNotesButton = styled(TouchableOpacity) <{ isActive: boolean }>`
   justify-content: center;
 `;
 
-const AddButton = styled(TouchableOpacity) <{ disabled?: boolean }>`
-  background-color: ${({ theme, disabled }: StyledPropsWith<{ disabled?: boolean }>) =>
+const AddButton = styled(TouchableOpacity)<{ disabled?: boolean }>`
+  background-color: ${({
+    theme,
+    disabled,
+  }: StyledPropsWith<{ disabled?: boolean }>) =>
     disabled ? theme.colors.borderLight : theme.colors.primary};
   border-radius: ${({ theme }: StyledProps) => theme.borderRadius.md}px;
   margin-left: ${({ theme }: StyledProps) => theme.spacing.sm}px;
@@ -287,7 +290,9 @@ export const NotesScreen: React.FC = () => {
               <NotesBanner
                 mode={mode}
                 bannerProgress={bannerProgress}
-                onToggleMode={() => setMode(mode === 'planning' ? 'shopping' : 'planning')}
+                onToggleMode={() =>
+                  setMode(mode === 'planning' ? 'shopping' : 'planning')
+                }
               />
 
               {mode === 'planning' && (
@@ -314,14 +319,22 @@ export const NotesScreen: React.FC = () => {
                     >
                       <Ionicons
                         name={
-                          showNotesField ? 'document-text' : 'document-text-outline'
+                          showNotesField
+                            ? 'document-text'
+                            : 'document-text-outline'
                         }
                         size={18}
-                        color={showNotesField ? 'white' : theme.colors.textSecondary}
+                        color={
+                          showNotesField ? 'white' : theme.colors.textSecondary
+                        }
                       />
                     </ToggleNotesButton>
                     <AddButton
-                      onPress={addingTodo || !newTodoText.trim() ? undefined : handleAddTodo}
+                      onPress={
+                        addingTodo || !newTodoText.trim()
+                          ? undefined
+                          : handleAddTodo
+                      }
                       activeOpacity={0.7}
                       hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                       disabled={addingTodo || !newTodoText.trim()}
@@ -332,7 +345,11 @@ export const NotesScreen: React.FC = () => {
                         <Ionicons
                           name="add"
                           size={18}
-                          color={!newTodoText.trim() ? theme.colors.textSecondary : 'white'}
+                          color={
+                            !newTodoText.trim()
+                              ? theme.colors.textSecondary
+                              : 'white'
+                          }
                         />
                       )}
                     </AddButton>

@@ -46,7 +46,8 @@ const CountBadge = styled(View)`
 const CountText = styled(Text)`
   font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.sm}px;
   color: ${({ theme }: StyledProps) => theme.colors.textSecondary};
-  font-weight: ${({ theme }: StyledProps) => theme.typography.fontWeight.medium};
+  font-weight: ${({ theme }: StyledProps) =>
+    theme.typography.fontWeight.medium};
 `;
 
 interface CollapsibleFilterPanelProps {
@@ -96,7 +97,10 @@ export const CollapsibleFilterPanel: React.FC<CollapsibleFilterPanelProps> = ({
   const animatedStyle = useAnimatedStyle(() => {
     const heightValue = open.value ? listHeight.value : 0;
     return {
-      height: listHeight.value === 0 ? undefined : withTiming(heightValue, { duration: 300 }),
+      height:
+        listHeight.value === 0
+          ? undefined
+          : withTiming(heightValue, { duration: 300 }),
       opacity: withTiming(open.value ? 1 : 0, { duration: 300 }),
       overflow: 'hidden',
     };
@@ -120,14 +124,16 @@ export const CollapsibleFilterPanel: React.FC<CollapsibleFilterPanelProps> = ({
         </TitleContainer>
         <GlassButton
           onPress={onToggle}
-          icon={isExpanded ? "funnel" : "funnel-outline"}
+          icon={isExpanded ? 'funnel' : 'funnel-outline'}
           text={t('common.filter')}
           tintColor={isExpanded ? theme.colors.primary : undefined}
           textColor={isExpanded ? '#FFFFFF' : undefined}
         />
       </Header>
 
-      <Animated.View style={[animatedStyle, { marginHorizontal: -theme.spacing.md }]}>
+      <Animated.View
+        style={[animatedStyle, { marginHorizontal: -theme.spacing.md }]}
+      >
         <View
           onLayout={(event) => {
             'worklet';

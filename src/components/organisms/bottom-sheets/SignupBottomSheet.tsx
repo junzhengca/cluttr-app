@@ -1,14 +1,29 @@
 import React, { useState, useCallback, useRef } from 'react';
-import { TouchableOpacity, View, Text, Keyboard, TextInput } from 'react-native';
+import {
+  TouchableOpacity,
+  View,
+  Text,
+  Keyboard,
+  TextInput,
+} from 'react-native';
 import styled from 'styled-components/native';
-import { BottomSheetModal, BottomSheetBackdrop, BottomSheetView } from '@gorhom/bottom-sheet';
+import {
+  BottomSheetModal,
+  BottomSheetBackdrop,
+  BottomSheetView,
+} from '@gorhom/bottom-sheet';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../../theme/ThemeProvider';
 import type { StyledProps } from '../../../utils/styledComponents';
 import { useAuth } from '../../../store/hooks';
 import { useKeyboardVisibility } from '../../../hooks/useKeyboardVisibility';
-import { BottomSheetHeader, UncontrolledInput, FormSection, GlassButton } from '../../atoms';
+import {
+  BottomSheetHeader,
+  UncontrolledInput,
+  FormSection,
+  GlassButton,
+} from '../../atoms';
 import { ContentContainer } from './shared/sheetPrimitives';
 
 interface FooterContainerProps {
@@ -17,11 +32,15 @@ interface FooterContainerProps {
   theme: StyledProps['theme'];
 }
 
-const FooterContainer = styled(View) <FooterContainerProps>`
+const FooterContainer = styled(View)<FooterContainerProps>`
   background-color: ${({ theme }: StyledProps) => theme.colors.background};
   padding: ${({ theme }: StyledProps) => theme.spacing.md}px;
   padding-top: ${({ theme }: StyledProps) => theme.spacing.md}px;
-  padding-bottom: ${({ bottomInset, showSafeArea, theme }: FooterContainerProps) =>
+  padding-bottom: ${({
+    bottomInset,
+    showSafeArea,
+    theme,
+  }: FooterContainerProps) =>
     showSafeArea ? bottomInset + theme.spacing.md : theme.spacing.md}px;
   border-top-width: 1px;
   border-top-color: ${({ theme }: StyledProps) => theme.colors.borderLight};
@@ -43,8 +62,6 @@ const LinkButton = styled(TouchableOpacity)`
   margin-top: ${({ theme }: StyledProps) => theme.spacing.md}px;
   margin-bottom: ${({ theme }: StyledProps) => theme.spacing.md}px;
 `;
-
-
 
 export interface SignupBottomSheetProps {
   bottomSheetRef: React.RefObject<BottomSheetModal | null>;
@@ -138,12 +155,21 @@ export const SignupBottomSheet: React.FC<SignupBottomSheetProps> = ({
         }, 300);
       }
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : t('signup.errors.failed');
+      const errorMessage =
+        error instanceof Error ? error.message : t('signup.errors.failed');
       setError(errorMessage);
     } finally {
       setIsLoading(false);
     }
-  }, [email, password, confirmPassword, signup, handleClose, onSignupSuccess, t]);
+  }, [
+    email,
+    password,
+    confirmPassword,
+    signup,
+    handleClose,
+    onSignupSuccess,
+    t,
+  ]);
 
   const handleLoginPress = useCallback(() => {
     handleClose();
@@ -197,14 +223,12 @@ export const SignupBottomSheet: React.FC<SignupBottomSheetProps> = ({
           />
 
           <View style={{ paddingHorizontal: theme.spacing.md }}>
-
-
             <FormSection label={t('signup.fields.email')}>
               <UncontrolledInput
                 ref={emailInputRef}
                 defaultValue={email}
                 onChangeText={handleEmailChange}
-                onBlur={() => { }}
+                onBlur={() => {}}
                 placeholder={t('signup.placeholders.email')}
                 placeholderTextColor={theme.colors.textSecondary}
                 keyboardType="email-address"
@@ -216,7 +240,7 @@ export const SignupBottomSheet: React.FC<SignupBottomSheetProps> = ({
                 ref={passwordInputRef}
                 defaultValue={password}
                 onChangeText={handlePasswordChange}
-                onBlur={() => { }}
+                onBlur={() => {}}
                 placeholder={t('signup.placeholders.password')}
                 placeholderTextColor={theme.colors.textSecondary}
                 keyboardType="default"
@@ -229,7 +253,7 @@ export const SignupBottomSheet: React.FC<SignupBottomSheetProps> = ({
                 ref={confirmPasswordInputRef}
                 defaultValue={confirmPassword}
                 onChangeText={handleConfirmPasswordChange}
-                onBlur={() => { }}
+                onBlur={() => {}}
                 onSubmitEditing={handleSubmit}
                 placeholder={t('signup.placeholders.confirmPassword')}
                 placeholderTextColor={theme.colors.textSecondary}
@@ -249,4 +273,3 @@ export const SignupBottomSheet: React.FC<SignupBottomSheetProps> = ({
     </BottomSheetModal>
   );
 };
-

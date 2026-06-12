@@ -37,6 +37,6 @@ const settingsSlice = createSlice({
   },
 });
 
-export const { setSettings, setLoading, setUpdateResult, clearUpdateResult } = settingsSlice.actions;
+export const { setSettings, setLoading, setUpdateResult, clearUpdateResult } =
+  settingsSlice.actions;
 export default settingsSlice.reducer;
-

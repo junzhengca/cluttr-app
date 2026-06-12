@@ -1,5 +1,15 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
-import { View, Text, TouchableOpacity, ViewStyle, TextInput, Animated, NativeSyntheticEvent, TextInputContentSizeChangeEventData, ActivityIndicator } from 'react-native';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  ViewStyle,
+  TextInput,
+  Animated,
+  NativeSyntheticEvent,
+  TextInputContentSizeChangeEventData,
+  ActivityIndicator,
+} from 'react-native';
 import styled from 'styled-components/native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
@@ -7,7 +17,10 @@ import { getTodoCategoryDisplayName } from '../../utils/todoCategoryI18n';
 import { useTheme } from '../../theme/ThemeProvider';
 import { TodoItem, TodoCategory } from '../../types/inventory';
 import { useTodoCategories } from '../../store/hooks';
-import type { StyledProps, StyledPropsWith } from '../../utils/styledComponents';
+import type {
+  StyledProps,
+  StyledPropsWith,
+} from '../../utils/styledComponents';
 import { BaseCard } from '../atoms';
 
 const ContentContainer = styled(View)`
@@ -22,41 +35,55 @@ const TextContainer = styled(View)`
   overflow: hidden;
 `;
 
-const Checkbox = styled(TouchableOpacity) <{ checked: boolean }>`
+const Checkbox = styled(TouchableOpacity)<{ checked: boolean }>`
   width: 20px;
   height: 20px;
   border-radius: 10px;
   border-width: 2px;
-  border-color: ${({ theme, checked }: StyledPropsWith<{ checked: boolean }>) =>
+  border-color: ${({
+    theme,
+    checked,
+  }: StyledPropsWith<{ checked: boolean }>) =>
     checked ? theme.colors.primary : theme.colors.border};
-  background-color: ${({ theme, checked }: StyledPropsWith<{ checked: boolean }>) =>
+  background-color: ${({
+    theme,
+    checked,
+  }: StyledPropsWith<{ checked: boolean }>) =>
     checked ? theme.colors.primary : 'transparent'};
   align-items: center;
   justify-content: center;
   margin-right: ${({ theme }: StyledProps) => theme.spacing.sm}px;
 `;
 
-const TodoText = styled(Text) <{ completed: boolean }>`
+const TodoText = styled(Text)<{ completed: boolean }>`
   font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.md}px;
-  font-weight: ${({ theme, completed }: StyledPropsWith<{ completed: boolean }>) =>
-    (completed ? theme.typography.fontWeight.regular : theme.typography.fontWeight.bold)};
+  font-weight: ${({
+    theme,
+    completed,
+  }: StyledPropsWith<{ completed: boolean }>) =>
+    completed
+      ? theme.typography.fontWeight.regular
+      : theme.typography.fontWeight.bold};
   color: ${({ theme, completed }: StyledPropsWith<{ completed: boolean }>) =>
-    (completed ? theme.colors.textSecondary : theme.colors.text)};
+    completed ? theme.colors.textSecondary : theme.colors.text};
   text-decoration-line: ${({ completed }: { completed: boolean }) =>
-    (completed ? 'line-through' : 'none')};
-  line-height: ${({ theme }: StyledProps) => theme.typography.fontSize.md * 1.2}px;
+    completed ? 'line-through' : 'none'};
+  line-height: ${({ theme }: StyledProps) =>
+    theme.typography.fontSize.md * 1.2}px;
   padding: 0px;
   padding-vertical: 0px;
   margin: 0px;
   padding-bottom: ${({ theme }: StyledProps) => theme.spacing.xs}px;
 `;
 
-const TodoNote = styled(Text) <{ completed: boolean }>`
+const TodoNote = styled(Text)<{ completed: boolean }>`
   font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.sm}px;
-  font-weight: ${({ theme }: StyledProps) => theme.typography.fontWeight.regular};
+  font-weight: ${({ theme }: StyledProps) =>
+    theme.typography.fontWeight.regular};
   color: ${({ theme, completed }: StyledPropsWith<{ completed: boolean }>) =>
-    (completed ? theme.colors.textSecondary : theme.colors.textSecondary)};
-  line-height: ${({ theme }: StyledProps) => theme.typography.fontSize.sm * 1.4}px;
+    completed ? theme.colors.textSecondary : theme.colors.textSecondary};
+  line-height: ${({ theme }: StyledProps) =>
+    theme.typography.fontSize.sm * 1.4}px;
   padding: 0px;
   padding-vertical: 0px;
   margin: 0px;
@@ -106,18 +133,28 @@ const CategoryTag = styled(View)`
 const CategoryTagText = styled(Text)`
   font-size: 10px;
   color: ${({ theme }: StyledProps) => theme.colors.textSecondary};
-  font-weight: ${({ theme }: StyledProps) => theme.typography.fontWeight.regular};
+  font-weight: ${({ theme }: StyledProps) =>
+    theme.typography.fontWeight.regular};
 `;
 
-const EditableTextInput = styled(TextInput) <{ completed: boolean; isEditing: boolean }>`
+const EditableTextInput = styled(TextInput)<{
+  completed: boolean;
+  isEditing: boolean;
+}>`
   font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.md}px;
-  font-weight: ${({ theme, completed }: StyledPropsWith<{ completed: boolean }>) =>
-    (completed ? theme.typography.fontWeight.regular : theme.typography.fontWeight.bold)};
+  font-weight: ${({
+    theme,
+    completed,
+  }: StyledPropsWith<{ completed: boolean }>) =>
+    completed
+      ? theme.typography.fontWeight.regular
+      : theme.typography.fontWeight.bold};
   color: ${({ theme, completed }: StyledPropsWith<{ completed: boolean }>) =>
-    (completed ? theme.colors.textSecondary : theme.colors.text)};
+    completed ? theme.colors.textSecondary : theme.colors.text};
   text-decoration-line: ${({ completed }: { completed: boolean }) =>
-    (completed ? 'line-through' : 'none')};
-  line-height: ${({ theme }: StyledProps) => theme.typography.fontSize.md * 1.2}px;
+    completed ? 'line-through' : 'none'};
+  line-height: ${({ theme }: StyledProps) =>
+    theme.typography.fontSize.md * 1.2}px;
   background-color: transparent;
   border-width: 0px;
   border-color: transparent;
@@ -152,12 +189,17 @@ const NotesInputContainer = styled(View)`
   width: 100%;
 `;
 
-const EditableNoteInput = styled(TextInput) <{ completed: boolean; isEditing: boolean }>`
+const EditableNoteInput = styled(TextInput)<{
+  completed: boolean;
+  isEditing: boolean;
+}>`
   font-size: ${({ theme }: StyledProps) => theme.typography.fontSize.sm}px;
-  font-weight: ${({ theme }: StyledProps) => theme.typography.fontWeight.regular};
+  font-weight: ${({ theme }: StyledProps) =>
+    theme.typography.fontWeight.regular};
   color: ${({ theme, completed }: StyledPropsWith<{ completed: boolean }>) =>
-    (completed ? theme.colors.textSecondary : theme.colors.textSecondary)};
-  line-height: ${({ theme }: StyledProps) => theme.typography.fontSize.sm * 1.4}px;
+    completed ? theme.colors.textSecondary : theme.colors.textSecondary};
+  line-height: ${({ theme }: StyledProps) =>
+    theme.typography.fontSize.sm * 1.4}px;
   background-color: transparent;
   border-width: 0px;
   border-color: transparent;
@@ -166,7 +208,8 @@ const EditableNoteInput = styled(TextInput) <{ completed: boolean; isEditing: bo
   padding: 0px;
   padding-vertical: 0px;
   margin: 0px;
-  min-height: ${({ theme }: StyledProps) => theme.typography.fontSize.sm * 1.4}px;
+  min-height: ${({ theme }: StyledProps) =>
+    theme.typography.fontSize.sm * 1.4}px;
   width: 100%;
 `;
 
@@ -270,10 +313,14 @@ const TodoBadges: React.FC<TodoBadgesProps> = ({ isSaving, category }) => {
 
   return (
     <BadgeContainer>
-      {isSaving && <SavingIndicator size="small" color={theme.colors.textSecondary} />}
+      {isSaving && (
+        <SavingIndicator size="small" color={theme.colors.textSecondary} />
+      )}
       {category && (
         <CategoryTag>
-          <CategoryTagText>{getTodoCategoryDisplayName(category, t)}</CategoryTagText>
+          <CategoryTagText>
+            {getTodoCategoryDisplayName(category, t)}
+          </CategoryTagText>
         </CategoryTag>
       )}
     </BadgeContainer>
@@ -388,7 +435,9 @@ const TodoNotesSection: React.FC<TodoNotesSectionProps> = ({
               ref={noteInputRef}
               value={noteContent} // Controlled visible input
               onChangeText={onNoteChange}
-              onContentSizeChange={(event: NativeSyntheticEvent<TextInputContentSizeChangeEventData>) => {
+              onContentSizeChange={(
+                event: NativeSyntheticEvent<TextInputContentSizeChangeEventData>
+              ) => {
                 const { height } = event.nativeEvent.contentSize;
                 if (height > 0) {
                   const containerPadding = theme.spacing.xs * 2;
@@ -446,8 +495,10 @@ export const TodoCard: React.FC<TodoCardProps> = ({
 }) => {
   const { categories } = useTodoCategories();
 
-  const category = categories.find(c => c.id === todo.categoryId);
-  const [editingField, setEditingField] = useState<'text' | 'note' | null>(null);
+  const category = categories.find((c) => c.id === todo.categoryId);
+  const [editingField, setEditingField] = useState<'text' | 'note' | null>(
+    null
+  );
   const textInputRef = useRef<TextInput>(null);
   const noteInputRef = useRef<TextInput>(null);
   const textValueRef = useRef(todo.text);
@@ -462,13 +513,15 @@ export const TodoCard: React.FC<TodoCardProps> = ({
 
   // Animation values for notes field - height cannot use native driver
   // Initialize based on whether todo has a note
-  const initialHeight = (!!todo.note || editingField !== null) ? 1 : 0;
+  const initialHeight = !!todo.note || editingField !== null ? 1 : 0;
   const notesHeight = useRef(new Animated.Value(initialHeight)).current;
   const notesOpacity = useRef(new Animated.Value(todo.note ? 1 : 0)).current;
   const previousNoteRef = useRef(todo.note);
   const editingFieldRef = useRef(editingField);
   const pendingSavedRef = useRef<{ text: string; note: string } | null>(null);
-  const [showNotesWrapper, setShowNotesWrapper] = useState(!!todo.note || editingField === 'text' || editingField === 'note');
+  const [showNotesWrapper, setShowNotesWrapper] = useState(
+    !!todo.note || editingField === 'text' || editingField === 'note'
+  );
 
   // Keep refs in sync with state
   useEffect(() => {
@@ -490,7 +543,11 @@ export const TodoCard: React.FC<TodoCardProps> = ({
       // Save any pending changes before exiting edit mode
       const newText = textValueRef.current.trim();
       const newNote = noteValueRef.current.trim();
-      if (newText && (newText !== todo.text || newNote !== (todo.note || '')) && onUpdate) {
+      if (
+        newText &&
+        (newText !== todo.text || newNote !== (todo.note || '')) &&
+        onUpdate
+      ) {
         onUpdate(todo.id, newText, newNote || undefined);
       }
       setEditingField(null);
@@ -574,7 +631,8 @@ export const TodoCard: React.FC<TodoCardProps> = ({
   const saveText = useCallback(() => {
     const newText = textValueRef.current.trim();
     const newNote = noteValueRef.current.trim();
-    const hasChange = newText && (newText !== todo.text || newNote !== (todo.note || ''));
+    const hasChange =
+      newText && (newText !== todo.text || newNote !== (todo.note || ''));
     if (hasChange && onUpdate) {
       onUpdate(todo.id, newText, newNote || undefined);
       pendingSavedRef.current = { text: newText, note: newNote };
@@ -588,7 +646,8 @@ export const TodoCard: React.FC<TodoCardProps> = ({
     const newNote = noteValueRef.current.trim();
     const field = editingFieldRef.current;
     if (field === 'text') {
-      const hasChange = newText && (newText !== todo.text || newNote !== (todo.note || ''));
+      const hasChange =
+        newText && (newText !== todo.text || newNote !== (todo.note || ''));
       if (hasChange && onUpdate) {
         onUpdate(todo.id, newText, newNote || undefined);
         pendingSavedRef.current = { text: newText, note: newNote };
@@ -607,10 +666,17 @@ export const TodoCard: React.FC<TodoCardProps> = ({
 
   // Save with explicitly captured values (used by blur timeout so we don't read refs 150ms later)
   const applySaveWithValues = useCallback(
-    (id: string, text: string, note: string, previousText: string, previousNote: string) => {
+    (
+      id: string,
+      text: string,
+      note: string,
+      previousText: string,
+      previousNote: string
+    ) => {
       const newText = text.trim();
       const newNote = note.trim();
-      const hasChange = newText && (newText !== previousText || newNote !== previousNote);
+      const hasChange =
+        newText && (newText !== previousText || newNote !== previousNote);
       if (hasChange && onUpdate) {
         onUpdate(id, newText, newNote || undefined);
         pendingSavedRef.current = { text: newText, note: newNote };
@@ -625,7 +691,10 @@ export const TodoCard: React.FC<TodoCardProps> = ({
   useEffect(() => {
     const pending = pendingSavedRef.current;
     if (editingField === null || !pending) return;
-    if (todo.text === pending.text && (todo.note ?? '') === (pending.note ?? '')) {
+    if (
+      todo.text === pending.text &&
+      (todo.note ?? '') === (pending.note ?? '')
+    ) {
       pendingSavedRef.current = null;
       setEditingField(null);
     }
@@ -654,7 +723,13 @@ export const TodoCard: React.FC<TodoCardProps> = ({
         setEditingField('note');
         return;
       }
-      applySaveWithValues(capturedId, capturedText, capturedNote, previousText, previousNote);
+      applySaveWithValues(
+        capturedId,
+        capturedText,
+        capturedNote,
+        previousText,
+        previousNote
+      );
     }, 150);
   }, [todo.id, todo.text, todo.note, applySaveWithValues]);
 
@@ -683,7 +758,13 @@ export const TodoCard: React.FC<TodoCardProps> = ({
         setEditingField('text');
         return;
       }
-      applySaveWithValues(capturedId, capturedText, capturedNote, previousText, previousNote);
+      applySaveWithValues(
+        capturedId,
+        capturedText,
+        capturedNote,
+        previousText,
+        previousNote
+      );
     }, 150);
   }, [todo.id, todo.text, todo.note, applySaveWithValues]);
 
@@ -696,7 +777,9 @@ export const TodoCard: React.FC<TodoCardProps> = ({
           activeOpacity={0.7}
           disabled={!onToggle}
         >
-          {todo.completed && <Ionicons name="checkmark" size={14} color="white" />}
+          {todo.completed && (
+            <Ionicons name="checkmark" size={14} color="white" />
+          )}
         </Checkbox>
         <TextContainer>
           <TitleRow>

@@ -123,7 +123,7 @@ export const useBottomSheetLifecycle = ({
           },
         },
       ],
-      { cancelable: true },
+      { cancelable: true }
     );
   }, [bottomSheetRef, t]);
 
@@ -157,7 +157,7 @@ export const useBottomSheetLifecycle = ({
 
       onOpenedRef.current?.(index);
     },
-    [bottomSheetRef, showDiscardAlert],
+    [bottomSheetRef, showDiscardAlert]
   );
 
   const dismissIntentionally = useCallback(() => {
@@ -183,7 +183,7 @@ export const useBottomSheetLifecycle = ({
 
       dismissIntentionally();
     },
-    [dismissIntentionally, showDiscardAlert],
+    [dismissIntentionally, showDiscardAlert]
   );
 
   const setOpeningNestedModal = useCallback((isOpening: boolean) => {

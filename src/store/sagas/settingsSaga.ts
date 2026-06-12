@@ -1,5 +1,9 @@
 import { call, put, takeLatest } from 'redux-saga/effects';
-import { setSettings, setLoading, setUpdateResult } from '../slices/settingsSlice';
+import {
+  setSettings,
+  setLoading,
+  setUpdateResult,
+} from '../slices/settingsSlice';
 import { settingsService } from '../../services/SettingsService';
 import { Settings } from '../../types/settings';
 import i18n from '../../i18n/i18n';
@@ -18,7 +22,10 @@ export const updateSettings = (updates: Partial<Settings>) => ({
 
 function* loadSettingsSaga() {
   try {
-    const loadedSettings: Settings = yield call([settingsService, 'getSettings']);
+    const loadedSettings: Settings = yield call([
+      settingsService,
+      'getSettings',
+    ]);
     yield put(setSettings(loadedSettings));
     // Update i18n language when settings are loaded
     i18n.changeLanguage(loadedSettings.language);
@@ -29,9 +36,15 @@ function* loadSettingsSaga() {
   }
 }
 
-function* updateSettingsSaga(action: { type: string; payload: Partial<Settings> }) {
+function* updateSettingsSaga(action: {
+  type: string;
+  payload: Partial<Settings>;
+}) {
   try {
-    const updated: Settings | null = yield call([settingsService, 'updateSettings'], action.payload);
+    const updated: Settings | null = yield call(
+      [settingsService, 'updateSettings'],
+      action.payload
+    );
     if (updated) {
       yield put(setSettings(updated));
       yield put(setUpdateResult(true));
@@ -41,7 +54,9 @@ function* updateSettingsSaga(action: { type: string; payload: Partial<Settings> 
       }
     } else {
       yield put(setUpdateResult(false));
-      sagaLogger.error('Failed to update settings: settingsService.updateSettings returned null');
+      sagaLogger.error(
+        'Failed to update settings: settingsService.updateSettings returned null'
+      );
     }
   } catch (error) {
     sagaLogger.error('Error updating settings', error);

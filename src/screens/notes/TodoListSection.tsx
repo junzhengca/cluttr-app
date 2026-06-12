@@ -62,11 +62,11 @@ export const TodoListSection: React.FC<TodoListSectionProps> = ({
     const uncategorized: TodoItem[] = [];
 
     // Initialize groups for all categories to ensure order
-    categories.forEach(cat => {
+    categories.forEach((cat) => {
       groups[cat.id] = [];
     });
 
-    pendingTodos.forEach(todo => {
+    pendingTodos.forEach((todo) => {
       if (todo.categoryId && groups[todo.categoryId]) {
         groups[todo.categoryId].push(todo);
       } else {
@@ -79,7 +79,7 @@ export const TodoListSection: React.FC<TodoListSectionProps> = ({
     // But filter out empty ones for display to avoid clutter
     const result: Record<string, TodoItem[]> = {};
 
-    categories.forEach(cat => {
+    categories.forEach((cat) => {
       if (groups[cat.id].length > 0) {
         result[cat.id] = groups[cat.id];
       }
@@ -162,15 +162,18 @@ export const TodoListSection: React.FC<TodoListSectionProps> = ({
         /* Shopping Mode */
         <>
           {Object.entries(groupedPendingTodos).map(([catId, todos]) => {
-            const category = categories.find(c => c.id === catId);
+            const category = categories.find((c) => c.id === catId);
             const title = category
-              ? getTodoCategoryDisplayName(category, t as TodoCategoryTranslateFn)
+              ? getTodoCategoryDisplayName(
+                  category,
+                  t as TodoCategoryTranslateFn
+                )
               : t('notes.uncategorized', 'Uncategorized');
 
             return (
               <View key={catId} style={{ marginBottom: 16 }}>
                 <CategorySectionTitle>{title}</CategorySectionTitle>
-                {todos.map(todo => renderTodoItem(todo, false))}
+                {todos.map((todo) => renderTodoItem(todo, false))}
               </View>
             );
           })}
@@ -179,19 +182,24 @@ export const TodoListSection: React.FC<TodoListSectionProps> = ({
             <EmptyState
               icon="cart-outline"
               title={t('notes.emptyShopping.title', 'All done!')}
-              description={t('notes.emptyShopping.description', 'No pending items to shop for.')}
+              description={t(
+                'notes.emptyShopping.description',
+                'No pending items to shop for.'
+              )}
             />
           )}
         </>
       )}
 
-      {mode === 'planning' && pendingTodos.length === 0 && completedTodos.length === 0 && (
-        <EmptyState
-          icon="clipboard-outline"
-          title={t('notes.empty.title')}
-          description={t('notes.empty.description')}
-        />
-      )}
+      {mode === 'planning' &&
+        pendingTodos.length === 0 &&
+        completedTodos.length === 0 && (
+          <EmptyState
+            icon="clipboard-outline"
+            title={t('notes.empty.title')}
+            description={t('notes.empty.description')}
+          />
+        )}
     </>
   );
 };

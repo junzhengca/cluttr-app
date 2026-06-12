@@ -1,9 +1,4 @@
-import React, {
-  useRef,
-  useCallback,
-  useMemo,
-  useState,
-} from 'react';
+import React, { useRef, useCallback, useMemo, useState } from 'react';
 import { Keyboard, type TextInput } from 'react-native';
 import styled from 'styled-components/native';
 import {
@@ -17,7 +12,12 @@ import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../../theme/ThemeProvider';
 import type { StyledProps } from '../../../utils/styledComponents';
 import { useAuth, useAppDispatch } from '../../../store/hooks';
-import { BottomSheetHeader, FormSection, UncontrolledInput, GlassButton } from '../../atoms';
+import {
+  BottomSheetHeader,
+  FormSection,
+  UncontrolledInput,
+  GlassButton,
+} from '../../atoms';
 import { setShowNicknameSetup, setUser } from '../../../store/slices/authSlice';
 import { userService } from '../../../services/UserService';
 import { uiLogger } from '../../../utils/Logger';
@@ -26,8 +26,10 @@ import { Backdrop } from './shared/sheetPrimitives';
 const ContentContainer = styled.View`
   flex: 1;
   background-color: ${({ theme }: StyledProps) => theme.colors.background};
-  border-top-left-radius: ${({ theme }: StyledProps) => theme.borderRadius.xl}px;
-  border-top-right-radius: ${({ theme }: StyledProps) => theme.borderRadius.xl}px;
+  border-top-left-radius: ${({ theme }: StyledProps) =>
+    theme.borderRadius.xl}px;
+  border-top-right-radius: ${({ theme }: StyledProps) =>
+    theme.borderRadius.xl}px;
   overflow: hidden;
 `;
 
@@ -138,10 +140,12 @@ export const SetupNicknameBottomSheet: React.FC<
       onNicknameSet?.();
     } catch (error) {
       uiLogger.error('Error updating nickname', error);
-      const errorMessage = error instanceof Error ? error.message : String(error);
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
       uiLogger.error('Error details', {
         message: errorMessage,
-        errorType: error instanceof Error ? error.constructor.name : typeof error,
+        errorType:
+          error instanceof Error ? error.constructor.name : typeof error,
       });
       setError(t('setupNickname.errors.updateFailed'));
     } finally {
