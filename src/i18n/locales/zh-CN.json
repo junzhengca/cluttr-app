@@ -20,7 +20,23 @@
     "home": "首页",
     "notes": "笔记",
     "share": "分享",
-    "settings": "设置"
+    "settings": "设置",
+    "search": "搜索"
+  },
+  "offline": {
+    "title": "您已离线",
+    "description": "离线时部分功能可能无法使用。请检查您的网络连接。",
+    "badge": "您已离线"
+  },
+  "accessControl": {
+    "itemLibrary": {
+      "title": "访问受限",
+      "description": "您没有权限查看该小家的物品库。"
+    },
+    "notes": {
+      "title": "访问受限",
+      "description": "您没有权限查看该小家的购物清单和笔记。"
+    }
   },
   "home": {
     "title": "家里有什么",
@@ -210,7 +226,19 @@
     },
     "actions": {
       "addToTodo": "添加到待办"
-    }
+    },
+    "createError": "创建物品失败",
+    "deleteError": "删除物品失败",
+    "updateError": "更新物品失败"
+  },
+  "inventoryCategory": {
+    "addError": "添加分类失败",
+    "updateError": "更新分类失败",
+    "deleteError": "删除分类失败"
+  },
+  "location": {
+    "updateError": "保存位置失败",
+    "deleteError": "删除位置失败"
   },
   "notes": {
     "title": "待办事项",
@@ -731,6 +759,15 @@
         "cancel": "取消",
         "confirm": "移除"
       },
+      "leaveHome": "退出小家",
+      "leaveConfirm": {
+        "title": "退出小家",
+        "message": "确定要退出这个小家吗？",
+        "cancel": "取消",
+        "confirm": "退出"
+      },
+      "leaveSuccess": "已退出小家",
+      "leaveError": "退出小家失败",
       "empty": {
         "title": "暂无成员",
         "description": "邀请家庭成员来分享您的库存"
@@ -777,7 +814,8 @@
     },
     "shoppingList": {
       "label": "共享购物清单"
-    }
+    },
+    "accessRevoked": "您对该小家的访问权限已被撤销"
   },
   "toast": {
     "loginSuccess": "登录成功",

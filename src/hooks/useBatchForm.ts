@@ -6,7 +6,9 @@ import type { ItemBatch } from '../types/inventory';
 // Types
 // ---------------------------------------------------------------------------
 
-export interface EditBatchFormValues {
+export type BatchFormMode = 'add' | 'edit';
+
+export interface BatchFormValues {
     price: string;
     amount: string;
     unit: string;
@@ -15,7 +17,9 @@ export interface EditBatchFormValues {
     note: string;
 }
 
-export interface UseEditBatchFormOptions {
+export interface UseBatchFormOptions {
+    mode: BatchFormMode;
+    /** Edit mode: the batch being edited; populates the form when set. */
     initialData?: ItemBatch | null;
     onFormValidChange?: (isValid: boolean) => void;
 }
@@ -30,40 +34,90 @@ const DEFAULT_UNIT = 'pcs';
 const DEFAULT_VENDOR = '';
 const DEFAULT_NOTE = '';
 
+interface BatchValueSet {
+    price: string;
+    amount: string;
+    unit: string;
+    vendor: string;
+    expiryDate: Date | null;
+    note: string;
+}
+
+const defaultValues = (): BatchValueSet => ({
+    price: DEFAULT_PRICE,
+    amount: DEFAULT_AMOUNT,
+    unit: DEFAULT_UNIT,
+    vendor: DEFAULT_VENDOR,
+    expiryDate: null,
+    note: DEFAULT_NOTE,
+});
+
+const valuesFromBatch = (batch: ItemBatch): BatchValueSet => ({
+    price: batch.price?.toString() ?? DEFAULT_PRICE,
+    amount: batch.amount?.toString() ?? DEFAULT_AMOUNT,
+    unit: batch.unit ?? DEFAULT_UNIT,
+    vendor: batch.vendor ?? DEFAULT_VENDOR,
+    expiryDate: batch.expiryDate ? new Date(batch.expiryDate) : null,
+    note: batch.note ?? DEFAULT_NOTE,
+});
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+const datesEqual = (a: Date | null, b: Date | null): boolean => {
+    if (a === null && b === null) return true;
+    if (a === null || b === null) return false;
+    return a.getTime() === b.getTime();
+};
+
 // ---------------------------------------------------------------------------
 // Hook
 // ---------------------------------------------------------------------------
 
-export const useEditBatchForm = (options: UseEditBatchFormOptions = {}) => {
-    const { initialData, onFormValidChange } = options;
+/**
+ * Unified form hook for the batch form bottom sheet (add + edit modes),
+ * consolidated from the former separate add/edit batch form hooks.
+ *
+ * Shared core (both modes):
+ *  - price / amount / unit / vendor / note – uncontrolled text inputs
+ *    (ref-based, IME-safe)
+ *  - expiryDate                            – date picker state
+ *  - validity = amount parses to a positive integer
+ *
+ * Edit-only extension:
+ *  - `initialData` population effect (re-keys the form on each new batch)
+ *  - dirty check / reset are relative to the populated batch values
+ *
+ * Uses the dual-state IME pattern: values live in refs (updated on
+ * onChangeText), `default*` state feeds `defaultValue`, and `formKey`
+ * remounts inputs on reset.
+ */
+export const useBatchForm = (options: UseBatchFormOptions) => {
+    const { mode, initialData, onFormValidChange } = options;
 
     // --- Refs (uncontrolled inputs) ----------------------------------------
+    // Add mode starts at the defaults; edit mode starts empty until
+    // `initialData` populates the form (matches the source hooks).
 
     const priceInputRef = useRef<TextInput>(null);
-    const priceValueRef = useRef('');
+    const priceValueRef = useRef(mode === 'add' ? DEFAULT_PRICE : '');
 
     const amountInputRef = useRef<TextInput>(null);
-    const amountValueRef = useRef('');
+    const amountValueRef = useRef(mode === 'add' ? DEFAULT_AMOUNT : '');
 
     const unitInputRef = useRef<TextInput>(null);
-    const unitValueRef = useRef('');
+    const unitValueRef = useRef(mode === 'add' ? DEFAULT_UNIT : '');
 
     const vendorInputRef = useRef<TextInput>(null);
-    const vendorValueRef = useRef('');
+    const vendorValueRef = useRef(mode === 'add' ? DEFAULT_VENDOR : '');
 
     const noteInputRef = useRef<TextInput>(null);
-    const noteValueRef = useRef('');
+    const noteValueRef = useRef(mode === 'add' ? DEFAULT_NOTE : '');
 
     // --- Initial values (for dirty-state tracking) -------------------------
 
-    const initialValuesRef = useRef({
-        price: DEFAULT_PRICE,
-        amount: DEFAULT_AMOUNT,
-        unit: DEFAULT_UNIT,
-        vendor: DEFAULT_VENDOR,
-        expiryDate: null as Date | null,
-        note: DEFAULT_NOTE,
-    });
+    const initialValuesRef = useRef<BatchValueSet>(defaultValues());
 
     // --- State -------------------------------------------------------------
 
@@ -80,8 +134,7 @@ export const useEditBatchForm = (options: UseEditBatchFormOptions = {}) => {
 
     const getIsFormValid = useCallback(() => {
         // Basic validation: amount must be > 0
-        const amountStr = amountValueRef.current || '0';
-        const amount = parseInt(amountStr, 10);
+        const amount = parseInt(amountValueRef.current || '0', 10);
         return !isNaN(amount) && amount > 0;
     }, []);
 
@@ -90,42 +143,33 @@ export const useEditBatchForm = (options: UseEditBatchFormOptions = {}) => {
         onFormValidChange?.(getIsFormValid());
     }, [getIsFormValid, onFormValidChange]);
 
-    // --- Initialization ----------------------------------------------------
+    // --- Apply a value set to refs + state -----------------------------------
+
+    const applyValues = useCallback((values: BatchValueSet) => {
+        initialValuesRef.current = values;
+
+        priceValueRef.current = values.price;
+        amountValueRef.current = values.amount;
+        unitValueRef.current = values.unit;
+        vendorValueRef.current = values.vendor;
+        noteValueRef.current = values.note;
+
+        setDefaultPrice(values.price);
+        setDefaultAmount(values.amount);
+        setDefaultUnit(values.unit);
+        setDefaultVendor(values.vendor);
+        setExpiryDate(values.expiryDate);
+        setDefaultNote(values.note);
+    }, []);
+
+    // --- Edit-mode initialization (populate from initialData) ---------------
 
     useEffect(() => {
-        if (initialData) {
-            const price = initialData.price?.toString() ?? DEFAULT_PRICE;
-            const amount = initialData.amount?.toString() ?? DEFAULT_AMOUNT;
-            const unit = initialData.unit ?? DEFAULT_UNIT;
-            const vendor = initialData.vendor ?? DEFAULT_VENDOR;
-            const parsedExpiryDate = initialData.expiryDate ? new Date(initialData.expiryDate) : null;
-            const note = initialData.note ?? DEFAULT_NOTE;
-
-            initialValuesRef.current = {
-                price,
-                amount,
-                unit,
-                vendor,
-                expiryDate: parsedExpiryDate,
-                note,
-            };
-
-            priceValueRef.current = price;
-            amountValueRef.current = amount;
-            unitValueRef.current = unit;
-            vendorValueRef.current = vendor;
-            noteValueRef.current = note;
-
-            setDefaultPrice(price);
-            setDefaultAmount(amount);
-            setDefaultUnit(unit);
-            setDefaultVendor(vendor);
-            setExpiryDate(parsedExpiryDate);
-            setDefaultNote(note);
-
+        if (mode === 'edit' && initialData) {
+            applyValues(valuesFromBatch(initialData));
             setFormKey((prev) => prev + 1);
         }
-    }, [initialData]);
+    }, [mode, initialData, applyValues]);
 
     // --- Input handlers ----------------------------------------------------
 
@@ -158,7 +202,7 @@ export const useEditBatchForm = (options: UseEditBatchFormOptions = {}) => {
     // --- Form helpers ------------------------------------------------------
 
     const getFormValues = useCallback(
-        (): EditBatchFormValues => ({
+        (): BatchFormValues => ({
             price: priceValueRef.current,
             amount: amountValueRef.current,
             unit: unitValueRef.current,
@@ -176,66 +220,21 @@ export const useEditBatchForm = (options: UseEditBatchFormOptions = {}) => {
             amountValueRef.current !== initial.amount ||
             unitValueRef.current !== initial.unit ||
             vendorValueRef.current !== initial.vendor ||
-            expiryDate?.getTime() !== initial.expiryDate?.getTime() ||
+            !datesEqual(expiryDate, initial.expiryDate) ||
             noteValueRef.current !== initial.note
         );
     }, [expiryDate]);
 
     const resetForm = useCallback(() => {
-        if (initialData) {
-            const price = initialData.price?.toString() ?? DEFAULT_PRICE;
-            const amount = initialData.amount?.toString() ?? DEFAULT_AMOUNT;
-            const unit = initialData.unit ?? DEFAULT_UNIT;
-            const vendor = initialData.vendor ?? DEFAULT_VENDOR;
-            const parsedExpiryDate = initialData.expiryDate ? new Date(initialData.expiryDate) : null;
-            const note = initialData.note ?? DEFAULT_NOTE;
-
-            initialValuesRef.current = {
-                price,
-                amount,
-                unit,
-                vendor,
-                expiryDate: parsedExpiryDate,
-                note,
-            };
-
-            priceValueRef.current = price;
-            amountValueRef.current = amount;
-            unitValueRef.current = unit;
-            vendorValueRef.current = vendor;
-            noteValueRef.current = note;
-
-            setDefaultPrice(price);
-            setDefaultAmount(amount);
-            setDefaultUnit(unit);
-            setDefaultVendor(vendor);
-            setExpiryDate(parsedExpiryDate);
-            setDefaultNote(note);
+        if (mode === 'edit' && initialData) {
+            // Re-populate from initialData
+            applyValues(valuesFromBatch(initialData));
         } else {
-            initialValuesRef.current = {
-                price: DEFAULT_PRICE,
-                amount: DEFAULT_AMOUNT,
-                unit: DEFAULT_UNIT,
-                vendor: DEFAULT_VENDOR,
-                expiryDate: null,
-                note: DEFAULT_NOTE,
-            };
-
-            priceValueRef.current = DEFAULT_PRICE;
-            amountValueRef.current = DEFAULT_AMOUNT;
-            unitValueRef.current = DEFAULT_UNIT;
-            vendorValueRef.current = DEFAULT_VENDOR;
-            noteValueRef.current = DEFAULT_NOTE;
-
-            setDefaultPrice(DEFAULT_PRICE);
-            setDefaultAmount(DEFAULT_AMOUNT);
-            setDefaultUnit(DEFAULT_UNIT);
-            setDefaultVendor(DEFAULT_VENDOR);
-            setExpiryDate(null);
-            setDefaultNote(DEFAULT_NOTE);
+            // Reset to defaults (add mode, or edit mode with no batch loaded)
+            applyValues(defaultValues());
         }
         setFormKey((prev) => prev + 1);
-    }, [initialData]);
+    }, [mode, initialData, applyValues]);
 
     // --- Public API --------------------------------------------------------
 
@@ -246,7 +245,7 @@ export const useEditBatchForm = (options: UseEditBatchFormOptions = {}) => {
         unitInputRef,
         vendorInputRef,
         noteInputRef,
-        // Default values
+        // Default values (for uncontrolled inputs)
         defaultPrice,
         defaultAmount,
         defaultUnit,

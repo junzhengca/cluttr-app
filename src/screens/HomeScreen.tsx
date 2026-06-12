@@ -31,9 +31,8 @@ import {
   LoginBottomSheet,
   SignupBottomSheet,
   FloatingActionButton,
-  CreateItemBottomSheet,
-  EditItemBottomSheet,
-  type EditItemBottomSheetRef,
+  ItemFormBottomSheet,
+  type ItemFormBottomSheetRef,
   ContextMenu,
   HomeSwitcher,
   CollapsibleFilterPanel,
@@ -100,7 +99,7 @@ export const HomeScreen: React.FC = () => {
   const loginBottomSheetRef = useRef<BottomSheetModal | null>(null);
   const signupBottomSheetRef = useRef<BottomSheetModal | null>(null);
   const createItemBottomSheetRef = useRef<BottomSheetModal | null>(null);
-  const editBottomSheetRef = useRef<EditItemBottomSheetRef>(null);
+  const editBottomSheetRef = useRef<ItemFormBottomSheetRef>(null);
   const editBottomSheetModalRef = useRef<BottomSheetModal>(null);
 
   const { confirmDelete } = useItemActions();
@@ -366,13 +365,15 @@ export const HomeScreen: React.FC = () => {
           onLoginPress={handleLoginPress}
           onSignupSuccess={handleSignupSuccess}
         />
-        <CreateItemBottomSheet
+        <ItemFormBottomSheet
+          mode="create"
           bottomSheetRef={createItemBottomSheetRef}
           initialData={recognizedItemData}
           onItemCreated={handleItemCreated}
           onSheetClose={() => setRecognizedItemData(null)}
         />
-        <EditItemBottomSheet
+        <ItemFormBottomSheet
+          mode="edit"
           ref={editBottomSheetRef}
           bottomSheetRef={editBottomSheetModalRef}
         />

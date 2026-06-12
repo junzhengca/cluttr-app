@@ -15,17 +15,16 @@ import { InventoryItem } from '../types/inventory';
 import { inventoryService } from '../services/InventoryService';
 import {
   getCurrencySymbol,
-  EditItemBottomSheet,
-  type EditItemBottomSheetRef,
+  ItemFormBottomSheet,
+  type ItemFormBottomSheetRef,
   PageHeader,
   BottomActionBar,
   BatchItemCard,
   SwipeableRow,
   Button,
-  AddBatchBottomSheet,
+  BatchFormBottomSheet,
+  type BatchFormBottomSheetRef,
   ContextMenu,
-  EditBatchBottomSheet,
-  type EditBatchBottomSheetRef,
 } from '../components';
 import { useItemActions } from '../hooks/useItemActions';
 import { useHome } from '../hooks/useHome';
@@ -206,8 +205,8 @@ export const ItemDetailsScreen: React.FC = () => {
   const [categoryColor, setCategoryColor] = useState<string | undefined>(undefined);
   const bottomSheetModalRef = useRef<BottomSheetModal>(null);
   const addBatchBottomSheetRef = useRef<BottomSheetModal>(null);
-  const editBottomSheetRef = useRef<EditItemBottomSheetRef>(null);
-  const editBatchBottomSheetRef = useRef<EditBatchBottomSheetRef>(null);
+  const editBottomSheetRef = useRef<ItemFormBottomSheetRef>(null);
+  const editBatchBottomSheetRef = useRef<BatchFormBottomSheetRef>(null);
   const editBatchBottomSheetModalRef = useRef<BottomSheetModal>(null);
   const dispatch = useAppDispatch();
 
@@ -508,14 +507,16 @@ export const ItemDetailsScreen: React.FC = () => {
         ]}
       />
 
-      <EditItemBottomSheet
+      <ItemFormBottomSheet
+        mode="edit"
         ref={editBottomSheetRef}
         bottomSheetRef={bottomSheetModalRef}
         onItemUpdated={handleItemUpdated}
       />
 
       {item && (
-        <AddBatchBottomSheet
+        <BatchFormBottomSheet
+          mode="add"
           bottomSheetRef={addBatchBottomSheetRef}
           item={item}
           onBatchAdded={handleBatchAdded}
@@ -523,7 +524,8 @@ export const ItemDetailsScreen: React.FC = () => {
       )}
 
       {item && (
-        <EditBatchBottomSheet
+        <BatchFormBottomSheet
+          mode="edit"
           ref={editBatchBottomSheetRef}
           bottomSheetRef={editBatchBottomSheetModalRef}
           onBatchUpdated={handleBatchUpdated}

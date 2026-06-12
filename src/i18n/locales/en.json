@@ -226,7 +226,19 @@
     },
     "actions": {
       "addToTodo": "Add to todo"
-    }
+    },
+    "createError": "Failed to create item",
+    "deleteError": "Failed to delete item",
+    "updateError": "Failed to update item"
+  },
+  "inventoryCategory": {
+    "addError": "Failed to add category",
+    "updateError": "Failed to update category",
+    "deleteError": "Failed to delete category"
+  },
+  "location": {
+    "updateError": "Failed to save location",
+    "deleteError": "Failed to delete location"
   },
   "notes": {
     "title": "Notes",
@@ -802,7 +814,8 @@
     },
     "shoppingList": {
       "label": "Shared Shopping List"
-    }
+    },
+    "accessRevoked": "Access to this home has been revoked"
   },
   "toast": {
     "loginSuccess": "Successfully logged in",
