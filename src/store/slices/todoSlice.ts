@@ -26,10 +26,6 @@ const todoSlice = createSlice({
     setTodos: (state, action: PayloadAction<TodoItem[]>) => {
       state.todos = action.payload;
     },
-    silentSetTodos: (state, action: PayloadAction<TodoItem[]>) => {
-      // Silent update - only updates todos, does not touch loading state
-      state.todos = action.payload;
-    },
     addTodo: (state, action: PayloadAction<TodoItem>) => {
       state.todos.unshift(action.payload);
     },
@@ -63,58 +59,14 @@ const todoSlice = createSlice({
     setError: (state, action: PayloadAction<string | null>) => {
       state.error = action.payload;
     },
-    upsertTodos: (state, action: PayloadAction<TodoItem[]>) => {
-      const todosToUpsert = action.payload;
-      if (todosToUpsert.length === 0) return;
-
-      const todoMap = new Map(state.todos.map((todo) => [todo.id, todo]));
-      todosToUpsert.forEach((todo) => {
-        todoMap.set(todo.id, todo);
-      });
-      state.todos = Array.from(todoMap.values());
-    },
-    removeTodos: (state, action: PayloadAction<string[]>) => {
-      const idsToRemove = new Set(action.payload);
-      if (idsToRemove.size === 0) return;
-      state.todos = state.todos.filter((todo) => !idsToRemove.has(todo.id));
-    },
-    addTodos: (state, action: PayloadAction<TodoItem[]>) => {
-      action.payload.forEach((todo) => {
-        const index = state.todos.findIndex((t) => t.id === todo.id);
-        if (index === -1) {
-          state.todos.push(todo); // Only add if not exists
-        }
-      });
-    },
     setTodoCategories: (state, action: PayloadAction<TodoCategory[]>) => {
       state.categories = action.payload;
-    },
-    silentSetTodoCategories: (state, action: PayloadAction<TodoCategory[]>) => {
-      // Silent update - only updates categories, does not touch loading state
-      state.categories = action.payload;
-    },
-    addTodoCategory: (state, action: PayloadAction<TodoCategory>) => {
-      state.categories.push(action.payload);
-    },
-    updateTodoCategory: (state, action: PayloadAction<TodoCategory>) => {
-      const index = state.categories.findIndex(
-        (cat) => cat.id === action.payload.id
-      );
-      if (index !== -1) {
-        state.categories[index] = action.payload;
-      }
-    },
-    removeTodoCategory: (state, action: PayloadAction<string>) => {
-      state.categories = state.categories.filter(
-        (cat) => cat.id !== action.payload
-      );
     },
   },
 });
 
 export const {
   setTodos,
-  silentSetTodos,
   addTodo,
   updateTodo,
   removeTodo,
@@ -123,14 +75,7 @@ export const {
   addUpdatingTodoId,
   removeUpdatingTodoId,
   setError,
-  upsertTodos,
-  removeTodos,
-  addTodos,
   setTodoCategories,
-  silentSetTodoCategories,
-  addTodoCategory,
-  updateTodoCategory,
-  removeTodoCategory,
 } = todoSlice.actions;
 
 // Selectors

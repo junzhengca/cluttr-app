@@ -4,9 +4,6 @@
  * This file runs before each test suite to set up global mocks and configurations.
  */
 
-// Set test environment variables
-process.env.EXPO_PUBLIC_API_BASE_URL = 'https://test-api.example.com';
-
 // Mock React Native modules that jest-expo doesn't handle automatically
 jest.mock('expo-file-system', () => ({
   FileSystem: {

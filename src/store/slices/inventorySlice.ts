@@ -22,17 +22,11 @@ const inventorySlice = createSlice({
     setItems: (state, action: PayloadAction<InventoryItem[]>) => {
       state.items = action.payload;
     },
-    addItem: (state, action: PayloadAction<InventoryItem>) => {
-      state.items.unshift(action.payload);
-    },
     updateItem: (state, action: PayloadAction<InventoryItem>) => {
       const index = state.items.findIndex((item) => item.id === action.payload.id);
       if (index !== -1) {
         state.items[index] = action.payload;
       }
-    },
-    removeItem: (state, action: PayloadAction<string>) => {
-      state.items = state.items.filter((item) => item.id !== action.payload);
     },
     setLoading: (state, action: PayloadAction<boolean>) => {
       state.loading = action.payload;
@@ -51,9 +45,7 @@ const inventorySlice = createSlice({
 
 export const {
   setItems,
-  addItem,
   updateItem,
-  removeItem,
   setLoading,
   setError,
   addUpdatingItemId,

@@ -261,28 +261,6 @@ export const useSelectedCategory = () => {
   };
 };
 
-// Category hook - replaces CategoryContext
-// Note: Categories are now managed via Redux state (useInventoryCategories hook)
-// This hook is kept for backward compatibility
-export const useCategory = () => {
-  const dispatch = useAppDispatch();
-
-  const refreshCategories = useCallback(() => {
-    dispatch({ type: 'inventoryCategory/SILENT_LOAD_CATEGORIES' });
-  }, [dispatch]);
-
-  // Refresh callbacks are no longer needed since Redux state is reactive
-  const registerRefreshCallback = useCallback(() => {
-    // No-op: Redux state updates automatically trigger re-renders
-    return () => { };
-  }, []);
-
-  return {
-    refreshCategories,
-    registerRefreshCallback,
-  };
-};
-
 // Inventory hook - replaces InventoryContext
 export const useInventory = () => {
   const dispatch = useAppDispatch();

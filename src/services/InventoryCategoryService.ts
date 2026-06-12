@@ -1,6 +1,28 @@
 import { generateCategoryId } from '../utils/idGenerator';
 import { InventoryCategory } from '../types/inventory';
-import { inventoryCategoriesCol, fireWrite, isoNow } from './firebase/firestoreRefs';
+import { inventoryCategoriesCol } from './firebase/firestoreRefs';
+import { createCrudService } from './createCrudService';
+
+type CreateCategoryInput = { name: string; description?: string; color?: string; icon?: string };
+type UpdateCategoryInput = { name?: string; description?: string; color?: string; icon?: string };
+
+const crud = createCrudService<InventoryCategory, CreateCategoryInput, UpdateCategoryInput>({
+    collection: inventoryCategoriesCol,
+    generateId: generateCategoryId,
+    entityLabel: 'category',
+    buildCreate: (input, { id, homeId, now }) => {
+        const fields = {
+            name: input.name.trim(),
+            description: input.description,
+            color: input.color,
+            icon: input.icon,
+        };
+        return {
+            docData: fields,
+            entity: { ...fields, id, homeId, createdAt: now, updatedAt: now },
+        };
+    },
+});
 
 /**
  * InventoryCategoryService
@@ -9,56 +31,16 @@ import { inventoryCategoriesCol, fireWrite, isoNow } from './firebase/firestoreR
  * Reads are live snapshots managed by inventoryCategorySaga.
  */
 class InventoryCategoryService {
-    createCategory(
-        homeId: string,
-        input: { name: string; description?: string; color?: string; icon?: string },
-    ): InventoryCategory {
-        const id = generateCategoryId();
-        const now = isoNow();
-
-        fireWrite(
-            inventoryCategoriesCol(homeId).doc(id).set({
-                name: input.name.trim(),
-                description: input.description,
-                color: input.color,
-                icon: input.icon,
-                createdAt: now,
-                updatedAt: now,
-            }),
-            'Failed to create category',
-        );
-
-        return {
-            id,
-            homeId,
-            name: input.name.trim(),
-            description: input.description,
-            color: input.color,
-            icon: input.icon,
-            createdAt: now,
-            updatedAt: now,
-        };
+    createCategory(homeId: string, input: CreateCategoryInput): InventoryCategory {
+        return crud.create(homeId, input);
     }
 
-    updateCategory(
-        homeId: string,
-        categoryId: string,
-        updates: { name?: string; description?: string; color?: string; icon?: string },
-    ): void {
-        fireWrite(
-            inventoryCategoriesCol(homeId).doc(categoryId).update({
-                ...updates,
-                updatedAt: isoNow(),
-            }),
-            'Failed to update category',
-        );
+    updateCategory(homeId: string, categoryId: string, updates: UpdateCategoryInput): void {
+        crud.update(homeId, categoryId, updates);
     }
 
     deleteCategory(homeId: string, categoryId: string): void {
-        fireWrite(
-            inventoryCategoriesCol(homeId).doc(categoryId).delete(),
-            'Failed to delete category',
-        );
+        crud.remove(homeId, categoryId);
     }
 }
 

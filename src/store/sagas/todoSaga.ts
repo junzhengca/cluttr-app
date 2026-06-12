@@ -12,6 +12,8 @@ import {
 } from '../slices/todoSlice';
 import { setActiveHomeId } from '../slices/authSlice';
 import { createSubscriptionSaga } from './firestoreSubscriptionSaga';
+import { requireActiveHomeId } from './helpers/requireActiveHomeId';
+import { handleSagaError } from './helpers/handleSagaError';
 import { todoService } from '../../services/TodoService';
 import { todoCategoryService } from '../../services/TodoCategoryService';
 import {
@@ -67,19 +69,6 @@ export const deleteTodoCategoryAction = (id: string) => ({
   payload: id,
 });
 
-/**
- * Get active home ID from Redux state
- */
-function* getActiveHomeId(): Generator<unknown, string, unknown> {
-  const state = (yield select()) as RootState;
-  const activeHomeId = state.auth.activeHomeId;
-  if (!activeHomeId) {
-    sagaLogger.error('No active home - cannot perform todo operation');
-    throw new Error('No active home selected');
-  }
-  return activeHomeId;
-}
-
 /** Live todos listener for the active home. */
 const subscribeTodosSaga = createSubscriptionSaga<TodoItem>({
   name: 'Todos',
@@ -110,7 +99,7 @@ function* addTodoSaga(action: {
   sagaLogger.verbose(`addTodoSaga - Creating todo: "${text}"`);
 
   try {
-    const homeId = (yield call(getActiveHomeId)) as string;
+    const homeId = (yield call(requireActiveHomeId, 'todo')) as string;
     yield put(setAddingTodo(true));
     yield put(setError(null));
 
@@ -133,7 +122,7 @@ function* toggleTodoSaga(action: {
   const id = action.payload;
 
   try {
-    const homeId = (yield call(getActiveHomeId)) as string;
+    const homeId = (yield call(requireActiveHomeId, 'todo')) as string;
     yield put(setError(null));
 
     const state = (yield select()) as RootState;
@@ -150,12 +139,12 @@ function* toggleTodoSaga(action: {
       completedAt: completed ? isoNow() : null,
     });
   } catch (error) {
-    sagaLogger.error('Error toggling todo', error);
-    const errorMessage =
-      error instanceof Error ? error.message : i18n.t('todo.toggleError', 'Failed to toggle todo');
-    yield put(setError(errorMessage));
-    const toast = getGlobalToast();
-    if (toast) toast(errorMessage, 'error');
+    yield call(handleSagaError, error, {
+      logMessage: 'Error toggling todo',
+      setError,
+      fallbackKey: 'todo.toggleError',
+      fallbackText: 'Failed to toggle todo',
+    });
   }
 }
 
@@ -164,16 +153,16 @@ function* deleteTodoSaga(action: {
   payload: string;
 }): Generator<unknown, void, unknown> {
   try {
-    const homeId = (yield call(getActiveHomeId)) as string;
+    const homeId = (yield call(requireActiveHomeId, 'todo')) as string;
     yield put(setError(null));
     todoService.deleteTodo(homeId, action.payload);
   } catch (error) {
-    sagaLogger.error('Error deleting todo', error);
-    const errorMessage =
-      error instanceof Error ? error.message : i18n.t('todo.deleteError', 'Failed to delete todo');
-    yield put(setError(errorMessage));
-    const toast = getGlobalToast();
-    if (toast) toast(errorMessage, 'error');
+    yield call(handleSagaError, error, {
+      logMessage: 'Error deleting todo',
+      setError,
+      fallbackKey: 'todo.deleteError',
+      fallbackText: 'Failed to delete todo',
+    });
   }
 }
 
@@ -206,18 +195,18 @@ function* updateTodoSaga(action: {
   yield put(addUpdatingTodoId(id));
 
   try {
-    const homeId = (yield call(getActiveHomeId)) as string;
+    const homeId = (yield call(requireActiveHomeId, 'todo')) as string;
     todoService.updateTodo(homeId, id, {
       text: optimisticTodo.text,
       note: optimisticTodo.note ?? '',
     });
   } catch (error) {
-    sagaLogger.error('Error updating todo', error);
-    const errorMessage =
-      error instanceof Error ? error.message : i18n.t('todo.updateError', 'Failed to save todo');
-    yield put(setError(errorMessage));
-    const toast = getGlobalToast();
-    if (toast) toast(errorMessage, 'error');
+    yield call(handleSagaError, error, {
+      logMessage: 'Error updating todo',
+      setError,
+      fallbackKey: 'todo.updateError',
+      fallbackText: 'Failed to save todo',
+    });
   } finally {
     yield put(removeUpdatingTodoId(id));
   }
@@ -231,7 +220,7 @@ function* addTodoCategorySaga(action: {
   if (!name.trim()) return;
 
   try {
-    const homeId = (yield call(getActiveHomeId)) as string;
+    const homeId = (yield call(requireActiveHomeId, 'todo')) as string;
     yield put(setError(null));
     todoCategoryService.createCategory(homeId, { name });
   } catch (error) {
@@ -249,7 +238,7 @@ function* updateTodoCategorySaga(action: {
   const { id, name } = action.payload;
 
   try {
-    const homeId = (yield call(getActiveHomeId)) as string;
+    const homeId = (yield call(requireActiveHomeId, 'todo')) as string;
     yield put(setError(null));
     todoCategoryService.updateCategory(homeId, id, { name });
   } catch (error) {
@@ -265,7 +254,7 @@ function* deleteTodoCategorySaga(action: {
   payload: string;
 }): Generator<unknown, void, unknown> {
   try {
-    const homeId = (yield call(getActiveHomeId)) as string;
+    const homeId = (yield call(requireActiveHomeId, 'todo')) as string;
     yield put(setError(null));
     todoCategoryService.deleteCategory(homeId, action.payload);
   } catch (error) {

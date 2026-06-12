@@ -12,6 +12,8 @@ import {
 } from '../slices/locationSlice';
 import { setActiveHomeId } from '../slices/authSlice';
 import { createSubscriptionSaga } from './firestoreSubscriptionSaga';
+import { requireActiveHomeId } from './helpers/requireActiveHomeId';
+import { handleSagaError } from './helpers/handleSagaError';
 import { locationService } from '../../services/LocationService';
 import {
   locationsCol,
@@ -47,19 +49,6 @@ export const updateLocationAction = (id: string, name: string, icon?: string) =>
 const DEBOUNCE_MS = 400;
 const pendingUpdateTasks = new Map<string, Task>();
 
-/**
- * Get active home ID from Redux state
- */
-function* getActiveHomeId(): Generator<unknown, string, unknown> {
-  const state = (yield select()) as RootState;
-  const activeHomeId = state.auth.activeHomeId;
-  if (!activeHomeId) {
-    sagaLogger.error('No active home - cannot perform location operation');
-    throw new Error('No active home selected');
-  }
-  return activeHomeId;
-}
-
 /** Live locations listener for the active home. */
 const subscribeLocationsSaga = createSubscriptionSaga<Location>({
   name: 'Locations',
@@ -81,7 +70,7 @@ function* addLocationSaga(action: {
   sagaLogger.verbose(`addLocationSaga - Creating location: "${name}"`);
 
   try {
-    const homeId = (yield call(getActiveHomeId)) as string;
+    const homeId = (yield call(requireActiveHomeId, 'location')) as string;
     yield put(setAddingLocation(true));
     yield put(setError(null));
 
@@ -102,16 +91,16 @@ function* deleteLocationSaga(action: {
   payload: string;
 }): Generator<unknown, void, unknown> {
   try {
-    const homeId = (yield call(getActiveHomeId)) as string;
+    const homeId = (yield call(requireActiveHomeId, 'location')) as string;
     yield put(setError(null));
     locationService.deleteLocation(homeId, action.payload);
   } catch (error) {
-    sagaLogger.error('Error deleting location', error);
-    const errorMessage =
-      error instanceof Error ? error.message : i18n.t('location.deleteError', 'Failed to delete location');
-    yield put(setError(errorMessage));
-    const toast = getGlobalToast();
-    if (toast) toast(errorMessage, 'error');
+    yield call(handleSagaError, error, {
+      logMessage: 'Error deleting location',
+      setError,
+      fallbackKey: 'location.deleteError',
+      fallbackText: 'Failed to delete location',
+    });
   }
 }
 
@@ -126,7 +115,7 @@ function* debouncedUpdateForId(id: string): Generator<unknown, void, unknown> {
     const currentLocation = state.location.locations.find((l) => l.id === id);
     if (!currentLocation) return;
 
-    const homeId = (yield call(getActiveHomeId)) as string;
+    const homeId = (yield call(requireActiveHomeId, 'location')) as string;
     locationService.updateLocation(homeId, id, {
       name: currentLocation.name.trim(),
       icon: currentLocation.icon,

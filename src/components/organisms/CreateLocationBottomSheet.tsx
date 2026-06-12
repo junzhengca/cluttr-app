@@ -1,6 +1,6 @@
 import React, { useCallback, useState, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Keyboard, TextInput } from 'react-native';
+import { TextInput } from 'react-native';
 import { BottomSheetModal, BottomSheetBackdrop, BottomSheetScrollView, BottomSheetBackdropProps } from '@gorhom/bottom-sheet';
 import styled from 'styled-components/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -11,16 +11,14 @@ import { useLocations } from '../../store/hooks';
 import { BottomSheetHeader, GlassButton, FormSection, UncontrolledInput } from '../atoms';
 import { StyledProps } from '../../utils/styledComponents';
 import { useKeyboardVisibility } from '../../hooks/useKeyboardVisibility';
+import { useBottomSheetLifecycle } from '../../hooks/useBottomSheetLifecycle';
 import { uiLogger } from '../../utils/Logger';
 import { IconSelector } from '../molecules/IconSelector';
 import { categoryIcons } from '../../data/categoryIcons';
-
-const ContentContainer = styled.View`
-  flex: 1;
-  border-top-left-radius: ${({ theme }: StyledProps) => theme.borderRadius.xxl}px;
-  border-top-right-radius: ${({ theme }: StyledProps) => theme.borderRadius.xxl}px;
-  overflow: hidden;
-`;
+import {
+  ContentContainer,
+  FooterContainer,
+} from './bottom-sheets/shared/sheetPrimitives';
 
 const FormContainer = styled.View`
   flex-direction: column;
@@ -39,22 +37,6 @@ const ErrorBanner = styled.View`
 const ErrorText = styled.Text`
   color: ${({ theme }: StyledProps) => theme.colors.surface};
   font-size: 12px;
-`;
-
-const FooterContainer = styled.View<{
-    bottomInset: number;
-    showSafeArea: boolean;
-}>`
-  background-color: ${({ theme }: StyledProps) => theme.colors.background};
-  padding-horizontal: ${({ theme }: StyledProps) => theme.spacing.lg}px;
-  padding-top: ${({ theme }: StyledProps) => theme.spacing.md}px;
-  padding-bottom: ${({ bottomInset, showSafeArea, theme }: StyledProps & { bottomInset: number; showSafeArea: boolean }) =>
-        showSafeArea ? bottomInset + theme.spacing.md : theme.spacing.md}px;
-  shadow-color: #000;
-  shadow-offset: 0px -2px;
-  shadow-opacity: 0.03;
-  shadow-radius: 4px;
-  elevation: 2;
 `;
 
 export interface CreateLocationBottomSheetProps {
@@ -93,23 +75,35 @@ export const CreateLocationBottomSheet: React.FC<CreateLocationBottomSheetProps>
         }
     }, [locationToEdit]);
 
-    const handleClose = useCallback(() => {
-        Keyboard.dismiss();
-        bottomSheetRef.current?.dismiss();
+    // Restore the form to its pristine state (initial values for the location
+    // being edited, or blank for create mode).
+    const resetForm = useCallback(() => {
+        if (locationToEdit) {
+            setName(locationToEdit.name);
+            setSelectedIcon((locationToEdit.icon as keyof typeof Ionicons.glyphMap) || categoryIcons[0]);
+        } else {
+            setName('');
+            setSelectedIcon(categoryIcons[0]);
+        }
+        setLocalError(null);
+        nameInputRef.current?.clear();
+    }, [locationToEdit]);
 
-        // Reset state on close
-        setTimeout(() => {
-            if (locationToEdit) {
-                setName(locationToEdit.name);
-                setSelectedIcon((locationToEdit.icon as keyof typeof Ionicons.glyphMap) || categoryIcons[0]);
-            } else {
-                setName('');
-                setSelectedIcon(categoryIcons[0]);
-            }
-            setLocalError(null);
-            nameInputRef.current?.clear();
-        }, 300);
-    }, [bottomSheetRef, locationToEdit]);
+    // This sheet has never prompted a discard confirmation, so the form is
+    // reported as always-pristine; closing resets state and notifies onClose.
+    const isFormDirty = useCallback(() => false, []);
+
+    const handleClosed = useCallback(() => {
+        resetForm();
+        onClose?.();
+    }, [resetForm, onClose]);
+
+    const { handleSheetChange, handleClose } = useBottomSheetLifecycle({
+        bottomSheetRef,
+        isFormDirty,
+        resetForm,
+        onClosed: handleClosed,
+    });
 
     const renderBackdrop = useCallback(
         (props: BottomSheetBackdropProps) => (
@@ -211,21 +205,7 @@ export const CreateLocationBottomSheet: React.FC<CreateLocationBottomSheetProps>
             stackBehavior="push"
             index={0}
             footerComponent={renderFooter}
-            onChange={(index) => {
-                if (index === -1) {
-                    Keyboard.dismiss();
-                    if (locationToEdit) {
-                        setName(locationToEdit.name);
-                        setSelectedIcon((locationToEdit.icon as keyof typeof Ionicons.glyphMap) || categoryIcons[0]);
-                    } else {
-                        setName('');
-                        setSelectedIcon(categoryIcons[0]);
-                    }
-                    setLocalError(null);
-                    nameInputRef.current?.clear();
-                    onClose?.();
-                }
-            }}
+            onChange={handleSheetChange}
         >
             <ContentContainer>
                 <BottomSheetHeader

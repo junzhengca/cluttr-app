@@ -1,6 +1,30 @@
 import { generateLocationId } from '../utils/idGenerator';
 import { Location } from '../types/inventory';
-import { locationsCol, fireWrite, isoNow } from './firebase/firestoreRefs';
+import { locationsCol } from './firebase/firestoreRefs';
+import { createCrudService } from './createCrudService';
+
+type CreateLocationInput = { name: string; icon?: string };
+type UpdateLocationInput = { name?: string; icon?: string };
+
+const crud = createCrudService<Location, CreateLocationInput, UpdateLocationInput>({
+    collection: locationsCol,
+    generateId: generateLocationId,
+    entityLabel: 'location',
+    buildCreate: (input, { id, homeId, now }) => ({
+        docData: {
+            name: input.name.trim(),
+            icon: input.icon,
+        },
+        entity: {
+            id,
+            homeId,
+            name: input.name.trim(),
+            icon: input.icon as Location['icon'],
+            createdAt: now,
+            updatedAt: now,
+        },
+    }),
+});
 
 /**
  * LocationService
@@ -9,43 +33,16 @@ import { locationsCol, fireWrite, isoNow } from './firebase/firestoreRefs';
  * live snapshots managed by locationSaga.
  */
 class LocationService {
-    createLocation(homeId: string, input: { name: string; icon?: string }): Location {
-        const id = generateLocationId();
-        const now = isoNow();
-
-        fireWrite(
-            locationsCol(homeId).doc(id).set({
-                name: input.name.trim(),
-                icon: input.icon,
-                createdAt: now,
-                updatedAt: now,
-            }),
-            'Failed to create location',
-        );
-
-        return {
-            id,
-            homeId,
-            name: input.name.trim(),
-            icon: input.icon as Location['icon'],
-            createdAt: now,
-            updatedAt: now,
-        };
+    createLocation(homeId: string, input: CreateLocationInput): Location {
+        return crud.create(homeId, input);
     }
 
-    updateLocation(
-        homeId: string,
-        locationId: string,
-        updates: { name?: string; icon?: string },
-    ): void {
-        fireWrite(
-            locationsCol(homeId).doc(locationId).update({ ...updates, updatedAt: isoNow() }),
-            'Failed to update location',
-        );
+    updateLocation(homeId: string, locationId: string, updates: UpdateLocationInput): void {
+        crud.update(homeId, locationId, updates);
     }
 
     deleteLocation(homeId: string, locationId: string): void {
-        fireWrite(locationsCol(homeId).doc(locationId).delete(), 'Failed to delete location');
+        crud.remove(homeId, locationId);
     }
 }
 

@@ -1,6 +1,30 @@
 import { generateTodoId } from '../utils/idGenerator';
 import { TodoItem } from '../types/inventory';
-import { todosCol, fireWrite, isoNow } from './firebase/firestoreRefs';
+import { todosCol } from './firebase/firestoreRefs';
+import { createCrudService } from './createCrudService';
+
+type CreateTodoInput = { text: string; note?: string; categoryId?: string };
+type UpdateTodoInput = Partial<Omit<TodoItem, 'id' | 'homeId' | 'createdAt' | 'updatedAt'>>;
+
+const crud = createCrudService<TodoItem, CreateTodoInput, UpdateTodoInput>({
+    collection: todosCol,
+    generateId: generateTodoId,
+    entityLabel: 'todo',
+    buildCreate: (input, { id, homeId, now }) => {
+        const fields = {
+            text: input.text.trim(),
+            completed: false,
+            completedAt: null,
+            position: 0,
+            note: input.note,
+            categoryId: input.categoryId,
+        };
+        return {
+            docData: fields,
+            entity: { ...fields, id, homeId, createdAt: now, updatedAt: now },
+        };
+    },
+});
 
 /**
  * TodoService
@@ -10,54 +34,16 @@ import { todosCol, fireWrite, isoNow } from './firebase/firestoreRefs';
  * latency-compensated local snapshot updates the UI immediately.
  */
 class TodoService {
-    createTodo(
-        homeId: string,
-        input: { text: string; note?: string; categoryId?: string },
-    ): TodoItem {
-        const id = generateTodoId();
-        const now = isoNow();
-
-        fireWrite(
-            todosCol(homeId).doc(id).set({
-                text: input.text.trim(),
-                completed: false,
-                completedAt: null,
-                position: 0,
-                note: input.note,
-                categoryId: input.categoryId,
-                createdAt: now,
-                updatedAt: now,
-            }),
-            'Failed to create todo',
-        );
-
-        return {
-            id,
-            homeId,
-            text: input.text.trim(),
-            completed: false,
-            completedAt: null,
-            position: 0,
-            note: input.note,
-            categoryId: input.categoryId,
-            createdAt: now,
-            updatedAt: now,
-        };
+    createTodo(homeId: string, input: CreateTodoInput): TodoItem {
+        return crud.create(homeId, input);
     }
 
-    updateTodo(
-        homeId: string,
-        todoId: string,
-        updates: Partial<Omit<TodoItem, 'id' | 'homeId' | 'createdAt' | 'updatedAt'>>,
-    ): void {
-        fireWrite(
-            todosCol(homeId).doc(todoId).update({ ...updates, updatedAt: isoNow() }),
-            'Failed to update todo',
-        );
+    updateTodo(homeId: string, todoId: string, updates: UpdateTodoInput): void {
+        crud.update(homeId, todoId, updates);
     }
 
     deleteTodo(homeId: string, todoId: string): void {
-        fireWrite(todosCol(homeId).doc(todoId).delete(), 'Failed to delete todo');
+        crud.remove(homeId, todoId);
     }
 }
 

@@ -1,11 +1,30 @@
 import { generateItemId } from '../utils/idGenerator';
 import { InventoryItem } from '../types/inventory';
-import {
-    inventoryCol,
-    inventoryItemFromDoc,
-    fireWrite,
-    isoNow,
-} from './firebase/firestoreRefs';
+import { inventoryCol, inventoryItemFromDoc } from './firebase/firestoreRefs';
+import { createCrudService } from './createCrudService';
+
+type CreateInventoryInput = Omit<InventoryItem, 'id' | 'homeId' | 'createdAt' | 'updatedAt'>;
+type UpdateInventoryInput = Partial<CreateInventoryInput>;
+
+const crud = createCrudService<InventoryItem, CreateInventoryInput, UpdateInventoryInput>({
+    collection: inventoryCol,
+    generateId: generateItemId,
+    entityLabel: 'inventory item',
+    buildCreate: (input, { id, homeId, now }) => ({
+        docData: {
+            name: input.name,
+            location: input.location,
+            detailedLocation: input.detailedLocation,
+            status: input.status,
+            icon: input.icon,
+            iconColor: input.iconColor,
+            warningThreshold: input.warningThreshold,
+            categoryId: input.categoryId,
+            batches: input.batches ?? [],
+        },
+        entity: { ...input, id, homeId, createdAt: now, updatedAt: now },
+    }),
+});
 
 /**
  * InventoryService
@@ -19,49 +38,16 @@ class InventoryService {
     /**
      * Create a new inventory item. Returns the locally constructed item.
      */
-    createInventoryItem(
-        homeId: string,
-        input: Omit<InventoryItem, 'id' | 'homeId' | 'createdAt' | 'updatedAt'>,
-    ): InventoryItem {
-        const id = generateItemId();
-        const now = isoNow();
-
-        fireWrite(
-            inventoryCol(homeId).doc(id).set({
-                name: input.name,
-                location: input.location,
-                detailedLocation: input.detailedLocation,
-                status: input.status,
-                icon: input.icon,
-                iconColor: input.iconColor,
-                warningThreshold: input.warningThreshold,
-                categoryId: input.categoryId,
-                batches: input.batches ?? [],
-                createdAt: now,
-                updatedAt: now,
-            }),
-            'Failed to create inventory item',
-        );
-
-        return { ...input, id, homeId, createdAt: now, updatedAt: now };
+    createInventoryItem(homeId: string, input: CreateInventoryInput): InventoryItem {
+        return crud.create(homeId, input);
     }
 
-    updateInventoryItem(
-        homeId: string,
-        itemId: string,
-        updates: Partial<Omit<InventoryItem, 'id' | 'homeId' | 'createdAt' | 'updatedAt'>>,
-    ): void {
-        fireWrite(
-            inventoryCol(homeId).doc(itemId).update({ ...updates, updatedAt: isoNow() }),
-            'Failed to update inventory item',
-        );
+    updateInventoryItem(homeId: string, itemId: string, updates: UpdateInventoryInput): void {
+        crud.update(homeId, itemId, updates);
     }
 
     deleteInventoryItem(homeId: string, itemId: string): void {
-        fireWrite(
-            inventoryCol(homeId).doc(itemId).delete(),
-            'Failed to delete inventory item',
-        );
+        crud.remove(homeId, itemId);
     }
 
     /**

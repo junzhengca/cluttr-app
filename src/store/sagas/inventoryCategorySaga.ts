@@ -1,5 +1,4 @@
-import { call, put, select, takeLatest } from 'redux-saga/effects';
-import type { RootState } from '../types';
+import { call, takeLatest, put } from 'redux-saga/effects';
 import {
   setCategories,
   setLoading,
@@ -7,6 +6,8 @@ import {
 } from '../slices/inventoryCategorySlice';
 import { setActiveHomeId } from '../slices/authSlice';
 import { createSubscriptionSaga } from './firestoreSubscriptionSaga';
+import { requireActiveHomeId } from './helpers/requireActiveHomeId';
+import { handleSagaError } from './helpers/handleSagaError';
 import { inventoryCategoryService } from '../../services/InventoryCategoryService';
 import {
   inventoryCategoriesCol,
@@ -14,7 +15,6 @@ import {
 } from '../../services/firebase/firestoreRefs';
 import type { InventoryCategory } from '../../types/inventory';
 import { sagaLogger } from '../../utils/Logger';
-import { getGlobalToast } from '../../utils/toastRegistry';
 
 // Action types
 const LOAD_CATEGORIES = 'inventoryCategory/LOAD_CATEGORIES';
@@ -38,19 +38,6 @@ export const deleteCategoryAction = (id: string) => ({
   type: DELETE_CATEGORY,
   payload: id,
 });
-
-/**
- * Get active home ID from Redux state
- */
-function* getActiveHomeId(): Generator<unknown, string, unknown> {
-  const state = (yield select()) as RootState;
-  const activeHomeId = state.auth.activeHomeId;
-  if (!activeHomeId) {
-    sagaLogger.error('No active home - cannot perform inventory category operation');
-    throw new Error('No active home selected');
-  }
-  return activeHomeId;
-}
 
 /** Live inventory-categories listener for the active home. */
 const subscribeCategoriesSaga = createSubscriptionSaga<InventoryCategory>({
@@ -76,16 +63,16 @@ function* addCategorySaga(action: {
   if (!name.trim()) return;
 
   try {
-    const homeId = (yield call(getActiveHomeId)) as string;
+    const homeId = (yield call(requireActiveHomeId, 'inventory category')) as string;
     yield put(setError(null));
     inventoryCategoryService.createCategory(homeId, { name, description, color, icon });
   } catch (error) {
-    sagaLogger.error('Error adding inventory category', error);
-    const errorMessage =
-      error instanceof Error ? error.message : 'Failed to add category';
-    yield put(setError(errorMessage));
-    const toast = getGlobalToast();
-    if (toast) toast(errorMessage, 'error');
+    yield call(handleSagaError, error, {
+      logMessage: 'Error adding inventory category',
+      setError,
+      fallbackKey: 'inventoryCategory.addError',
+      fallbackText: 'Failed to add category',
+    });
   }
 }
 
@@ -96,16 +83,16 @@ function* updateCategorySaga(action: {
   const { id, name, description, color, icon } = action.payload;
 
   try {
-    const homeId = (yield call(getActiveHomeId)) as string;
+    const homeId = (yield call(requireActiveHomeId, 'inventory category')) as string;
     yield put(setError(null));
     inventoryCategoryService.updateCategory(homeId, id, { name, description, color, icon });
   } catch (error) {
-    sagaLogger.error('Error updating inventory category', error);
-    const errorMessage =
-      error instanceof Error ? error.message : 'Failed to update category';
-    yield put(setError(errorMessage));
-    const toast = getGlobalToast();
-    if (toast) toast(errorMessage, 'error');
+    yield call(handleSagaError, error, {
+      logMessage: 'Error updating inventory category',
+      setError,
+      fallbackKey: 'inventoryCategory.updateError',
+      fallbackText: 'Failed to update category',
+    });
   }
 }
 
@@ -114,16 +101,16 @@ function* deleteCategorySaga(action: {
   payload: string;
 }): Generator<unknown, void, unknown> {
   try {
-    const homeId = (yield call(getActiveHomeId)) as string;
+    const homeId = (yield call(requireActiveHomeId, 'inventory category')) as string;
     yield put(setError(null));
     inventoryCategoryService.deleteCategory(homeId, action.payload);
   } catch (error) {
-    sagaLogger.error('Error deleting inventory category', error);
-    const errorMessage =
-      error instanceof Error ? error.message : 'Failed to delete category';
-    yield put(setError(errorMessage));
-    const toast = getGlobalToast();
-    if (toast) toast(errorMessage, 'error');
+    yield call(handleSagaError, error, {
+      logMessage: 'Error deleting inventory category',
+      setError,
+      fallbackKey: 'inventoryCategory.deleteError',
+      fallbackText: 'Failed to delete category',
+    });
   }
 }
 

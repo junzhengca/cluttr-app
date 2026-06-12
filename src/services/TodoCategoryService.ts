@@ -1,6 +1,28 @@
 import { generateCategoryId } from '../utils/idGenerator';
 import { TodoCategory } from '../types/inventory';
-import { todoCategoriesCol, fireWrite, isoNow } from './firebase/firestoreRefs';
+import { todoCategoriesCol } from './firebase/firestoreRefs';
+import { createCrudService } from './createCrudService';
+
+type CreateTodoCategoryInput = { name: string; description?: string; color?: string; icon?: string };
+type UpdateTodoCategoryInput = { name?: string; description?: string; color?: string; icon?: string };
+
+const crud = createCrudService<TodoCategory, CreateTodoCategoryInput, UpdateTodoCategoryInput>({
+    collection: todoCategoriesCol,
+    generateId: generateCategoryId,
+    entityLabel: 'todo category',
+    buildCreate: (input, { id, homeId, now }) => {
+        const fields = {
+            name: input.name.trim(),
+            description: input.description,
+            color: input.color,
+            icon: input.icon,
+        };
+        return {
+            docData: fields,
+            entity: { ...fields, id, homeId, createdAt: now, updatedAt: now },
+        };
+    },
+});
 
 /**
  * TodoCategoryService
@@ -9,53 +31,16 @@ import { todoCategoriesCol, fireWrite, isoNow } from './firebase/firestoreRefs';
  * are live snapshots managed by todoSaga.
  */
 class TodoCategoryService {
-    createCategory(
-        homeId: string,
-        input: { name: string; description?: string; color?: string; icon?: string },
-    ): TodoCategory {
-        const id = generateCategoryId();
-        const now = isoNow();
-
-        fireWrite(
-            todoCategoriesCol(homeId).doc(id).set({
-                name: input.name.trim(),
-                description: input.description,
-                color: input.color,
-                icon: input.icon,
-                createdAt: now,
-                updatedAt: now,
-            }),
-            'Failed to create todo category',
-        );
-
-        return {
-            id,
-            homeId,
-            name: input.name.trim(),
-            description: input.description,
-            color: input.color,
-            icon: input.icon,
-            createdAt: now,
-            updatedAt: now,
-        };
+    createCategory(homeId: string, input: CreateTodoCategoryInput): TodoCategory {
+        return crud.create(homeId, input);
     }
 
-    updateCategory(
-        homeId: string,
-        categoryId: string,
-        updates: { name?: string; description?: string; color?: string; icon?: string },
-    ): void {
-        fireWrite(
-            todoCategoriesCol(homeId).doc(categoryId).update({ ...updates, updatedAt: isoNow() }),
-            'Failed to update todo category',
-        );
+    updateCategory(homeId: string, categoryId: string, updates: UpdateTodoCategoryInput): void {
+        crud.update(homeId, categoryId, updates);
     }
 
     deleteCategory(homeId: string, categoryId: string): void {
-        fireWrite(
-            todoCategoriesCol(homeId).doc(categoryId).delete(),
-            'Failed to delete todo category',
-        );
+        crud.remove(homeId, categoryId);
     }
 }
 
