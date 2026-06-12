@@ -1,4 +1,3 @@
- 
 import auth, { type FirebaseAuthTypes } from '@react-native-firebase/auth';
 import {
   GoogleSignin,
