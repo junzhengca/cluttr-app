@@ -9,7 +9,8 @@ import Animated, {
   SharedValue,
   useAnimatedStyle,
 } from 'react-native-reanimated';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import MaterialCommunityIcons from '@react-native-vector-icons/material-design-icons/static';
+import type { MaterialCommunityIconsName } from '../../types/icons';
 import * as Haptics from 'expo-haptics';
 import styled from 'styled-components/native';
 import { StyledProps } from '../../utils/styledComponents';
@@ -65,7 +66,7 @@ interface ActionPillProps {
   translation: SharedValue<number>;
   totalWidth: number;
   distanceFromEdge: number;
-  icon: keyof typeof MaterialCommunityIcons.glyphMap;
+  icon: MaterialCommunityIconsName;
   label?: string;
   onPress: () => void;
   Pill: typeof EditPill;

@@ -9,14 +9,19 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useContextMenu } from './ContextMenuContext';
 import { useTheme } from '../../../theme/ThemeProvider';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import MaterialCommunityIcons from '@react-native-vector-icons/material-design-icons/static';
+import type { MaterialCommunityIconsName } from '../../../types/icons';
 import { uiLogger } from '../../../utils/Logger';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 const styles = StyleSheet.create({
   backdrop: {
-    ...StyleSheet.absoluteFillObject,
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
   },
   menuContainer: {
     width: 200,
@@ -151,9 +156,7 @@ export const ContextMenuOverlay: React.FC = () => {
             >
               {item.icon && (
                 <MaterialCommunityIcons
-                  name={
-                    item.icon as keyof typeof MaterialCommunityIcons.glyphMap
-                  }
+                  name={item.icon as MaterialCommunityIconsName}
                   size={20}
                   color={itemColor}
                   style={styles.menuIcon}

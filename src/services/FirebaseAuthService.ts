@@ -1,4 +1,4 @@
-// eslint-disable-next-line no-duplicate-imports
+ 
 import auth, { type FirebaseAuthTypes } from '@react-native-firebase/auth';
 import {
   GoogleSignin,

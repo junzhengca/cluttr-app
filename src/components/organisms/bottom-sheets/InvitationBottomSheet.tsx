@@ -14,7 +14,7 @@ import { GlassButton, BottomSheetHeader } from '../../atoms';
 import { useAppSelector } from '../../../store/hooks';
 import { useToast } from '../../../hooks/useToast';
 import type { StyledProps } from '../../../utils/styledComponents';
-import Ionicons from '@expo/vector-icons/Ionicons';
+import Ionicons from '@react-native-vector-icons/ionicons/static';
 import { uiLogger } from '../../../utils/Logger';
 import {
   invitationService,

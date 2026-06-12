@@ -2,7 +2,7 @@ import React, { memo, useState } from 'react';
 import styled from 'styled-components/native';
 import { BottomSheetTextInput } from '@gorhom/bottom-sheet';
 import { View, TextInput, type ViewStyle } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import Ionicons from '@react-native-vector-icons/ionicons/static';
 import type { StyledProps } from '../../utils/styledComponents';
 
 // Main wrapper - can be styled with flex: 1, etc.

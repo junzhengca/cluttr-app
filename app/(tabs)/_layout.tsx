@@ -1,10 +1,6 @@
-import {
-  NativeTabs,
-  Label,
-  Icon,
-  VectorIcon,
-} from 'expo-router/unstable-native-tabs';
-import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { NativeTabs } from 'expo-router/unstable-native-tabs';
+import Ionicons from '@react-native-vector-icons/ionicons/static';
+import MaterialCommunityIcons from '@react-native-vector-icons/material-design-icons/static';
 
 import { useTheme } from '../../src/theme/ThemeProvider';
 import { useSettings } from '../../src/store/hooks';
@@ -28,24 +24,45 @@ export default function TabLayout() {
       shadowColor="transparent"
     >
       <NativeTabs.Trigger name="index">
-        <Label>{t('navigation.home')}</Label>
-        <Icon src={<VectorIcon family={Ionicons} name="home" />} />
+        <NativeTabs.Trigger.Label>
+          {t('navigation.home')}
+        </NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Icon
+          src={<NativeTabs.Trigger.VectorIcon family={Ionicons} name="home" />}
+        />
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="search" role="search">
-        <Label>{t('navigation.search')}</Label>
-        <Icon src={<VectorIcon family={Ionicons} name="search" />} />
+        <NativeTabs.Trigger.Label>
+          {t('navigation.search')}
+        </NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Icon
+          src={
+            <NativeTabs.Trigger.VectorIcon family={Ionicons} name="search" />
+          }
+        />
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="notes">
-        <Label>{t('navigation.notes')}</Label>
-        <Icon
+        <NativeTabs.Trigger.Label>
+          {t('navigation.notes')}
+        </NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Icon
           src={
-            <VectorIcon family={MaterialCommunityIcons} name="notebook-edit" />
+            <NativeTabs.Trigger.VectorIcon
+              family={MaterialCommunityIcons}
+              name="notebook-edit"
+            />
           }
         />
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="settings">
-        <Label>{t('navigation.settings')}</Label>
-        <Icon src={<VectorIcon family={Ionicons} name="settings" />} />
+        <NativeTabs.Trigger.Label>
+          {t('navigation.settings')}
+        </NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Icon
+          src={
+            <NativeTabs.Trigger.VectorIcon family={Ionicons} name="settings" />
+          }
+        />
       </NativeTabs.Trigger>
     </NativeTabs>
   );

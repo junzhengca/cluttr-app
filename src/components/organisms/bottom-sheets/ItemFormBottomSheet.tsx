@@ -14,7 +14,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { useStore } from 'react-redux';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Ionicons } from '@expo/vector-icons';
+import type { IoniconsName } from '../../../types/icons';
 
 import type { InventoryItem, ItemBatch } from '../../../types/inventory';
 import { ThemeContext, useTheme } from '../../../theme/ThemeProvider';
@@ -57,7 +57,7 @@ export interface ItemFormSubmitValues {
   status: string;
   categoryId: string | null;
   warningThreshold: number;
-  icon: keyof typeof Ionicons.glyphMap;
+  icon: IoniconsName;
   iconColor: string;
   batches?: ItemBatch[];
 }

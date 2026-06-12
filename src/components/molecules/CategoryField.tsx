@@ -1,7 +1,8 @@
 import React from 'react';
 import { TouchableOpacity } from 'react-native';
 import styled from 'styled-components/native';
-import { Ionicons } from '@expo/vector-icons';
+import Ionicons from '@react-native-vector-icons/ionicons/static';
+import type { IoniconsName } from '../../types/icons';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../theme/ThemeProvider';
 import type {
@@ -108,7 +109,7 @@ export const CategoryField: React.FC<CategoryFieldProps> = ({
         {category.icon && (
           <CategoryIcon color={theme.colors.primary}>
             <Ionicons
-              name={category.icon as keyof typeof Ionicons.glyphMap}
+              name={category.icon as IoniconsName}
               size={24}
               color={theme.colors.primary}
             />

@@ -1,4 +1,4 @@
-import { Ionicons } from '@expo/vector-icons';
+import type { IoniconsName } from './icons';
 
 /**
  * Base type for all home-scoped entities using direct CRUD endpoints.
@@ -23,7 +23,7 @@ export type Category = InventoryCategory;
 /** Location has no position; order comes from the server. */
 export interface Location extends HomeScopedCrudEntity {
   name: string; // Location name
-  icon?: keyof typeof Ionicons.glyphMap;
+  icon?: IoniconsName;
 }
 
 export interface ItemBatch {
@@ -43,7 +43,7 @@ export interface InventoryItem extends HomeScopedCrudEntity {
   location: string; // Location ID (e.g., "living-room")
   detailedLocation: string; // e.g., "梳妆台"
   status: string; // Status ID (e.g., "using", "new", "out-of-stock")
-  icon: keyof typeof Ionicons.glyphMap;
+  icon: IoniconsName;
   iconColor: string;
   warningThreshold?: number; // Warning threshold for restocking badge (defaults to 0)
   batches: ItemBatch[]; // Purchase batches

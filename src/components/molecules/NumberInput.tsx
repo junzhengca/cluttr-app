@@ -13,7 +13,7 @@ import {
   type ViewStyle,
 } from 'react-native';
 import styled from 'styled-components/native';
-import { Ionicons } from '@expo/vector-icons';
+import Ionicons from '@react-native-vector-icons/ionicons/static';
 import type { StyledProps } from '../../utils/styledComponents';
 import { UncontrolledInput, MemoizedInput, UnitPicker } from '../atoms';
 

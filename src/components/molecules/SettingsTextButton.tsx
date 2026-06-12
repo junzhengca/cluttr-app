@@ -1,12 +1,13 @@
 import React from 'react';
 import { TouchableOpacity, Text } from 'react-native';
 import styled from 'styled-components/native';
-import { Ionicons } from '@expo/vector-icons';
+import Ionicons from '@react-native-vector-icons/ionicons/static';
+import type { IoniconsName } from '../../types/icons';
 import type { StyledProps } from '../../utils/styledComponents';
 
 export interface SettingsTextButtonProps {
   label: string;
-  icon?: keyof typeof Ionicons.glyphMap;
+  icon?: IoniconsName;
   onPress: () => void;
   variant?: 'default' | 'destructive';
   /** Use smaller bottom margin (e.g. when followed by more content in same card) */

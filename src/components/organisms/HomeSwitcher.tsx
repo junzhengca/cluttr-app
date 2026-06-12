@@ -11,7 +11,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import styled from 'styled-components/native';
-import { Ionicons } from '@expo/vector-icons';
+import Ionicons from '@react-native-vector-icons/ionicons/static';
 import Animated, {
   useAnimatedStyle,
   withSpring,
@@ -31,7 +31,11 @@ import { BottomSheetModal } from '@gorhom/bottom-sheet';
 
 const styles = StyleSheet.create({
   backdrop: {
-    ...StyleSheet.absoluteFillObject,
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
   },
   menuContainer: {
     position: 'absolute',

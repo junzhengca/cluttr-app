@@ -1,10 +1,10 @@
-import { Ionicons } from '@expo/vector-icons';
+import type { IoniconsName } from '../types/icons';
 
 /**
  * Curated list of popular Ionicons suitable for category selection
  * These icons are commonly used for categorizing items
  */
-export const categoryIcons: (keyof typeof Ionicons.glyphMap)[] = [
+export const categoryIcons: IoniconsName[] = [
   // Common items
   'cube-outline',
   'heart-outline',

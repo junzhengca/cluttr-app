@@ -15,7 +15,7 @@ import { useUnitPicker } from '../organisms/UnitPicker/UnitPickerContext';
 import { UnitItemData } from '../organisms/UnitPicker/types';
 import { useTheme } from '../../theme/ThemeProvider';
 import type { StyledProps } from '../../utils/styledComponents';
-import { Ionicons } from '@expo/vector-icons';
+import Ionicons from '@react-native-vector-icons/ionicons/static';
 
 const PickerTrigger = styled(Animated.View)<{ isCompact?: boolean }>`
   height: ${(props: { isCompact?: boolean }) =>

@@ -9,7 +9,7 @@ import {
 } from 'react-native';
 import styled from 'styled-components/native';
 import { useTranslation } from 'react-i18next';
-import { Ionicons } from '@expo/vector-icons';
+import Ionicons from '@react-native-vector-icons/ionicons/static';
 import * as ImagePicker from 'expo-image-picker';
 import * as ImageManipulator from 'expo-image-manipulator';
 import storage from '@react-native-firebase/storage';

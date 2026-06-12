@@ -2,7 +2,8 @@ import React from 'react';
 import { TouchableOpacity, View, Text, ViewStyle } from 'react-native';
 import { GlassView } from 'expo-glass-effect';
 import styled from 'styled-components/native';
-import { Ionicons } from '@expo/vector-icons';
+import Ionicons from '@react-native-vector-icons/ionicons/static';
+import type { IoniconsName } from '../../types/icons';
 import { useTheme } from '../../theme/ThemeProvider';
 import type {
   StyledProps,
@@ -14,7 +15,7 @@ export type ButtonVariant = 'primary' | 'secondary' | 'danger';
 export interface ButtonProps {
   onPress: () => void;
   label: string;
-  icon?: keyof typeof Ionicons.glyphMap | React.ReactNode;
+  icon?: IoniconsName | React.ReactNode;
   variant?: ButtonVariant;
   disabled?: boolean;
   iconColor?: string; // Optional custom icon color when using icon name
@@ -174,7 +175,7 @@ export const Button: React.FC<ButtonProps> = ({
     return (
       <IconContainer>
         <StyledIcon
-          name={icon as keyof typeof Ionicons.glyphMap}
+          name={icon as IoniconsName}
           size={20}
           variant={variant}
           disabled={disabled}

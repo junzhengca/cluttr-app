@@ -7,7 +7,8 @@ import React, {
 } from 'react';
 import { TouchableOpacity, View, Keyboard } from 'react-native';
 import styled from 'styled-components/native';
-import { Ionicons } from '@expo/vector-icons';
+import Ionicons from '@react-native-vector-icons/ionicons/static';
+import type { IoniconsName } from '../../types/icons';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../theme/ThemeProvider';
 import {
@@ -87,9 +88,9 @@ const FooterContainer = styled.View<{ bottomInset: number }>`
 `;
 
 export interface IconColorPickerProps {
-  icon: keyof typeof Ionicons.glyphMap;
+  icon: IoniconsName;
   color: string;
-  onIconSelect: (icon: keyof typeof Ionicons.glyphMap) => void;
+  onIconSelect: (icon: IoniconsName) => void;
   onColorSelect: (color: string) => void;
   onOpeningNestedModal?: (isOpening: boolean) => void;
 }
@@ -108,8 +109,7 @@ export const IconColorPicker: React.FC<IconColorPickerProps> = ({
   const bottomSheetModalRef = useRef<BottomSheetModal | null>(null);
 
   // Temporary state for selections (only applied on save)
-  const [tempIcon, setTempIcon] =
-    useState<keyof typeof Ionicons.glyphMap>(icon);
+  const [tempIcon, setTempIcon] = useState<IoniconsName>(icon);
   const [tempColor, setTempColor] = useState<string>(color);
 
   // Sync with props when they change from outside
@@ -163,12 +163,9 @@ export const IconColorPicker: React.FC<IconColorPickerProps> = ({
     handleClose();
   }, [tempIcon, tempColor, onIconSelect, onColorSelect, handleClose]);
 
-  const handleIconSelect = useCallback(
-    (selectedIcon: keyof typeof Ionicons.glyphMap) => {
-      setTempIcon(selectedIcon);
-    },
-    []
-  );
+  const handleIconSelect = useCallback((selectedIcon: IoniconsName) => {
+    setTempIcon(selectedIcon);
+  }, []);
 
   const handleColorSelect = useCallback((selectedColor: string) => {
     setTempColor(selectedColor);

@@ -3,7 +3,7 @@ import { Text as RNText } from 'react-native';
 import { BottomSheetModal, BottomSheetView } from '@gorhom/bottom-sheet';
 import styled, { useTheme } from 'styled-components/native';
 import { useTranslation } from 'react-i18next';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import MaterialCommunityIcons from '@react-native-vector-icons/material-design-icons/static';
 import { GlassButton } from '../../atoms/GlassButton';
 import { StyledProps } from '../../../utils/styledComponents';
 

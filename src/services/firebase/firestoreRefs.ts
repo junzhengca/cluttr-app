@@ -2,7 +2,7 @@ import firestore, {
   FirebaseFirestoreTypes,
 } from '@react-native-firebase/firestore';
 import { eventChannel, EventChannel } from 'redux-saga';
-import { Ionicons } from '@expo/vector-icons';
+import type { IoniconsName } from '../../types/icons';
 import {
   InventoryItem,
   InventoryCategory,
@@ -21,7 +21,6 @@ void firestore().settings({ ignoreUndefinedProperties: true });
 export const db = firestore;
 
 type DocSnapshot = FirebaseFirestoreTypes.DocumentSnapshot;
-type QuerySnapshot = FirebaseFirestoreTypes.QuerySnapshot;
 
 // ─── Collection refs ──────────────────────────────────────────────────────────
 
@@ -72,7 +71,7 @@ export function inventoryItemFromDoc(
     location: (data.location as string) || '',
     detailedLocation: (data.detailedLocation as string) || '',
     status: (data.status as string) || '',
-    icon: (data.icon as keyof typeof Ionicons.glyphMap) || 'cube',
+    icon: (data.icon as IoniconsName) || 'cube',
     iconColor: (data.iconColor as string) || '#3B82F6',
     warningThreshold: data.warningThreshold as number | undefined,
     batches: (data.batches as InventoryItem['batches']) || [],
@@ -166,7 +165,7 @@ export function userFromDoc(doc: DocSnapshot): User {
 // ─── Saga snapshot channel ────────────────────────────────────────────────────
 
 export interface SnapshotEvent {
-  snapshot?: QuerySnapshot;
+  snapshot?: FirebaseFirestoreTypes.QuerySnapshot;
   error?: Error & { code?: string };
 }
 

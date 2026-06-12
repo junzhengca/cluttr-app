@@ -1,7 +1,8 @@
 import React, { useEffect, useRef, useCallback } from 'react';
 import { View, Text } from 'react-native';
 import styled from 'styled-components/native';
-import { Ionicons } from '@expo/vector-icons';
+import Ionicons from '@react-native-vector-icons/ionicons/static';
+import type { IoniconsName } from '../../types/icons';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -71,7 +72,7 @@ const ToastText = styled(Text)`
   flex: 1;
 `;
 
-const getIconName = (type: ToastType): keyof typeof Ionicons.glyphMap => {
+const getIconName = (type: ToastType): IoniconsName => {
   switch (type) {
     case 'success':
       return 'checkmark-circle';

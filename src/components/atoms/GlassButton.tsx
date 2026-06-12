@@ -9,13 +9,14 @@ import {
 } from 'react-native';
 import { GlassView } from 'expo-glass-effect';
 import styled from 'styled-components/native';
-import { Ionicons } from '@expo/vector-icons';
+import Ionicons from '@react-native-vector-icons/ionicons/static';
+import type { IoniconsName } from '../../types/icons';
 import { useTheme } from '../../theme/ThemeProvider';
 import { StyledProps } from '../../utils/styledComponents';
 
 interface GlassButtonProps {
   onPress: () => void;
-  icon?: keyof typeof Ionicons.glyphMap;
+  icon?: IoniconsName;
   text?: string;
   tintColor?: string;
   textColor?: string;

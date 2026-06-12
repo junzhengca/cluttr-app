@@ -9,7 +9,8 @@ import {
 } from 'react-native';
 import styled, { useTheme } from 'styled-components/native';
 import { useTranslation } from 'react-i18next';
-import { Ionicons } from '@expo/vector-icons';
+import Ionicons from '@react-native-vector-icons/ionicons/static';
+import type { IoniconsName } from '../../types/icons';
 import { BottomSheetModal } from '@gorhom/bottom-sheet';
 
 import type { StyledProps } from '../../utils/styledComponents';
@@ -202,10 +203,7 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
                 activeOpacity={0.7}
               >
                 <Ionicons
-                  name={
-                    (location.icon ||
-                      'location-outline') as keyof typeof Ionicons.glyphMap
-                  }
+                  name={(location.icon || 'location-outline') as IoniconsName}
                   size={24}
                   color={theme.colors.primary}
                 />

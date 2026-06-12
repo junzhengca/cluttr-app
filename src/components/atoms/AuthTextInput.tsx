@@ -1,7 +1,8 @@
 import React, { memo, useState } from 'react';
 import { View, TextInput, TouchableOpacity } from 'react-native';
 import styled from 'styled-components/native';
-import { Ionicons } from '@expo/vector-icons';
+import Ionicons from '@react-native-vector-icons/ionicons/static';
+import type { IoniconsName } from '../../types/icons';
 import type { StyledProps } from '../../utils/styledComponents';
 
 const InputContainer = styled(View)<{ hasError: boolean; isFocused: boolean }>`
@@ -61,7 +62,7 @@ const ErrorText = styled.Text`
 `;
 
 export interface AuthTextInputProps {
-  icon: keyof typeof Ionicons.glyphMap;
+  icon: IoniconsName;
   placeholder: string;
   value: string;
   onChangeText: (text: string) => void;

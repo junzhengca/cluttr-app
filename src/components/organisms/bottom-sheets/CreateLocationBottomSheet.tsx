@@ -9,7 +9,7 @@ import {
 } from '@gorhom/bottom-sheet';
 import styled from 'styled-components/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
+import type { IoniconsName } from '../../../types/icons';
 
 import { useTheme } from '../../../theme/ThemeProvider';
 import { useLocations } from '../../../store/hooks';
@@ -70,9 +70,9 @@ export const CreateLocationBottomSheet: React.FC<
   const { isKeyboardVisible } = useKeyboardVisibility();
 
   const [name, setName] = useState('');
-  const [selectedIcon, setSelectedIcon] = useState<
-    keyof typeof Ionicons.glyphMap
-  >(categoryIcons[0]);
+  const [selectedIcon, setSelectedIcon] = useState<IoniconsName>(
+    categoryIcons[0]
+  );
   const [localError, setLocalError] = useState<string | null>(null);
 
   const nameInputRef = useRef<TextInput>(null);
@@ -81,8 +81,7 @@ export const CreateLocationBottomSheet: React.FC<
     if (locationToEdit) {
       setName(locationToEdit.name);
       setSelectedIcon(
-        (locationToEdit.icon as keyof typeof Ionicons.glyphMap) ||
-          categoryIcons[0]
+        (locationToEdit.icon as IoniconsName) || categoryIcons[0]
       );
     } else {
       setName('');
@@ -96,8 +95,7 @@ export const CreateLocationBottomSheet: React.FC<
     if (locationToEdit) {
       setName(locationToEdit.name);
       setSelectedIcon(
-        (locationToEdit.icon as keyof typeof Ionicons.glyphMap) ||
-          categoryIcons[0]
+        (locationToEdit.icon as IoniconsName) || categoryIcons[0]
       );
     } else {
       setName('');

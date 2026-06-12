@@ -1,7 +1,8 @@
 import React from 'react';
 import { View, Text } from 'react-native';
 import styled from 'styled-components/native';
-import { Ionicons } from '@expo/vector-icons';
+import Ionicons from '@react-native-vector-icons/ionicons/static';
+import type { IoniconsName } from '../../types/icons';
 import type { StyledProps } from '../../utils/styledComponents';
 
 const Container = styled(View)`
@@ -37,7 +38,7 @@ const TitleText = styled(Text)`
 
 export interface SectionTitleProps {
   title: string;
-  icon?: keyof typeof Ionicons.glyphMap;
+  icon?: IoniconsName;
   iconText?: string; // For text-based icons like currency symbol
 }
 

@@ -14,7 +14,7 @@ import type {
 } from '../../utils/styledComponents';
 import type { Theme } from '../../theme/types';
 import { BottomSheetModal } from '@gorhom/bottom-sheet';
-import { Ionicons } from '@expo/vector-icons';
+import Ionicons from '@react-native-vector-icons/ionicons/static';
 import { CreateCategoryBottomSheet } from '../organisms/bottom-sheets/CreateCategoryBottomSheet';
 import { ContextMenu } from '../organisms/ContextMenu/ContextMenu';
 

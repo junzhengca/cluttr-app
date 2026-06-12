@@ -32,7 +32,7 @@ import type { Location } from '../../types/inventory';
 import { sagaLogger } from '../../utils/Logger';
 import { getGlobalToast } from '../../utils/toastRegistry';
 import i18n from '../../i18n/i18n';
-import Ionicons from '@expo/vector-icons/Ionicons';
+import type { IoniconsName } from '../../types/icons';
 
 // Action types
 const LOAD_LOCATIONS = 'location/LOAD_LOCATIONS';
@@ -169,10 +169,7 @@ function* updateLocationDebounceSaga(action: {
   const optimisticLocation: Location = {
     ...previousLocation,
     name: name.trim(),
-    icon:
-      icon !== undefined
-        ? (icon as keyof typeof Ionicons.glyphMap)
-        : previousLocation.icon,
+    icon: icon !== undefined ? (icon as IoniconsName) : previousLocation.icon,
   };
   yield put(updateLocationSlice(optimisticLocation));
   yield put(addUpdatingLocationId(id));

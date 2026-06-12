@@ -1,7 +1,8 @@
 import React from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import styled from 'styled-components/native';
-import { Ionicons } from '@expo/vector-icons';
+import Ionicons from '@react-native-vector-icons/ionicons/static';
+import type { IoniconsName } from '../../types/icons';
 import { getLightColor } from '../../utils/colors';
 import type { StyledProps } from '../../utils/styledComponents';
 import { BaseCard } from '../atoms';
@@ -74,10 +75,7 @@ export const CategoryPreviewCard = <
     <BaseCard compact>
       <IconContainer backgroundColor={getLightColor(theme.colors.primary)}>
         <Ionicons
-          name={
-            (category.icon ||
-              'pricetag-outline') as keyof typeof Ionicons.glyphMap
-          }
+          name={(category.icon || 'pricetag-outline') as IoniconsName}
           size={24}
           color={theme.colors.primary}
         />

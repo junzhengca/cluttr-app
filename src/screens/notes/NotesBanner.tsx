@@ -1,6 +1,6 @@
 import React from 'react';
 import { Animated, Text, View } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import Ionicons from '@react-native-vector-icons/ionicons/static';
 import styled from 'styled-components/native';
 import { useTranslation } from 'react-i18next';
 import type {

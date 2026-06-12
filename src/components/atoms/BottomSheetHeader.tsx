@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text } from 'react-native';
 import styled from 'styled-components/native';
-import { Ionicons } from '@expo/vector-icons';
+import type { IoniconsName } from '../../types/icons';
 import type { StyledProps } from '../../utils/styledComponents';
 import { GlassButton } from './GlassButton';
 
@@ -38,7 +38,7 @@ export interface BottomSheetHeaderProps {
   title: string;
   subtitle: string;
   onClose?: () => void;
-  closeIcon?: keyof typeof Ionicons.glyphMap;
+  closeIcon?: IoniconsName;
 }
 
 /**

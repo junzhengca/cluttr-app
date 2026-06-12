@@ -9,7 +9,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useUnitPicker } from './UnitPickerContext';
 import { useTheme } from '../../../theme/ThemeProvider';
-import { Ionicons } from '@expo/vector-icons';
+import Ionicons from '@react-native-vector-icons/ionicons/static';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -18,7 +18,11 @@ const ITEM_HEIGHT = 44;
 
 const styles = StyleSheet.create({
   backdrop: {
-    ...StyleSheet.absoluteFillObject,
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
   },
   pickerContainer: {
     width: DROPDOWN_WIDTH,

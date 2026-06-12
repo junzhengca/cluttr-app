@@ -1,7 +1,8 @@
 import React from 'react';
 import { View } from 'react-native';
 import styled from 'styled-components/native';
-import { Ionicons } from '@expo/vector-icons';
+import Ionicons from '@react-native-vector-icons/ionicons/static';
+import type { IoniconsName } from '../../types/icons';
 import { useTheme } from '../../theme/ThemeProvider';
 import type { StyledProps } from '../../utils/styledComponents';
 
@@ -19,7 +20,7 @@ const Icon = styled(Ionicons)`
 `;
 
 export interface IconContainerProps {
-  icon: keyof typeof Ionicons.glyphMap;
+  icon: IoniconsName;
   iconColor?: string;
   size?: number;
 }

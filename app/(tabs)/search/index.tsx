@@ -15,7 +15,7 @@ import { useInventory, useTodos } from '../../../src/store/hooks';
 import { ItemCard } from '../../../src/components/molecules/ItemCard';
 import { TodoCard } from '../../../src/components/organisms/TodoCard';
 import { InventoryItem, TodoItem } from '../../../src/types/inventory';
-import { Ionicons } from '@expo/vector-icons';
+import Ionicons from '@react-native-vector-icons/ionicons/static';
 import { PageHeader } from '../../../src/components/organisms/PageHeader';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 

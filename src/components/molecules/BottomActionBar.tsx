@@ -1,7 +1,7 @@
 import React from 'react';
 import { View } from 'react-native';
 import styled from 'styled-components/native';
-import { Ionicons } from '@expo/vector-icons';
+import type { IoniconsName } from '../../types/icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../theme/ThemeProvider';
 import type { StyledProps } from '../../utils/styledComponents';
@@ -12,7 +12,7 @@ export interface ActionButton {
   onPress: () => void;
   variant?: 'outlined' | 'filled' | 'danger';
   icon?: React.ReactNode;
-  iconName?: keyof typeof Ionicons.glyphMap;
+  iconName?: IoniconsName;
   disabled?: boolean;
 }
 

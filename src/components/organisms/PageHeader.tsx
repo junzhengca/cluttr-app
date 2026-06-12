@@ -2,7 +2,8 @@ import React from 'react';
 import { TouchableOpacity, View, Text } from 'react-native';
 import { Image } from 'expo-image';
 import styled from 'styled-components/native';
-import { Ionicons } from '@expo/vector-icons';
+import Ionicons from '@react-native-vector-icons/ionicons/static';
+import type { IoniconsName } from '../../types/icons';
 import { GlassView } from 'expo-glass-effect';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -12,7 +13,7 @@ import { useTheme } from '../../theme/ThemeProvider';
 import { GlassButton } from '../atoms/GlassButton';
 
 export interface PageHeaderProps {
-  icon?: keyof typeof Ionicons.glyphMap;
+  icon?: IoniconsName;
   title?: string;
   titleComponent?: React.ReactNode;
   subtitle?: string;
