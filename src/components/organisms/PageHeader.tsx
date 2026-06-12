@@ -91,11 +91,13 @@ const AvatarButton = styled(View)`
   border-radius: ${({ theme }: StyledProps) => theme.borderRadius.full}px;
   align-items: center;
   justify-content: center;
+  overflow: hidden;
 `;
 
 const AvatarImage = styled(Image)`
   width: 100%;
   height: 100%;
+  border-radius: ${({ theme }: StyledProps) => theme.borderRadius.full}px;
 `;
 
 const AvatarPlaceholder = styled(View)`
@@ -187,7 +189,6 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
                     source={{ uri: avatarUrl }}
                     contentFit="cover"
                     cachePolicy="memory-disk"
-                    style={{ borderRadius: 20 }}
                   />
                 ) : (
                   <AvatarPlaceholder>
