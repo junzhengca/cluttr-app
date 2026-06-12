@@ -20,6 +20,7 @@ import {
   PageHeader,
   BottomActionBar,
   BatchItemCard,
+  SwipeableRow,
   Button,
   AddBatchBottomSheet,
   ContextMenu,
@@ -457,12 +458,29 @@ export const ItemDetailsScreen: React.FC = () => {
                 ];
 
                 return (
-                  <ContextMenu key={batch.id || index} items={batchMenuOptions}>
-                    <BatchItemCard
-                      batch={batch}
-                      currencySymbol={currencySymbol}
-                    />
-                  </ContextMenu>
+                  <SwipeableRow
+                    key={batch.id || index}
+                    onEdit={() => {
+                      if (batch.id) {
+                        editBatchBottomSheetRef.current?.present(item.id, batch.id);
+                      }
+                    }}
+                    onDelete={() => {
+                      if (batch.id) {
+                        handleDeleteBatch(batch.id);
+                      }
+                    }}
+                    editLabel={t('itemDetails.actions.modify')}
+                    deleteLabel={t('itemDetails.actions.delete')}
+                    style={{ marginBottom: 12 }}
+                  >
+                    <ContextMenu items={batchMenuOptions}>
+                      <BatchItemCard
+                        batch={batch}
+                        currencySymbol={currencySymbol}
+                      />
+                    </ContextMenu>
+                  </SwipeableRow>
                 );
               })
             ) : (

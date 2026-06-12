@@ -1,6 +1,5 @@
-import React, { useRef, useCallback } from 'react';
+import React, { useCallback } from 'react';
 import { View, Text, ActivityIndicator, Alert } from 'react-native';
-import { Swipeable } from 'react-native-gesture-handler';
 import styled from 'styled-components/native';
 import { useTranslation } from 'react-i18next';
 import type { StyledProps } from '../../utils/styledComponents';
@@ -67,7 +66,6 @@ export const MemberList: React.FC<MemberListProps> = ({
 }) => {
   const { t } = useTranslation();
   const theme = useTheme();
-  const swipeableRefs = useRef<Map<string, React.RefObject<Swipeable | null>>>(new Map());
 
   const handleRemoveMember = useCallback(
     (memberId: string) => {
@@ -94,13 +92,6 @@ export const MemberList: React.FC<MemberListProps> = ({
     },
     [members, onRemoveMember, t]
   );
-
-  const getSwipeableRef = useCallback((memberId: string) => {
-    if (!swipeableRefs.current.has(memberId)) {
-      swipeableRefs.current.set(memberId, React.createRef<Swipeable | null>());
-    }
-    return swipeableRefs.current.get(memberId)!;
-  }, []);
 
   if (isLoading) {
     return (
@@ -160,7 +151,6 @@ export const MemberList: React.FC<MemberListProps> = ({
               member={member}
               isOwner={false}
               onRemove={onRemoveMember ? handleRemoveMember : undefined}
-              swipeableRef={getSwipeableRef(member.userId)}
               noMarginBottom={index === members.length - 1}
             />
           ))}

@@ -138,7 +138,7 @@ export const BatchItemCard: React.FC<BatchItemCardProps> = ({ batch, currencySym
     };
 
     return (
-        <BaseCard compact style={{ marginBottom: 12, paddingVertical: 12 }}>
+        <BaseCard compact style={{ paddingVertical: 12 }}>
             <ContentWrapper>
                 {renderExpiryBadge()}
                 <RightContainer>

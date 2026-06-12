@@ -1,12 +1,12 @@
 import React from 'react';
-import { View, Text, TouchableOpacity } from 'react-native';
+import { View, Text } from 'react-native';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import styled from 'styled-components/native';
-import { Swipeable } from 'react-native-gesture-handler';
 import { useTranslation } from 'react-i18next';
 import type { StyledProps } from '../../utils/styledComponents';
 import { Member } from '../../types/user';
+import { SwipeableRow } from './SwipeableRow';
 
 const CardWrapper = styled(View)<{ noMarginBottom?: boolean }>`
   margin-bottom: ${({ theme, noMarginBottom }: StyledProps & { noMarginBottom?: boolean }) =>
@@ -65,41 +65,10 @@ const OwnerBadge = styled(Text)`
   color: ${({ theme }: StyledProps) => theme.colors.textSecondary};
 `;
 
-const SwipeActionsContainer = styled(View)`
-  flex-direction: row;
-  border-top-right-radius: ${({ theme }: StyledProps) => theme.borderRadius.xxl}px;
-  border-bottom-right-radius: ${({ theme }: StyledProps) => theme.borderRadius.xxl}px;
-  overflow: hidden;
-  margin-left: ${({ theme }: StyledProps) => theme.spacing.xs}px;
-`;
-
-const ActionButton = styled(TouchableOpacity)`
-  justify-content: center;
-  align-items: center;
-  width: 80px;
-  align-self: stretch;
-  position: relative;
-`;
-
-const DeleteAction = styled(ActionButton)`
-  background-color: ${({ theme }: StyledProps) => theme.colors.error};
-  border-top-left-radius: ${({ theme }: StyledProps) => theme.borderRadius.xxl}px;
-  border-bottom-left-radius: ${({ theme }: StyledProps) => theme.borderRadius.xxl}px;
-  border-top-right-radius: ${({ theme }: StyledProps) => theme.borderRadius.xxl}px;
-  border-bottom-right-radius: ${({ theme }: StyledProps) => theme.borderRadius.xxl}px;
-
-  shadow-color: ${({ theme }: StyledProps) => theme.colors.error};
-  shadow-offset: 0px 2px;
-  shadow-opacity: 0.2;
-  shadow-radius: 4px;
-  elevation: 3;
-`;
-
 export interface MemberCardProps {
   member: Member;
   isOwner?: boolean;
   onRemove?: (memberId: string) => void;
-  swipeableRef?: React.RefObject<Swipeable | null>;
   /** Omit bottom margin (e.g. when this is the last card in the list) */
   noMarginBottom?: boolean;
 }
@@ -108,31 +77,10 @@ export const MemberCard: React.FC<MemberCardProps> = ({
   member,
   isOwner = false,
   onRemove,
-  swipeableRef,
   noMarginBottom = false,
 }) => {
   const { t } = useTranslation();
   const displayName = member.nickname || member.email;
-
-  const renderSwipeActions = () => {
-    if (isOwner || !onRemove) {
-      return null;
-    }
-
-    return (
-      <SwipeActionsContainer>
-        <DeleteAction
-          onPress={() => {
-            onRemove(member.userId);
-            swipeableRef?.current?.close();
-          }}
-          activeOpacity={0.8}
-        >
-          <Ionicons name="trash" size={22} color="white" />
-        </DeleteAction>
-      </SwipeActionsContainer>
-    );
-  };
 
   const cardContent = (
     <CardContent>
@@ -158,23 +106,17 @@ export const MemberCard: React.FC<MemberCardProps> = ({
     </CardContent>
   );
 
-  // If owner or no remove handler, return non-swipeable card
-  if (isOwner || !onRemove) {
-    return <CardWrapper noMarginBottom={noMarginBottom}>{cardContent}</CardWrapper>;
-  }
-
-  // Return swipeable card for members
+  // SwipeableRow renders plain children when no actions are provided (owner rows)
   return (
     <CardWrapper noMarginBottom={noMarginBottom}>
-      <Swipeable
-        ref={swipeableRef}
-        renderRightActions={renderSwipeActions}
-        rightThreshold={40}
-        friction={2}
-        enableTrackpadTwoFingerGesture
+      <SwipeableRow
+        onDelete={
+          !isOwner && onRemove ? () => onRemove(member.userId) : undefined
+        }
+        deleteLabel={t('common.delete')}
       >
         {cardContent}
-      </Swipeable>
+      </SwipeableRow>
     </CardWrapper>
   );
 };

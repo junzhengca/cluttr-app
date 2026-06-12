@@ -95,6 +95,7 @@ Components use atomic design: `src/components/{atoms,molecules,organisms}`.
 | User profiles       | `src/services/UserService.ts`                                                        | `users/{uid}` docs: ensure, update, member join  |
 | Navigation          | `src/navigation/RootStack.tsx`, `src/navigation/TabNavigator.tsx`                    | 2-level: RootStack (modals) + MainTabs (screens) |
 | Form patterns       | `src/components/CreateItemBottomSheet.tsx`, `src/components/EditItemBottomSheet.tsx` | IME-safe uncontrolled inputs                     |
+| Swipe actions       | `src/components/molecules/SwipeableRow.tsx`                                          | Shared iOS-style swipe-to-edit/delete; used by HomeScreen, ItemDetailsScreen, NotesScreen, MemberCard |
 | Styling             | `src/theme/ThemeProvider.tsx`, `src/utils/styledComponents.ts`                       | Theme via `useTheme()`, styled via `StyledProps` |
 | Firebase auth       | `src/services/FirebaseAuthService.ts`                                                | Email/Google/Apple sign-in, password reset       |
 | Security rules      | `firestore.rules`, `storage.rules`                                                   | The entire authorization model                   |
@@ -108,6 +109,7 @@ Components use atomic design: `src/components/{atoms,molecules,organisms}`.
 - **Styled-components**: Inject theme via `({ theme }: StyledProps) => ...`
 - **Saga pattern**: Domain sagas in `src/store/sagas/`; listeners via `takeLatest([setActiveHomeId, LOAD_*], subscribe*Saga)` with `eventChannel`, writes via service helpers
 - **Selector pattern**: Memoized with `createSelector` (inventorySlice, todoSlice)
+- **Swipe actions**: wrap rows in the `SwipeableRow` molecule (`onEdit`/`onDelete` callbacks + labels; omit a callback to hide that pill — no actions renders plain children, useful for permission-gated rows). It owns one-open-at-a-time, haptics, close-before-action, and a11y labels. Composition order: `SwipeableRow > ContextMenu > Card`; keep row spacing on the wrapper (`style` prop / list `gap`), NOT on the card, so the action pills match card height
 - **OAuth client IDs**: Use iOS/Android client IDs (NOT Web) with custom scheme `com.cluttrapp.cluttr://`
 - **Firebase keys**: Never commit `GoogleService-Info.plist` or `google-services.json` (gitignored).
 - **Firebase SDK**: Version-locked (currently `^23.x.x` for `@react-native-firebase/*`).
@@ -118,6 +120,7 @@ Components use atomic design: `src/components/{atoms,molecules,organisms}`.
 - **NEVER** write `undefined` into Firestore docs (rejected) — `ignoreUndefinedProperties` is enabled in `firestoreRefs.ts`, but prefer explicit `null`
 - **NEVER** change the Firestore schema or membership model without updating `firestore.rules` in the same change (IaC rule above)
 - **NEVER** use controlled inputs (`value` prop) in bottom sheet modals - breaks IME composition
+- **NEVER** use the deprecated `Swipeable` from `react-native-gesture-handler` or hand-roll swipe-action UI — use the `SwipeableRow` molecule (built on `ReanimatedSwipeable`; legacy usages fully migrated 2026-06-11)
 - **NEVER** use Web OAuth client IDs for authentication - only iOS (`EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID`) and Android (`EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID`). *Note: `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID` is used for Firebase Auth configuration only.*
 - **NEVER** use `console.log()` - use Logger from `src/utils/Logger.ts`
 - **NEVER** suppress type errors with `as any` or `@ts-ignore`
@@ -196,6 +199,8 @@ make build-ios-production-local      # Local production build (auto-increments b
 - Some buttons (e.g. styled Touchables) expose no accessibility label — fall back to coordinate taps. Frames in `ui` are in points and match screenshot pixels ÷ 3.
 - Stray typing with no focused field can open the Expo dev menu — close it via `tap --label "Close"`.
 - `up`/`reload` auto-accept the iOS "Open in Cluttr?" deep-link dialog.
+- Fast Refresh can serve stale code after multi-file edits — if the UI doesn't match fresh changes, `reload` before debugging.
+- Swipe a row left to reveal swipe actions: `swipe --start-x 360 --start-y <rowY> --end-x 100 --end-y <rowY>`. Pill labels ("Modify"/"Delete") can collide with other on-screen buttons — tap by coordinates when ambiguous (more in E2E_TESTS.md §2.3).
 
 **Test accounts** (Firebase email/password, created via the signup UI):
 - Primary: `juncapersonal+cluttr-ai-test@gmail.com` / `Cluttr-AI-e16c71d6e9f2` (UID `LhiZ0HUZIIYL4NdA56Ce55jt4Wo1`, nickname "Cluttr Tester")

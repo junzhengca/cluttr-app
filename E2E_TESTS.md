@@ -4,7 +4,8 @@ End-to-end Critical User Journeys (CUJs) and test cases for Cluttr, executable b
 `scripts/harness.sh` against the **live Firebase backend** (project `cluttr-app-f3c18`:
 Auth + Firestore + Storage — there is no custom server).
 
-**Last validated:** 2026-06-11 (full pass after the Firebase migration), iPhone 16 Pro simulator.
+**Last validated:** 2026-06-11 (full pass after the Firebase migration; swipe-action CUJs added and
+validated the same day after `SwipeableRow` shipped), iPhone 16 Pro simulator.
 
 ---
 
@@ -43,6 +44,7 @@ Auth + Firestore + Storage — there is no custom server).
 ./scripts/harness.sh type 'text'           # type into the FOCUSED field (tap a field first)
 ./scripts/harness.sh key 42                # HID key: 42=backspace, 40=return
 ./scripts/harness.sh swipe --start-x 200 --start-y 700 --end-x 200 --end-y 450   # scroll up
+./scripts/harness.sh swipe --start-x 360 --start-y <rowY> --end-x 100 --end-y <rowY>  # swipe a row LEFT (reveal swipe actions)
 xcrun simctl openurl booted "com.cluttrapp.cluttr://?inviteCode=<CODE>"          # deep link
 ```
 
@@ -76,6 +78,17 @@ xcrun simctl openurl booted "com.cluttrapp.cluttr://?inviteCode=<CODE>"         
 7. **Stray typing with no focused field can open the Expo dev menu** — close via `tap --label "Close"`.
 8. **Expected log noise:** RNFB "namespaced API deprecated" WARNs are pre-existing; ignore them.
    Grep with `grep -viE "deprecat"` to filter.
+9. **Fast Refresh can serve STALE code after multi-file edits.** If the UI doesn't match the code
+   you just wrote (e.g. an old component design appears), run `./scripts/harness.sh reload` before
+   debugging — observed when a component + its consumers were edited in one batch.
+10. **Swipe-action labels collide with other buttons.** "Modify"/"Delete" also exist in
+    ItemDetails' bottom action bar and in confirm alerts; `tap --label` taps an arbitrary match.
+    When a swiped-open row and another same-label button are both on screen, tap the pill by
+    coordinates from the screenshot instead.
+11. **A swipe action that "does nothing" may be correctly disabled.** Swipe actions are
+    role/permission-gated (e.g. member rows only swipe for the home OWNER; owner rows never
+    swipe). Before debugging, confirm which account is logged in (avatar → Profile) and what the
+    row's gating condition is.
 
 ### 2.4 Reading results
 
@@ -239,13 +252,42 @@ Run order matters only where stated. Each test case lists **Pre** (preconditions
 - **Expect:** UI updates instantly; admin REST: `batches` array reflects the change atomically on the item doc.
 
 #### TC-2.4 Delete item
-- **Steps:** From the item's context menu (long-press the card on Home) or ItemDetails → delete → confirm.
+- **Steps:** From the item's context menu (long-press the card on Home), the swipe Delete pill
+  (TC-2.6), or ItemDetails → delete → confirm.
 - **Expect:** Item disappears immediately; count decrements; admin REST: doc gone.
 
 #### TC-2.5 Filters smoke
 - **Steps:** Home tab → "Filter" → filter by location "Kitchen" → screenshot → clear filter.
 - **Expect:** Only Kitchen items listed; clearing restores the full list. (Pre-existing nit: cards
   display raw location IDs like `loc-...` for custom locations — NOT a failure.)
+
+#### TC-2.6 Swipe actions on item cards (SwipeableRow)
+- **Pre:** Home tab, ≥ 2 items (create `E2E-` items as needed).
+- **Steps:**
+  1. `ui` → get a card's frame, compute center y. Swipe left:
+     `swipe --start-x 360 --start-y <y> --end-x 100 --end-y <y>`.
+  2. Screenshot: expect TWO pills matching the card's height/rounding — gray "Modify"
+     (pencil icon) and red "Delete" (trash icon), staggered reveal.
+  3. `tap --label "Modify"` → EditItemBottomSheet opens with the item's data → dismiss (X).
+     Dismissing also closes the swiped row.
+  4. One-open-at-a-time: swipe row 1 open, then row 2 open → screenshot → row 1 must be closed.
+  5. Swipe an `E2E-` item open → tap "Delete" → "Confirm Delete" alert appears with the row
+     already closed behind it → confirm.
+- **Expect:** Item gone (UI + admin REST). Regression: tap still navigates to ItemDetails and
+  long-press still opens the ContextMenu on the same cards.
+
+#### TC-2.7 Swipe actions on batch cards (ItemDetails)
+- **Pre:** ItemDetails of an item; add a disposable batch first (Add Batch → set Vendor `E2E` →
+  Save) so the delete step doesn't touch baseline data.
+- **Steps:**
+  1. `ui`/screenshot → locate the batch card's center y → swipe left as in TC-2.6.
+  2. Pills appear sized to the batch card. **Tap the Modify pill by COORDINATES** (the bottom
+     action bar also has "Modify"/"Delete" labels — gotcha 2.3.10) → EditBatchBottomSheet opens →
+     dismiss.
+  3. Swipe the `E2E` batch open → tap the Delete pill (coordinates) → "Delete Batch" alert →
+     confirm.
+- **Expect:** Batch removed; header QUANTITY decrements; admin REST: item doc's `batches` array
+  no longer contains it.
 
 ---
 
@@ -264,9 +306,11 @@ Run order matters only where stated. Each test case lists **Pre** (preconditions
 - **Steps:** Tap the todo row to open edit → change text → save.
 - **Expect:** Updated text in list and in Firestore.
 
-#### TC-3.4 Delete todo
-- **Steps:** Swipe/long-press the row → delete.
-- **Expect:** Gone from UI and Firestore.
+#### TC-3.4 Delete todo (swipe)
+- **Steps:** Swipe the todo row left (TC-2.6 syntax) → red "Delete" pill (icon + label, sized to
+  the row) → tap it → "Delete Todo" alert (row closes behind it) → confirm.
+- **Expect:** Gone from UI and Firestore. Tapping the row's checkbox/text still toggles/edits
+  (swipe wrapper must not eat taps).
 
 #### TC-3.5 Todo categories smoke
 - **Steps:** Via the category UI on Notes (Planning List header area): create category `E2E-Cat`, assign it, then delete the category.
@@ -354,7 +398,10 @@ Run order matters only where stated. Each test case lists **Pre** (preconditions
 
 #### TC-6.6 Owner removes member
 - **Pre:** A logged in, Settings tab; B is a member (and ideally B's session is live on A's home to observe the kick).
-- **Steps:** Member list → remove "Tester Two" (trash/remove affordance on the member row) → confirm.
+- **Steps:** Member list → swipe the "Tester Two" row left → red "Delete" pill → tap → "Remove
+  Member" alert → confirm. (Swipe is owner-gated: when logged in as a MEMBER the rows don't swipe
+  at all, and the owner's own row never swipes — that's expected, see gotcha 2.3.11. To verify
+  non-destructively, tap "Cancel" on the alert instead of confirming.)
 - **Expect:** Member disappears from A's list. Admin REST: B's uid gone from `members`/`memberIds`.
   If B's session was active on that home: B's app auto-switches to B's own home (home vanished from
   B's homes snapshot) — toast "Access to this home has been revoked" may appear.
@@ -445,8 +492,9 @@ Minimal pass to confirm the app is alive after any change:
 
 1. `./scripts/harness.sh up` → screenshot → app boots (Login or Home).
 2. TC-1.2 session restore (or TC-1.1 login if logged out).
-3. TC-2.1 create item → TC-2.4 delete it.
-4. TC-3.1 add todo → TC-3.2 toggle → TC-3.4 delete.
+3. TC-2.1 create item → TC-2.6 swipe-reveal pills on it (Modify opens sheet; close) → delete it
+   via the swipe Delete pill (TC-2.4).
+4. TC-3.1 add todo → TC-3.2 toggle → TC-3.4 swipe-delete.
 5. TC-7.1 external rename appears live (restore the name after).
 6. `npm run build && npm run lint` both clean.
 

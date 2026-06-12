@@ -15,10 +15,7 @@ import { Ionicons } from '@expo/vector-icons';
 import styled from 'styled-components/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
-import {
-  GestureHandlerRootView,
-  Swipeable,
-} from 'react-native-gesture-handler';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { BottomSheetModal } from '@gorhom/bottom-sheet';
 import type { StyledProps, StyledPropsWith } from '../utils/styledComponents';
 import { useTranslation } from 'react-i18next';
@@ -36,6 +33,7 @@ import {
   HomeSwitcher,
   TodoCategoryPicker,
   GlassButton,
+  SwipeableRow,
 } from '../components';
 import { useTodos, useAuth, useTodoCategories } from '../store/hooks';
 import { useHome } from '../hooks/useHome';
@@ -180,41 +178,8 @@ const CategorySectionTitle = styled(Text)`
   margin-bottom: ${({ theme }: StyledProps) => theme.spacing.sm}px;
 `;
 
-const SwipeableWrapper = styled(View)`
-  margin-bottom: ${({ theme }: StyledProps) => theme.spacing.md}px;
-`;
-
 const CardWrapper = styled(View)`
   margin-bottom: 0;
-`;
-
-const SwipeActionsContainer = styled(View)`
-  flex-direction: row;
-  border-top-right-radius: ${({ theme }: StyledProps) =>
-    theme.borderRadius.xxl}px;
-  border-bottom-right-radius: ${({ theme }: StyledProps) =>
-    theme.borderRadius.xxl}px;
-  margin-left: ${({ theme }: StyledProps) => theme.spacing.xs}px;
-`;
-
-const ActionButton = styled(TouchableOpacity)`
-  justify-content: center;
-  align-items: center;
-  width: 80px;
-  align-self: stretch;
-  position: relative;
-`;
-
-const DeleteAction = styled(ActionButton)`
-  background-color: ${({ theme }: StyledProps) => theme.colors.error};
-  border-top-left-radius: ${({ theme }: StyledProps) =>
-    theme.borderRadius.xxl}px;
-  border-bottom-left-radius: ${({ theme }: StyledProps) =>
-    theme.borderRadius.xxl}px;
-  border-top-right-radius: ${({ theme }: StyledProps) =>
-    theme.borderRadius.xxl}px;
-  border-bottom-right-radius: ${({ theme }: StyledProps) =>
-    theme.borderRadius.xxl}px;
 `;
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
@@ -255,7 +220,6 @@ export const NotesScreen: React.FC = () => {
 
   const loginBottomSheetRef = useRef<BottomSheetModal | null>(null);
   const signupBottomSheetRef = useRef<BottomSheetModal | null>(null);
-  const swipeableRefs = useRef<Map<string, Swipeable>>(new Map());
 
   // Animation values for notes field - height cannot use native driver
   const notesHeight = useRef(new Animated.Value(0)).current;
@@ -403,22 +367,6 @@ export const NotesScreen: React.FC = () => {
     ]);
   };
 
-  const renderSwipeActions = (todo: TodoItem) => {
-    return (
-      <SwipeActionsContainer>
-        <DeleteAction
-          onPress={() => {
-            handleDeleteTodo(todo.id);
-            swipeableRefs.current.get(todo.id)?.close();
-          }}
-          activeOpacity={0.8}
-        >
-          <Ionicons name="trash" size={22} color="white" />
-        </DeleteAction>
-      </SwipeActionsContainer>
-    );
-  };
-
   const renderTodoItem = (todo: TodoItem, editable: boolean = true) => {
     // Wrap all todos in Swipeable to allow deletion
     // If not editable (shopping mode), disable swipeable or just don't allow delete?
@@ -444,29 +392,22 @@ export const NotesScreen: React.FC = () => {
     }
 
     return (
-      <SwipeableWrapper key={todo.id}>
-        <Swipeable
-          ref={(ref) => {
-            if (ref) {
-              swipeableRefs.current.set(todo.id, ref);
-            }
-          }}
-          renderRightActions={() => renderSwipeActions(todo)}
-          rightThreshold={40}
-          friction={2}
-          enableTrackpadTwoFingerGesture
-        >
-          <CardWrapper>
-            <TodoCard
-              todo={todo}
-              onToggle={handleToggleTodo}
-              onUpdate={updateTodo}
-              style={{ marginBottom: 0 }}
-              isSaving={updatingTodoIds.includes(todo.id)}
-            />
-          </CardWrapper>
-        </Swipeable>
-      </SwipeableWrapper>
+      <SwipeableRow
+        key={todo.id}
+        onDelete={() => handleDeleteTodo(todo.id)}
+        deleteLabel={t('common.delete')}
+        style={{ marginBottom: 16 }}
+      >
+        <CardWrapper>
+          <TodoCard
+            todo={todo}
+            onToggle={handleToggleTodo}
+            onUpdate={updateTodo}
+            style={{ marginBottom: 0 }}
+            isSaving={updatingTodoIds.includes(todo.id)}
+          />
+        </CardWrapper>
+      </SwipeableRow>
     );
   };
 

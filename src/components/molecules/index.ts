@@ -16,6 +16,9 @@ export type { MemberCardProps } from './MemberCard';
 export { HomeCard } from './HomeCard';
 export type { HomeCardProps } from './HomeCard';
 
+export { SwipeableRow } from './SwipeableRow';
+export type { SwipeableRowProps } from './SwipeableRow';
+
 // Input/filter molecules
 export { SearchInput } from './SearchInput';
 export type { SearchInputProps } from './SearchInput';

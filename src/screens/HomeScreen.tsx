@@ -26,6 +26,7 @@ import {
   StatusFilter,
   CategorySelector,
   ItemCard,
+  SwipeableRow,
   EmptyState,
   LoginBottomSheet,
   SignupBottomSheet,
@@ -328,9 +329,20 @@ export const HomeScreen: React.FC = () => {
                     ];
 
                     return (
-                      <ContextMenu items={menuItems}>
-                        <ItemCard item={item} onPress={handleItemPress} />
-                      </ContextMenu>
+                      <SwipeableRow
+                        onEdit={() => {
+                          editBottomSheetRef.current?.present(item.id);
+                        }}
+                        onDelete={() => {
+                          confirmDelete(item.id);
+                        }}
+                        editLabel={t('itemDetails.actions.modify')}
+                        deleteLabel={t('itemDetails.actions.delete')}
+                      >
+                        <ContextMenu items={menuItems}>
+                          <ItemCard item={item} onPress={handleItemPress} />
+                        </ContextMenu>
+                      </SwipeableRow>
                     );
                   }}
                   keyboardDismissMode="on-drag"
