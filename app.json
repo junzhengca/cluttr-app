@@ -6,7 +6,6 @@
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
-    "newArchEnabled": true,
     "scheme": "com.cluttrapp.cluttr",
     "splash": {
       "image": "./assets/splash-icon.png",
@@ -31,7 +30,6 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "edgeToEdgeEnabled": true,
       "permissions": [
         "android.permission.RECORD_AUDIO"
       ]
@@ -74,7 +72,9 @@
       "@react-native-firebase/perf",
       "@react-native-firebase/crashlytics",
       "@react-native-firebase/messaging",
-      "@react-native-google-signin/google-signin"
+      "@react-native-google-signin/google-signin",
+      "@react-native-vector-icons/ionicons",
+      "@react-native-vector-icons/material-design-icons"
     ],
     "extra": {
       "eas": {
