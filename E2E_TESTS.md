@@ -368,7 +368,7 @@ Run order matters only where stated. Each test case lists **Pre** (preconditions
 #### TC-5.1 Create + switch home
 
 - **Steps:** Tap "My Home ˅" header (≈ 75, 104) → "Add New Property" → name `E2E-Home` → submit. Then use the switcher to flip between homes.
-- **Expect:** New home selected automatically after creation; switching re-subscribes listeners — logs show fresh snapshots per domain, item list swaps content. **A transient retried permission-denied right after creation is acceptable; a permanent one is a FAIL.**
+- **Expect:** New home selected automatically after creation; switching re-subscribes listeners — logs show fresh snapshots per domain, item list swaps content. The new home arrives pre-seeded with default lists — see TC-5.5. **A transient retried permission-denied right after creation is acceptable; a permanent one is a FAIL.**
 
 #### TC-5.2 Edit home name
 
@@ -388,7 +388,36 @@ Run order matters only where stated. Each test case lists **Pre** (preconditions
   - App switches to the remaining home; deleted home gone from switcher.
   - Admin REST: home doc gone, AND its `inventory`/`todos` subcollection docs gone (list returns empty), AND its `invitations/{code}` doc gone if one existed.
   - Logs: no permission errors.
-- **Note:** This is the least-exercised code path (`HomeService.cascadeDelete`) — watch it closely.
+- **Note:** This is the least-exercised code path (`HomeService.cascadeDelete`) — watch it closely. The seeded defaults (TC-5.5) also give the `inventoryCategories`/`locations`/`todoCategories` subcollections cascade work — verify those list empty afterwards too.
+
+#### TC-5.5 Default seeding on home creation (English)
+
+- **Pre:** Logged in as account A; app language is English (Settings → Appearance → Language).
+- **Steps:**
+  1. Create a home named `E2E-Seed-EN` (TC-5.1 path: home switcher → "Add New Property" → name → submit).
+  2. Resolve the new home's id: admin REST `GET {base}/homes` (§3) and find the doc whose `name` is `E2E-Seed-EN`.
+  3. Admin REST: list `homes/{homeId}/inventoryCategories`, `.../locations`, `.../todoCategories`.
+  4. UI spot-checks: Add-Item sheet shows the 8 category chips and 5 location chips; Notes tab category picker / manager sheet shows the 12 shopping categories.
+- **Expect:**
+  - `inventoryCategories`: exactly 8 docs — Appliances, Kitchenware, Digital, Beauty, Entertainment, Apparel, Home, Other — each with `icon`, `color`, and ISO string `createdAt`/`updatedAt`.
+  - `locations`: exactly 5 docs — Kitchen (`restaurant-outline`), Medical Cabinet (`medkit-outline`), Bookshelf (`book-outline`), Bedroom (`bed-outline`), Living Room (`tv-outline`).
+  - `todoCategories`: exactly 12 docs — Produce, Dairy & Eggs, Meat, Seafood, Bakery, Frozen, Pantry Staples, Beverages, Snacks, Household, Personal Care, Other (name only; no icon/color).
+  - Logs: only the acceptable transient retried permission-denied from TC-5.1, if any.
+- **Cleanup:** Keep the home if proceeding to TC-5.6, else delete via the TC-5.4 cascade path (verify all three subcollections list empty afterwards).
+
+#### TC-5.6 Seeded names are localized at creation time (and frozen)
+
+- **Pre:** Logged in as account A; English UI.
+- **Steps:**
+  1. Settings tab → Appearance → Language → select 中文. No `reload` needed — settingsSaga applies `i18n.changeLanguage` live.
+  2. Create a home named `E2E-Seed-ZH`.
+  3. Admin REST: resolve the home id by name, then list its three subcollections.
+  4. Switch the language back to English (设置 → 语言 → English).
+  5. Re-list the same three subcollections via admin REST, and re-check the chips in the app while `E2E-Seed-ZH` is the active home.
+- **Expect:**
+  - Step 3: stored names are Chinese — inventory: 电器, 厨具, 数码, 美妆, 娱乐, 服饰, 家居, 其他; locations: 厨房, 药箱, 书架, 卧室, 客厅; todo: 蔬果, 奶蛋, 肉类, 海鲜, 烘焙, 冷冻, 粮油副食, 饮品, 零食, 日用百货, 个人护理, 其他.
+  - Step 5: stored names byte-identical to step 3 (switching language does NOT rewrite them), and the app shows the Chinese list names inside an otherwise-English UI — this is the intended "localized at creation time" behavior, not a bug.
+- **Cleanup:** Delete `E2E-Seed-EN` and `E2E-Seed-ZH` via the TC-5.4 cascade path; confirm the app language is back to English.
 
 ---
 

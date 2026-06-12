@@ -141,6 +141,18 @@
     "placeholder": "e.g., Produce",
     "emptyState": "No categories yet. Create one to group your shopping list.",
     "manage": "Categories",
+    "produce": "Produce",
+    "dairy": "Dairy & Eggs",
+    "meat": "Meat",
+    "seafood": "Seafood",
+    "bakery": "Bakery",
+    "frozen": "Frozen",
+    "pantry": "Pantry Staples",
+    "beverages": "Beverages",
+    "snacks": "Snacks",
+    "household": "Household",
+    "personal-care": "Personal Care",
+    "other": "Other",
     "delete": {
       "title": "Delete Category",
       "message": "Are you sure you want to delete this category? Todos in it will become uncategorized."

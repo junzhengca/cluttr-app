@@ -141,6 +141,18 @@
     "placeholder": "例如：生鲜",
     "emptyState": "还没有分类。创建一个来给购物清单分组吧。",
     "manage": "分类",
+    "produce": "蔬果",
+    "dairy": "奶蛋",
+    "meat": "肉类",
+    "seafood": "海鲜",
+    "bakery": "烘焙",
+    "frozen": "冷冻",
+    "pantry": "粮油副食",
+    "beverages": "饮品",
+    "snacks": "零食",
+    "household": "日用百货",
+    "personal-care": "个人护理",
+    "other": "其他",
     "delete": {
       "title": "删除分类",
       "message": "确定要删除这个分类吗？该分类下的待办将变为未分类。"

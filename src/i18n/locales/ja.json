@@ -141,6 +141,18 @@
     "placeholder": "例：野菜・果物",
     "emptyState": "カテゴリがまだありません。作成して買い物リストを整理しましょう。",
     "manage": "カテゴリ",
+    "produce": "野菜・果物",
+    "dairy": "乳製品・卵",
+    "meat": "肉類",
+    "seafood": "魚介類",
+    "bakery": "パン・菓子",
+    "frozen": "冷凍食品",
+    "pantry": "穀物・調味料",
+    "beverages": "飲み物",
+    "snacks": "お菓子",
+    "household": "日用品",
+    "personal-care": "パーソナルケア",
+    "other": "その他",
     "delete": {
       "title": "カテゴリを削除",
       "message": "このカテゴリを削除してもよろしいですか？このカテゴリのToDoは未分類になります。"

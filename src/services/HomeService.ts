@@ -13,6 +13,7 @@ import {
   fireWrite,
   isoNow,
 } from './firebase/firestoreRefs';
+import { seedHomeDefaults } from './seedHomeDefaults';
 
 const DELETE_PAGE_SIZE = 450;
 
@@ -87,6 +88,8 @@ class HomeService {
   /**
    * Create a new home and switch to it. The write is latency-compensated:
    * the home is inserted locally right away and the snapshot confirms it.
+   * Preset categories/locations/todo categories are seeded right after the
+   * home doc write (see seedHomeDefaults).
    */
   createHome(uid: string, name: string, address?: string): Home {
     const id = generateItemId();
@@ -118,6 +121,10 @@ class HomeService {
       }),
       'Failed to create home'
     );
+
+    // Queued after the home doc write — client mutation order guarantees the
+    // security rules' home-doc lookups succeed.
+    seedHomeDefaults(id);
 
     this.homes = [...this.homes, home];
     this.currentHomeId = id;

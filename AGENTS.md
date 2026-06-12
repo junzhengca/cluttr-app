@@ -59,6 +59,7 @@ invitations/{code}                        doc ID = invitation code; homeId + den
 - `memberIds` mirrors `members` keys (enforced by rules) so the homes list is one live query: `homes.where('memberIds','array-contains',uid)`.
 - **Reads are real-time**: each domain saga wraps `onSnapshot` in a redux-saga `eventChannel` (`createSnapshotChannel` in `src/services/firebase/firestoreRefs.ts`), subscribed via `takeLatest(setActiveHomeId, ...)` — switching home or logging out auto-cancels the previous listener. The homes listener lives in `authSaga`.
 - **Writes are fire-and-forget** (`fireWrite` helper): latency compensation updates the local snapshot immediately (even offline); errors surface as toasts. Inventory/location field edits are debounced 400 ms to coalesce billed writes.
+- **New homes are seeded client-side** (`seedHomeDefaults`, called from `HomeService.createHome`): 8 inventory categories, 5 locations, 12 todo categories. Names are resolved via i18n at creation time and stored as plain strings — they intentionally do NOT change on later language switches. Invitation accept does not seed.
 - **Invitations are rules-only** (no server): accepting = the invitee updates the home doc adding their own membership entry; rules validate the code doc. See `src/services/InvitationService.ts`.
 - **Home deletion cascade is client-side** (`HomeService.deleteHome`): batch-delete subcollections → invitation doc → home doc last (rules deny subcollection access once the home doc is gone, so orphans are unreachable; retry-safe).
 - **Access revocation signal**: the home disappearing from the homes snapshot (and `permission-denied` on domain listeners → `accessDenied` action).
@@ -81,7 +82,7 @@ invitations/{code}                        doc ID = invitation code; homeId + den
 │   ├── types/              # TypeScript types (inventory, home, user, settings, errors)
 │   ├── theme/              # Styled-components theme
 │   ├── i18n/              # i18next locales (en, zh-CN)
-│   └── data/               # Static config (categories, locations, statuses)
+│   └── data/               # Static config + default-home presets (categories, locations, todo categories, statuses)
 └── app/_layout.tsx        # expo-router entry with provider nesting
 ```
 
@@ -95,6 +96,7 @@ Components use atomic design: `src/components/{atoms,molecules,organisms}`.
 | Firestore refs/converters/channels | `src/services/firebase/firestoreRefs.ts`                                                                    | Collection refs, doc⇄domain converters, `createSnapshotChannel`, `fireWrite`                          |
 | Data writes                        | `src/services/{Inventory,Todo,Location,InventoryCategory,TodoCategory}Service.ts`                           | Slim write helpers built on `createCrudService.ts`; import singletons directly                        |
 | Homes/members                      | `src/services/HomeService.ts`                                                                               | Snapshot-fed; cascade delete, leave/remove member                                                     |
+| Default home seeding               | `src/services/seedHomeDefaults.ts`, `src/data/default{Categories,Locations,TodoCategories}.ts`              | i18n-resolved names at creation time; invoked from `HomeService.createHome`                           |
 | Invitations                        | `src/services/InvitationService.ts`                                                                         | Code create/validate/accept (rules-validated)                                                         |
 | User profiles                      | `src/services/UserService.ts`                                                                               | `users/{uid}` docs: ensure, update, member join                                                       |
 | Navigation                         | `src/navigation/RootStack.tsx`, `src/navigation/TabNavigator.tsx`                                           | 2-level: RootStack (modals) + MainTabs (screens)                                                      |
