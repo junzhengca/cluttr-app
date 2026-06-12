@@ -30,10 +30,11 @@ const StyledAnimatedContainer = styled.View<StyledProps>`
   z-index: 9999;
 `;
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+/* eslint-disable @typescript-eslint/no-explicit-any */
 const AnimatedContainer = Animated.createAnimatedComponent(
   StyledAnimatedContainer
 ) as unknown as React.ComponentType<any>;
+/* eslint-enable @typescript-eslint/no-explicit-any */
 
 const ToastContainer = styled.View<StyledProps & { type: ToastType }>`
   background-color: ${({ theme, type }: StyledProps & { type: ToastType }) => {

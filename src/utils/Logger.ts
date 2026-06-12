@@ -81,11 +81,12 @@ const CATEGORY_EMOJIS: Record<LogCategory, string> = {
  */
 function getEnvVar(key: string, defaultValue: string): string {
   // Try Constants.expoConfig.extra first (Expo SDK 46+), then Constants.manifest.extra
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  /* eslint-disable @typescript-eslint/no-explicit-any */
   const extras =
     (Constants.expoConfig as any)?.extra ||
     (Constants.manifest as any)?.extra ||
     {};
+  /* eslint-enable @typescript-eslint/no-explicit-any */
   const value = extras[key];
   return value !== undefined ? String(value) : defaultValue;
 }
