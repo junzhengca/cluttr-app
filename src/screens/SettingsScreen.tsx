@@ -17,6 +17,7 @@ import {
 } from '../components';
 import { useSettings, useAuth } from '../store/hooks';
 import { useHome } from '../hooks/useHome';
+import { usePlanLimits } from '../hooks/usePlanLimits';
 import { useToast } from '../hooks/useToast';
 import { calculateBottomPadding } from '../utils/layout';
 import { Member } from '../types/user';
@@ -25,6 +26,7 @@ import { homeService } from '../services/HomeService';
 import { invitationService } from '../services/InvitationService';
 import { HomeSettingsSection } from './settings/HomeSettingsSection';
 import { AppearanceSection } from './settings/AppearanceSection';
+import { SubscriptionSection } from './settings/SubscriptionSection';
 
 const Container = styled(View)`
   flex: 1;
@@ -61,6 +63,7 @@ export const SettingsScreen: React.FC = () => {
   const toast = useToast();
 
   const { currentHome, deleteHome, updateHomeSettings } = useHome();
+  const { gateInvite } = usePlanLimits();
   const editHomeSheetRef = useRef<BottomSheetModal>(null);
   const inviteMenuBottomSheetRef = useRef<BottomSheetModal | null>(null);
 
@@ -122,6 +125,7 @@ export const SettingsScreen: React.FC = () => {
   );
 
   const handleInvitePress = useCallback(async () => {
+    if (!(await gateInvite())) return;
     // Lazily create the invitation code on first share
     if (currentHome?.role === 'owner' && user) {
       try {
@@ -131,7 +135,7 @@ export const SettingsScreen: React.FC = () => {
       }
     }
     inviteMenuBottomSheetRef.current?.present();
-  }, [currentHome, user]);
+  }, [currentHome, user, gateInvite]);
 
   const getInvitationLink = useCallback(() => {
     const scheme = 'com.cluttrapp.cluttr';
@@ -341,6 +345,9 @@ export const SettingsScreen: React.FC = () => {
           onDeleteHomePress={handleDeleteHomePress}
           onLeaveHome={handleLeaveHome}
         />
+
+        {/* Cluttr Pro Subscription Section */}
+        {isAuthenticated && <SubscriptionSection />}
 
         {/* Appearance Section */}
         <AppearanceSection

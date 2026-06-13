@@ -1,6 +1,12 @@
 import firestore from '@react-native-firebase/firestore';
 import * as Crypto from 'expo-crypto';
-import { invitationRef, homeRef, isoNow } from './firebase/firestoreRefs';
+import i18n from '../i18n/i18n';
+import {
+  invitationRef,
+  homeRef,
+  isoNow,
+  isPermissionDenied,
+} from './firebase/firestoreRefs';
 import { Home } from '../types/home';
 import { User } from '../types/user';
 import { storageLogger } from '../utils/Logger';
@@ -144,6 +150,17 @@ class InvitationService {
       return { success: true };
     } catch (error) {
       storageLogger.error('Failed to accept invitation', error);
+      // Rules deny the join when the home is at its member cap (or the code
+      // no longer matches) — surface that instead of the raw Firestore error.
+      if (isPermissionDenied(error as { code?: string })) {
+        return {
+          success: false,
+          message: i18n.t('limits.joinDenied', {
+            defaultValue:
+              'Unable to join — this home may be full or the invitation is no longer valid',
+          }),
+        };
+      }
       return {
         success: false,
         message:

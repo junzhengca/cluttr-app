@@ -28,8 +28,12 @@ import {
   inventoryItemFromDoc,
 } from '../../services/firebase/firestoreRefs';
 import type { InventoryItem } from '../../types/inventory';
+import { homeService } from '../../services/HomeService';
+import { purchasesService } from '../../services/PurchasesService';
+import { effectiveInventoryCap } from '../../data/planLimits';
 import { sagaLogger } from '../../utils/Logger';
 import { getGlobalToast } from '../../utils/toastRegistry';
+import i18n from '../../i18n/i18n';
 
 // Action types
 const LOAD_ITEMS = 'inventory/LOAD_ITEMS';
@@ -88,6 +92,31 @@ function* createItemSaga(action: {
   try {
     const homeId = (yield call(requireActiveHomeId, 'inventory')) as string;
     yield put(setError(null));
+
+    // Backstop for the UI plan-limit gate (security rules enforce the Pro
+    // soft cap server-side; this keeps the optimistic write from appearing
+    // and then vanishing on the rules denial).
+    const itemCount = (yield select(
+      (state: RootState) => state.inventory.items.length
+    )) as number;
+    const cap = effectiveInventoryCap(
+      purchasesService.isProActive(),
+      homeService.getCurrentHome()
+    );
+    if (itemCount >= cap) {
+      sagaLogger.warn(`Inventory cap reached (${itemCount}/${cap})`);
+      const toast = getGlobalToast();
+      if (toast) {
+        toast(
+          i18n.t('limits.inventoryCapReached', {
+            max: cap,
+            defaultValue: 'Item limit reached ({{max}})',
+          }),
+          'error'
+        );
+      }
+      return;
+    }
 
     // Latency-compensated write: the local snapshot delivers the new item
     // immediately, even offline.

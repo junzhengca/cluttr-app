@@ -44,6 +44,7 @@ export type LogCategory =
   | 'network' // Network status and connectivity
   | 'image' // Image processing and uploads
   | 'ai' // AI recognition operations
+  | 'purchases' // RevenueCat subscriptions and purchases
   | 'general'; // General logging
 
 interface LogLevelConfig {
@@ -73,6 +74,7 @@ const CATEGORY_EMOJIS: Record<LogCategory, string> = {
   network: '📡',
   image: '🖼️',
   ai: '🤖',
+  purchases: '💳',
   general: '📝',
 };
 
@@ -682,3 +684,4 @@ export const sagaLogger = logger.scoped('saga');
 export const networkLogger = logger.scoped('network');
 export const imageLogger = logger.scoped('image');
 export const aiLogger = logger.scoped('ai');
+export const purchasesLogger = logger.scoped('purchases');

@@ -24,6 +24,9 @@ import {
   isoNow,
 } from '../../services/firebase/firestoreRefs';
 import type { TodoItem, TodoCategory } from '../../types/inventory';
+import { homeService } from '../../services/HomeService';
+import { purchasesService } from '../../services/PurchasesService';
+import { effectiveTodoCap } from '../../data/planLimits';
 import { sagaLogger } from '../../utils/Logger';
 import { getGlobalToast } from '../../utils/toastRegistry';
 import i18n from '../../i18n/i18n';
@@ -102,6 +105,31 @@ function* addTodoSaga(action: {
     const homeId = (yield call(requireActiveHomeId, 'todo')) as string;
     yield put(setAddingTodo(true));
     yield put(setError(null));
+
+    // Backstop for the UI plan-limit gate (security rules enforce the Pro
+    // soft cap server-side; this keeps the optimistic write from appearing
+    // and then vanishing on the rules denial).
+    const todoCount = (yield select(
+      (state: RootState) => state.todo.todos.length
+    )) as number;
+    const cap = effectiveTodoCap(
+      purchasesService.isProActive(),
+      homeService.getCurrentHome()
+    );
+    if (todoCount >= cap) {
+      sagaLogger.warn(`Todo cap reached (${todoCount}/${cap})`);
+      const toast = getGlobalToast();
+      if (toast) {
+        toast(
+          i18n.t('limits.todoCapReached', {
+            max: cap,
+            defaultValue: 'To-do limit reached ({{max}})',
+          }),
+          'error'
+        );
+      }
+      return;
+    }
 
     const newTodo = todoService.createTodo(homeId, { text, note, categoryId });
     sagaLogger.verbose(

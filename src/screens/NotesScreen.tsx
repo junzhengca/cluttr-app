@@ -29,6 +29,7 @@ import {
 } from '../components';
 import { useTodos, useAuth, useTodoCategories } from '../store/hooks';
 import { useHome } from '../hooks/useHome';
+import { usePlanLimits } from '../hooks/usePlanLimits';
 import { useTheme } from '../theme/ThemeProvider';
 import { NotesBanner, type TodoMode } from './notes/NotesBanner';
 import { TodoListSection } from './notes/TodoListSection';
@@ -159,6 +160,12 @@ export const NotesScreen: React.FC = () => {
     handleToggleTodo,
     handleDeleteTodo,
   } = useNotesTodoActions({ addTodo, toggleTodoCompletion, removeTodo });
+  const { gateAddTodo } = usePlanLimits();
+
+  // Plan-limit gate in front of the raw add handler (paywall/toast at cap)
+  const guardedAddTodo = React.useCallback(async () => {
+    if (await gateAddTodo()) handleAddTodo();
+  }, [gateAddTodo, handleAddTodo]);
 
   const loginBottomSheetRef = useRef<BottomSheetModal | null>(null);
   const signupBottomSheetRef = useRef<BottomSheetModal | null>(null);
@@ -298,7 +305,7 @@ export const NotesScreen: React.FC = () => {
                       placeholderTextColor={theme.colors.textLight}
                       value={newTodoText}
                       onChangeText={handleTodoTextChange}
-                      onSubmitEditing={handleAddTodo}
+                      onSubmitEditing={guardedAddTodo}
                       onFocus={() => setIsFocused(true)}
                       onBlur={() => setIsFocused(false)}
                       autoCorrect={false}
@@ -328,7 +335,7 @@ export const NotesScreen: React.FC = () => {
                       onPress={
                         addingTodo || !newTodoText.trim()
                           ? undefined
-                          : handleAddTodo
+                          : guardedAddTodo
                       }
                       activeOpacity={0.7}
                       hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}

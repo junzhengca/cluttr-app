@@ -17,6 +17,14 @@ export interface Home {
     canShareTodos: boolean;
   };
   invitationCode?: string;
+  /**
+   * Per-home raises of the Pro item soft caps, granted by support. Editable
+   * only from the Firebase console — security rules deny client writes.
+   */
+  limitOverrides?: {
+    inventoryMax?: number;
+    todoMax?: number;
+  };
   memberCount?: number;
   isOwner?: boolean;
   createdAt: string;

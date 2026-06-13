@@ -361,7 +361,33 @@
       "message": "本当にログアウトしますか？",
       "cancel": "キャンセル",
       "confirm": "ログアウト"
+    },
+    "subscription": {
+      "title": "Cluttr Pro",
+      "upgrade": "Cluttr Pro にアップグレード",
+      "restore": "購入を復元",
+      "manage": "サブスクリプションを管理",
+      "active": "Cluttr Pro は有効です",
+      "lifetime": "ライフタイムアクセス",
+      "renewsOn": "{{date}} に更新されます",
+      "expiresOn": "{{date}} に期限切れになります",
+      "purchaseSuccess": "Cluttr Pro へようこそ！",
+      "restoreSuccess": "購入を復元しました",
+      "restoreNone": "復元できる購入はありません",
+      "restoreError": "購入の復元に失敗しました"
     }
+  },
+  "limits": {
+    "homesFree": "無料プランでは最大 {{max}} つのホームまでです — Cluttr Pro にアップグレードしてください",
+    "inviteFree": "ホームの共有には Cluttr Pro が必要です",
+    "homeFull": "このホームはメンバー数の上限（{{max}} 人）に達しています",
+    "inventoryFree": "無料プランでは 1 ホームあたり最大 {{max}} 個のアイテムまでです — Cluttr Pro にアップグレードしてください",
+    "inventorySoftCap": "このホームはアイテム数の上限（{{max}}）に達しました。引き上げにはサポートへご連絡ください。",
+    "inventoryCapReached": "アイテム数の上限（{{max}}）に達しました",
+    "todoFree": "無料プランでは 1 ホームあたり最大 {{max}} 件の ToDo までです — Cluttr Pro にアップグレードしてください",
+    "todoSoftCap": "このホームは ToDo の上限（{{max}}）に達しました。引き上げにはサポートへご連絡ください。",
+    "todoCapReached": "ToDo の上限（{{max}}）に達しました",
+    "joinDenied": "参加できません — このホームが満員か、招待が無効になっている可能性があります"
   },
   "createItem": {
     "title": "新しいアイテムを追加",

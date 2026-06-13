@@ -35,6 +35,7 @@ import { useItemActions } from '../hooks/useItemActions';
 import { InventoryItem } from '../types/inventory';
 import { useInventory, useAuth, useTodos } from '../store/hooks';
 import { useHome } from '../hooks/useHome';
+import { usePlanLimits } from '../hooks/usePlanLimits';
 import { calculateBottomPadding } from '../utils/layout';
 import { useToast } from '../hooks/useToast';
 import { isExpiringSoon, countExpiringItems } from '../utils/dateUtils';
@@ -97,6 +98,7 @@ export const HomeScreen: React.FC = () => {
   const editBottomSheetModalRef = useRef<BottomSheetModal>(null);
 
   const { confirmDelete } = useItemActions();
+  const { gateAddInventoryItem } = usePlanLimits();
   const { addTodo } = useTodos();
   const { showToast } = useToast();
 
@@ -182,7 +184,8 @@ export const HomeScreen: React.FC = () => {
     loginBottomSheetRef.current?.present();
   };
 
-  const handleManualAdd = () => {
+  const handleManualAdd = async () => {
+    if (!(await gateAddInventoryItem())) return;
     setRecognizedItemData({
       location: selectedLocationId || undefined,
       status: selectedStatusId || undefined,

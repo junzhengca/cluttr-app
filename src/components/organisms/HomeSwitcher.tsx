@@ -24,6 +24,7 @@ import Animated, {
   runOnUI,
 } from 'react-native-reanimated';
 import { useHome } from '../../hooks/useHome';
+import { usePlanLimits } from '../../hooks/usePlanLimits';
 import { StyledProps } from '../../utils/styledComponents';
 import { useTheme } from '../../theme/ThemeProvider';
 import { AddHomeBottomSheet } from './bottom-sheets/AddHomeBottomSheet';
@@ -135,6 +136,7 @@ const AddButtonText = styled(Text)`
 export const HomeSwitcher: React.FC = () => {
   const { t } = useTranslation();
   const { currentHome, homes, switchHome, loadingState } = useHome();
+  const { gateCreateHome } = usePlanLimits();
   const theme = useTheme();
   const [modalVisible, setModalVisible] = useState(false);
   const addHomeSheetRef = useRef<BottomSheetModal>(null);
@@ -207,8 +209,11 @@ export const HomeSwitcher: React.FC = () => {
 
   const handleOpenAdd = () => {
     handleClose();
-    // Small delay to allow modal to close first
-    setTimeout(() => {
+    // Delay until the modal has fully closed: presenting the paywall (a
+    // native sheet) while the RN Modal is mid-dismiss wedges iOS view
+    // controller presentation and leaves an invisible touch-blocking sheet.
+    setTimeout(async () => {
+      if (!(await gateCreateHome())) return;
       addHomeSheetRef.current?.present();
     }, 300);
   };

@@ -41,6 +41,17 @@ export const todosCol = (homeId: string) => homeRef(homeId).collection('todos');
 export const todoCategoriesCol = (homeId: string) =>
   homeRef(homeId).collection('todoCategories');
 
+/**
+ * Per-home item counters (`homes/{id}/meta/counters`), maintained in the same
+ * batch as every inventory/todo create/delete so security rules can enforce
+ * the item soft caps. Purely a rules artifact — the app counts items from its
+ * live snapshots and never reads this doc.
+ */
+export const homeCountersRef = (homeId: string) =>
+  homeRef(homeId).collection('meta').doc('counters');
+
+export type CountedCollection = 'inventory' | 'todos';
+
 /** Live query for every home the user belongs to. */
 export const homesQueryForUser = (uid: string) =>
   homesCol().where('memberIds', 'array-contains', uid);
@@ -144,6 +155,7 @@ export function homeFromDoc(doc: DocSnapshot, uid: string): Home {
     isOwner: ownerId === uid,
     settings: data.settings as Home['settings'],
     invitationCode: data.invitationCode as string | undefined,
+    limitOverrides: data.limitOverrides as Home['limitOverrides'],
     memberCount: Object.keys(members).length,
     createdAt: (data.createdAt as string) || isoNow(),
     updatedAt: (data.updatedAt as string) || isoNow(),
@@ -207,6 +219,28 @@ export function fireWrite(
     const toast = getGlobalToast();
     if (toast) toast(errorMessage, 'error');
   });
+}
+
+/**
+ * Fire-and-forget batch that pairs a write with the matching ±1 update of the
+ * home's item counter (rules require the two in one atomic batch for counted
+ * collections). `populate` adds the item write(s) to the batch.
+ */
+export function fireCountedWrite(
+  homeId: string,
+  counterField: CountedCollection,
+  delta: 1 | -1,
+  populate: (batch: FirebaseFirestoreTypes.WriteBatch) => void,
+  errorMessage: string
+): void {
+  const batch = firestore().batch();
+  populate(batch);
+  batch.set(
+    homeCountersRef(homeId),
+    { [counterField]: firestore.FieldValue.increment(delta) },
+    { merge: true }
+  );
+  fireWrite(batch.commit(), errorMessage);
 }
 
 export { isoNow };

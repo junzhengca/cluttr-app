@@ -12,6 +12,31 @@ service cloud.firestore {
       return get(/databases/$(database)/documents/homes/$(homeId)).data;
     }
 
+    // ── plan limits (mirrored in src/data/planLimits.ts) ───────────────
+    // Hard member cap per home (Pro tier; free users are capped client-side
+    // since rules cannot see RevenueCat entitlements without a backend).
+    function maxMembers() {
+      return 10;
+    }
+    // Item soft caps, validated against the per-home counters doc that the
+    // client must update (±1) in the same batch as every item create/delete.
+    // Support raises a home's cap by editing `limitOverrides` on the home doc
+    // from the console (client writes to that field are denied below).
+    function countersPath(homeId) {
+      return /databases/$(database)/documents/homes/$(homeId)/meta/counters;
+    }
+    function counterBefore(homeId, field) {
+      return exists(countersPath(homeId))
+        ? get(countersPath(homeId)).data.get(field, 0)
+        : 0;
+    }
+    function counterAfter(homeId, field) {
+      return getAfter(countersPath(homeId)).data.get(field, 0);
+    }
+    function itemCap(homeId, overrideKey) {
+      return homeData(homeId).get('limitOverrides', {}).get(overrideKey, 5000);
+    }
+
     // ── users ──────────────────────────────────────────────────────────
     // Profiles power member lists and invitation previews, so any
     // signed-in user may `get` one, but profiles are not enumerable.
@@ -59,14 +84,19 @@ service cloud.firestore {
         && request.resource.data.members.keys().hasOnly([uid()])
         && request.resource.data.members[uid()].role == 'owner'
         && request.resource.data.memberIds == [uid()]
-        && request.resource.data.settings.keys().hasAll(['canShareInventory', 'canShareTodos']);
+        && request.resource.data.settings.keys().hasAll(['canShareInventory', 'canShareTodos'])
+        && !('limitOverrides' in request.resource.data);
 
-      allow update: if consistent(request.resource.data) && (
-          // Owner: full control, but ownership cannot transfer and the
-          // owner cannot remove themselves.
+      allow update: if consistent(request.resource.data)
+        && request.resource.data.memberIds.size() <= maxMembers()
+        && (
+          // Owner: full control, but ownership cannot transfer, the owner
+          // cannot remove themselves, and the support-managed limit
+          // overrides are console-only.
           ( isOwner()
             && request.resource.data.ownerId == resource.data.ownerId
-            && resource.data.ownerId in request.resource.data.memberIds )
+            && resource.data.ownerId in request.resource.data.memberIds
+            && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['limitOverrides']) )
           // Member self-leave: removes exactly their own entry.
           || ( isMember() && !isOwner()
             && onlyOwnMembershipChanged()
@@ -100,8 +130,19 @@ service cloud.firestore {
         || (uid() in h.memberIds && h.settings.canShareTodos == true));
     }
 
+    // Inventory/todo creates must increment the home's counter doc in the
+    // same batch and stay under the (override-able) item cap. Deletes must
+    // decrement it — except for the owner, so the home-deletion cascade can
+    // bulk-delete without counter bookkeeping (skipping a decrement only
+    // ever over-counts, i.e. tightens the cap).
     match /homes/{homeId}/inventory/{itemId} {
-      allow read, write: if canAccessInventory(homeId);
+      allow read, update: if canAccessInventory(homeId);
+      allow create: if canAccessInventory(homeId)
+        && counterAfter(homeId, 'inventory') == counterBefore(homeId, 'inventory') + 1
+        && counterAfter(homeId, 'inventory') <= itemCap(homeId, 'inventoryMax');
+      allow delete: if canAccessInventory(homeId)
+        && ( homeData(homeId).ownerId == uid()
+          || counterAfter(homeId, 'inventory') == counterBefore(homeId, 'inventory') - 1 );
     }
     match /homes/{homeId}/inventoryCategories/{categoryId} {
       allow read, write: if canAccessInventory(homeId);
@@ -110,10 +151,58 @@ service cloud.firestore {
       allow read, write: if canAccessInventory(homeId);
     }
     match /homes/{homeId}/todos/{todoId} {
-      allow read, write: if canAccessTodos(homeId);
+      allow read, update: if canAccessTodos(homeId);
+      allow create: if canAccessTodos(homeId)
+        && counterAfter(homeId, 'todos') == counterBefore(homeId, 'todos') + 1
+        && counterAfter(homeId, 'todos') <= itemCap(homeId, 'todoMax');
+      allow delete: if canAccessTodos(homeId)
+        && ( homeData(homeId).ownerId == uid()
+          || counterAfter(homeId, 'todos') == counterBefore(homeId, 'todos') - 1 );
     }
     match /homes/{homeId}/todoCategories/{categoryId} {
       allow read, write: if canAccessTodos(homeId);
+    }
+
+    // ── item counters ──────────────────────────────────────────────────
+    // `homes/{id}/meta/counters` backs the item-cap enforcement above. The
+    // owner seeds it at home creation ({inventory: 0, todos: 0}) and deletes
+    // it in the home-deletion cascade; members may only move one field by
+    // exactly ±1 per write (the batched create/delete bookkeeping). A lone
+    // +1 only tightens the cap; the ±1 limit keeps mass decrements from
+    // cheaply resetting it.
+    match /homes/{homeId}/meta/counters {
+      function isHomeMember() {
+        return signedIn() && uid() in homeData(homeId).memberIds;
+      }
+      function isHomeOwner() {
+        return signedIn() && homeData(homeId).ownerId == uid();
+      }
+      // Numeric, not `is int`: the RN Firebase client serializes JS numbers
+      // (including FieldValue.increment deltas) as doubles.
+      function nonNegativeNumber(field) {
+        return request.resource.data.get(field, 0) >= 0;
+      }
+      function movedByOne(field) {
+        return request.resource.data.get(field, 0) == resource.data.get(field, 0) + 1
+          || request.resource.data.get(field, 0) == resource.data.get(field, 0) - 1;
+      }
+
+      allow read: if isHomeMember();
+      allow create: if isHomeOwner()
+        && request.resource.data.keys().hasOnly(['inventory', 'todos'])
+        && nonNegativeNumber('inventory')
+        && nonNegativeNumber('todos');
+      allow update: if isHomeMember()
+        && request.resource.data.keys().hasOnly(['inventory', 'todos'])
+        && nonNegativeNumber('inventory')
+        && nonNegativeNumber('todos')
+        && (
+          ( request.resource.data.diff(resource.data).affectedKeys().hasOnly(['inventory'])
+            && movedByOne('inventory') )
+          || ( request.resource.data.diff(resource.data).affectedKeys().hasOnly(['todos'])
+            && movedByOne('todos') )
+        );
+      allow delete: if isHomeOwner();
     }
 
     // ── invitations ────────────────────────────────────────────────────

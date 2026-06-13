@@ -1,5 +1,10 @@
 import type { FirebaseFirestoreTypes } from '@react-native-firebase/firestore';
-import { fireWrite, isoNow } from './firebase/firestoreRefs';
+import {
+  fireWrite,
+  fireCountedWrite,
+  isoNow,
+  type CountedCollection,
+} from './firebase/firestoreRefs';
 
 /**
  * createCrudService
@@ -22,6 +27,12 @@ export interface CrudServiceConfig<TEntity, TCreateInput> {
   generateId: () => string;
   /** Human-readable label used in fire-and-forget error toasts. */
   entityLabel: string;
+  /**
+   * Set for collections with a server-enforced item cap (inventory, todos):
+   * creates/deletes then batch a ±1 update of `homes/{id}/meta/counters` so
+   * the security rules can validate the count.
+   */
+  counterField?: CountedCollection;
   /**
    * Build the Firestore doc payload (without timestamps — the factory adds
    * `createdAt`/`updatedAt`) and the optimistic entity returned to callers.
@@ -48,20 +59,30 @@ export function createCrudService<
 >(
   config: CrudServiceConfig<TEntity, TCreateInput>
 ): CrudService<TEntity, TCreateInput, TUpdateInput> {
-  const { collection, generateId, entityLabel, buildCreate } = config;
+  const { collection, generateId, entityLabel, buildCreate, counterField } =
+    config;
 
   return {
     create(homeId: string, input: TCreateInput): TEntity {
       const id = generateId();
       const now = isoNow();
       const { docData, entity } = buildCreate(input, { id, homeId, now });
+      const payload = { ...docData, createdAt: now, updatedAt: now };
 
-      fireWrite(
-        collection(homeId)
-          .doc(id)
-          .set({ ...docData, createdAt: now, updatedAt: now }),
-        `Failed to create ${entityLabel}`
-      );
+      if (counterField) {
+        fireCountedWrite(
+          homeId,
+          counterField,
+          1,
+          (batch) => batch.set(collection(homeId).doc(id), payload),
+          `Failed to create ${entityLabel}`
+        );
+      } else {
+        fireWrite(
+          collection(homeId).doc(id).set(payload),
+          `Failed to create ${entityLabel}`
+        );
+      }
 
       return entity;
     },
@@ -76,10 +97,20 @@ export function createCrudService<
     },
 
     remove(homeId: string, id: string): void {
-      fireWrite(
-        collection(homeId).doc(id).delete(),
-        `Failed to delete ${entityLabel}`
-      );
+      if (counterField) {
+        fireCountedWrite(
+          homeId,
+          counterField,
+          -1,
+          (batch) => batch.delete(collection(homeId).doc(id)),
+          `Failed to delete ${entityLabel}`
+        );
+      } else {
+        fireWrite(
+          collection(homeId).doc(id).delete(),
+          `Failed to delete ${entityLabel}`
+        );
+      }
     },
   };
 }

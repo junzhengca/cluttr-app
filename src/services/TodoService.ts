@@ -12,6 +12,7 @@ const crud = createCrudService<TodoItem, CreateTodoInput, UpdateTodoInput>({
   collection: todosCol,
   generateId: generateTodoId,
   entityLabel: 'todo',
+  counterField: 'todos',
   buildCreate: (input, { id, homeId, now }) => {
     const fields = {
       text: input.text.trim(),

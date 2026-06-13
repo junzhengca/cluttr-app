@@ -9,10 +9,11 @@
  */
 
 import { createCrudService, CrudServiceConfig } from '../createCrudService';
-import { fireWrite, isoNow } from '../firebase/firestoreRefs';
+import { fireWrite, fireCountedWrite, isoNow } from '../firebase/firestoreRefs';
 
 jest.mock('../firebase/firestoreRefs', () => ({
   fireWrite: jest.fn(),
+  fireCountedWrite: jest.fn(),
   isoNow: jest.fn(),
 }));
 
@@ -37,6 +38,7 @@ const FIXED_NOW = '2026-06-11T12:00:00.000Z';
 const ISO_8601 = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/;
 
 const mockedFireWrite = fireWrite as unknown as jest.Mock;
+const mockedFireCountedWrite = fireCountedWrite as unknown as jest.Mock;
 const mockedIsoNow = isoNow as unknown as jest.Mock;
 
 /**
@@ -241,6 +243,89 @@ describe('createCrudService', () => {
       );
       expect(mocks.docRef.set).not.toHaveBeenCalled();
       expect(mocks.docRef.update).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('counterField (counted collections)', () => {
+    const makeCountedService = (mocks: Mocks) =>
+      createCrudService<TestEntity, TestCreateInput, TestUpdateInput>({
+        collection: mocks.collection as unknown as CrudServiceConfig<
+          TestEntity,
+          TestCreateInput
+        >['collection'],
+        generateId: () => 'generated-id-1',
+        entityLabel: 'widget',
+        counterField: 'inventory',
+        buildCreate: (input, ctx) => ({
+          docData: { name: input.name },
+          entity: {
+            id: ctx.id,
+            homeId: ctx.homeId,
+            name: input.name,
+            createdAt: ctx.now,
+            updatedAt: ctx.now,
+          },
+        }),
+      });
+
+    it('routes create through fireCountedWrite with a +1 delta and batches the doc set', () => {
+      const mocks = makeFirestoreMocks();
+      const service = makeCountedService(mocks);
+
+      const result = service.create('home-1', { name: 'Milk' });
+
+      expect(result.id).toBe('generated-id-1');
+      expect(mockedFireWrite).not.toHaveBeenCalled();
+      expect(mockedFireCountedWrite).toHaveBeenCalledTimes(1);
+      const [homeId, field, delta, populate, errorMessage] =
+        mockedFireCountedWrite.mock.calls[0];
+      expect(homeId).toBe('home-1');
+      expect(field).toBe('inventory');
+      expect(delta).toBe(1);
+      expect(errorMessage).toBe('Failed to create widget');
+
+      // The populate callback adds the doc write to the supplied batch.
+      const batch = { set: jest.fn(), delete: jest.fn() };
+      populate(batch);
+      expect(batch.set).toHaveBeenCalledWith(mocks.docRef, {
+        name: 'Milk',
+        createdAt: FIXED_NOW,
+        updatedAt: FIXED_NOW,
+      });
+    });
+
+    it('routes remove through fireCountedWrite with a -1 delta and batches the doc delete', () => {
+      const mocks = makeFirestoreMocks();
+      const service = makeCountedService(mocks);
+
+      service.remove('home-1', 'item-7');
+
+      expect(mockedFireWrite).not.toHaveBeenCalled();
+      expect(mockedFireCountedWrite).toHaveBeenCalledTimes(1);
+      const [homeId, field, delta, populate, errorMessage] =
+        mockedFireCountedWrite.mock.calls[0];
+      expect(homeId).toBe('home-1');
+      expect(field).toBe('inventory');
+      expect(delta).toBe(-1);
+      expect(errorMessage).toBe('Failed to delete widget');
+
+      const batch = { set: jest.fn(), delete: jest.fn() };
+      populate(batch);
+      expect(mocks.collectionRef.doc).toHaveBeenCalledWith('item-7');
+      expect(batch.delete).toHaveBeenCalledWith(mocks.docRef);
+    });
+
+    it('keeps update as a plain (uncounted) fireWrite', () => {
+      const mocks = makeFirestoreMocks();
+      const service = makeCountedService(mocks);
+
+      service.update('home-1', 'item-7', { name: 'Bread' });
+
+      expect(mockedFireCountedWrite).not.toHaveBeenCalled();
+      expect(mockedFireWrite).toHaveBeenCalledWith(
+        mocks.updatePromise,
+        'Failed to update widget'
+      );
     });
   });
 });

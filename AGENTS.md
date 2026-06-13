@@ -45,7 +45,10 @@ All app data lives in Firestore, accessed directly from the client with `@react-
 ```
 users/{uid}                               email, nickname, avatarUrl, timestamps
 homes/{homeId}                            name, address, ownerId, settings{canShareInventory,canShareTodos},
-                                          invitationCode, members{uid→{role,joinedAt,inviteCode?}}, memberIds[]
+                                          invitationCode, members{uid→{role,joinedAt,inviteCode?}}, memberIds[],
+                                          limitOverrides{inventoryMax?,todoMax?} (console-only; raises item caps)
+homes/{homeId}/meta/counters              {inventory, todos} item counts; ±1-updated in the same batch as every
+                                          item create/delete; rules enforce the item caps against it
 homes/{homeId}/inventory/{id}             item fields + batches[] array
 homes/{homeId}/inventoryCategories/{id}
 homes/{homeId}/locations/{id}
@@ -63,6 +66,7 @@ invitations/{code}                        doc ID = invitation code; homeId + den
 - **Invitations are rules-only** (no server): accepting = the invitee updates the home doc adding their own membership entry; rules validate the code doc. See `src/services/InvitationService.ts`.
 - **Home deletion cascade is client-side** (`HomeService.deleteHome`): batch-delete subcollections → invitation doc → home doc last (rules deny subcollection access once the home doc is gone, so orphans are unreachable; retry-safe).
 - **Access revocation signal**: the home disappearing from the homes snapshot (and `permission-denied` on domain listeners → `accessDenied` action).
+- **Plan limits (free vs Cluttr Pro)**: constants in `src/data/planLimits.ts`, UI gates via `usePlanLimits()` (paywall/toast), saga backstops in inventory/todo create sagas. Server side, rules enforce member cap (10) and item caps (5000 default, raised per home via console-only `limitOverrides`) against `meta/counters` — every inventory/todo create/delete batches a ±1 counter update (`fireCountedWrite`). Free-tier caps (2 homes, no invites, 100 items/todos) are client-side only: rules can't see RevenueCat entitlements without a backend. Rules numbers and `planLimits.ts` MUST stay in sync. Counter values are doubles (RNFB serializes JS numbers as doubles — rules must not use `is int`).
 
 ## STRUCTURE
 
@@ -110,6 +114,8 @@ Components use atomic design: `src/components/{atoms,molecules,organisms}`.
 | Styling                            | `src/theme/ThemeProvider.tsx`, `src/utils/styledComponents.ts`                                              | Theme via `useTheme()`, styled via `StyledProps`                                                      |
 | Firebase auth                      | `src/services/FirebaseAuthService.ts`                                                                       | Email/Google/Apple sign-in, password reset                                                            |
 | Security rules                     | `firestore.rules`, `storage.rules`                                                                          | The entire authorization model                                                                        |
+| Subscriptions (RevenueCat)         | `src/services/PurchasesService.ts`, `src/hooks/useSubscription.ts`                                          | Cluttr Pro entitlement, paywall, Customer Center; setup guide in `REVENUECAT.md`                      |
+| Plan limits (free vs Pro)          | `src/data/planLimits.ts`, `src/hooks/usePlanLimits.ts`                                                      | Caps + UI gates; server enforcement in `firestore.rules` (`meta/counters`, `limitOverrides`)          |
 
 ## CONVENTIONS
 
@@ -217,6 +223,8 @@ make build-ios-production-local      # Local production build (auto-increments b
 - Swipe a row left to reveal swipe actions: `swipe --start-x 360 --start-y <rowY> --end-x 100 --end-y <rowY>`. Pill labels ("Modify"/"Delete") can collide with other on-screen buttons — tap by coordinates when ambiguous (more in E2E_TESTS.md §2.3).
 - **The SDK 56 dev client shows a draggable floating dev-menu button (grey gear) that swallows touches around itself.** It boots at top-right, hidden behind the PageHeader avatar, where it silently blocks the header filter button. If a top-right control ignores taps, drag the gear away (`swipe --start-x 360 --start-y 113 --end-x 30 --end-y 700`) and re-check its position after every reload. Dev-client-only — absent from release builds (E2E_TESTS.md §2.3.13).
 - **`type` only supports ASCII** (axe maps characters to hardware keycodes) — CJK/IME input cannot be driven from the harness. Chinese-input behavior in bottom-sheet forms needs a manual pass before release.
+
+**RevenueCat key swap for local purchase testing**: `.env` ships the production platform keys (iOS `appl_…`; Android still pending a `goog_…` key). Real purchases can't run in the simulator (and offerings stay empty until App Store products are registered in RevenueCat), so to test purchase/paywall/limit flows locally, temporarily set BOTH `EXPO_PUBLIC_REVENUECAT_IOS_API_KEY` and `EXPO_PUBLIC_REVENUECAT_ANDROID_API_KEY` to the Test Store key `test_pScUbcsvKDZWCqlKQLYMxrFEZUA` (simulated purchases; `reload` after editing `.env`). **When done, ALWAYS restore the production key(s) in `.env` before committing or finishing the task.**
 
 **Test accounts** (Firebase email/password, created via the signup UI):
 

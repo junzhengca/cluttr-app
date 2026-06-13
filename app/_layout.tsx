@@ -15,6 +15,7 @@ import { I18nextProvider } from 'react-i18next';
 import { Provider } from 'react-redux';
 import { ThemeProvider } from '../src/theme/ThemeProvider';
 import { dataInitializationService } from '../src/services/DataInitializationService';
+import { purchasesService } from '../src/services/PurchasesService';
 import {
   ErrorBottomSheet,
   SetupNicknameBottomSheet,
@@ -50,6 +51,10 @@ import {
 setBackgroundMessageHandler(async (_message) => {
   // Background messages are handled silently; FCM shows the notification automatically
 });
+
+// Configure RevenueCat as early as possible so cached entitlements are
+// available before the first screen renders (identity sync happens in authSaga)
+purchasesService.configure();
 
 const appLogger = logger.scoped('general');
 

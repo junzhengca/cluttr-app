@@ -4,6 +4,7 @@ import { generateItemId } from '../utils/idGenerator';
 import { storageLogger } from '../utils/Logger';
 import {
   homeRef,
+  homeCountersRef,
   invitationRef,
   inventoryCol,
   inventoryCategoriesCol,
@@ -120,6 +121,14 @@ class HomeService {
         updatedAt: now,
       }),
       'Failed to create home'
+    );
+
+    // Item counters start at zero — security rules validate every inventory/
+    // todo create/delete against this doc (queued after the home doc write so
+    // the rules' owner lookup succeeds).
+    fireWrite(
+      homeCountersRef(id).set({ inventory: 0, todos: 0 }),
+      'Failed to initialize home counters'
     );
 
     // Queued after the home doc write — client mutation order guarantees the
@@ -242,6 +251,10 @@ class HomeService {
         if (page.size < DELETE_PAGE_SIZE) break;
       }
     }
+
+    // Counters doc (owner-only delete; item deletes above skip the counter
+    // decrement, which the rules allow for the owner)
+    await homeCountersRef(home.id).delete();
 
     if (home.invitationCode) {
       try {

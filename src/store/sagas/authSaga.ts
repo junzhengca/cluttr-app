@@ -11,6 +11,7 @@ import {
 import { authService } from '../../services/AuthService';
 import { firebaseAuthService } from '../../services/FirebaseAuthService';
 import { homeService } from '../../services/HomeService';
+import { purchasesService } from '../../services/PurchasesService';
 import { userService } from '../../services/UserService';
 import {
   createSnapshotChannel,
@@ -94,6 +95,9 @@ function* clearAuthAndLogout() {
   // Stop the homes listener before tearing down auth
   yield put(subscribeHomes(null));
 
+  // Detach the RevenueCat identity (fire-and-forget, errors handled inside)
+  purchasesService.logOut();
+
   // Sign out from Firebase (also signs out from Google if applicable)
   try {
     yield call([firebaseAuthService, 'signOut']);
@@ -160,6 +164,11 @@ function* postAuthSetup(firebaseUser: FirebaseAuthTypes.User): Generator {
   yield put(setError(null));
 
   yield put(subscribeHomes(firebaseUser.uid));
+
+  // Alias the RevenueCat customer to the Firebase UID. Fire-and-forget:
+  // it must never block or fail auth (offline restore included) — the
+  // service logs failures and entitlements catch up on the next launch.
+  purchasesService.logIn(firebaseUser.uid);
 }
 
 // ─── Homes Subscription ───────────────────────────────────────────────────────

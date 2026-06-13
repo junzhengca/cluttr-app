@@ -17,6 +17,7 @@ const crud = createCrudService<
   collection: inventoryCol,
   generateId: generateItemId,
   entityLabel: 'inventory item',
+  counterField: 'inventory',
   buildCreate: (input, { id, homeId, now }) => ({
     docData: {
       name: input.name,

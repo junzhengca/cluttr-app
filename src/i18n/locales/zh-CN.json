@@ -361,7 +361,33 @@
       "message": "您确定要登出吗？",
       "cancel": "取消",
       "confirm": "登出"
+    },
+    "subscription": {
+      "title": "Cluttr Pro",
+      "upgrade": "升级到 Cluttr Pro",
+      "restore": "恢复购买",
+      "manage": "管理订阅",
+      "active": "Cluttr Pro 已激活",
+      "lifetime": "终身访问",
+      "renewsOn": "将于 {{date}} 续订",
+      "expiresOn": "将于 {{date}} 到期",
+      "purchaseSuccess": "欢迎使用 Cluttr Pro！",
+      "restoreSuccess": "已恢复购买",
+      "restoreNone": "没有可恢复的购买",
+      "restoreError": "恢复购买失败"
     }
+  },
+  "limits": {
+    "homesFree": "免费版最多支持 {{max}} 个家庭 — 升级到 Cluttr Pro 解锁更多",
+    "inviteFree": "共享家庭需要 Cluttr Pro",
+    "homeFull": "该家庭成员已达上限（{{max}} 人）",
+    "inventoryFree": "免费版每个家庭最多 {{max}} 件物品 — 升级到 Cluttr Pro 解锁更多",
+    "inventorySoftCap": "该家庭已达 {{max}} 件物品上限，请联系客服提升额度。",
+    "inventoryCapReached": "已达物品数量上限（{{max}}）",
+    "todoFree": "免费版每个家庭最多 {{max}} 条待办 — 升级到 Cluttr Pro 解锁更多",
+    "todoSoftCap": "该家庭已达 {{max}} 条待办上限，请联系客服提升额度。",
+    "todoCapReached": "已达待办数量上限（{{max}}）",
+    "joinDenied": "无法加入 — 该家庭可能已满员，或邀请已失效"
   },
   "createItem": {
     "title": "入库新物品",

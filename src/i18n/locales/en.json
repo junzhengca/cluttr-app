@@ -361,7 +361,33 @@
       "message": "Are you sure you want to log out?",
       "cancel": "Cancel",
       "confirm": "Log Out"
+    },
+    "subscription": {
+      "title": "Cluttr Pro",
+      "upgrade": "Upgrade to Cluttr Pro",
+      "restore": "Restore Purchases",
+      "manage": "Manage Subscription",
+      "active": "Cluttr Pro is active",
+      "lifetime": "Lifetime access",
+      "renewsOn": "Renews on {{date}}",
+      "expiresOn": "Expires on {{date}}",
+      "purchaseSuccess": "Welcome to Cluttr Pro!",
+      "restoreSuccess": "Purchases restored",
+      "restoreNone": "No purchases to restore",
+      "restoreError": "Failed to restore purchases"
     }
+  },
+  "limits": {
+    "homesFree": "The free plan supports up to {{max}} homes — upgrade to Cluttr Pro for more",
+    "inviteFree": "Sharing your home requires Cluttr Pro",
+    "homeFull": "This home already has the maximum of {{max}} members",
+    "inventoryFree": "The free plan is limited to {{max}} items per home — upgrade to Cluttr Pro for more",
+    "inventorySoftCap": "This home reached the {{max}}-item limit. Contact support to raise it.",
+    "inventoryCapReached": "Item limit reached ({{max}})",
+    "todoFree": "The free plan is limited to {{max}} to-dos per home — upgrade to Cluttr Pro for more",
+    "todoSoftCap": "This home reached the {{max}} to-do limit. Contact support to raise it.",
+    "todoCapReached": "To-do limit reached ({{max}})",
+    "joinDenied": "Unable to join — this home may be full or the invitation is no longer valid"
   },
   "createItem": {
     "title": "Add New Item",
